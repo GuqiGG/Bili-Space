@@ -1,0 +1,127 @@
+{
+  "label": "baseline",
+  "mode": "native WebView2 with representative promotion/message DOM and native IntersectionObserver; no real chat or account actions",
+  "sha256": "e796ac10678308b772a73ccebf4c7deda6fffbda5e15e16a3deab3e539fe3f1b",
+  "home": {
+    "adDisplay": "contents",
+    "adFlattened": "wrapper",
+    "creativeVisible": true,
+    "requests": [],
+    "scrollY": 0,
+    "cards": 16,
+    "expanded": "false",
+    "navHidden": false,
+    "font": "12px",
+    "trigger": {
+      "x": 107.3250002861023,
+      "y": 28.600000381469727
+    },
+    "title": {
+      "x": 641.2374877929688,
+      "y": 18.200000762939453,
+      "width": 62.32500076293945,
+      "height": 20.80000114440918,
+      "top": 18.200000762939453,
+      "right": 703.5624885559082,
+      "bottom": 39.00000190734863,
+      "left": 641.2374877929688
+    }
+  },
+  "hover": {
+    "adDisplay": "contents",
+    "adFlattened": "wrapper",
+    "creativeVisible": true,
+    "requests": [],
+    "scrollY": 0,
+    "cards": 16,
+    "expanded": "true",
+    "navHidden": false,
+    "font": "12px",
+    "trigger": {
+      "x": 107.3250002861023,
+      "y": 28.600000381469727
+    },
+    "title": {
+      "x": 641.2374877929688,
+      "y": 18.200000762939453,
+      "width": 62.32500076293945,
+      "height": 20.80000114440918,
+      "top": 18.200000762939453,
+      "right": 703.5624885559082,
+      "bottom": 39.00000190734863,
+      "left": 641.2374877929688
+    }
+  },
+  "click": {
+    "adDisplay": "contents",
+    "adFlattened": "wrapper",
+    "creativeVisible": true,
+    "requests": [],
+    "scrollY": 0,
+    "cards": 16,
+    "expanded": "true",
+    "navHidden": false,
+    "font": "12px",
+    "trigger": {
+      "x": 107.3250002861023,
+      "y": 28.600000381469727
+    },
+    "title": {
+      "x": 641.2374877929688,
+      "y": 18.200000762939453,
+      "width": 62.32500076293945,
+      "height": 20.80000114440918,
+      "top": 18.200000762939453,
+      "right": 703.5624885559082,
+      "bottom": 39.00000190734863,
+      "left": 641.2374877929688
+    }
+  },
+  "leave": {
+    "adDisplay": "contents",
+    "adFlattened": "wrapper",
+    "creativeVisible": true,
+    "requests": [],
+    "scrollY": 0,
+    "cards": 16,
+    "expanded": "true",
+    "navHidden": false,
+    "font": "12px",
+    "trigger": {
+      "x": 107.3250002861023,
+      "y": 28.600000381469727
+    },
+    "title": {
+      "x": 641.2374877929688,
+      "y": 18.200000762939453,
+      "width": 62.32500076293945,
+      "height": 20.80000114440918,
+      "top": 18.200000762939453,
+      "right": 703.5624885559082,
+      "bottom": 39.00000190734863,
+      "left": 641.2374877929688
+    }
+  },
+  "motion": [
+    {
+      "events": 1,
+      "layer": "matrix(1, 0, 0, 1, -12.1032, 0)",
+      "layers": 1
+    },
+    {
+      "events": 2,
+      "layer": "matrix(1, 0, 0, 1, 12.1032, 0)",
+      "layers": 1
+    }
+  ],
+  "messages": {
+    "background": "rgb(214, 235, 234)",
+    "image": "linear-gradient(rgb(214, 235, 234), rgb(255, 255, 255))",
+    "sidebar": "rgba(255, 255, 255, 0.8)",
+    "rgb": "",
+    "main": "rgba(255, 255, 255, 0.5)",
+    "top": 128
+  },
+  "runtime_errors": [],
+  "result": "OBSERVED BASELINE"
+}

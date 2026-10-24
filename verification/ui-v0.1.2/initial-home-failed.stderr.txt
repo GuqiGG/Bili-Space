@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_home.py", line 93, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_home.py", line 47, in main
+    assert report['before']['banner']['h']>=88 and report['before']['bannerText']=='bili space'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

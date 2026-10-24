@@ -1,0 +1,8 @@
+MODIFIED_FILE: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js [49099 bytes; SHA256 4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f]
+DIFF_FILE: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch [14811 bytes; SHA256 f17c6567b47f91da65e6f7cf3031c140c608870b8defb1ee3694bd916f61e679]
+VERIFICATION: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt [21436 bytes; SHA256 7bbaff6a5e83fa5653ef175fceb793b88bf0f299727f4b87ff954925089dbf32]
+ROLLBACK: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh [67206 bytes; SHA256 e3aeebc6d3f2b7ab2a843464b88db5833b76fa698513a3fa1dd685c1d0e750d4]
+BASELINE: {"settings":{"hideLiveCards":false,"blockAdCards":true,"videoProfileButton":true},"routes":["home","video","search","home","home"],"uids":["123","",""]}
+MODIFIED: {"settings":{"hideLiveCards":false,"blockAdCards":false,"videoProfileButton":false},"routes":["home","disabled","disabled","disabled","home"],"uids":["123","456",""]}
+ROLLBACK: {"settings":{"hideLiveCards":false,"blockAdCards":true,"videoProfileButton":true},"routes":["home","video","search","home","home"],"uids":["123","",""]}
+Verified: pristine target unchanged; rollback hash matches; diff reconstructs exact modified bytes.

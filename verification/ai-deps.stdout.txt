@@ -1,0 +1,18 @@
+Collecting onnx
+  Downloading onnx-1.23.2-cp312-abi3-win_amd64.whl.metadata (8.7 kB)
+Collecting pyyaml
+  Using cached pyyaml-6.0.3-cp313-cp313-win_amd64.whl.metadata (2.4 kB)
+Requirement already satisfied: numpy>=1.23.2 in D:\Apps\Python\Lib\site-packages (from onnx) (2.5.3)
+Collecting protobuf>=6.31.1 (from onnx)
+  Downloading protobuf-7.36.2-cp310-abi3-win_amd64.whl.metadata (595 bytes)
+Requirement already satisfied: typing_extensions>=4.7.1 in D:\Apps\Python\Lib\site-packages (from onnx) (4.16.0)
+Collecting ml_dtypes>=0.5.4 (from onnx)
+  Downloading ml_dtypes-0.6.0-cp313-cp313-win_amd64.whl.metadata (8.8 kB)
+Downloading onnx-1.23.2-cp312-abi3-win_amd64.whl (7.9 MB)
+   ---------------------------------------- 7.9/7.9 MB 48.7 MB/s  0:00:00
+Using cached pyyaml-6.0.3-cp313-cp313-win_amd64.whl (154 kB)
+Downloading ml_dtypes-0.6.0-cp313-cp313-win_amd64.whl (439 kB)
+Downloading protobuf-7.36.2-cp310-abi3-win_amd64.whl (456 kB)
+Installing collected packages: pyyaml, protobuf, ml_dtypes, onnx
+
+Successfully installed ml_dtypes-0.6.0 onnx-1.23.2 protobuf-7.36.2 pyyaml-6.0.3

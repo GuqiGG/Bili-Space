@@ -1,0 +1,10 @@
+{
+  "command": [
+    "node",
+    "tests/polish-policy.cjs",
+    "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-v0.1.4\\enhance.original.js"
+  ],
+  "stdout": "{\"promotionDisplay\":\"none\",\"promotionFlattened\":false,\"navHidden\":true,\"categoryFont\":\"15px\",\"prefetchMargin\":\"true\",\"bannerMotionLayers\":1,\"messageBackground\":\"rgb(22, 22, 24)\",\"messageRgb\":\"22,22,24\"}\n",
+  "stderr": "",
+  "exit": 0
+}

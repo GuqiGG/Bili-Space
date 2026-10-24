@@ -1,0 +1,3239 @@
+{
+  "TARGET": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\third_party\\blocker\\script.user.js",
+  "GOAL": "getPageKind => www.bilibili.com homepage only, including locale home routes; extractUid supports explicit locale author URLs; hideLiveCards=false, blockAdCards=false, videoProfileButton=false; no optional menus or background count",
+  "roles": {
+    "MODIFIED_FILE": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\blocker.home.user.js",
+    "DIFF_FILE": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\blocker.home.patch",
+    "VERIFICATION": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\VERIFICATION.txt",
+    "ROLLBACK": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh"
+  },
+  "hashes": {
+    "original": "40e40bd8fcfa52e1d2e3b7dd9b25f563a53a504b94bd00b9cace4539a6d95ccf",
+    "modified": "4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f",
+    "rollback": "40e40bd8fcfa52e1d2e3b7dd9b25f563a53a504b94bd00b9cace4539a6d95ccf",
+    "reconstructed": "4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f"
+  },
+  "original_unchanged": true,
+  "rollback_hash_matches": true,
+  "diff_reconstructs_exact_bytes": true,
+  "events": [
+    {
+      "label": "BASELINE",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\blocker-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\blocker.original.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":true,\"videoProfileButton\":true},\"routes\":[\"home\",\"video\",\"search\",\"home\",\"home\"],\"uids\":[\"123\",\"\",\"\"]}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "MODIFIED",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\blocker-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\blocker.home.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":false,\"videoProfileButton\":false},\"routes\":[\"home\",\"disabled\",\"disabled\",\"disabled\",\"home\"],\"uids\":[\"123\",\"456\",\"\"]}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "EXECUTE ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "C:\\Program Files\\Git\\bin\\bash.exe",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\rollback-copy.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\blocker-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\rollback-copy.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":true,\"videoProfileButton\":true},\"routes\":[\"home\",\"video\",\"search\",\"home\",\"home\"],\"uids\":[\"123\",\"\",\"\"]}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "BUILD EXACT DIFF",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\patch-inputs",
+      "command": [
+        "git",
+        "-c",
+        "core.attributesfile=C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\binary.attributes",
+        "diff",
+        "--no-index",
+        "--binary",
+        "--",
+        "a/policy.user.js",
+        "b/policy.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "diff --git a/a/policy.user.js b/b/policy.user.js\nindex 00abe344c93310bbfb50bfee05ae983e352e6102..2d3d2ee5d153499c855abfbff288b8f8295b8b46 100644\nGIT binary patch\ndelta 9587\n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\n\ndelta 10985\n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\n\n",
+      "stderr": "",
+      "exit_status": 1
+    },
+    {
+      "label": "EXTEND DIFF ui",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\patch-inputs",
+      "command": [
+        "git",
+        "-c",
+        "core.attributesfile=C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\binary.attributes",
+        "diff",
+        "--no-index",
+        "--binary",
+        "--",
+        "a/enhance.js",
+        "b/enhance.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "diff --git a/a/enhance.js b/b/enhance.js\nindex f40fdfa6b8ecf423cd96dc4ecadc105c104679a1..bba2fced5fb6b7291a8a7556dc9f3dfc323bce29 100644\nGIT binary patch\ndelta 13375\n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\nQWs)P}Z`k?O_x|>O0M{)<1ONa4\n\ndelta 838\nzcmYjPOK1~O6eUR;r1gi^#`x>lh9=QwI<ZyKN#l=dtypWTwQBM6I`fh|oL^@qZR(JX\nz3JQY1YmGq>wH8qkk>|n>Qt<=TjSB@ALKl+aQbf>|;*3?1x468+J@=k-xDz)$*B-i0\nz@Aqx%+OTmulVB`{W!bi^Z9Cf5ZDDfpGrNlPyKArn?s^mO%(sd9=b!S>7Yjd>z=83_\nzbew5-!Mf_X?o~0mv%1U$-)guDi70r#j#C*4>3mHCXTL_cw{jtz3|ySor;0<ChD4Dl\nzsfej+{HjJR3v+8N`muJe3*Lv;_!(AE6%*N0bStG3F=Ap_laPsF+p-Ec5wD^@`JU+|\nzNeO3RcWVoM+dAQ%7wQ#}i6Uki%QzvCRNCAdw&<75i`*qEWA+BMd#N{tG=2pK$J&p8\nzyQ3oEe4DgvTt<3|C=uNu@lj68=Gfl@3}&iYgG4mbe6+#tP2;Jq2DsG0mkX+-+7>yE\nzi^10pnb(kFsTvZ9ImC1Er0s%_Mzw6cLuCx47!d>OB>8tfpH>I3&KNcg>N=}DPHpcL\nzVWRT_9PR3ulT*+DgZL!T4KpI7i6p|$E+5?39;p4JS;9$^M;TL%Pid5i5?T=(7_4iE\nz**?N>Rji;3c67VEIkpc82jNWLe5mPZqT-%%FTH&rF>?vqrz1tQL}J(x5AlksU}vr6\nzgcEIqO0^fx_VXi?{T^DHx$LHaLx=q^2Eue(?CR(F=KA02<#W;u2l#mW>_3Eo=HY$i\nz4!Zmg_G5U^o7QnMQ4L?p{4jcc7Q8xN_dgWQS3_rh84Tx_!gzkPv_7foGBg!Zn*)}p\nz3K<zIrhOgiL4sML2vSDGMkv^VMci#C+t!i@hSvm(4{jA7Jt{u9GdXr7$Ok_a9#1|Q\nzX4ZeYT?poy>k++QNV#1cU36*0LtC%-Jk#uRGfbvG0hP0>7O<vH<WM+HlA->vqzcF+\ngs=_+5!8d0uxURFbF!DJt^7M5nExwubfdAdgU%YWZa{vGU\n\n",
+      "stderr": "",
+      "exit_status": 1
+    },
+    {
+      "label": "EXTEND DIFF native",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\patch-inputs",
+      "command": [
+        "git",
+        "-c",
+        "core.attributesfile=C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\binary.attributes",
+        "diff",
+        "--no-index",
+        "--binary",
+        "--",
+        "a/main.cpp",
+        "b/main.cpp"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "diff --git a/a/main.cpp b/b/main.cpp\nindex 1702a8b5b256d68eb7bbdb5f0a011b4fdca62eb6..2748ab726da8c0ed94fc32144fa5db828c85d85c 100644\nGIT binary patch\ndelta 682\nzcma)4L2lDP6jek4kqA+!SfH{n1C$xzIFYE3>f%N<R20cAi!2ce)A3I-#P*b#aZCtR\nzH*8?*3vh%;-XI}y2-w1g8}tT@(-sx4nBBbj@4f%u{Mm=v=TEiSkNTlKMMIz=$ZZh=\nzvb9X%;4k)MlF*p5D!k2=7IIRBeMytB3U+}?HmssMpcEZ|LhXv<CSxK^bhX~6Y;=qj\nz-|Kr9^2uW3VtlMo+`am~cFDeXdd;s5Yrbtgd;EO2x3kslZa&@e(EZm+Bv_h3u@pkL\nz0z{Ppty(9nrh1c73C&nYaMXB!NO81ubonr$V?Ll75SiAkGl!;HSgGV*#zVldGp11r\nz7^N~ow$h>NDlK_3m>v+a{tuD&v7tGNzXMDjd8_TUhbt>3BKtfEae#(e?<=>}Qe|%W\nz$HglTXcTouFv)}rJ!H3u=e0=&dt(k+b7S|U!MQ5y8Cz^D^Ix}b6u)o%Y~0bHv}vRh\nzARn{_Y56?jR(GE=uwImpFOge(YkqCi?EsxdI9fYjTYyMGK0`N`OiqEIp;5u*b`V6?\nyi=O-C+$(qsEY*Nj%9#0!4$903B6CWMxkJY}!|hWeNRay<Rr8%7sJOndyzmDhhV0$|\n\ndelta 53\nzcmV-50LuTMiUF{M0kG2wvx5s^2D1ecZ2_~16IubYFBRtvv+yI_3$ySqy9<-UJNL8x\nLJf{P*2SFJGMgkSz\n\n",
+      "stderr": "",
+      "exit_status": 1
+    },
+    {
+      "label": "RECONSTRUCT FROM DIFF",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "git",
+        "-c",
+        "core.autocrlf=false",
+        "-c",
+        "core.attributesfile=C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\binary.attributes",
+        "apply",
+        "--binary",
+        "--unsafe-paths",
+        "--directory=C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\reconstructed",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\blocker.home.patch"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "UI BASELINE",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\ui-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-v0.1.0\\enhance.original.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"activeHistory\":null,\"avatar\":null,\"messages\":null,\"lightsSvg\":0,\"query\":\"\",\"siteSearch\":\"block\",\"loading\":null,\"nativeSearch\":false,\"channels\":\"none\",\"feedColumns\":\"\",\"searchBackground\":\"rgba(0, 0, 0, 0)\"}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "UI MODIFIED",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\ui-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\enhance.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"activeHistory\":\"历史\",\"avatar\":\"https://i0.hdslb.com/bfs/face/test-avatar.png\",\"messages\":\"https://message.bilibili.com/#/reply\",\"lightsSvg\":3,\"query\":\"苏丹\",\"siteSearch\":\"none\",\"loading\":\"true\",\"nativeSearch\":true,\"channels\":\"none\",\"feedColumns\":\"repeat(var(--bs-feed-columns),minmax(0,1fr))\",\"searchBackground\":\"rgb(22, 22, 24)\"}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "EXECUTE UI ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "C:\\Program Files\\Git\\bin\\bash.exe",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-rollback-copy.js",
+        "ui"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "UI ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\ui-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-rollback-copy.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"activeHistory\":null,\"avatar\":null,\"messages\":null,\"lightsSvg\":0,\"query\":\"\",\"siteSearch\":\"block\",\"loading\":null,\"nativeSearch\":false,\"channels\":\"none\",\"feedColumns\":\"\",\"searchBackground\":\"rgba(0, 0, 0, 0)\"}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "EXECUTE NATIVE ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "C:\\Program Files\\Git\\bin\\bash.exe",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\native-rollback-copy.cpp",
+        "native"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "HEADER BASELINE",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\header-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-v0.1.1\\enhance.original.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"brandCentered\":false,\"maximizeSquare\":false,\"glyphFade\":false,\"providedMessageIcon\":false,\"videoHome\":null,\"headerTab\":false,\"hideHome\":false,\"hideMessages\":false,\"independentVideoHome\":false}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "HEADER MODIFIED",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\header-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\enhance.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"brandCentered\":true,\"maximizeSquare\":true,\"glyphFade\":true,\"providedMessageIcon\":true,\"videoHome\":\"https://www.bilibili.com/\",\"headerTab\":true,\"hideHome\":true,\"hideMessages\":true,\"independentVideoHome\":true}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "EXECUTE HEADER ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "C:\\Program Files\\Git\\bin\\bash.exe",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\header-rollback-copy.js",
+        "ui-v0.1.1"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "HEADER ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\header-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\header-rollback-copy.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"brandCentered\":false,\"maximizeSquare\":false,\"glyphFade\":false,\"providedMessageIcon\":false,\"videoHome\":null,\"headerTab\":false,\"hideHome\":false,\"hideMessages\":false,\"independentVideoHome\":false}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "EXECUTE HEADER NATIVE ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "C:\\Program Files\\Git\\bin\\bash.exe",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\header-native-rollback.cpp",
+        "native-v0.1.1"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "REAPPLIED MODIFIED",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\blocker-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\blocker.home.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":false,\"videoProfileButton\":false},\"routes\":[\"home\",\"disabled\",\"disabled\",\"disabled\",\"home\"],\"uids\":[\"123\",\"456\",\"\"]}\n",
+      "stderr": "",
+      "exit_status": 0
+    }
+  ],
+  "supplemental": {
+    "build_log": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\build.log",
+    "smoke": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\smoke.json",
+    "unit_tests": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\tests.stdout.txt",
+    "ui_transaction": {
+      "ui": {
+        "pristine_file": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-v0.1.0\\enhance.original.js",
+        "modified_file": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\enhance.js",
+        "original_sha256": "8ece9cb02d743fe9630a6256a889ceecf0614cc04b876902fa23a0c656e9aed4",
+        "modified_sha256": "7db5b3a2e9dc2d8013cfd1118e37d9dab9895a0b00df8fca5a9dbac6ade82c2a",
+        "restored_sha256": "8ece9cb02d743fe9630a6256a889ceecf0614cc04b876902fa23a0c656e9aed4",
+        "diff_reconstructed_exactly": true
+      },
+      "native": {
+        "pristine_file": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-v0.1.0\\main.original.cpp",
+        "modified_file": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\src\\main.cpp",
+        "original_sha256": "e5fa821a3730bafead3c56722aa6131ce40f4c76e9d0b2fb65dc64131a3b3c2f",
+        "modified_sha256": "f1d7d1afc7f2fa1d443125b55db42dbaf999b29aa3097d3bb5db8171f2ffee9c",
+        "restored_sha256": "e5fa821a3730bafead3c56722aa6131ce40f4c76e9d0b2fb65dc64131a3b3c2f",
+        "diff_reconstructed_exactly": true
+      }
+    },
+    "ui_functions": [
+      "pageKind",
+      "syncRoute",
+      "refreshAccount",
+      "submitSearch",
+      "setLoading",
+      "pageCss",
+      "shellCss"
+    ],
+    "previous_verified_delivery": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-v0.1.0\\previous-verification.json",
+    "header_transaction": {
+      "baseline_file": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-v0.1.1\\enhance.original.js",
+      "original_sha256": "988577ed166a617f31f14ef47fd32ede8d11bd67f2af60d9526bb3ea6a2caac8",
+      "restored_sha256": "988577ed166a617f31f14ef47fd32ede8d11bd67f2af60d9526bb3ea6a2caac8",
+      "modified_file": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\enhance.js",
+      "modified_sha256": "7db5b3a2e9dc2d8013cfd1118e37d9dab9895a0b00df8fca5a9dbac6ade82c2a",
+      "native_original_sha256": "53373197435e5244fcabe6d3392c59583fdbd7dc6ed49925e320b0931d7d7dfd",
+      "native_restored_sha256": "53373197435e5244fcabe6d3392c59583fdbd7dc6ed49925e320b0931d7d7dfd",
+      "previous_delivery": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ui-v0.1.1\\previous-verification.json"
+    }
+  },
+  "delivery_events": [
+    {
+      "label": "BUILD",
+      "command": [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\scripts\\build.ps1"
+      ],
+      "stdout": "Built: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\dist\\BetterBiliSpace.exe\r\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "UNIT_TESTS",
+      "command": [
+        "npm.cmd",
+        "test"
+      ],
+      "stdout": "\n> better-bili-space@0.1.2 test\n> node --test tests/*.test.cjs\n\n✔ explicit home, banner and right-side ad markers; no title-based false positive (111.6914ms)\n✔ native settings in lower left; Douyin font, channels, theme and progress options apply (44.5366ms)\n✔ sparkles control precedes resolution; performance/quality and multipliers exist (22.3869ms)\n✔ native PiP keeps a video-only DOM state and restores normal chrome (30.1832ms)\n✔ WebGL unavailable fails visibly without hiding original video (32.7696ms)\n✔ incremental ad card insertion is detected (271.484ms)\n✔ modified blocker hard-locks optional features and non-home routes (46.2631ms)\n✔ requested message SVG and square maximize glyph appear in the centered-title header (110.4106ms)\n✔ header settings individually hide all eight optional items without hiding window controls (51.8056ms)\n✔ video webpage has an independent homepage anchor, even with the top Home item disabled (26.5996ms)\n✔ history/locale history and dynamic highlight their own navigation, never home (165.4482ms)\n✔ SPA route changes update selected nav and search query without wiping pending edits (29.6947ms)\n✔ login status renders API avatar; messages link is present; no text impersonating a profile (50.3571ms)\n✔ signed out retains a working login link (30.614ms)\n✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (43.3777ms)\n✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (19.9514ms)\n✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (27.0252ms)\nℹ tests 17\nℹ suites 0\nℹ pass 17\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1000.8477\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "TRANSACTION",
+      "command": [
+        "python",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\scripts\\verify_transaction.py"
+      ],
+      "stdout": "MODIFIED_FILE: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\blocker.home.user.js [49099 bytes; SHA256 4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f]\r\nDIFF_FILE: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\blocker.home.patch [25025 bytes; SHA256 925b1fcd87f39923ed9a1eaaf0a403511aedf7a716645f6ba4dfc1a3e10a1e49]\r\nVERIFICATION: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\VERIFICATION.txt [42373 bytes; SHA256 36e3f3c9c76f854f97da3a81a2cf3ea701b230f7975990ed481ab4c487614adc]\r\nROLLBACK: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh [234677 bytes; SHA256 c8490ac5e22e82eeab7fcbadc03f8e8d714f0d6d80b129b610bc7cfbc3d2212d]\r\nBASELINE: {\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":true,\"videoProfileButton\":true},\"routes\":[\"home\",\"video\",\"search\",\"home\",\"home\"],\"uids\":[\"123\",\"\",\"\"]}\r\nMODIFIED: {\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":false,\"videoProfileButton\":false},\"routes\":[\"home\",\"disabled\",\"disabled\",\"disabled\",\"home\"],\"uids\":[\"123\",\"456\",\"\"]}\r\nROLLBACK: {\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":true,\"videoProfileButton\":true},\"routes\":[\"home\",\"video\",\"search\",\"home\",\"home\"],\"uids\":[\"123\",\"\",\"\"]}\r\nVerified: pristine target unchanged; rollback hash matches; diff reconstructs exact modified bytes.\r\nUI BASELINE: {\"activeHistory\":null,\"avatar\":null,\"messages\":null,\"lightsSvg\":0,\"query\":\"\",\"siteSearch\":\"block\",\"loading\":null,\"nativeSearch\":false,\"channels\":\"none\",\"feedColumns\":\"\",\"searchBackground\":\"rgba(0, 0, 0, 0)\"}\r\nUI MODIFIED: {\"activeHistory\":\"��ʷ\",\"avatar\":\"https://i0.hdslb.com/bfs/face/test-avatar.png\",\"messages\":\"https://message.bilibili.com/#/reply\",\"lightsSvg\":3,\"query\":\"�յ�\",\"siteSearch\":\"none\",\"loading\":\"true\",\"nativeSearch\":true,\"channels\":\"none\",\"feedColumns\":\"repeat(var(--bs-feed-columns),minmax(0,1fr))\",\"searchBackground\":\"rgb(22, 22, 24)\"}\r\nUI ROLLBACK: {\"activeHistory\":null,\"avatar\":null,\"messages\":null,\"lightsSvg\":0,\"query\":\"\",\"siteSearch\":\"block\",\"loading\":null,\"nativeSearch\":false,\"channels\":\"none\",\"feedColumns\":\"\",\"searchBackground\":\"rgba(0, 0, 0, 0)\"}\r\nHEADER BASELINE: {\"brandCentered\":false,\"maximizeSquare\":false,\"glyphFade\":false,\"providedMessageIcon\":false,\"videoHome\":null,\"headerTab\":false,\"hideHome\":false,\"hideMessages\":false,\"independentVideoHome\":false}\r\nHEADER MODIFIED: {\"brandCentered\":true,\"maximizeSquare\":true,\"glyphFade\":true,\"providedMessageIcon\":true,\"videoHome\":\"https://www.bilibili.com/\",\"headerTab\":true,\"hideHome\":true,\"hideMessages\":true,\"independentVideoHome\":true}\r\nHEADER ROLLBACK: {\"brandCentered\":false,\"maximizeSquare\":false,\"glyphFade\":false,\"providedMessageIcon\":false,\"videoHome\":null,\"headerTab\":false,\"hideHome\":false,\"hideMessages\":false,\"independentVideoHome\":false}\r\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "NATIVE_SMOKE",
+      "command": [
+        "python",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\scripts\\smoke.py"
+      ],
+      "stdout": "{\r\n  \"artifact_sha256\": {\r\n    \"dist\\\\BetterBiliSpace.exe\": \"25e39da4af271f7162b38a8294abb516aa48314cbfe3d39cbeaafb52856c46e4\",\r\n    \"dist\\\\assets\\\\blocker.home.user.js\": \"4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f\",\r\n    \"dist\\\\assets\\\\bridge.js\": \"950a34b1247b69bc7bbf014ee257e567b60e62bcbb4b3575be05b707f212d578\",\r\n    \"dist\\\\assets\\\\btr.user.js\": \"995a2edaaa96732a9a4fd2482652aeb951f2f359c1a4f6f749838643582879c1\",\r\n    \"dist\\\\assets\\\\enhance.js\": \"7db5b3a2e9dc2d8013cfd1118e37d9dab9895a0b00df8fca5a9dbac6ade82c2a\",\r\n    \"dist\\\\assets\\\\fixture.html\": \"25261bdd6bc7cfeade65aff96450f7fe53a449b2ed681f34e932f911e8f0fa17\",\r\n    \"dist\\\\assets\\\\message-square-more.svg\": \"b3216d22b398ab20e19b4b3f2637f7ad7f6a2f9fca6bf7c8d9f65455b39ad78b\",\r\n    \"dist\\\\assets\\\\settings.svg\": \"f904d96fdbc562e72e9547ce437ecd4ab9c6ea83bfd7eccd9b53d803ca335669\",\r\n    \"dist\\\\assets\\\\sparkles.svg\": \"df560e8955d1f02b4d64265aafcee4a350223aaed4bbd6377b741a8be7772eaa\"\r\n  },\r\n  \"process_pid\": 35784,\r\n  \"initial\": {\r\n    \"state\": {\r\n      \"prefs\": {\r\n        \"theme\": \"dark\",\r\n        \"accent\": \"#fb7299\",\r\n        \"progressColor\": \"#fb7299\",\r\n        \"progressHeight\": 4,\r\n        \"progressRadius\": 12,\r\n        \"progressAlways\": false,\r\n        \"progressThumb\": true,\r\n        \"showChannels\": false,\r\n        \"hideAds\": true,\r\n        \"btr\": true,\r\n        \"font\": true,\r\n        \"zoom\": 100,\r\n        \"srMode\": \"off\",\r\n        \"srScale\": 3,\r\n        \"headerHome\": true,\r\n        \"headerDynamic\": true,\r\n        \"headerHistory\": true,\r\n        \"headerBrand\": true,\r\n        \"headerSearch\": true,\r\n        \"headerMessages\": true,\r\n        \"headerAccount\": true,\r\n        \"headerBack\": true\r\n      },\r\n      \"status\": \"\\u672a\\u5f00\\u542f\",\r\n      \"frames\": 0,\r\n      \"stopped\": true,\r\n      \"pip\": false,\r\n      \"full\": false,\r\n      \"route\": \"other\",\r\n      \"loading\": false,\r\n      \"ads\": 4\r\n    },\r\n    \"btr\": true,\r\n    \"font\": true,\r\n    \"adDisplays\": [\r\n      \"none\",\r\n      \"none\",\r\n      \"none\",\r\n      \"none\"\r\n    ],\r\n    \"commentVisible\": \"block\",\r\n    \"toolBeforeQuality\": \"bs-player-tool\"\r\n  },\r\n  \"native_persistence\": {\r\n    \"accent\": \"#5aaf9a\",\r\n    \"btr\": true,\r\n    \"font\": true,\r\n    \"headerAccount\": true,\r\n    \"headerBack\": true,\r\n    \"headerBrand\": true,\r\n    \"headerDynamic\": true,\r\n    \"headerHistory\": true,\r\n    \"headerHome\": true,\r\n    \"headerMessages\": true,\r\n    \"headerSearch\": true,\r\n    \"hideAds\": true,\r\n    \"progressAlways\": false,\r\n    \"progressColor\": \"#5aaf9a\",\r\n    \"progressHeight\": 8,\r\n    \"progressRadius\": 12,\r\n    \"progressThumb\": true,\r\n    \"showChannels\": false,\r\n    \"srMode\": \"off\",\r\n    \"srScale\": 3,\r\n    \"theme\": \"dark\",\r\n    \"zoom\": 100\r\n  },\r\n  \"gpu\": {\r\n    \"prefs\": {\r\n      \"theme\": \"dark\",\r\n      \"accent\": \"#5aaf9a\",\r\n      \"progressColor\": \"#5aaf9a\",\r\n      \"progressHeight\": 8,\r\n      \"progressRadius\": 12,\r\n      \"progressAlways\": false,\r\n      \"progressThumb\": true,\r\n      \"showChannels\": false,\r\n      \"hideAds\": true,\r\n      \"btr\": true,\r\n      \"font\": true,\r\n      \"zoom\": 100,\r\n      \"srMode\": \"quality\",\r\n      \"srScale\": 2,\r\n      \"headerHome\": true,\r\n      \"headerDynamic\": true,\r\n      \"headerHistory\": true,\r\n      \"headerBrand\": true,\r\n      \"headerSearch\": true,\r\n      \"headerMessages\": true,\r\n      \"headerAccount\": true,\r\n      \"headerBack\": true\r\n    },\r\n    \"status\": \"640\\u00d7360 \\u2192 1280\\u00d7720 \\u00b7 2.00\\u00d7 \\u00b7 \\u8d28\\u91cf \\u00b7 GPU\",\r\n    \"frames\": 61,\r\n    \"stopped\": false,\r\n    \"pip\": false,\r\n    \"full\": false,\r\n    \"route\": \"other\",\r\n    \"loading\": false,\r\n    \"ads\": 4,\r\n    \"canvas\": {\r\n      \"width\": 1280,\r\n      \"height\": 720\r\n    },\r\n    \"opacity\": \"0\"\r\n  },\r\n  \"pip\": {\r\n    \"state\": {\r\n      \"prefs\": {\r\n        \"theme\": \"dark\",\r\n        \"accent\": \"#5aaf9a\",\r\n        \"progressColor\": \"#5aaf9a\",\r\n        \"progressHeight\": 8,\r\n        \"progressRadius\": 12,\r\n        \"progressAlways\": false,\r\n        \"progressThumb\": true,\r\n        \"showChannels\": false,\r\n        \"hideAds\": true,\r\n        \"btr\": true,\r\n        \"font\": true,\r\n        \"zoom\": 100,\r\n        \"srMode\": \"quality\",\r\n        \"srScale\": 2,\r\n        \"headerHome\": true,\r\n        \"headerDynamic\": true,\r\n        \"headerHistory\": true,\r\n        \"headerBrand\": true,\r\n        \"headerSearch\": true,\r\n        \"headerMessages\": true,\r\n        \"headerAccount\": true,\r\n        \"headerBack\": true\r\n      },\r\n      \"status\": \"640\\u00d7360 \\u2192 1280\\u00d7720 \\u00b7 2.00\\u00d7 \\u00b7 \\u8d28\\u91cf \\u00b7 GPU\",\r\n      \"frames\": 86,\r\n      \"stopped\": false,\r\n      \"pip\": true,\r\n      \"full\": false,\r\n      \"route\": \"other\",\r\n      \"loading\": false,\r\n      \"ads\": 4\r\n    },\r\n    \"width\": 384,\r\n    \"height\": 216,\r\n    \"bodyScroll\": 902,\r\n    \"video\": {\r\n      \"x\": 0,\r\n      \"y\": 0,\r\n      \"width\": 384,\r\n      \"height\": 216,\r\n      \"top\": 0,\r\n      \"right\": 384,\r\n      \"bottom\": 216,\r\n      \"left\": 0\r\n    },\r\n    \"style\": 2483486720,\r\n    \"topmost\": true\r\n  },\r\n  \"after_reload\": {\r\n    \"prefs\": {\r\n      \"theme\": \"dark\",\r\n      \"accent\": \"#fb7299\",\r\n      \"progressColor\": \"#fb7299\",\r\n      \"progressHeight\": 4,\r\n      \"progressRadius\": 12,\r\n      \"progressAlways\": false,\r\n      \"progressThumb\": true,\r\n      \"showChannels\": true,\r\n      \"hideAds\": true,\r\n      \"btr\": true,\r\n      \"font\": true,\r\n      \"zoom\": 100,\r\n      \"srMode\": \"off\",\r\n      \"srScale\": 2,\r\n      \"headerHome\": true,\r\n      \"headerDynamic\": true,\r\n      \"headerHistory\": true,\r\n      \"headerBrand\": true,\r\n      \"headerSearch\": true,\r\n      \"headerMessages\": true,\r\n      \"headerAccount\": true,\r\n      \"headerBack\": true\r\n    },\r\n    \"status\": \"\\u672a\\u5f00\\u542f\",\r\n    \"frames\": 0,\r\n    \"stopped\": true,\r\n    \"pip\": false,\r\n    \"full\": false,\r\n    \"route\": \"other\",\r\n    \"loading\": false,\r\n    \"ads\": 4\r\n  },\r\n  \"performance\": {\r\n    \"prefs\": {\r\n      \"theme\": \"dark\",\r\n      \"accent\": \"#fb7299\",\r\n      \"progressColor\": \"#fb7299\",\r\n      \"progressHeight\": 4,\r\n      \"progressRadius\": 12,\r\n      \"progressAlways\": false,\r\n      \"progressThumb\": true,\r\n      \"showChannels\": true,\r\n      \"hideAds\": true,\r\n      \"btr\": true,\r\n      \"font\": true,\r\n      \"zoom\": 100,\r\n      \"srMode\": \"performance\",\r\n      \"srScale\": 3,\r\n      \"headerHome\": true,\r\n      \"headerDynamic\": true,\r\n      \"headerHistory\": true,\r\n      \"headerBrand\": true,\r\n      \"headerSearch\": true,\r\n      \"headerMessages\": true,\r\n      \"headerAccount\": true,\r\n      \"headerBack\": true\r\n    },\r\n    \"status\": \"640\\u00d7360 \\u2192 1920\\u00d71080 \\u00b7 3.00\\u00d7 \\u00b7 \\u6027\\u80fd \\u00b7 GPU\",\r\n    \"frames\": 30,\r\n    \"stopped\": false,\r\n    \"pip\": false,\r\n    \"full\": false,\r\n    \"route\": \"other\",\r\n    \"loading\": false,\r\n    \"ads\": 4\r\n  },\r\n  \"context_loss\": {\r\n    \"state\": {\r\n      \"prefs\": {\r\n        \"theme\": \"dark\",\r\n        \"accent\": \"#fb7299\",\r\n        \"progressColor\": \"#fb7299\",\r\n        \"progressHeight\": 4,\r\n        \"progressRadius\": 12,\r\n        \"progressAlways\": false,\r\n        \"progressThumb\": true,\r\n        \"showChannels\": true,\r\n        \"hideAds\": true,\r\n        \"btr\": true,\r\n        \"font\": true,\r\n        \"zoom\": 100,\r\n        \"srMode\": \"performance\",\r\n        \"srScale\": 3,\r\n        \"headerHome\": true,\r\n        \"headerDynamic\": true,\r\n        \"headerHistory\": true,\r\n        \"headerBrand\": true,\r\n        \"headerSearch\": true,\r\n        \"headerMessages\": true,\r\n        \"headerAccount\": true,\r\n        \"headerBack\": true\r\n      },\r\n      \"status\": \"GPU \\u4e0a\\u4e0b\\u6587\\u4e22\\u5931\\uff0c\\u5df2\\u6062\\u590d\\u539f\\u751f\\u64ad\\u653e\",\r\n      \"frames\": 30,\r\n      \"stopped\": true,\r\n      \"pip\": false,\r\n      \"full\": false,\r\n      \"route\": \"other\",\r\n      \"loading\": false,\r\n      \"ads\": 4\r\n    },\r\n    \"opacity\": \"\",\r\n    \"canvas\": false\r\n  },\r\n  \"runtime_exceptions\": [],\r\n  \"live_home\": {\r\n    \"url\": \"https://www.bilibili.com/zh-Hans\",\r\n    \"title\": \"bilibili\",\r\n    \"ready\": true,\r\n    \"btr\": true,\r\n    \"cards\": 22,\r\n    \"blockButtons\": 10,\r\n    \"state\": {\r\n      \"prefs\": {\r\n        \"theme\": \"dark\",\r\n        \"accent\": \"#fb7299\",\r\n        \"progressColor\": \"#fb7299\",\r\n        \"progressHeight\": 4,\r\n        \"progressRadius\": 12,\r\n        \"progressAlways\": false,\r\n        \"progressThumb\": true,\r\n        \"showChannels\": true,\r\n        \"hideAds\": true,\r\n        \"btr\": true,\r\n        \"font\": true,\r\n        \"zoom\": 100,\r\n        \"srMode\": \"off\",\r\n        \"srScale\": 3,\r\n        \"headerHome\": true,\r\n        \"headerDynamic\": true,\r\n        \"headerHistory\": true,\r\n        \"headerBrand\": true,\r\n        \"headerSearch\": true,\r\n        \"headerMessages\": true,\r\n        \"headerAccount\": true,\r\n        \"headerBack\": true\r\n      },\r\n      \"status\": \"\\u672a\\u5f00\\u542f\",\r\n      \"frames\": 0,\r\n      \"stopped\": true,\r\n      \"pip\": false,\r\n      \"full\": false,\r\n      \"route\": \"home\",\r\n      \"loading\": false,\r\n      \"ads\": 0\r\n    },\r\n    \"text\": \"39.8\\u4e07\\n1024\\n01:37:59\\n\\u3010\\u5b8c\\u6574\\u7248\\u3011\\u7eaa\\u5ff5\\u4e2d\\u56fd\\u5de5\\u519c\\u7ea2\\u519b\\u957f\\u5f81\\u80dc\\u522990\\u5468\\u5e74\\u7535\\u89c6\\u6587\\u827a\\u665a\\u4f1a\\u300a\\u957f\\u5f81\\u9882\\u6b4c\\u300b\\n\\u592e\\u89c6\\u65b0\\u95fb\\n\\u00b7 2\\u5929\\u524d\\n32\\u4e07\\n666\\n11:22\\n\\u53c8\\u6bc1\\u539f\\u4f5c\\uff01\\uff1f\\u836f\\u5c4b\\u5c11\\u5973\\u771f\\u4eba\\u7248\\u5230\\u5e95\\u4ec0\\u4e48\\u6c34\\u5e73\\uff1f\\u5bfc\\u6f14\\u6f14\\u5458\\u7f16\\u5267\\u9760\\u8c31\\u5417\\uff1f\\u3010\\u65b0\\u756a\\u65e5\\u63a863\\u3011\\n\\u8d6b\\u841d\\u8001\\u5e08\\n\\u00b7 2\\u5929\\u524d\\n536\\u4e07\\n2460\\n17:53\\n148\\u5143\\u4e00\\u6876\\u201c\\u5929\\u4ef7\\u7f51\\u7ea2\\u5de8\\u578b\\u706b\\u9e21\\u9762\\u201d\\uff01\\u592a\\u8d85\\u6807\\u4e86\\uff01\\uff01\\n\\u7a7f\\u6bdb\\u88e4\\u7684\\u5c0f\\u62c9\\u6cfd\\n\\u00b7 10\\u670810\\u65e5\\n11.6\\u4e07\\n174\\n03:28\\n\\u4e13\\u8bbf\\u4e2d\\uff0c\\u5f20\\u96ea\\u628a\\u81ea\\u5df1\\u8bf4\\u54ed\\u4e86\\uff1a\\u6211\\u7684\\u76ee\\u6807\\u5c31\\u662f\\u5f80\\u5c71\\u9876\\u53bb\\u2026\\u2026\\n\\u65b0\\u534e\\u793e\\n\\u00b7 21\\u5c0f\\u65f6\\u524d\\n37.7\\u4e07\\n1462\\n02:12:36\\n\\u3010\\u6563\\u4eba\\u3011\\u6700\\u5f3a\\u7279\\u5de5 \\u60ac\\u7591\\u63a8\\u7406\\u300a\\u5343\\u9762\\u4eba\\u5728\\u6b64\\u300b\\n\\u900d\\u9065\\u6563\\u4eba\\n\\u00b7 10\\u670818\\u65e5\\n165.\"\r\n  },\r\n  \"result\": \"PASS\",\r\n  \"process_exit\": 0\r\n}\r\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "UI_REGRESSION",
+      "command": [
+        "python",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\scripts\\regression_ui.py"
+      ],
+      "stdout": "home PASS\r\nhistory PASS\r\ndynamic PASS\r\nsearch PASS\r\nvideo PASS\r\n{\r\n  \"mode\": \"mock account + representative page DOM; no real login or account writes\",\r\n  \"events\": {\r\n    \"home\": {\r\n      \"url\": \"https://www.bilibili.com/\",\r\n      \"route\": \"home\",\r\n      \"active\": \"\\u9996\\u9875\",\r\n      \"query\": \"\",\r\n      \"avatar\": \"https://i0.hdslb.com/bfs/face/bs-test-avatar.svg\",\r\n      \"avatarComplete\": true,\r\n      \"messages\": \"https://message.bilibili.com/#/reply\",\r\n      \"lights\": [\r\n        {\r\n          \"x\": 24,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 47,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 70,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        }\r\n      ],\r\n      \"glyphs\": [\r\n        {\r\n          \"x\": 27,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 50,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 73,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        }\r\n      ],\r\n      \"content\": {\r\n        \"x\": 32,\r\n        \"y\": 91.5999984741211,\r\n        \"w\": 1216,\r\n        \"h\": 435.5249938964844\r\n      },\r\n      \"cards\": [\r\n        {\r\n          \"x\": 70.4000015258789,\r\n          \"y\": 91.5999984741211,\r\n          \"w\": 269.8000183105469,\r\n          \"h\": 203.7624969482422\r\n        },\r\n        {\r\n          \"x\": 360.20001220703125,\r\n          \"y\": 91.5999984741211,\r\n          \"w\": 269.8000183105469,\r\n          \"h\": 203.7624969482422\r\n        },\r\n        {\r\n          \"x\": 650,\r\n          \"y\": 91.5999984741211,\r\n          \"w\": 269.8000183105469,\r\n          \"h\": 203.7624969482422\r\n        },\r\n        {\r\n          \"x\": 939.7999877929688,\r\n          \"y\": 91.5999984741211,\r\n          \"w\": 269.8000183105469,\r\n          \"h\": 203.7624969482422\r\n        },\r\n        {\r\n          \"x\": 70.4000015258789,\r\n          \"y\": 323.3625183105469,\r\n          \"w\": 269.8000183105469,\r\n          \"h\": 203.7624969482422\r\n        },\r\n        {\r\n          \"x\": 360.20001220703125,\r\n          \"y\": 323.3625183105469,\r\n          \"w\": 269.8000183105469,\r\n          \"h\": 203.7624969482422\r\n        },\r\n        {\r\n          \"x\": 650,\r\n          \"y\": 323.3625183105469,\r\n          \"w\": 269.8000183105469,\r\n          \"h\": 203.7624969482422\r\n        },\r\n        {\r\n          \"x\": 939.7999877929688,\r\n          \"y\": 323.3625183105469,\r\n          \"w\": 269.8000183105469,\r\n          \"h\": 203.7624969482422\r\n        }\r\n      ],\r\n      \"overflow\": false,\r\n      \"searchInput\": \"block\",\r\n      \"historyPad\": \"86px\",\r\n      \"dynamicPad\": \"80px\",\r\n      \"playerShadow\": \"none\",\r\n      \"dmBg\": \"rgb(32, 32, 35)\",\r\n      \"channelDisplay\": \"none\",\r\n      \"buttonBg\": \"rgb(38, 38, 43)\"\r\n    },\r\n    \"history\": {\r\n      \"url\": \"https://www.bilibili.com/account/history\",\r\n      \"route\": \"history\",\r\n      \"active\": \"\\u5386\\u53f2\",\r\n      \"query\": \"\",\r\n      \"avatar\": \"https://i0.hdslb.com/bfs/face/bs-test-avatar.svg\",\r\n      \"avatarComplete\": true,\r\n      \"messages\": \"https://message.bilibili.com/#/reply\",\r\n      \"lights\": [\r\n        {\r\n          \"x\": 24,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 47,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 70,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        }\r\n      ],\r\n      \"glyphs\": [\r\n        {\r\n          \"x\": 27,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 50,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 73,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        }\r\n      ],\r\n      \"content\": {\r\n        \"x\": 32,\r\n        \"y\": 91.5999984741211,\r\n        \"w\": 1216,\r\n        \"h\": 423.3000183105469\r\n      },\r\n      \"cards\": [\r\n        {\r\n          \"x\": 32,\r\n          \"y\": 242.40000915527344,\r\n          \"w\": 392,\r\n          \"h\": 272.5\r\n        },\r\n        {\r\n          \"x\": 444,\r\n          \"y\": 242.40000915527344,\r\n          \"w\": 392,\r\n          \"h\": 272.5\r\n        },\r\n        {\r\n          \"x\": 856,\r\n          \"y\": 242.40000915527344,\r\n          \"w\": 392,\r\n          \"h\": 272.5\r\n        }\r\n      ],\r\n      \"overflow\": false,\r\n      \"searchInput\": \"block\",\r\n      \"historyPad\": \"20px\",\r\n      \"dynamicPad\": \"80px\",\r\n      \"playerShadow\": \"none\",\r\n      \"dmBg\": \"rgb(32, 32, 35)\",\r\n      \"channelDisplay\": \"none\",\r\n      \"buttonBg\": \"rgb(38, 38, 43)\"\r\n    },\r\n    \"dynamic\": {\r\n      \"url\": \"https://t.bilibili.com/\",\r\n      \"route\": \"dynamic\",\r\n      \"active\": \"\\u52a8\\u6001\",\r\n      \"query\": \"\",\r\n      \"avatar\": \"https://i0.hdslb.com/bfs/face/bs-test-avatar.svg\",\r\n      \"avatarComplete\": true,\r\n      \"messages\": \"https://message.bilibili.com/#/reply\",\r\n      \"lights\": [\r\n        {\r\n          \"x\": 24,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 47,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 70,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        }\r\n      ],\r\n      \"glyphs\": [\r\n        {\r\n          \"x\": 27,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 50,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 73,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        }\r\n      ],\r\n      \"content\": {\r\n        \"x\": 32,\r\n        \"y\": 91.5999984741211,\r\n        \"w\": 1216,\r\n        \"h\": 238.60000610351562\r\n      },\r\n      \"cards\": [],\r\n      \"overflow\": false,\r\n      \"searchInput\": \"block\",\r\n      \"historyPad\": \"86px\",\r\n      \"dynamicPad\": \"16px\",\r\n      \"playerShadow\": \"none\",\r\n      \"dmBg\": \"rgb(32, 32, 35)\",\r\n      \"channelDisplay\": \"none\",\r\n      \"buttonBg\": \"rgb(38, 38, 43)\"\r\n    },\r\n    \"search\": {\r\n      \"url\": \"https://search.bilibili.com/all?keyword=%E8%8B%8F%E4%B8%B9\",\r\n      \"route\": \"search\",\r\n      \"active\": null,\r\n      \"query\": \"\\u82cf\\u4e39\",\r\n      \"avatar\": \"https://i0.hdslb.com/bfs/face/bs-test-avatar.svg\",\r\n      \"avatarComplete\": true,\r\n      \"messages\": \"https://message.bilibili.com/#/reply\",\r\n      \"lights\": [\r\n        {\r\n          \"x\": 24,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 47,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 70,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        }\r\n      ],\r\n      \"glyphs\": [\r\n        {\r\n          \"x\": 27,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 50,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 73,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        }\r\n      ],\r\n      \"content\": {\r\n        \"x\": 32,\r\n        \"y\": 91.5999984741211,\r\n        \"w\": 1216,\r\n        \"h\": 451.8999938964844\r\n      },\r\n      \"cards\": [\r\n        {\r\n          \"x\": 32,\r\n          \"y\": 236,\r\n          \"w\": 392,\r\n          \"h\": 272.5\r\n        },\r\n        {\r\n          \"x\": 444,\r\n          \"y\": 236,\r\n          \"w\": 392,\r\n          \"h\": 272.5\r\n        },\r\n        {\r\n          \"x\": 856,\r\n          \"y\": 236,\r\n          \"w\": 392,\r\n          \"h\": 272.5\r\n        }\r\n      ],\r\n      \"overflow\": false,\r\n      \"searchInput\": \"none\",\r\n      \"historyPad\": \"86px\",\r\n      \"dynamicPad\": \"80px\",\r\n      \"playerShadow\": \"none\",\r\n      \"dmBg\": \"rgb(32, 32, 35)\",\r\n      \"channelDisplay\": \"none\",\r\n      \"buttonBg\": \"rgb(38, 38, 43)\"\r\n    },\r\n    \"video\": {\r\n      \"url\": \"https://www.bilibili.com/video/BVfixture\",\r\n      \"route\": \"video\",\r\n      \"active\": null,\r\n      \"query\": \"\",\r\n      \"avatar\": \"https://i0.hdslb.com/bfs/face/bs-test-avatar.svg\",\r\n      \"avatarComplete\": true,\r\n      \"messages\": \"https://message.bilibili.com/#/reply\",\r\n      \"lights\": [\r\n        {\r\n          \"x\": 24,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 47,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        },\r\n        {\r\n          \"x\": 70,\r\n          \"y\": 21.600000381469727,\r\n          \"w\": 14,\r\n          \"h\": 14\r\n        }\r\n      ],\r\n      \"glyphs\": [\r\n        {\r\n          \"x\": 27,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 50,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        },\r\n        {\r\n          \"x\": 73,\r\n          \"y\": 24.600000381469727,\r\n          \"w\": 8,\r\n          \"h\": 8\r\n        }\r\n      ],\r\n      \"content\": {\r\n        \"x\": 32,\r\n        \"y\": 91.5999984741211,\r\n        \"w\": 1216,\r\n        \"h\": 497.20001220703125\r\n      },\r\n      \"cards\": [],\r\n      \"overflow\": false,\r\n      \"searchInput\": \"block\",\r\n      \"historyPad\": \"86px\",\r\n      \"dynamicPad\": \"80px\",\r\n      \"playerShadow\": \"none\",\r\n      \"dmBg\": \"rgb(32, 32, 35)\",\r\n      \"channelDisplay\": \"none\",\r\n      \"buttonBg\": \"rgb(38, 38, 43)\"\r\n    }\r\n  },\r\n  \"sha256\": \"7db5b3a2e9dc2d8013cfd1118e37d9dab9895a0b00df8fca5a9dbac6ade82c2a\",\r\n  \"responsive\": [\r\n    {\r\n      \"width\": 580,\r\n      \"scroll\": 565,\r\n      \"columns\": \"220.4px 220.4px\",\r\n      \"headerRight\": 552.7999877929688,\r\n      \"brandCenter\": 282.40000343322754,\r\n      \"headerCenter\": 282.3999938964844,\r\n      \"brandWidth\": 62.32500076293945\r\n    },\r\n    {\r\n      \"width\": 880,\r\n      \"scroll\": 880,\r\n      \"columns\": \"241.062px 241.062px 241.075px\",\r\n      \"headerRight\": 856,\r\n      \"brandCenter\": 439.9999942779541,\r\n      \"headerCenter\": 440,\r\n      \"brandWidth\": 62.32500076293945\r\n    },\r\n    {\r\n      \"width\": 1100,\r\n      \"scroll\": 1085,\r\n      \"columns\": \"304.925px 304.938px 304.925px\",\r\n      \"headerRight\": 1060.800048828125,\r\n      \"brandCenter\": 542.4000186920166,\r\n      \"headerCenter\": 542.4000244140625,\r\n      \"brandWidth\": 62.32500076293945\r\n    },\r\n    {\r\n      \"width\": 1440,\r\n      \"scroll\": 1440,\r\n      \"columns\": \"307.4px 307.4px 307.4px 307.4px\",\r\n      \"headerRight\": 1416,\r\n      \"brandCenter\": 720.0000247955322,\r\n      \"headerCenter\": 720,\r\n      \"brandWidth\": 62.32500076293945\r\n    }\r\n  ],\r\n  \"header\": {\r\n    \"square\": true,\r\n    \"messageIcon\": true,\r\n    \"videoHome\": \"https://www.bilibili.com/\",\r\n    \"fade\": {\r\n      \"start\": 0,\r\n      \"during\": 0.628853,\r\n      \"end\": 1,\r\n      \"out\": 0.370065,\r\n      \"hidden\": 0\r\n    },\r\n    \"after_reload\": {\r\n      \"prefs\": {\r\n        \"theme\": \"dark\",\r\n        \"accent\": \"#fb7299\",\r\n        \"progressColor\": \"#fb7299\",\r\n        \"progressHeight\": 4,\r\n        \"progressRadius\": 12,\r\n        \"progressAlways\": false,\r\n        \"progressThumb\": true,\r\n        \"showChannels\": false,\r\n        \"hideAds\": true,\r\n        \"btr\": true,\r\n        \"font\": true,\r\n        \"zoom\": 100,\r\n        \"srMode\": \"off\",\r\n        \"srScale\": 3,\r\n        \"headerHome\": false,\r\n        \"headerDynamic\": false,\r\n        \"headerHistory\": false,\r\n        \"headerBrand\": false,\r\n        \"headerSearch\": false,\r\n        \"headerMessages\": false,\r\n        \"headerAccount\": false,\r\n        \"headerBack\": false\r\n      },\r\n      \"visibleWindows\": true,\r\n      \"videoHome\": true\r\n    }\r\n  },\r\n  \"enter_loader\": \"true\",\r\n  \"runtime_errors\": [],\r\n  \"result\": \"PASS\"\r\n}\r\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "PACKAGE",
+      "command": [
+        "python",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\scripts\\package.py"
+      ],
+      "stdout": "{\r\n  \"archive\": \"C:\\\\Users\\\\guqig\\\\Documents\\\\ChatGPT\\\\Better-Bili-Space\\\\releases\\\\BetterBiliSpace-0.1.2-win64.zip\",\r\n  \"sha256\": \"beb3c2f7dac4e0c3e21d5f48fea5598b9211f12fabf37558e924bd2311026db5\",\r\n  \"bytes\": 533974,\r\n  \"entries\": [\r\n    \"BetterBiliSpace/BetterBiliSpace.exe\",\r\n    \"BetterBiliSpace/WebView2Loader.dll\",\r\n    \"BetterBiliSpace/assets/blocker.home.user.js\",\r\n    \"BetterBiliSpace/assets/bridge.js\",\r\n    \"BetterBiliSpace/assets/btr.user.js\",\r\n    \"BetterBiliSpace/assets/enhance.js\",\r\n    \"BetterBiliSpace/assets/fixture.html\",\r\n    \"BetterBiliSpace/assets/message-square-more.svg\",\r\n    \"BetterBiliSpace/assets/settings.svg\",\r\n    \"BetterBiliSpace/assets/sparkles.svg\",\r\n    \"BetterBiliSpace/vendor/btr.LICENSE\",\r\n    \"BetterBiliSpace/vendor/blocker.LICENSE\",\r\n    \"BetterBiliSpace/vendor/plugins.lock.json\",\r\n    \"BetterBiliSpace/vendor/WebView2.LICENSE.txt\",\r\n    \"BetterBiliSpace/vendor/WebView2.NOTICE.txt\",\r\n    \"BetterBiliSpace/vendor/json.LICENSE\",\r\n    \"BetterBiliSpace/README.md\"\r\n  ],\r\n  \"crc_verified\": true,\r\n  \"no_user_profile\": true\r\n}\r\n",
+      "stderr": "",
+      "exit_status": 0
+    }
+  ],
+  "native_smoke": {
+    "artifact_sha256": {
+      "dist\\BetterBiliSpace.exe": "25e39da4af271f7162b38a8294abb516aa48314cbfe3d39cbeaafb52856c46e4",
+      "dist\\assets\\blocker.home.user.js": "4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f",
+      "dist\\assets\\bridge.js": "950a34b1247b69bc7bbf014ee257e567b60e62bcbb4b3575be05b707f212d578",
+      "dist\\assets\\btr.user.js": "995a2edaaa96732a9a4fd2482652aeb951f2f359c1a4f6f749838643582879c1",
+      "dist\\assets\\enhance.js": "7db5b3a2e9dc2d8013cfd1118e37d9dab9895a0b00df8fca5a9dbac6ade82c2a",
+      "dist\\assets\\fixture.html": "25261bdd6bc7cfeade65aff96450f7fe53a449b2ed681f34e932f911e8f0fa17",
+      "dist\\assets\\message-square-more.svg": "b3216d22b398ab20e19b4b3f2637f7ad7f6a2f9fca6bf7c8d9f65455b39ad78b",
+      "dist\\assets\\settings.svg": "f904d96fdbc562e72e9547ce437ecd4ab9c6ea83bfd7eccd9b53d803ca335669",
+      "dist\\assets\\sparkles.svg": "df560e8955d1f02b4d64265aafcee4a350223aaed4bbd6377b741a8be7772eaa"
+    },
+    "process_pid": 35784,
+    "initial": {
+      "state": {
+        "prefs": {
+          "theme": "dark",
+          "accent": "#fb7299",
+          "progressColor": "#fb7299",
+          "progressHeight": 4,
+          "progressRadius": 12,
+          "progressAlways": false,
+          "progressThumb": true,
+          "showChannels": false,
+          "hideAds": true,
+          "btr": true,
+          "font": true,
+          "zoom": 100,
+          "srMode": "off",
+          "srScale": 3,
+          "headerHome": true,
+          "headerDynamic": true,
+          "headerHistory": true,
+          "headerBrand": true,
+          "headerSearch": true,
+          "headerMessages": true,
+          "headerAccount": true,
+          "headerBack": true
+        },
+        "status": "未开启",
+        "frames": 0,
+        "stopped": true,
+        "pip": false,
+        "full": false,
+        "route": "other",
+        "loading": false,
+        "ads": 4
+      },
+      "btr": true,
+      "font": true,
+      "adDisplays": [
+        "none",
+        "none",
+        "none",
+        "none"
+      ],
+      "commentVisible": "block",
+      "toolBeforeQuality": "bs-player-tool"
+    },
+    "native_persistence": {
+      "accent": "#5aaf9a",
+      "btr": true,
+      "font": true,
+      "headerAccount": true,
+      "headerBack": true,
+      "headerBrand": true,
+      "headerDynamic": true,
+      "headerHistory": true,
+      "headerHome": true,
+      "headerMessages": true,
+      "headerSearch": true,
+      "hideAds": true,
+      "progressAlways": false,
+      "progressColor": "#5aaf9a",
+      "progressHeight": 8,
+      "progressRadius": 12,
+      "progressThumb": true,
+      "showChannels": false,
+      "srMode": "off",
+      "srScale": 3,
+      "theme": "dark",
+      "zoom": 100
+    },
+    "gpu": {
+      "prefs": {
+        "theme": "dark",
+        "accent": "#5aaf9a",
+        "progressColor": "#5aaf9a",
+        "progressHeight": 8,
+        "progressRadius": 12,
+        "progressAlways": false,
+        "progressThumb": true,
+        "showChannels": false,
+        "hideAds": true,
+        "btr": true,
+        "font": true,
+        "zoom": 100,
+        "srMode": "quality",
+        "srScale": 2,
+        "headerHome": true,
+        "headerDynamic": true,
+        "headerHistory": true,
+        "headerBrand": true,
+        "headerSearch": true,
+        "headerMessages": true,
+        "headerAccount": true,
+        "headerBack": true
+      },
+      "status": "640×360 → 1280×720 · 2.00× · 质量 · GPU",
+      "frames": 61,
+      "stopped": false,
+      "pip": false,
+      "full": false,
+      "route": "other",
+      "loading": false,
+      "ads": 4,
+      "canvas": {
+        "width": 1280,
+        "height": 720
+      },
+      "opacity": "0"
+    },
+    "pip": {
+      "state": {
+        "prefs": {
+          "theme": "dark",
+          "accent": "#5aaf9a",
+          "progressColor": "#5aaf9a",
+          "progressHeight": 8,
+          "progressRadius": 12,
+          "progressAlways": false,
+          "progressThumb": true,
+          "showChannels": false,
+          "hideAds": true,
+          "btr": true,
+          "font": true,
+          "zoom": 100,
+          "srMode": "quality",
+          "srScale": 2,
+          "headerHome": true,
+          "headerDynamic": true,
+          "headerHistory": true,
+          "headerBrand": true,
+          "headerSearch": true,
+          "headerMessages": true,
+          "headerAccount": true,
+          "headerBack": true
+        },
+        "status": "640×360 → 1280×720 · 2.00× · 质量 · GPU",
+        "frames": 86,
+        "stopped": false,
+        "pip": true,
+        "full": false,
+        "route": "other",
+        "loading": false,
+        "ads": 4
+      },
+      "width": 384,
+      "height": 216,
+      "bodyScroll": 902,
+      "video": {
+        "x": 0,
+        "y": 0,
+        "width": 384,
+        "height": 216,
+        "top": 0,
+        "right": 384,
+        "bottom": 216,
+        "left": 0
+      },
+      "style": 2483486720,
+      "topmost": true
+    },
+    "after_reload": {
+      "prefs": {
+        "theme": "dark",
+        "accent": "#fb7299",
+        "progressColor": "#fb7299",
+        "progressHeight": 4,
+        "progressRadius": 12,
+        "progressAlways": false,
+        "progressThumb": true,
+        "showChannels": true,
+        "hideAds": true,
+        "btr": true,
+        "font": true,
+        "zoom": 100,
+        "srMode": "off",
+        "srScale": 2,
+        "headerHome": true,
+        "headerDynamic": true,
+        "headerHistory": true,
+        "headerBrand": true,
+        "headerSearch": true,
+        "headerMessages": true,
+        "headerAccount": true,
+        "headerBack": true
+      },
+      "status": "未开启",
+      "frames": 0,
+      "stopped": true,
+      "pip": false,
+      "full": false,
+      "route": "other",
+      "loading": false,
+      "ads": 4
+    },
+    "performance": {
+      "prefs": {
+        "theme": "dark",
+        "accent": "#fb7299",
+        "progressColor": "#fb7299",
+        "progressHeight": 4,
+        "progressRadius": 12,
+        "progressAlways": false,
+        "progressThumb": true,
+        "showChannels": true,
+        "hideAds": true,
+        "btr": true,
+        "font": true,
+        "zoom": 100,
+        "srMode": "performance",
+        "srScale": 3,
+        "headerHome": true,
+        "headerDynamic": true,
+        "headerHistory": true,
+        "headerBrand": true,
+        "headerSearch": true,
+        "headerMessages": true,
+        "headerAccount": true,
+        "headerBack": true
+      },
+      "status": "640×360 → 1920×1080 · 3.00× · 性能 · GPU",
+      "frames": 30,
+      "stopped": false,
+      "pip": false,
+      "full": false,
+      "route": "other",
+      "loading": false,
+      "ads": 4
+    },
+    "context_loss": {
+      "state": {
+        "prefs": {
+          "theme": "dark",
+          "accent": "#fb7299",
+          "progressColor": "#fb7299",
+          "progressHeight": 4,
+          "progressRadius": 12,
+          "progressAlways": false,
+          "progressThumb": true,
+          "showChannels": true,
+          "hideAds": true,
+          "btr": true,
+          "font": true,
+          "zoom": 100,
+          "srMode": "performance",
+          "srScale": 3,
+          "headerHome": true,
+          "headerDynamic": true,
+          "headerHistory": true,
+          "headerBrand": true,
+          "headerSearch": true,
+          "headerMessages": true,
+          "headerAccount": true,
+          "headerBack": true
+        },
+        "status": "GPU 上下文丢失，已恢复原生播放",
+        "frames": 30,
+        "stopped": true,
+        "pip": false,
+        "full": false,
+        "route": "other",
+        "loading": false,
+        "ads": 4
+      },
+      "opacity": "",
+      "canvas": false
+    },
+    "runtime_exceptions": [],
+    "live_home": {
+      "url": "https://www.bilibili.com/zh-Hans",
+      "title": "bilibili",
+      "ready": true,
+      "btr": true,
+      "cards": 22,
+      "blockButtons": 10,
+      "state": {
+        "prefs": {
+          "theme": "dark",
+          "accent": "#fb7299",
+          "progressColor": "#fb7299",
+          "progressHeight": 4,
+          "progressRadius": 12,
+          "progressAlways": false,
+          "progressThumb": true,
+          "showChannels": true,
+          "hideAds": true,
+          "btr": true,
+          "font": true,
+          "zoom": 100,
+          "srMode": "off",
+          "srScale": 3,
+          "headerHome": true,
+          "headerDynamic": true,
+          "headerHistory": true,
+          "headerBrand": true,
+          "headerSearch": true,
+          "headerMessages": true,
+          "headerAccount": true,
+          "headerBack": true
+        },
+        "status": "未开启",
+        "frames": 0,
+        "stopped": true,
+        "pip": false,
+        "full": false,
+        "route": "home",
+        "loading": false,
+        "ads": 0
+      },
+      "text": "39.8万\n1024\n01:37:59\n【完整版】纪念中国工农红军长征胜利90周年电视文艺晚会《长征颂歌》\n央视新闻\n· 2天前\n32万\n666\n11:22\n又毁原作！？药屋少女真人版到底什么水平？导演演员编剧靠谱吗？【新番日推63】\n赫萝老师\n· 2天前\n536万\n2460\n17:53\n148元一桶“天价网红巨型火鸡面”！太超标了！！\n穿毛裤的小拉泽\n· 10月10日\n11.6万\n174\n03:28\n专访中，张雪把自己说哭了：我的目标就是往山顶去……\n新华社\n· 21小时前\n37.7万\n1462\n02:12:36\n【散人】最强特工 悬疑推理《千面人在此》\n逍遥散人\n· 10月18日\n165."
+    },
+    "result": "PASS",
+    "process_exit": 0
+  },
+  "live_video_observation": {
+    "prefs": {
+      "accent": "#fb7299",
+      "btr": true,
+      "font": true,
+      "hideAds": true,
+      "progressAlways": false,
+      "progressColor": "#fb7299",
+      "progressHeight": 4,
+      "progressRadius": 6,
+      "progressThumb": true,
+      "showChannels": true,
+      "srMode": "performance",
+      "srScale": 2,
+      "theme": "light",
+      "zoom": 100
+    },
+    "status": "853×480 → 1706×960 · 2.00× · 性能 · GPU",
+    "frames": 72,
+    "stopped": false,
+    "pip": false,
+    "full": false,
+    "ads": 2
+  },
+  "package": {
+    "archive": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\releases\\BetterBiliSpace-0.1.2-win64.zip",
+    "sha256": "beb3c2f7dac4e0c3e21d5f48fea5598b9211f12fabf37558e924bd2311026db5",
+    "bytes": 533974,
+    "entries": [
+      "BetterBiliSpace/BetterBiliSpace.exe",
+      "BetterBiliSpace/WebView2Loader.dll",
+      "BetterBiliSpace/assets/blocker.home.user.js",
+      "BetterBiliSpace/assets/bridge.js",
+      "BetterBiliSpace/assets/btr.user.js",
+      "BetterBiliSpace/assets/enhance.js",
+      "BetterBiliSpace/assets/fixture.html",
+      "BetterBiliSpace/assets/message-square-more.svg",
+      "BetterBiliSpace/assets/settings.svg",
+      "BetterBiliSpace/assets/sparkles.svg",
+      "BetterBiliSpace/vendor/btr.LICENSE",
+      "BetterBiliSpace/vendor/blocker.LICENSE",
+      "BetterBiliSpace/vendor/plugins.lock.json",
+      "BetterBiliSpace/vendor/WebView2.LICENSE.txt",
+      "BetterBiliSpace/vendor/WebView2.NOTICE.txt",
+      "BetterBiliSpace/vendor/json.LICENSE",
+      "BetterBiliSpace/README.md"
+    ],
+    "crc_verified": true,
+    "no_user_profile": true
+  },
+  "ui_regression": {
+    "mode": "mock account + representative page DOM; no real login or account writes",
+    "events": {
+      "home": {
+        "url": "https://www.bilibili.com/",
+        "route": "home",
+        "active": "首页",
+        "query": "",
+        "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+        "avatarComplete": true,
+        "messages": "https://message.bilibili.com/#/reply",
+        "lights": [
+          {
+            "x": 24,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 47,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 70,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          }
+        ],
+        "glyphs": [
+          {
+            "x": 27,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 50,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 73,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          }
+        ],
+        "content": {
+          "x": 32,
+          "y": 91.5999984741211,
+          "w": 1216,
+          "h": 435.5249938964844
+        },
+        "cards": [
+          {
+            "x": 70.4000015258789,
+            "y": 91.5999984741211,
+            "w": 269.8000183105469,
+            "h": 203.7624969482422
+          },
+          {
+            "x": 360.20001220703125,
+            "y": 91.5999984741211,
+            "w": 269.8000183105469,
+            "h": 203.7624969482422
+          },
+          {
+            "x": 650,
+            "y": 91.5999984741211,
+            "w": 269.8000183105469,
+            "h": 203.7624969482422
+          },
+          {
+            "x": 939.7999877929688,
+            "y": 91.5999984741211,
+            "w": 269.8000183105469,
+            "h": 203.7624969482422
+          },
+          {
+            "x": 70.4000015258789,
+            "y": 323.3625183105469,
+            "w": 269.8000183105469,
+            "h": 203.7624969482422
+          },
+          {
+            "x": 360.20001220703125,
+            "y": 323.3625183105469,
+            "w": 269.8000183105469,
+            "h": 203.7624969482422
+          },
+          {
+            "x": 650,
+            "y": 323.3625183105469,
+            "w": 269.8000183105469,
+            "h": 203.7624969482422
+          },
+          {
+            "x": 939.7999877929688,
+            "y": 323.3625183105469,
+            "w": 269.8000183105469,
+            "h": 203.7624969482422
+          }
+        ],
+        "overflow": false,
+        "searchInput": "block",
+        "historyPad": "86px",
+        "dynamicPad": "80px",
+        "playerShadow": "none",
+        "dmBg": "rgb(32, 32, 35)",
+        "channelDisplay": "none",
+        "buttonBg": "rgb(38, 38, 43)"
+      },
+      "history": {
+        "url": "https://www.bilibili.com/account/history",
+        "route": "history",
+        "active": "历史",
+        "query": "",
+        "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+        "avatarComplete": true,
+        "messages": "https://message.bilibili.com/#/reply",
+        "lights": [
+          {
+            "x": 24,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 47,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 70,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          }
+        ],
+        "glyphs": [
+          {
+            "x": 27,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 50,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 73,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          }
+        ],
+        "content": {
+          "x": 32,
+          "y": 91.5999984741211,
+          "w": 1216,
+          "h": 423.3000183105469
+        },
+        "cards": [
+          {
+            "x": 32,
+            "y": 242.40000915527344,
+            "w": 392,
+            "h": 272.5
+          },
+          {
+            "x": 444,
+            "y": 242.40000915527344,
+            "w": 392,
+            "h": 272.5
+          },
+          {
+            "x": 856,
+            "y": 242.40000915527344,
+            "w": 392,
+            "h": 272.5
+          }
+        ],
+        "overflow": false,
+        "searchInput": "block",
+        "historyPad": "20px",
+        "dynamicPad": "80px",
+        "playerShadow": "none",
+        "dmBg": "rgb(32, 32, 35)",
+        "channelDisplay": "none",
+        "buttonBg": "rgb(38, 38, 43)"
+      },
+      "dynamic": {
+        "url": "https://t.bilibili.com/",
+        "route": "dynamic",
+        "active": "动态",
+        "query": "",
+        "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+        "avatarComplete": true,
+        "messages": "https://message.bilibili.com/#/reply",
+        "lights": [
+          {
+            "x": 24,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 47,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 70,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          }
+        ],
+        "glyphs": [
+          {
+            "x": 27,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 50,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 73,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          }
+        ],
+        "content": {
+          "x": 32,
+          "y": 91.5999984741211,
+          "w": 1216,
+          "h": 238.60000610351562
+        },
+        "cards": [],
+        "overflow": false,
+        "searchInput": "block",
+        "historyPad": "86px",
+        "dynamicPad": "16px",
+        "playerShadow": "none",
+        "dmBg": "rgb(32, 32, 35)",
+        "channelDisplay": "none",
+        "buttonBg": "rgb(38, 38, 43)"
+      },
+      "search": {
+        "url": "https://search.bilibili.com/all?keyword=%E8%8B%8F%E4%B8%B9",
+        "route": "search",
+        "active": null,
+        "query": "苏丹",
+        "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+        "avatarComplete": true,
+        "messages": "https://message.bilibili.com/#/reply",
+        "lights": [
+          {
+            "x": 24,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 47,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 70,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          }
+        ],
+        "glyphs": [
+          {
+            "x": 27,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 50,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 73,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          }
+        ],
+        "content": {
+          "x": 32,
+          "y": 91.5999984741211,
+          "w": 1216,
+          "h": 451.8999938964844
+        },
+        "cards": [
+          {
+            "x": 32,
+            "y": 236,
+            "w": 392,
+            "h": 272.5
+          },
+          {
+            "x": 444,
+            "y": 236,
+            "w": 392,
+            "h": 272.5
+          },
+          {
+            "x": 856,
+            "y": 236,
+            "w": 392,
+            "h": 272.5
+          }
+        ],
+        "overflow": false,
+        "searchInput": "none",
+        "historyPad": "86px",
+        "dynamicPad": "80px",
+        "playerShadow": "none",
+        "dmBg": "rgb(32, 32, 35)",
+        "channelDisplay": "none",
+        "buttonBg": "rgb(38, 38, 43)"
+      },
+      "video": {
+        "url": "https://www.bilibili.com/video/BVfixture",
+        "route": "video",
+        "active": null,
+        "query": "",
+        "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+        "avatarComplete": true,
+        "messages": "https://message.bilibili.com/#/reply",
+        "lights": [
+          {
+            "x": 24,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 47,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          },
+          {
+            "x": 70,
+            "y": 21.600000381469727,
+            "w": 14,
+            "h": 14
+          }
+        ],
+        "glyphs": [
+          {
+            "x": 27,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 50,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          },
+          {
+            "x": 73,
+            "y": 24.600000381469727,
+            "w": 8,
+            "h": 8
+          }
+        ],
+        "content": {
+          "x": 32,
+          "y": 91.5999984741211,
+          "w": 1216,
+          "h": 497.20001220703125
+        },
+        "cards": [],
+        "overflow": false,
+        "searchInput": "block",
+        "historyPad": "86px",
+        "dynamicPad": "80px",
+        "playerShadow": "none",
+        "dmBg": "rgb(32, 32, 35)",
+        "channelDisplay": "none",
+        "buttonBg": "rgb(38, 38, 43)"
+      }
+    },
+    "sha256": "7db5b3a2e9dc2d8013cfd1118e37d9dab9895a0b00df8fca5a9dbac6ade82c2a",
+    "responsive": [
+      {
+        "width": 580,
+        "scroll": 565,
+        "columns": "220.4px 220.4px",
+        "headerRight": 552.7999877929688,
+        "brandCenter": 282.40000343322754,
+        "headerCenter": 282.3999938964844,
+        "brandWidth": 62.32500076293945
+      },
+      {
+        "width": 880,
+        "scroll": 880,
+        "columns": "241.062px 241.062px 241.075px",
+        "headerRight": 856,
+        "brandCenter": 439.9999942779541,
+        "headerCenter": 440,
+        "brandWidth": 62.32500076293945
+      },
+      {
+        "width": 1100,
+        "scroll": 1085,
+        "columns": "304.925px 304.938px 304.925px",
+        "headerRight": 1060.800048828125,
+        "brandCenter": 542.4000186920166,
+        "headerCenter": 542.4000244140625,
+        "brandWidth": 62.32500076293945
+      },
+      {
+        "width": 1440,
+        "scroll": 1440,
+        "columns": "307.4px 307.4px 307.4px 307.4px",
+        "headerRight": 1416,
+        "brandCenter": 720.0000247955322,
+        "headerCenter": 720,
+        "brandWidth": 62.32500076293945
+      }
+    ],
+    "header": {
+      "square": true,
+      "messageIcon": true,
+      "videoHome": "https://www.bilibili.com/",
+      "fade": {
+        "start": 0,
+        "during": 0.628853,
+        "end": 1,
+        "out": 0.370065,
+        "hidden": 0
+      },
+      "after_reload": {
+        "prefs": {
+          "theme": "dark",
+          "accent": "#fb7299",
+          "progressColor": "#fb7299",
+          "progressHeight": 4,
+          "progressRadius": 12,
+          "progressAlways": false,
+          "progressThumb": true,
+          "showChannels": false,
+          "hideAds": true,
+          "btr": true,
+          "font": true,
+          "zoom": 100,
+          "srMode": "off",
+          "srScale": 3,
+          "headerHome": false,
+          "headerDynamic": false,
+          "headerHistory": false,
+          "headerBrand": false,
+          "headerSearch": false,
+          "headerMessages": false,
+          "headerAccount": false,
+          "headerBack": false
+        },
+        "visibleWindows": true,
+        "videoHome": true
+      }
+    },
+    "enter_loader": "true",
+    "runtime_errors": [],
+    "result": "PASS"
+  },
+  "anonymous_live_pages": {
+    "home": {
+      "url": "https://www.bilibili.com/zh-Hans",
+      "title": "bilibili",
+      "roots": [
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "",
+          "top": 58,
+          "height": 1542,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-panel nav-search-panel",
+          "top": 0,
+          "height": 0,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "13px 0px 16px"
+        },
+        {
+          "tag": "MAIN",
+          "id": "",
+          "class": "bili-feed4-layout",
+          "top": 58,
+          "height": 1542,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px 33.12px",
+          "padding": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "feed2",
+          "top": 58,
+          "height": 1542,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px"
+        }
+      ],
+      "children": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "browser-tip",
+          "top": 58,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "",
+          "top": 58,
+          "height": 1542,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bili-video-card__wrap __scale-wrap",
+              "top": 58,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            },
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bili-feed4",
+              "top": 58,
+              "height": 1542,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            }
+          ]
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "vite-legacy-polyfill",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "vite-legacy-entry",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "IFRAME",
+          "id": "KbQPFngtSy",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "IFRAME",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "bs-pip-controls",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            },
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            }
+          ]
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 704,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        }
+      ],
+      "inputs": [
+        {
+          "c": "nav-search-input",
+          "ph": ""
+        }
+      ],
+      "styles": [
+        ":root { --bs-accent: #fb7299; --bs-progress: #fb7299; --bs-progress-height: 4px; --bs-progress-radius: 6px; --bs-feed-columns: 4; --bs-header-height: 58px; scroll-padding-top: 70px; }",
+        "html[data-bs-ads=\"true\"] .bili-feed4-layout .recommended-container_floor-aside > .container { display: grid !important; grid-template-columns: repeat(var(--bs-feed-columns),minmax(0,1fr)) !important; grid-template-rows: none !important; grid-auto-flow: dense !important; grid-auto-rows: auto !important; gap: 28px 20px !important; align-content: start !important; width: 100% !important; min-width: 0px !important; }"
+      ],
+      "text": "159.5万\n1.8万\n19:26:44\n盘点144首天花板级emo情歌精选\n白白的空格\n· 9月21日\n97.5万\n3209\n01:04:12\n【蜘蛛侠崭新之日】系列最佳，当痛苦流遍全身，真正的蜘蛛"
+    },
+    "history": {
+      "url": "https://www.bilibili.com/zh-Hans/history",
+      "title": "历史记录",
+      "roots": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-panel nav-search-panel",
+          "top": 0,
+          "height": 0,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "13px 0px 16px"
+        },
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "",
+          "top": 58,
+          "height": 640,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px"
+        },
+        {
+          "tag": "MAIN",
+          "id": "",
+          "class": "history-record empty",
+          "top": 58,
+          "height": 298,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "20px 0px 0px"
+        }
+      ],
+      "children": [
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "HEADER",
+          "id": "biliMainHeader",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px auto",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bili-header bili-header--mini",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px auto",
+              "padding": "0px"
+            }
+          ]
+        },
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "",
+          "top": 58,
+          "height": 640,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "MAIN",
+              "id": "",
+              "class": "history-record empty",
+              "top": 58,
+              "height": 298,
+              "bg": "rgb(22, 22, 24)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "20px 0px 0px"
+            }
+          ]
+        },
+        {
+          "tag": "FOOTER",
+          "id": "biliMainFooter",
+          "class": "",
+          "top": 698,
+          "height": 74,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bili-footer-overseas",
+              "top": 698,
+              "height": 74,
+              "bg": "rgb(22, 22, 24)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "30px 0px"
+            }
+          ]
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "vite-legacy-polyfill",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "vite-legacy-entry",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "bs-pip-controls",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            },
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            }
+          ]
+        },
+        {
+          "tag": "IFRAME",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        }
+      ],
+      "inputs": [
+        {
+          "c": "nav-search-input",
+          "ph": ""
+        }
+      ],
+      "styles": [
+        ".right-channel-container.is-zh .channel-items__left[data-v-6980a397] { display: grid; width: 100%; grid-auto-flow: column; grid-column: span 4; gap: 10px; grid-template-rows: repeat(2, 1fr); position: relative; }",
+        "@media (max-width: 1099.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+        "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+        "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(11, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+22) { display: none !important; }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(12, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+24) { display: none !important; }\n}",
+        "@media (min-width: 2200px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(14, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+28) { display: none !important; }\n}",
+        ".right-channel-container.is-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+        ".right-channel-container.not-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+        "@media (max-width: 1099.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(3, 1fr); }\n}",
+        "@media (min-width: 2200px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(2, 1fr); }\n}",
+        ".bili-header .manga-left { border-right: .5px solid var(--line_regular); padding-right: 20px; display: grid; grid-template-columns: 136px 136px; gap: 16px; }",
+        ".big-logo__switch[data-v-76544956] { display: grid; grid-template-rows: 8px 12px; row-gap: 6px; justify-items: start; align-content: center; padding: 4px 0px 4px 4px; min-height: 32px; }",
+        ":root { --bs-accent: #fb7299; --bs-progress: #fb7299; --bs-progress-height: 4px; --bs-progress-radius: 6px; --bs-feed-columns: 4; --bs-header-height: 58px; scroll-padding-top: 70px; }",
+        "html[data-bs-ads=\"true\"] .bili-feed4-layout .recommended-container_floor-aside > .container { display: grid !important; grid-template-columns: repeat(var(--bs-feed-columns),minmax(0,1fr)) !important; grid-template-rows: none !important; grid-auto-flow: dense !important; grid-auto-rows: auto !important; gap: 28px 20px !important; align-content: start !important; width: 100% !important; min-width: 0px !important; }"
+      ],
+      "text": "历史记录\n登录发现更多精彩\n立即登录\nbilibili\n用户协议\n隐私协议\nBilibili社区准则\n侵权申诉"
+    },
+    "dynamic": {
+      "url": "https://t.bilibili.com/zh-Hans",
+      "title": "动态首页-哔哩哔哩",
+      "roots": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-panel nav-search-panel",
+          "top": 0,
+          "height": 0,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "13px 0px 16px"
+        },
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "",
+          "top": 58,
+          "height": 712,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "8px 0px 0px"
+        },
+        {
+          "tag": "MAIN",
+          "id": "",
+          "class": "",
+          "top": 66,
+          "height": 332,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px 12px 0px 0px",
+          "padding": "0px"
+        }
+      ],
+      "children": [
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "META",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "LINK",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "bili-header-container",
+          "class": "z-top-container",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bili-header bili-header--mini bili-header--fixed",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px auto",
+              "padding": "0px"
+            }
+          ]
+        },
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "",
+          "top": 58,
+          "height": 712,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "8px 0px 0px",
+          "children": [
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bgc",
+              "top": 0,
+              "height": 704,
+              "bg": "rgb(211, 233, 232)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            },
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bg",
+              "top": 83,
+              "height": 621,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            },
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bili-dyn-home--visitor",
+              "top": 66,
+              "height": 332,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            }
+          ]
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "bs-pip-controls",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            },
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            }
+          ]
+        },
+        {
+          "tag": "IFRAME",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        }
+      ],
+      "inputs": [
+        {
+          "c": "nav-search-input",
+          "ph": ""
+        }
+      ],
+      "styles": [
+        ".right-channel-container.is-zh .channel-items__left[data-v-6980a397] { display: grid; width: 100%; grid-auto-flow: column; grid-column: span 4; gap: 10px; grid-template-rows: repeat(2, 1fr); position: relative; }",
+        "@media (max-width: 1099.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+        "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+        "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(11, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+22) { display: none !important; }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(12, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+24) { display: none !important; }\n}",
+        "@media (min-width: 2200px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(14, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+28) { display: none !important; }\n}",
+        ".right-channel-container.is-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+        ".right-channel-container.not-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+        "@media (max-width: 1099.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(3, 1fr); }\n}",
+        "@media (min-width: 2200px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(2, 1fr); }\n}",
+        ".bili-header .manga-left { border-right: .5px solid var(--line_regular); padding-right: 20px; display: grid; grid-template-columns: 136px 136px; gap: 16px; }",
+        ".big-logo__switch[data-v-76544956] { display: grid; grid-template-rows: 8px 12px; row-gap: 6px; justify-items: start; align-content: center; padding: 4px 0px 4px 4px; min-height: 32px; }",
+        ":root { --bs-accent: #fb7299; --bs-progress: #fb7299; --bs-progress-height: 4px; --bs-progress-radius: 6px; --bs-feed-columns: 4; --bs-header-height: 58px; scroll-padding-top: 70px; }",
+        "html[data-bs-ads=\"true\"] .bili-feed4-layout .recommended-container_floor-aside > .container { display: grid !important; grid-template-columns: repeat(var(--bs-feed-columns),minmax(0,1fr)) !important; grid-template-rows: none !important; grid-auto-flow: dense !important; grid-auto-rows: auto !important; gap: 28px 20px !important; align-content: start !important; width: 100% !important; min-width: 0px !important; }"
+      ],
+      "text": "探索属于你的新世界\n赶快注册或登录吧\n注册\n登录\n好像没有东西诶"
+    },
+    "search": {
+      "url": "https://search.bilibili.com/zh-Hans/all?keyword=%E8%8B%8F%E4%B8%B9",
+      "title": "苏丹-哔哩哔哩_bilibili",
+      "roots": [
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-panel nav-search-panel",
+          "top": 0,
+          "height": 0,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "13px 0px 16px"
+        },
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "",
+          "top": 58,
+          "height": 2134,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-header",
+          "top": 58,
+          "height": 48,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-input",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "25px 0px 15px",
+          "padding": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-panel search-panel-popover",
+          "top": 0,
+          "height": 0,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "rgba(0, 0, 0, 0.1) 0px 10px 30px 0px",
+          "margin": "0px",
+          "padding": "13px 0px 16px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-content--gray search-content",
+          "top": 106,
+          "height": 2036,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-page search-page-all",
+          "top": 106,
+          "height": 2036,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "brand-ad-list search-all-list",
+          "top": 106,
+          "height": 18,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "18px 0px 0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "video i_wrapper search-all-list",
+          "top": 124,
+          "height": 1934,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "18px 64px 0px"
+        }
+      ],
+      "children": [
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "old-browser-tip",
+          "top": 58,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "bili-header-container",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bili-header bili-header--mini",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px auto",
+              "padding": "0px"
+            }
+          ]
+        },
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "",
+          "top": 58,
+          "height": 2134,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "search-layout clearfix",
+              "top": 58,
+              "height": 2134,
+              "bg": "rgb(22, 22, 24)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            }
+          ]
+        },
+        {
+          "tag": "DIV",
+          "id": "biliMainFooter",
+          "class": "biliMainFooterWrapper",
+          "top": 2192,
+          "height": 78,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "bili-footer-overseas",
+              "top": 2192,
+              "height": 78,
+              "bg": "rgb(22, 22, 24)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "30px 0px"
+            }
+          ]
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "vite-legacy-polyfill",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "vite-legacy-entry",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "IFRAME",
+          "id": "jCiB3okCtp",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "IFRAME",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "bs-pip-controls",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            },
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            }
+          ]
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        }
+      ],
+      "inputs": [
+        {
+          "c": "nav-search-input",
+          "ph": ""
+        },
+        {
+          "c": "search-input-el",
+          "ph": "输入关键字搜索"
+        }
+      ],
+      "styles": [
+        ".right-channel-container.is-zh .channel-items__left[data-v-6980a397] { display: grid; width: 100%; grid-auto-flow: column; grid-column: span 4; gap: 10px; grid-template-rows: repeat(2, 1fr); position: relative; }",
+        "@media (max-width: 1099.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+        "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+        "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(11, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+22) { display: none !important; }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(12, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+24) { display: none !important; }\n}",
+        "@media (min-width: 2200px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(14, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+28) { display: none !important; }\n}",
+        ".right-channel-container.is-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+        ".right-channel-container.not-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+        "@media (max-width: 1099.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(3, 1fr); }\n}",
+        "@media (min-width: 2200px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(2, 1fr); }\n}",
+        ".bili-header .manga-left { border-right: .5px solid var(--line_regular); padding-right: 20px; display: grid; grid-template-columns: 136px 136px; gap: 16px; }",
+        ".big-logo__switch[data-v-76544956] { display: grid; grid-template-rows: 8px 12px; row-gap: 6px; justify-items: start; align-content: center; padding: 4px 0px 4px 4px; min-height: 32px; }",
+        ":root { --bs-accent: #fb7299; --bs-progress: #fb7299; --bs-progress-height: 4px; --bs-progress-radius: 6px; --bs-feed-columns: 4; --bs-header-height: 58px; scroll-padding-top: 70px; }",
+        "html[data-bs-ads=\"true\"] .bili-feed4-layout .recommended-container_floor-aside > .container { display: grid !important; grid-template-columns: repeat(var(--bs-feed-columns),minmax(0,1fr)) !important; grid-template-rows: none !important; grid-auto-flow: dense !important; grid-auto-rows: auto !important; gap: 28px 20px !important; align-content: start !important; width: 100% !important; min-width: 0px !important; }"
+      ],
+      "text": "综合\n番剧\n0\n用户\n99+\n19.8万\n550\n24:35\n苏丹内战：本世纪最大屠杀，为何无人关注？\n青灯夜华\n· 8月14日\n1.8万\n94\n01:00:12\nAI短剧 | 新婚之夜读懂苏丹的心 "
+    },
+    "video": {
+      "url": "https://www.bilibili.com/zh-Hans/video/BV1jceB6dEz7/?trackid=web_pegasus_0.router-web-pegasus-2479516-gfll4.1792832728800.477",
+      "title": "盘点144首天花板级emo情歌精选_哔哩哔哩_bilibili",
+      "roots": [
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "app-v1",
+          "top": 58,
+          "height": 2660,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "search-panel nav-search-panel",
+          "top": 0,
+          "height": 0,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "13px 0px 16px"
+        },
+        {
+          "tag": "DIV",
+          "id": "mirror-vdcon",
+          "class": "video-container-v1",
+          "top": 58,
+          "height": 2660,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "16px 10px 0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "bilibili-player",
+          "class": "",
+          "top": 178,
+          "height": 422,
+          "bg": "rgb(0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "bpx-player-sending-bar",
+          "top": 554,
+          "height": 46,
+          "bg": "rgb(32, 32, 35)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px 12px"
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "bpx-player-dm-wrap",
+          "top": 563,
+          "height": 28,
+          "bg": "rgb(44, 44, 50)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px 0px 0px 6px"
+        },
+        {
+          "tag": "INPUT",
+          "id": "",
+          "class": "bpx-player-dm-input",
+          "top": 0,
+          "height": 0,
+          "bg": "rgb(44, 44, 50)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px 5px"
+        }
+      ],
+      "children": [
+        {
+          "tag": "IMG",
+          "id": "wxwork-share-pic",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "video-page-app",
+          "class": "",
+          "top": 58,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "app",
+          "class": "app-v1",
+          "top": 58,
+          "height": 2660,
+          "bg": "rgb(22, 22, 24)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "DIV",
+              "id": "biliMainHeader",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            },
+            {
+              "tag": "DIV",
+              "id": "mirror-vdcon",
+              "class": "video-container-v1",
+              "top": 58,
+              "height": 2660,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "16px 10px 0px"
+            },
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "video-note-sidebar-panel",
+              "top": 0,
+              "height": 704,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            },
+            {
+              "tag": "DIV",
+              "id": "",
+              "class": "video-note-sidebar-chapter-layer",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            },
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "video-note-sidebar-chapter-portal",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0.5px 7px"
+            }
+          ]
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "A",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            },
+            {
+              "tag": "A",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            },
+            {
+              "tag": "A",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(0, 0, 0, 0)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "0px"
+            }
+          ]
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "bs-pip-controls",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": [
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            },
+            {
+              "tag": "BUTTON",
+              "id": "",
+              "class": "",
+              "top": 0,
+              "height": 0,
+              "bg": "rgba(22, 22, 27, 0.85)",
+              "shadow": "none",
+              "margin": "0px",
+              "padding": "8px 12px"
+            }
+          ]
+        },
+        {
+          "tag": "IFRAME",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "IFRAME",
+          "id": "HLO8FaHE2V",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "LINK",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "SCRIPT",
+          "id": "",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "DIV",
+          "id": "",
+          "class": "usercard-wrap",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        },
+        {
+          "tag": "STYLE",
+          "id": "bili-comments-global-style",
+          "class": "",
+          "top": 0,
+          "height": 0,
+          "bg": "rgba(0, 0, 0, 0)",
+          "shadow": "none",
+          "margin": "0px",
+          "padding": "0px",
+          "children": []
+        }
+      ],
+      "inputs": [
+        {
+          "c": "nav-search-input",
+          "ph": ""
+        },
+        {
+          "c": "bpx-player-ctrl-time-seek",
+          "ph": ""
+        },
+        {
+          "c": "bui-switch-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-switch-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-switch-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-checkbox-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-checkbox-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-checkbox-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-checkbox-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-danmaku-switch-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-checkbox-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-checkbox-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-checkbox-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-checkbox-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-checkbox-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bui-radio-input",
+          "ph": ""
+        },
+        {
+          "c": "bpx-player-dm-input",
+          "ph": "发个友善的弹幕见证当下"
+        },
+        {
+          "c": "",
+          "ph": ""
+        }
+      ],
+      "styles": [
+        ".bpx-player-report-wrap.bpx-player-report-i18n .bpx-player-report-list .bui-radio-group { display: grid; grid-template-columns: repeat(2, minmax(0px, 1fr)); }",
+        ".bpx-player-ctrl-setting-i18n-view .bpx-player-ctrl-setting-handoff-content .bui-radio-group { grid-template-columns: repeat(2, minmax(max-content, 1fr)); }",
+        ".bpx-player-ctrl-setting-i18n-view .bpx-player-ctrl-setting-aspect-content .bui-radio-group, .bpx-player-ctrl-setting-i18n-view .bpx-player-ctrl-setting-loudness-content .bui-radio-group { grid-template-columns: repeat(3, minmax(max-content, 1fr)); }",
+        ".bpx-player-ctrl-setting-i18n-view .bpx-player-ctrl-setting-codec-content .bui-radio-group, .bpx-player-ctrl-setting-i18n-view .bpx-player-ctrl-setting-longpress-rate-content .bui-radio-group { grid-template-columns: repeat(4, minmax(max-content, 1fr)); }",
+        ".bpx-player-dm-setting-wrap.bpx-player-dm-setting-i18n-view .bpx-player-dm-setting-right-fontborder-content .bui-radio-group { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); min-width: 226px; width: 100%; margin: 0px !important; }",
+        ".bpx-player-rich-pip-audio-actions { -webkit-box-flex: 0; -webkit-box-align: center; -webkit-box-pack: center; align-items: center; column-gap: 30px; display: grid; flex: 0 0 60px; grid-template-columns: 40px 58px 40px; justify-content: center; min-width: 0px; padding-top: 2px; }",
+        ".right-channel-container.is-zh .channel-items__left[data-v-6980a397] { display: grid; width: 100%; grid-auto-flow: column; grid-column: span 4; gap: 10px; grid-template-rows: repeat(2, 1fr); position: relative; }",
+        "@media (max-width: 1099.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+        "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+        "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(11, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+22) { display: none !important; }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(12, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+24) { display: none !important; }\n}",
+        "@media (min-width: 2200px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(14, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+28) { display: none !important; }\n}",
+        ".right-channel-container.is-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+        ".right-channel-container.not-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+        "@media (max-width: 1099.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+        "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(3, 1fr); }\n}",
+        "@media (min-width: 2200px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(2, 1fr); }\n}",
+        ".bili-header .manga-left { border-right: .5px solid var(--line_regular); padding-right: 20px; display: grid; grid-template-columns: 136px 136px; gap: 16px; }",
+        ".big-logo__switch[data-v-76544956] { display: grid; grid-template-rows: 8px 12px; row-gap: 6px; justify-items: start; align-content: center; padding: 4px 0px 4px 4px; min-height: 32px; }",
+        ":root { --bs-accent: #fb7299; --bs-progress: #fb7299; --bs-progress-height: 4px; --bs-progress-radius: 6px; --bs-feed-columns: 4; --bs-header-height: 58px; scroll-padding-top: 70px; }",
+        "html[data-bs-ads=\"true\"] .bili-feed4-layout .recommended-container_floor-aside > .container { display: grid !important; grid-template-columns: repeat(var(--bs-feed-columns),minmax(0,1fr)) !important; grid-template-rows: none !important; grid-auto-flow: dense !important; grid-auto-rows: auto !important; gap: 28px 20px !important; align-content: start !important; width: 100% !important; min-width: 0px !important; }"
+      ],
+      "text": "盘点144首天花板级emo情歌精选\n159.5万\n1.8万\n2026-09-21 12:00:00\n未经作者授权，禁止转载\n跳伞06：44：59\n5\n跳伞00:41:06\n2026年10月7日晚上11"
+    }
+  }
+}

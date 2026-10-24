@@ -1,0 +1,11 @@
+const fs=require('node:fs');
+const {app}=require('./ui-harness.cjs');
+const a=app({source:process.argv[2],url:'https://www.bilibili.com/video/BVfixture',html:'<div class="left-container"><div class="video-info-container"><h1>视频标题</h1></div><div id="bilibili-player"></div></div>'});
+const d=a.w.document,s=d.querySelector('#bili-space-root').shadowRoot,css=s.querySelector('style').textContent;
+const glyphCss=css.match(/\.lights \.light svg\{([^}]+)\}/)?.[1]||'';
+const before={brandCentered:/\.brand\{grid-column:2;grid-row:1;justify-self:center/.test(css),maximizeSquare:!!s.querySelector('.light.max rect'),glyphFade:/transition:opacity 150ms/.test(glyphCss),providedMessageIcon:!!s.querySelector('.messages svg.lucide-message-square-more'),videoHome:d.querySelector('#bili-space-video-home')?.href||null,headerTab:!!s.querySelector('[data-tab=header]')};
+a.w.BiliSpace.update({headerHome:false,headerMessages:false});
+before.hideHome=s.querySelector('nav [data-route=home]')?.hidden||false;
+before.hideMessages=s.querySelector('.messages').hidden;
+before.independentVideoHome=!!d.querySelector('#bili-space-video-home:not([hidden])');
+a.close();console.log(JSON.stringify(before));

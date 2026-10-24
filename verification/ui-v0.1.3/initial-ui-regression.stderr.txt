@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_ui.py", line 124, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_ui.py", line 79, in main
+    assert start==0 and 0<during<1 and end==1 and 0<out<1 and hidden==0,report['header']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'square': True, 'messageIcon': True, 'videoHome': 'https://www.bilibili.com/', 'fade': {'start': 0, 'during': 0, 'end': 0, 'out': 0, 'hidden': 0}}

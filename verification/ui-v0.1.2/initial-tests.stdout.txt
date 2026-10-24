@@ -1,0 +1,55 @@
+
+> better-bili-space@0.1.2 test
+> node --test tests/*.test.cjs
+
+✔ explicit home, banner and right-side ad markers; no title-based false positive (123.2822ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (54.9423ms)
+✔ sparkles control precedes resolution; performance/quality and multipliers exist (29.2362ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (35.7489ms)
+✔ WebGL unavailable fails visibly without hiding original video (26.8936ms)
+✔ incremental ad card insertion is detected (280.0065ms)
+✔ modified blocker hard-locks optional features and non-home routes (48.9176ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (123.2469ms)
+✔ header settings individually hide all eight optional items without hiding window controls (65.0054ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (30.421ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (165.2385ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (310.2777ms)
+✖ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (28.7527ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (186.1623ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (34.6954ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (46.7284ms)
+✔ signed out retains a working login link (47.984ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (44.703ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (23.9626ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (35.252ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1157.6535
+
+✖ failing tests:
+
+test at tests\home.test.cjs:25:1
+✖ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (28.7527ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert(links.inert)
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\home.test.cjs:27:97)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

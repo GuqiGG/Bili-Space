@@ -1,0 +1,9 @@
+.tools/
+build/
+dist/
+.appdata/
+node_modules/
+third_party/
+__pycache__/
+verification/*.png
+verification/*.json

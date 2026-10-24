@@ -1,0 +1,25 @@
+{
+  "archive": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\releases\\BetterBiliSpace-0.1.0-win64.zip",
+  "sha256": "5f8c84db4201341108f44377d1b510aea2e44e15517a4567490fc029587c89a6",
+  "bytes": 525182,
+  "entries": [
+    "BetterBiliSpace/BetterBiliSpace.exe",
+    "BetterBiliSpace/WebView2Loader.dll",
+    "BetterBiliSpace/assets/blocker.home.user.js",
+    "BetterBiliSpace/assets/bridge.js",
+    "BetterBiliSpace/assets/btr.user.js",
+    "BetterBiliSpace/assets/enhance.js",
+    "BetterBiliSpace/assets/fixture.html",
+    "BetterBiliSpace/assets/settings.svg",
+    "BetterBiliSpace/assets/sparkles.svg",
+    "BetterBiliSpace/vendor/btr.LICENSE",
+    "BetterBiliSpace/vendor/blocker.LICENSE",
+    "BetterBiliSpace/vendor/plugins.lock.json",
+    "BetterBiliSpace/vendor/WebView2.LICENSE.txt",
+    "BetterBiliSpace/vendor/WebView2.NOTICE.txt",
+    "BetterBiliSpace/vendor/json.LICENSE",
+    "BetterBiliSpace/README.md"
+  ],
+  "crc_verified": true,
+  "no_user_profile": true
+}

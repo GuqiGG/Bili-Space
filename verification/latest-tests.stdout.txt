@@ -1,0 +1,32 @@
+
+> better-bili-space@0.1.3 test
+> node --test tests/*.test.cjs
+
+✔ explicit home, banner and right-side ad markers; no title-based false positive (121.2257ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (49.9938ms)
+✔ sparkles control precedes resolution; performance/quality and multipliers exist (31.9498ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (29.1003ms)
+✔ WebGL unavailable fails visibly without hiding original video (28.3729ms)
+✔ incremental ad card insertion is detected (284.9969ms)
+✔ modified blocker hard-locks optional features and non-home routes (46.5304ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (119.2834ms)
+✔ header settings individually hide all eight optional items without hiding window controls (62.2102ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (33.6331ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (164.5725ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (323.6034ms)
+✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (30.3036ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (188.7329ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (36.452ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (41.4004ms)
+✔ signed out retains a working login link (45.4247ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (41.5418ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (18.5422ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (30.9438ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1071.555

@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.24)
+project(BetterBiliSpace VERSION 0.1.4 LANGUAGES CXX)
+if(NOT WIN32)
+  message(FATAL_ERROR "This first release targets Windows 10/11 with WebView2.")
+endif()
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(WEBVIEW2_SDK "${CMAKE_SOURCE_DIR}/.tools/webview2" CACHE PATH "Extracted WebView2 NuGet SDK")
+add_executable(BetterBiliSpace WIN32 src/main.cpp)
+target_include_directories(BetterBiliSpace PRIVATE vendor "${WEBVIEW2_SDK}/build/native/include")
+target_compile_definitions(BetterBiliSpace PRIVATE UNICODE _UNICODE NOMINMAX)
+target_link_libraries(BetterBiliSpace PRIVATE ole32 user32 gdi32 shell32 dwmapi uuid)
+if(MINGW AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_compile_options(BetterBiliSpace PRIVATE -fms-extensions)
+endif()
+add_custom_command(TARGET BetterBiliSpace POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy "${WEBVIEW2_SDK}/build/native/x64/WebView2Loader.dll" "$<TARGET_FILE_DIR:BetterBiliSpace>"
+  COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:BetterBiliSpace>/assets")

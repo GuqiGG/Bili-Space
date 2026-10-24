@@ -1,0 +1,499 @@
+home PASS
+history PASS
+dynamic PASS
+search PASS
+video PASS
+{
+  "mode": "mock account + representative page DOM; no real login or account writes",
+  "events": {
+    "home": {
+      "url": "https://www.bilibili.com/",
+      "route": "home",
+      "active": "\u9996\u9875",
+      "query": "",
+      "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+      "avatarComplete": true,
+      "messages": "https://message.bilibili.com/#/reply",
+      "lights": [
+        {
+          "x": 24,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 47,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 70,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        }
+      ],
+      "glyphs": [
+        {
+          "x": 27,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 50,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 73,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        }
+      ],
+      "content": {
+        "x": 32,
+        "y": 91.5999984741211,
+        "w": 1216,
+        "h": 455.5249938964844
+      },
+      "cards": [
+        {
+          "x": 70.4000015258789,
+          "y": 111.5999984741211,
+          "w": 269.8000183105469,
+          "h": 203.7624969482422
+        },
+        {
+          "x": 360.20001220703125,
+          "y": 111.5999984741211,
+          "w": 269.8000183105469,
+          "h": 203.7624969482422
+        },
+        {
+          "x": 650,
+          "y": 111.5999984741211,
+          "w": 269.8000183105469,
+          "h": 203.7624969482422
+        },
+        {
+          "x": 939.7999877929688,
+          "y": 111.5999984741211,
+          "w": 269.8000183105469,
+          "h": 203.7624969482422
+        },
+        {
+          "x": 70.4000015258789,
+          "y": 343.3625183105469,
+          "w": 269.8000183105469,
+          "h": 203.7624969482422
+        },
+        {
+          "x": 360.20001220703125,
+          "y": 343.3625183105469,
+          "w": 269.8000183105469,
+          "h": 203.7624969482422
+        },
+        {
+          "x": 650,
+          "y": 343.3625183105469,
+          "w": 269.8000183105469,
+          "h": 203.7624969482422
+        },
+        {
+          "x": 939.7999877929688,
+          "y": 343.3625183105469,
+          "w": 269.8000183105469,
+          "h": 203.7624969482422
+        }
+      ],
+      "overflow": false,
+      "searchInput": "block",
+      "historyPad": "86px",
+      "dynamicPad": "80px",
+      "playerShadow": "none",
+      "dmBg": "rgb(32, 32, 35)",
+      "channelDisplay": "none",
+      "buttonBg": "rgb(38, 38, 43)"
+    },
+    "history": {
+      "url": "https://www.bilibili.com/account/history",
+      "route": "history",
+      "active": "\u5386\u53f2",
+      "query": "",
+      "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+      "avatarComplete": true,
+      "messages": "https://message.bilibili.com/#/reply",
+      "lights": [
+        {
+          "x": 24,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 47,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 70,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        }
+      ],
+      "glyphs": [
+        {
+          "x": 27,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 50,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 73,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        }
+      ],
+      "content": {
+        "x": 32,
+        "y": 91.5999984741211,
+        "w": 1216,
+        "h": 423.3000183105469
+      },
+      "cards": [
+        {
+          "x": 32,
+          "y": 242.40000915527344,
+          "w": 392,
+          "h": 272.5
+        },
+        {
+          "x": 444,
+          "y": 242.40000915527344,
+          "w": 392,
+          "h": 272.5
+        },
+        {
+          "x": 856,
+          "y": 242.40000915527344,
+          "w": 392,
+          "h": 272.5
+        }
+      ],
+      "overflow": false,
+      "searchInput": "block",
+      "historyPad": "20px",
+      "dynamicPad": "80px",
+      "playerShadow": "none",
+      "dmBg": "rgb(32, 32, 35)",
+      "channelDisplay": "none",
+      "buttonBg": "rgb(38, 38, 43)"
+    },
+    "dynamic": {
+      "url": "https://t.bilibili.com/",
+      "route": "dynamic",
+      "active": "\u52a8\u6001",
+      "query": "",
+      "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+      "avatarComplete": true,
+      "messages": "https://message.bilibili.com/#/reply",
+      "lights": [
+        {
+          "x": 24,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 47,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 70,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        }
+      ],
+      "glyphs": [
+        {
+          "x": 27,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 50,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 73,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        }
+      ],
+      "content": {
+        "x": 32,
+        "y": 91.5999984741211,
+        "w": 1216,
+        "h": 238.60000610351562
+      },
+      "cards": [],
+      "overflow": false,
+      "searchInput": "block",
+      "historyPad": "86px",
+      "dynamicPad": "16px",
+      "playerShadow": "none",
+      "dmBg": "rgb(32, 32, 35)",
+      "channelDisplay": "none",
+      "buttonBg": "rgb(38, 38, 43)"
+    },
+    "search": {
+      "url": "https://search.bilibili.com/all?keyword=%E8%8B%8F%E4%B8%B9",
+      "route": "search",
+      "active": null,
+      "query": "\u82cf\u4e39",
+      "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+      "avatarComplete": true,
+      "messages": "https://message.bilibili.com/#/reply",
+      "lights": [
+        {
+          "x": 24,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 47,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 70,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        }
+      ],
+      "glyphs": [
+        {
+          "x": 27,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 50,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 73,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        }
+      ],
+      "content": {
+        "x": 32,
+        "y": 91.5999984741211,
+        "w": 1216,
+        "h": 451.8999938964844
+      },
+      "cards": [
+        {
+          "x": 32,
+          "y": 236,
+          "w": 392,
+          "h": 272.5
+        },
+        {
+          "x": 444,
+          "y": 236,
+          "w": 392,
+          "h": 272.5
+        },
+        {
+          "x": 856,
+          "y": 236,
+          "w": 392,
+          "h": 272.5
+        }
+      ],
+      "overflow": false,
+      "searchInput": "none",
+      "historyPad": "86px",
+      "dynamicPad": "80px",
+      "playerShadow": "none",
+      "dmBg": "rgb(32, 32, 35)",
+      "channelDisplay": "none",
+      "buttonBg": "rgb(38, 38, 43)"
+    },
+    "video": {
+      "url": "https://www.bilibili.com/video/BVfixture",
+      "route": "video",
+      "active": null,
+      "query": "",
+      "avatar": "https://i0.hdslb.com/bfs/face/bs-test-avatar.svg",
+      "avatarComplete": true,
+      "messages": "https://message.bilibili.com/#/reply",
+      "lights": [
+        {
+          "x": 24,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 47,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        },
+        {
+          "x": 70,
+          "y": 21.600000381469727,
+          "w": 14,
+          "h": 14
+        }
+      ],
+      "glyphs": [
+        {
+          "x": 27,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 50,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        },
+        {
+          "x": 73,
+          "y": 24.600000381469727,
+          "w": 8,
+          "h": 8
+        }
+      ],
+      "content": {
+        "x": 32,
+        "y": 91.5999984741211,
+        "w": 1216,
+        "h": 497.20001220703125
+      },
+      "cards": [],
+      "overflow": false,
+      "searchInput": "block",
+      "historyPad": "86px",
+      "dynamicPad": "80px",
+      "playerShadow": "none",
+      "dmBg": "rgb(32, 32, 35)",
+      "channelDisplay": "none",
+      "buttonBg": "rgb(38, 38, 43)"
+    }
+  },
+  "sha256": "09b3788ecf910aa68fd82eda9510f4bef0b3157ada674119db357ca14f21050d",
+  "responsive": [
+    {
+      "width": 580,
+      "scroll": 565,
+      "columns": "repeat(4, 1fr)",
+      "headerRight": 552.7999877929688,
+      "brandCenter": 282.40000343322754,
+      "headerCenter": 282.3999938964844,
+      "brandWidth": 62.32500076293945
+    },
+    {
+      "width": 880,
+      "scroll": 880,
+      "columns": "repeat(4, 1fr)",
+      "headerRight": 856,
+      "brandCenter": 439.9999942779541,
+      "headerCenter": 440,
+      "brandWidth": 62.32500076293945
+    },
+    {
+      "width": 1100,
+      "scroll": 1085,
+      "columns": "repeat(4, 1fr)",
+      "headerRight": 1060.800048828125,
+      "brandCenter": 542.4000186920166,
+      "headerCenter": 542.4000244140625,
+      "brandWidth": 62.32500076293945
+    },
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "columns": "repeat(4, 1fr)",
+      "headerRight": 1416,
+      "brandCenter": 720.0000247955322,
+      "headerCenter": 720,
+      "brandWidth": 62.32500076293945
+    }
+  ],
+  "header": {
+    "square": true,
+    "messageIcon": true,
+    "videoHome": "https://www.bilibili.com/",
+    "fade": {
+      "start": 0,
+      "during": 0.628423,
+      "end": 1,
+      "out": 0.370729,
+      "hidden": 0
+    },
+    "after_reload": {
+      "prefs": {
+        "theme": "dark",
+        "accent": "#fb7299",
+        "progressColor": "#fb7299",
+        "progressHeight": 4,
+        "progressRadius": 12,
+        "progressAlways": false,
+        "progressThumb": true,
+        "showChannels": false,
+        "hideAds": true,
+        "btr": true,
+        "font": true,
+        "zoom": 100,
+        "srMode": "off",
+        "srScale": 3,
+        "headerHome": false,
+        "headerDynamic": false,
+        "headerHistory": false,
+        "headerBrand": false,
+        "headerSearch": false,
+        "headerMessages": false,
+        "headerAccount": false,
+        "headerBack": false
+      },
+      "visibleWindows": true,
+      "videoHome": true
+    }
+  },
+  "enter_loader": "true",
+  "runtime_errors": [],
+  "result": "PASS"
+}

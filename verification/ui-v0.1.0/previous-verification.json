@@ -1,0 +1,482 @@
+{
+  "TARGET": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\third_party\\blocker\\script.user.js",
+  "GOAL": "getPageKind => www.bilibili.com homepage only, including locale home routes; extractUid supports explicit locale author URLs; hideLiveCards=false, blockAdCards=false, videoProfileButton=false; no optional menus or background count",
+  "roles": {
+    "MODIFIED_FILE": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\blocker.home.user.js",
+    "DIFF_FILE": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\blocker.home.patch",
+    "VERIFICATION": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\VERIFICATION.txt",
+    "ROLLBACK": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh"
+  },
+  "hashes": {
+    "original": "40e40bd8fcfa52e1d2e3b7dd9b25f563a53a504b94bd00b9cace4539a6d95ccf",
+    "modified": "4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f",
+    "rollback": "40e40bd8fcfa52e1d2e3b7dd9b25f563a53a504b94bd00b9cace4539a6d95ccf",
+    "reconstructed": "4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f"
+  },
+  "original_unchanged": true,
+  "rollback_hash_matches": true,
+  "diff_reconstructs_exact_bytes": true,
+  "events": [
+    {
+      "label": "BASELINE",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\blocker-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\blocker.original.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":true,\"videoProfileButton\":true},\"routes\":[\"home\",\"video\",\"search\",\"home\",\"home\"],\"uids\":[\"123\",\"\",\"\"]}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "MODIFIED",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\blocker-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\blocker.home.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":false,\"videoProfileButton\":false},\"routes\":[\"home\",\"disabled\",\"disabled\",\"disabled\",\"home\"],\"uids\":[\"123\",\"456\",\"\"]}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "EXECUTE ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "C:\\Program Files\\Git\\bin\\bash.exe",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\rollback-copy.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "ROLLBACK",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\blocker-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\rollback-copy.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":true,\"videoProfileButton\":true},\"routes\":[\"home\",\"video\",\"search\",\"home\",\"home\"],\"uids\":[\"123\",\"\",\"\"]}\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "BUILD EXACT DIFF",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\patch-inputs",
+      "command": [
+        "git",
+        "-c",
+        "core.attributesfile=C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\binary.attributes",
+        "diff",
+        "--no-index",
+        "--binary",
+        "--",
+        "a/policy.user.js",
+        "b/policy.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "diff --git a/a/policy.user.js b/b/policy.user.js\nindex 00abe344c93310bbfb50bfee05ae983e352e6102..2d3d2ee5d153499c855abfbff288b8f8295b8b46 100644\nGIT binary patch\ndelta 9587\n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\n\ndelta 10985\n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\n\n",
+      "stderr": "",
+      "exit_status": 1
+    },
+    {
+      "label": "RECONSTRUCT FROM DIFF",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "git",
+        "-c",
+        "core.autocrlf=false",
+        "-c",
+        "core.attributesfile=C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\binary.attributes",
+        "apply",
+        "--binary",
+        "--unsafe-paths",
+        "--directory=C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\reconstructed",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\blocker.home.patch"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "REAPPLIED MODIFIED",
+      "cwd": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space",
+      "command": [
+        "node",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\tests\\blocker-policy.cjs",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\blocker.home.user.js"
+      ],
+      "input": "same policy extraction and routes: home, video, search, popular",
+      "stdout": "{\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":false,\"videoProfileButton\":false},\"routes\":[\"home\",\"disabled\",\"disabled\",\"disabled\",\"home\"],\"uids\":[\"123\",\"456\",\"\"]}\n",
+      "stderr": "",
+      "exit_status": 0
+    }
+  ],
+  "supplemental": {
+    "build_log": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\build.log",
+    "smoke": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\smoke.json",
+    "unit_tests": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\tests.stdout.txt"
+  },
+  "delivery_events": [
+    {
+      "label": "BUILD",
+      "command": [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\scripts\\build.ps1"
+      ],
+      "stdout": "Built: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\dist\\BetterBiliSpace.exe\r\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "UNIT_TESTS",
+      "command": [
+        "npm.cmd",
+        "test"
+      ],
+      "stdout": "\n> better-bili-space@0.1.0 test\n> node --test tests/*.test.cjs\n\n✔ explicit home, banner and right-side ad markers; no title-based false positive (99.8269ms)\n✔ native settings in lower left; Douyin font, channels, theme and progress options apply (34.1185ms)\n✔ sparkles control precedes resolution; performance/quality and multipliers exist (21.2311ms)\n✔ native PiP keeps a video-only DOM state and restores normal chrome (20.1776ms)\n✔ WebGL unavailable fails visibly without hiding original video (22.4508ms)\n✔ incremental ad card insertion is detected (270.1593ms)\n✔ modified blocker hard-locks optional features and non-home routes (48.2437ms)\nℹ tests 7\nℹ suites 0\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 925.9088\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "TRANSACTION",
+      "command": [
+        "python",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\scripts\\verify_transaction.py"
+      ],
+      "stdout": "MODIFIED_FILE: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\blocker.home.user.js [49099 bytes; SHA256 4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f]\r\nDIFF_FILE: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\blocker.home.patch [14811 bytes; SHA256 f17c6567b47f91da65e6f7cf3031c140c608870b8defb1ee3694bd916f61e679]\r\nVERIFICATION: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\VERIFICATION.txt [21436 bytes; SHA256 7bbaff6a5e83fa5653ef175fceb793b88bf0f299727f4b87ff954925089dbf32]\r\nROLLBACK: C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\ROLLBACK.sh [67206 bytes; SHA256 e3aeebc6d3f2b7ab2a843464b88db5833b76fa698513a3fa1dd685c1d0e750d4]\r\nBASELINE: {\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":true,\"videoProfileButton\":true},\"routes\":[\"home\",\"video\",\"search\",\"home\",\"home\"],\"uids\":[\"123\",\"\",\"\"]}\r\nMODIFIED: {\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":false,\"videoProfileButton\":false},\"routes\":[\"home\",\"disabled\",\"disabled\",\"disabled\",\"home\"],\"uids\":[\"123\",\"456\",\"\"]}\r\nROLLBACK: {\"settings\":{\"hideLiveCards\":false,\"blockAdCards\":true,\"videoProfileButton\":true},\"routes\":[\"home\",\"video\",\"search\",\"home\",\"home\"],\"uids\":[\"123\",\"\",\"\"]}\r\nVerified: pristine target unchanged; rollback hash matches; diff reconstructs exact modified bytes.\r\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "NATIVE_SMOKE",
+      "command": [
+        "python",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\scripts\\smoke.py"
+      ],
+      "stdout": "{\r\n  \"artifact_sha256\": {\r\n    \"dist\\\\BetterBiliSpace.exe\": \"0edc0c41775d7079a2aa5f2d354ec55b454370e0b2dbbc14a5c23a424ae39108\",\r\n    \"dist\\\\assets\\\\blocker.home.user.js\": \"4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f\",\r\n    \"dist\\\\assets\\\\bridge.js\": \"50f5f1b508a765de74278cff988abac83f1f943982211d20b6415785cde8f1db\",\r\n    \"dist\\\\assets\\\\btr.user.js\": \"995a2edaaa96732a9a4fd2482652aeb951f2f359c1a4f6f749838643582879c1\",\r\n    \"dist\\\\assets\\\\enhance.js\": \"8ece9cb02d743fe9630a6256a889ceecf0614cc04b876902fa23a0c656e9aed4\",\r\n    \"dist\\\\assets\\\\fixture.html\": \"25261bdd6bc7cfeade65aff96450f7fe53a449b2ed681f34e932f911e8f0fa17\",\r\n    \"dist\\\\assets\\\\settings.svg\": \"f904d96fdbc562e72e9547ce437ecd4ab9c6ea83bfd7eccd9b53d803ca335669\",\r\n    \"dist\\\\assets\\\\sparkles.svg\": \"df560e8955d1f02b4d64265aafcee4a350223aaed4bbd6377b741a8be7772eaa\"\r\n  },\r\n  \"process_pid\": 33188,\r\n  \"initial\": {\r\n    \"state\": {\r\n      \"prefs\": {\r\n        \"accent\": \"#fb7299\",\r\n        \"btr\": true,\r\n        \"font\": true,\r\n        \"hideAds\": true,\r\n        \"progressAlways\": false,\r\n        \"progressColor\": \"#fb7299\",\r\n        \"progressHeight\": 4,\r\n        \"progressRadius\": 6,\r\n        \"progressThumb\": true,\r\n        \"showChannels\": true,\r\n        \"srMode\": \"off\",\r\n        \"srScale\": 2,\r\n        \"theme\": \"light\",\r\n        \"zoom\": 100\r\n      },\r\n      \"status\": \"\\u672a\\u5f00\\u542f\",\r\n      \"frames\": 0,\r\n      \"stopped\": true,\r\n      \"pip\": false,\r\n      \"full\": false,\r\n      \"ads\": 4\r\n    },\r\n    \"btr\": true,\r\n    \"font\": true,\r\n    \"adDisplays\": [\r\n      \"none\",\r\n      \"none\",\r\n      \"none\",\r\n      \"none\"\r\n    ],\r\n    \"commentVisible\": \"block\",\r\n    \"toolBeforeQuality\": \"bs-player-tool\"\r\n  },\r\n  \"native_persistence\": {\r\n    \"accent\": \"#5aaf9a\",\r\n    \"btr\": true,\r\n    \"font\": true,\r\n    \"hideAds\": true,\r\n    \"progressAlways\": false,\r\n    \"progressColor\": \"#5aaf9a\",\r\n    \"progressHeight\": 8,\r\n    \"progressRadius\": 6,\r\n    \"progressThumb\": true,\r\n    \"showChannels\": false,\r\n    \"srMode\": \"off\",\r\n    \"srScale\": 2,\r\n    \"theme\": \"light\",\r\n    \"zoom\": 100\r\n  },\r\n  \"gpu\": {\r\n    \"prefs\": {\r\n      \"accent\": \"#5aaf9a\",\r\n      \"btr\": true,\r\n      \"font\": true,\r\n      \"hideAds\": true,\r\n      \"progressAlways\": false,\r\n      \"progressColor\": \"#5aaf9a\",\r\n      \"progressHeight\": 8,\r\n      \"progressRadius\": 6,\r\n      \"progressThumb\": true,\r\n      \"showChannels\": false,\r\n      \"srMode\": \"quality\",\r\n      \"srScale\": 2,\r\n      \"theme\": \"light\",\r\n      \"zoom\": 100\r\n    },\r\n    \"status\": \"640\\u00d7360 \\u2192 1280\\u00d7720 \\u00b7 2.00\\u00d7 \\u00b7 \\u8d28\\u91cf \\u00b7 GPU\",\r\n    \"frames\": 60,\r\n    \"stopped\": false,\r\n    \"pip\": false,\r\n    \"full\": false,\r\n    \"ads\": 4,\r\n    \"canvas\": {\r\n      \"width\": 1280,\r\n      \"height\": 720\r\n    },\r\n    \"opacity\": \"0\"\r\n  },\r\n  \"pip\": {\r\n    \"state\": {\r\n      \"prefs\": {\r\n        \"accent\": \"#5aaf9a\",\r\n        \"btr\": true,\r\n        \"font\": true,\r\n        \"hideAds\": true,\r\n        \"progressAlways\": false,\r\n        \"progressColor\": \"#5aaf9a\",\r\n        \"progressHeight\": 8,\r\n        \"progressRadius\": 6,\r\n        \"progressThumb\": true,\r\n        \"showChannels\": false,\r\n        \"srMode\": \"quality\",\r\n        \"srScale\": 2,\r\n        \"theme\": \"light\",\r\n        \"zoom\": 100\r\n      },\r\n      \"status\": \"640\\u00d7360 \\u2192 1280\\u00d7720 \\u00b7 2.00\\u00d7 \\u00b7 \\u8d28\\u91cf \\u00b7 GPU\",\r\n      \"frames\": 86,\r\n      \"stopped\": false,\r\n      \"pip\": true,\r\n      \"full\": false,\r\n      \"ads\": 4\r\n    },\r\n    \"width\": 384,\r\n    \"height\": 216,\r\n    \"bodyScroll\": 902,\r\n    \"video\": {\r\n      \"x\": 0,\r\n      \"y\": 0,\r\n      \"width\": 384,\r\n      \"height\": 216,\r\n      \"top\": 0,\r\n      \"right\": 384,\r\n      \"bottom\": 216,\r\n      \"left\": 0\r\n    },\r\n    \"style\": 2483486720,\r\n    \"topmost\": true\r\n  },\r\n  \"after_reload\": {\r\n    \"prefs\": {\r\n      \"accent\": \"#fb7299\",\r\n      \"btr\": true,\r\n      \"font\": true,\r\n      \"hideAds\": true,\r\n      \"progressAlways\": false,\r\n      \"progressColor\": \"#fb7299\",\r\n      \"progressHeight\": 4,\r\n      \"progressRadius\": 6,\r\n      \"progressThumb\": true,\r\n      \"showChannels\": true,\r\n      \"srMode\": \"off\",\r\n      \"srScale\": 2,\r\n      \"theme\": \"dark\",\r\n      \"zoom\": 100\r\n    },\r\n    \"status\": \"\\u672a\\u5f00\\u542f\",\r\n    \"frames\": 0,\r\n    \"stopped\": true,\r\n    \"pip\": false,\r\n    \"full\": false,\r\n    \"ads\": 4\r\n  },\r\n  \"performance\": {\r\n    \"prefs\": {\r\n      \"accent\": \"#fb7299\",\r\n      \"btr\": true,\r\n      \"font\": true,\r\n      \"hideAds\": true,\r\n      \"progressAlways\": false,\r\n      \"progressColor\": \"#fb7299\",\r\n      \"progressHeight\": 4,\r\n      \"progressRadius\": 6,\r\n      \"progressThumb\": true,\r\n      \"showChannels\": true,\r\n      \"srMode\": \"performance\",\r\n      \"srScale\": 3,\r\n      \"theme\": \"dark\",\r\n      \"zoom\": 100\r\n    },\r\n    \"status\": \"640\\u00d7360 \\u2192 1920\\u00d71080 \\u00b7 3.00\\u00d7 \\u00b7 \\u6027\\u80fd \\u00b7 GPU\",\r\n    \"frames\": 28,\r\n    \"stopped\": false,\r\n    \"pip\": false,\r\n    \"full\": false,\r\n    \"ads\": 4\r\n  },\r\n  \"context_loss\": {\r\n    \"state\": {\r\n      \"prefs\": {\r\n        \"accent\": \"#fb7299\",\r\n        \"btr\": true,\r\n        \"font\": true,\r\n        \"hideAds\": true,\r\n        \"progressAlways\": false,\r\n        \"progressColor\": \"#fb7299\",\r\n        \"progressHeight\": 4,\r\n        \"progressRadius\": 6,\r\n        \"progressThumb\": true,\r\n        \"showChannels\": true,\r\n        \"srMode\": \"performance\",\r\n        \"srScale\": 3,\r\n        \"theme\": \"dark\",\r\n        \"zoom\": 100\r\n      },\r\n      \"status\": \"GPU \\u4e0a\\u4e0b\\u6587\\u4e22\\u5931\\uff0c\\u5df2\\u6062\\u590d\\u539f\\u751f\\u64ad\\u653e\",\r\n      \"frames\": 28,\r\n      \"stopped\": true,\r\n      \"pip\": false,\r\n      \"full\": false,\r\n      \"ads\": 4\r\n    },\r\n    \"opacity\": \"\",\r\n    \"canvas\": false\r\n  },\r\n  \"runtime_exceptions\": [],\r\n  \"live_home\": {\r\n    \"url\": \"https://www.bilibili.com/zh-Hans\",\r\n    \"title\": \"bilibili\",\r\n    \"ready\": true,\r\n    \"btr\": true,\r\n    \"cards\": 34,\r\n    \"blockButtons\": 22,\r\n    \"state\": {\r\n      \"prefs\": {\r\n        \"accent\": \"#fb7299\",\r\n        \"btr\": true,\r\n        \"font\": true,\r\n        \"hideAds\": true,\r\n        \"progressAlways\": false,\r\n        \"progressColor\": \"#fb7299\",\r\n        \"progressHeight\": 4,\r\n        \"progressRadius\": 12,\r\n        \"progressThumb\": true,\r\n        \"showChannels\": true,\r\n        \"srMode\": \"off\",\r\n        \"srScale\": 3,\r\n        \"theme\": \"dark\",\r\n        \"zoom\": 100\r\n      },\r\n      \"status\": \"\\u672a\\u5f00\\u542f\",\r\n      \"frames\": 0,\r\n      \"stopped\": true,\r\n      \"pip\": false,\r\n      \"full\": false,\r\n      \"ads\": 0\r\n    },\r\n    \"text\": \"131.1\\u4e07\\n3307\\n29:26\\n\\u9003\\u79bb\\u57ce\\u5e02\\uff0c\\u767d\\u5929\\u97a3\\u5236\\u9e7f\\u76ae\\u591c\\u665a\\u7096\\u8089\\u6c64\\u8eb2\\u8fdb\\u77f3\\u5934\\u5b89\\u5168\\u5c4b\\u53d6\\u6696\\uff0c\\u5f00\\u59cb\\u8fce\\u63a5\\u6f2b\\u957f\\u800c\\u5bd2\\u51b7\\u91ce\\u5916\\u751f\\u6d3b\\n\\u6f20\\u751f\\u94c1\\u94c1\\n\\u00b7 10\\u670812\\u65e5\\n311.9\\u4e07\\n5688\\n13:23\\n\\u731c\\uff01\\u8c01\\u5403\\u5230\\u4e86\\u9ed1\\u6697\\u6599\\u7406\\uff1f\\n\\u7ef5\\u7f8a\\u6599\\u7406\\n\\u00b7 10\\u670815\\u65e5\\n161\\u4e07\\n1.5\\u4e07\\n07:43:19\\n\\u9cc4\\u9c7c\\u7f05\\u53171-66\\u5927\\u5408\\u96c6\\n\\u9cc4\\u9c7c\\u6f2b\\u8bf4\\n\\u00b7 9\\u670825\\u65e5\\n150.1\\u4e07\\n5417\\n15:25\\n\\u5c0f\\u623f\\u8f66\\u5185\\u90e8\\u96f6\\u4e0b20\\u5ea6\\u771f\\u662f\\u8981\\u547d\\u554a\\uff0c\\u5c31\\u8fde\\u653e\\u5728\\u5e8a\\u8fb9\\u7684\\u6c34\\u90fd\\u51bb\\u786c\\u4e86\\uff0c\\u770b\\u6765\\u4e0d\\u5f97\\u4e0d\\u5f97\\u63d0\\u524d\\u542f\\u52a8\\u53d6\\u6696\\u7089\\u6765\\u53d6\\u6696\\u4e86\\uff0c\\u665a\\u4e0a\\u522e\\u5927\\u98ce\\u5728\\u7834\\u65e7\\u7684\\u7267\\u6c11\\u623f\\u91cc\\u9732\\u8425\\u907f\\u907f\\u98ce\\u505a\\u4e2a\\u6912\\u76d0\\u9e21\\u7fc5\\u5403\\u4e00\\u53e3\\u4e0b\\u53bb\\u56de\\u5473\\u65e0\\u7a77\\n\\u963f\\u7a0b\\u7684\\u5c0f\\u623f\\u8f66\\u4e4b\\u65c5\\n\\u00b7 10\\u670815\\u65e5\\n22.8\\u4e07\\n2287\\n11:26\\n\\u7ebd\\u7ea65\\u4e2a\\u7075\\u9b42\"\r\n  },\r\n  \"result\": \"PASS\",\r\n  \"process_exit\": 0\r\n}\r\n",
+      "stderr": "",
+      "exit_status": 0
+    },
+    {
+      "label": "PACKAGE",
+      "command": [
+        "python",
+        "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\scripts\\package.py"
+      ],
+      "stdout": "{\r\n  \"archive\": \"C:\\\\Users\\\\guqig\\\\Documents\\\\ChatGPT\\\\Better-Bili-Space\\\\releases\\\\BetterBiliSpace-0.1.0-win64.zip\",\r\n  \"sha256\": \"c69ce78ead3077adda55fe796caaa99aa8c7a8bde1013cfb781b2ce5fed9f6a4\",\r\n  \"bytes\": 525182,\r\n  \"entries\": [\r\n    \"BetterBiliSpace/BetterBiliSpace.exe\",\r\n    \"BetterBiliSpace/WebView2Loader.dll\",\r\n    \"BetterBiliSpace/assets/blocker.home.user.js\",\r\n    \"BetterBiliSpace/assets/bridge.js\",\r\n    \"BetterBiliSpace/assets/btr.user.js\",\r\n    \"BetterBiliSpace/assets/enhance.js\",\r\n    \"BetterBiliSpace/assets/fixture.html\",\r\n    \"BetterBiliSpace/assets/settings.svg\",\r\n    \"BetterBiliSpace/assets/sparkles.svg\",\r\n    \"BetterBiliSpace/vendor/btr.LICENSE\",\r\n    \"BetterBiliSpace/vendor/blocker.LICENSE\",\r\n    \"BetterBiliSpace/vendor/plugins.lock.json\",\r\n    \"BetterBiliSpace/vendor/WebView2.LICENSE.txt\",\r\n    \"BetterBiliSpace/vendor/WebView2.NOTICE.txt\",\r\n    \"BetterBiliSpace/vendor/json.LICENSE\",\r\n    \"BetterBiliSpace/README.md\"\r\n  ],\r\n  \"crc_verified\": true,\r\n  \"no_user_profile\": true\r\n}\r\n",
+      "stderr": "",
+      "exit_status": 0
+    }
+  ],
+  "native_smoke": {
+    "artifact_sha256": {
+      "dist\\BetterBiliSpace.exe": "0edc0c41775d7079a2aa5f2d354ec55b454370e0b2dbbc14a5c23a424ae39108",
+      "dist\\assets\\blocker.home.user.js": "4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f",
+      "dist\\assets\\bridge.js": "50f5f1b508a765de74278cff988abac83f1f943982211d20b6415785cde8f1db",
+      "dist\\assets\\btr.user.js": "995a2edaaa96732a9a4fd2482652aeb951f2f359c1a4f6f749838643582879c1",
+      "dist\\assets\\enhance.js": "8ece9cb02d743fe9630a6256a889ceecf0614cc04b876902fa23a0c656e9aed4",
+      "dist\\assets\\fixture.html": "25261bdd6bc7cfeade65aff96450f7fe53a449b2ed681f34e932f911e8f0fa17",
+      "dist\\assets\\settings.svg": "f904d96fdbc562e72e9547ce437ecd4ab9c6ea83bfd7eccd9b53d803ca335669",
+      "dist\\assets\\sparkles.svg": "df560e8955d1f02b4d64265aafcee4a350223aaed4bbd6377b741a8be7772eaa"
+    },
+    "process_pid": 33188,
+    "initial": {
+      "state": {
+        "prefs": {
+          "accent": "#fb7299",
+          "btr": true,
+          "font": true,
+          "hideAds": true,
+          "progressAlways": false,
+          "progressColor": "#fb7299",
+          "progressHeight": 4,
+          "progressRadius": 6,
+          "progressThumb": true,
+          "showChannels": true,
+          "srMode": "off",
+          "srScale": 2,
+          "theme": "light",
+          "zoom": 100
+        },
+        "status": "未开启",
+        "frames": 0,
+        "stopped": true,
+        "pip": false,
+        "full": false,
+        "ads": 4
+      },
+      "btr": true,
+      "font": true,
+      "adDisplays": [
+        "none",
+        "none",
+        "none",
+        "none"
+      ],
+      "commentVisible": "block",
+      "toolBeforeQuality": "bs-player-tool"
+    },
+    "native_persistence": {
+      "accent": "#5aaf9a",
+      "btr": true,
+      "font": true,
+      "hideAds": true,
+      "progressAlways": false,
+      "progressColor": "#5aaf9a",
+      "progressHeight": 8,
+      "progressRadius": 6,
+      "progressThumb": true,
+      "showChannels": false,
+      "srMode": "off",
+      "srScale": 2,
+      "theme": "light",
+      "zoom": 100
+    },
+    "gpu": {
+      "prefs": {
+        "accent": "#5aaf9a",
+        "btr": true,
+        "font": true,
+        "hideAds": true,
+        "progressAlways": false,
+        "progressColor": "#5aaf9a",
+        "progressHeight": 8,
+        "progressRadius": 6,
+        "progressThumb": true,
+        "showChannels": false,
+        "srMode": "quality",
+        "srScale": 2,
+        "theme": "light",
+        "zoom": 100
+      },
+      "status": "640×360 → 1280×720 · 2.00× · 质量 · GPU",
+      "frames": 60,
+      "stopped": false,
+      "pip": false,
+      "full": false,
+      "ads": 4,
+      "canvas": {
+        "width": 1280,
+        "height": 720
+      },
+      "opacity": "0"
+    },
+    "pip": {
+      "state": {
+        "prefs": {
+          "accent": "#5aaf9a",
+          "btr": true,
+          "font": true,
+          "hideAds": true,
+          "progressAlways": false,
+          "progressColor": "#5aaf9a",
+          "progressHeight": 8,
+          "progressRadius": 6,
+          "progressThumb": true,
+          "showChannels": false,
+          "srMode": "quality",
+          "srScale": 2,
+          "theme": "light",
+          "zoom": 100
+        },
+        "status": "640×360 → 1280×720 · 2.00× · 质量 · GPU",
+        "frames": 86,
+        "stopped": false,
+        "pip": true,
+        "full": false,
+        "ads": 4
+      },
+      "width": 384,
+      "height": 216,
+      "bodyScroll": 902,
+      "video": {
+        "x": 0,
+        "y": 0,
+        "width": 384,
+        "height": 216,
+        "top": 0,
+        "right": 384,
+        "bottom": 216,
+        "left": 0
+      },
+      "style": 2483486720,
+      "topmost": true
+    },
+    "after_reload": {
+      "prefs": {
+        "accent": "#fb7299",
+        "btr": true,
+        "font": true,
+        "hideAds": true,
+        "progressAlways": false,
+        "progressColor": "#fb7299",
+        "progressHeight": 4,
+        "progressRadius": 6,
+        "progressThumb": true,
+        "showChannels": true,
+        "srMode": "off",
+        "srScale": 2,
+        "theme": "dark",
+        "zoom": 100
+      },
+      "status": "未开启",
+      "frames": 0,
+      "stopped": true,
+      "pip": false,
+      "full": false,
+      "ads": 4
+    },
+    "performance": {
+      "prefs": {
+        "accent": "#fb7299",
+        "btr": true,
+        "font": true,
+        "hideAds": true,
+        "progressAlways": false,
+        "progressColor": "#fb7299",
+        "progressHeight": 4,
+        "progressRadius": 6,
+        "progressThumb": true,
+        "showChannels": true,
+        "srMode": "performance",
+        "srScale": 3,
+        "theme": "dark",
+        "zoom": 100
+      },
+      "status": "640×360 → 1920×1080 · 3.00× · 性能 · GPU",
+      "frames": 28,
+      "stopped": false,
+      "pip": false,
+      "full": false,
+      "ads": 4
+    },
+    "context_loss": {
+      "state": {
+        "prefs": {
+          "accent": "#fb7299",
+          "btr": true,
+          "font": true,
+          "hideAds": true,
+          "progressAlways": false,
+          "progressColor": "#fb7299",
+          "progressHeight": 4,
+          "progressRadius": 6,
+          "progressThumb": true,
+          "showChannels": true,
+          "srMode": "performance",
+          "srScale": 3,
+          "theme": "dark",
+          "zoom": 100
+        },
+        "status": "GPU 上下文丢失，已恢复原生播放",
+        "frames": 28,
+        "stopped": true,
+        "pip": false,
+        "full": false,
+        "ads": 4
+      },
+      "opacity": "",
+      "canvas": false
+    },
+    "runtime_exceptions": [],
+    "live_home": {
+      "url": "https://www.bilibili.com/zh-Hans",
+      "title": "bilibili",
+      "ready": true,
+      "btr": true,
+      "cards": 34,
+      "blockButtons": 22,
+      "state": {
+        "prefs": {
+          "accent": "#fb7299",
+          "btr": true,
+          "font": true,
+          "hideAds": true,
+          "progressAlways": false,
+          "progressColor": "#fb7299",
+          "progressHeight": 4,
+          "progressRadius": 12,
+          "progressThumb": true,
+          "showChannels": true,
+          "srMode": "off",
+          "srScale": 3,
+          "theme": "dark",
+          "zoom": 100
+        },
+        "status": "未开启",
+        "frames": 0,
+        "stopped": true,
+        "pip": false,
+        "full": false,
+        "ads": 0
+      },
+      "text": "131.1万\n3307\n29:26\n逃离城市，白天鞣制鹿皮夜晚炖肉汤躲进石头安全屋取暖，开始迎接漫长而寒冷野外生活\n漠生铁铁\n· 10月12日\n311.9万\n5688\n13:23\n猜！谁吃到了黑暗料理？\n绵羊料理\n· 10月15日\n161万\n1.5万\n07:43:19\n鳄鱼缅北1-66大合集\n鳄鱼漫说\n· 9月25日\n150.1万\n5417\n15:25\n小房车内部零下20度真是要命啊，就连放在床边的水都冻硬了，看来不得不得提前启动取暖炉来取暖了，晚上刮大风在破旧的牧民房里露营避避风做个椒盐鸡翅吃一口下去回味无穷\n阿程的小房车之旅\n· 10月15日\n22.8万\n2287\n11:26\n纽约5个灵魂"
+    },
+    "result": "PASS",
+    "process_exit": 0
+  },
+  "live_video_observation": {
+    "prefs": {
+      "accent": "#fb7299",
+      "btr": true,
+      "font": true,
+      "hideAds": true,
+      "progressAlways": false,
+      "progressColor": "#fb7299",
+      "progressHeight": 4,
+      "progressRadius": 6,
+      "progressThumb": true,
+      "showChannels": true,
+      "srMode": "performance",
+      "srScale": 2,
+      "theme": "light",
+      "zoom": 100
+    },
+    "status": "853×480 → 1706×960 · 2.00× · 性能 · GPU",
+    "frames": 72,
+    "stopped": false,
+    "pip": false,
+    "full": false,
+    "ads": 2
+  },
+  "package": {
+    "archive": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\releases\\BetterBiliSpace-0.1.0-win64.zip",
+    "sha256": "c69ce78ead3077adda55fe796caaa99aa8c7a8bde1013cfb781b2ce5fed9f6a4",
+    "bytes": 525182,
+    "entries": [
+      "BetterBiliSpace/BetterBiliSpace.exe",
+      "BetterBiliSpace/WebView2Loader.dll",
+      "BetterBiliSpace/assets/blocker.home.user.js",
+      "BetterBiliSpace/assets/bridge.js",
+      "BetterBiliSpace/assets/btr.user.js",
+      "BetterBiliSpace/assets/enhance.js",
+      "BetterBiliSpace/assets/fixture.html",
+      "BetterBiliSpace/assets/settings.svg",
+      "BetterBiliSpace/assets/sparkles.svg",
+      "BetterBiliSpace/vendor/btr.LICENSE",
+      "BetterBiliSpace/vendor/blocker.LICENSE",
+      "BetterBiliSpace/vendor/plugins.lock.json",
+      "BetterBiliSpace/vendor/WebView2.LICENSE.txt",
+      "BetterBiliSpace/vendor/WebView2.NOTICE.txt",
+      "BetterBiliSpace/vendor/json.LICENSE",
+      "BetterBiliSpace/README.md"
+    ],
+    "crc_verified": true,
+    "no_user_profile": true
+  }
+}

@@ -1,0 +1,19 @@
+
+> better-bili-space@0.1.0 test
+> node --test tests/*.test.cjs
+
+✔ explicit home, banner and right-side ad markers; no title-based false positive (105.514ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (33.9487ms)
+✔ sparkles control precedes resolution; performance/quality and multipliers exist (19.6844ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (19.7965ms)
+✔ WebGL unavailable fails visibly without hiding original video (20.3958ms)
+✔ incremental ad card insertion is detected (276.8234ms)
+✔ modified blocker hard-locks optional features and non-home routes (45.5605ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 940.7346

@@ -1,0 +1,37 @@
+
+> better-bili-space@0.1.4 test
+> node --test tests/*.test.cjs
+
+✔ explicit home, banner and right-side ad markers; no title-based false positive (142.9659ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (63.9885ms)
+✔ sparkles control precedes resolution; performance/quality and multipliers exist (32.6384ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (29.7204ms)
+✔ WebGL unavailable fails visibly without hiding original video (35.2315ms)
+✔ incremental ad card insertion is detected (283.0298ms)
+✔ modified blocker hard-locks optional features and non-home routes (43.1809ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (145.9105ms)
+✔ header settings individually hide all eight optional items without hiding window controls (76.555ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (28.1122ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (193.9977ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (335.0046ms)
+✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (31.8649ms)
+✔ promotion containing video markup stays hidden and is never converted to display contents (186.9122ms)
+✔ message dark theme covers the background, translucent sidebar RGB tokens and header reserve (74.3577ms)
+✔ category disclosure is click-only, replaces primary navigation and restores its saved visibility (924.8142ms)
+✔ native banner layers and handlers are preserved; center text does not intercept the pointer (33.5747ms)
+✔ homepage prefetch uses the existing loader and respects Save-Data instead of issuing duplicate API requests (18.9689ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (214.771ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (38.019ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (54.9502ms)
+✔ signed out retains a working login link (45.4937ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (41.8163ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (21.7292ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (34.9476ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1749.3456

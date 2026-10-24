@@ -1,0 +1,85 @@
+{
+  "url": "https://www.bilibili.com/zh-Hans",
+  "banner": {
+    "x": 0,
+    "y": 58,
+    "width": 1100,
+    "height": 88.3125,
+    "top": 58,
+    "right": 1100,
+    "bottom": 146.3125,
+    "left": 0
+  },
+  "brand": "bili space",
+  "cards": 22,
+  "roots": [
+    {
+      "c": "feed2",
+      "rect": {
+        "x": 33.11249923706055,
+        "y": 146.3125,
+        "width": 1022.5750122070312,
+        "height": 1410.1624755859375,
+        "top": 146.3125,
+        "right": 1055.6875114440918,
+        "bottom": 1556.4749755859375,
+        "left": 33.11249923706055
+      },
+      "columns": "240.637px 240.65px 240.637px 240.65px"
+    }
+  ],
+  "shims": [
+    {
+      "c": "fixed-channel-shim",
+      "display": "block",
+      "rect": {
+        "x": 33.11249923706055,
+        "y": 146.3125,
+        "width": 1104,
+        "height": 0,
+        "top": 146.3125,
+        "right": 1137.1124992370605,
+        "bottom": 146.3125,
+        "left": 33.11249923706055
+      },
+      "html": "<div class=\"fixed-channel-shim\"></div>"
+    },
+    {
+      "c": "load-more-anchor",
+      "display": "block",
+      "rect": {
+        "x": 33.11249923706055,
+        "y": 1555.4749755859375,
+        "width": 1022.5750122070312,
+        "height": 1,
+        "top": 1555.4749755859375,
+        "right": 1055.6875114440918,
+        "bottom": 1556.4749755859375,
+        "left": 33.11249923706055
+      },
+      "html": "<div class=\"load-more-anchor\" data-bs-feed=\"sentinel\"><div class=\"bili-video-card\" style=\"--cover-radio: 56.25%;\"><div class=\"bili-video-card__skeleton loading_animation\"><div class=\"bili-video-card__skeleton--cover\"></div><div class=\"bili-video-card__skeleton--info\"><div class=\"bili-video-card__skeleton--right\"><p class=\"bili-video-card__skeleton--text\"></p><p class=\"bili-video-card__skeleton--text short\"></p><p class=\"bili-video-card__skeleton--light\"></p></div></div></div><!----><!----></div></div>"
+    }
+  ],
+  "overflow": false,
+  "source_sha256": "e796ac10678308b772a73ccebf4c7deda6fffbda5e15e16a3deab3e539fe3f1b",
+  "scroll": [
+    {
+      "y": 852.7999877929688,
+      "height": 2266,
+      "cards": 34,
+      "loaded": 22
+    },
+    {
+      "y": 1561.5999755859375,
+      "height": 2738,
+      "cards": 43,
+      "loaded": 31
+    },
+    {
+      "y": 2034.4000244140625,
+      "height": 3211,
+      "cards": 52,
+      "loaded": 40
+    }
+  ]
+}

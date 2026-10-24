@@ -1,0 +1,102 @@
+{
+  "url": "https://www.bilibili.com/zh-Hans",
+  "banner": {
+    "x": 0,
+    "y": 58,
+    "width": 1100,
+    "height": 100,
+    "top": 58,
+    "right": 1100,
+    "bottom": 158,
+    "left": 0
+  },
+  "brand": "bili space",
+  "cards": 34,
+  "roots": [
+    {
+      "c": "feed2",
+      "rect": {
+        "x": 33.11249923706055,
+        "y": 158,
+        "width": 1022.5750122070312,
+        "height": 2119.25,
+        "top": 158,
+        "right": 1055.6875114440918,
+        "bottom": 2277.25,
+        "left": 33.11249923706055
+      },
+      "columns": "240.637px 240.65px 240.637px 240.65px"
+    }
+  ],
+  "shims": [
+    {
+      "c": "fixed-channel-shim",
+      "display": "block",
+      "rect": {
+        "x": 33.11249923706055,
+        "y": 158,
+        "width": 1104,
+        "height": 0,
+        "top": 158,
+        "right": 1137.1124992370605,
+        "bottom": 158,
+        "left": 33.11249923706055
+      },
+      "html": "<div class=\"fixed-channel-shim\"></div>"
+    },
+    {
+      "c": "load-more-anchor",
+      "display": "block",
+      "rect": {
+        "x": 33.11249923706055,
+        "y": 1290.6500244140625,
+        "width": 1022.5750122070312,
+        "height": 1,
+        "top": 1290.6500244140625,
+        "right": 1055.6875114440918,
+        "bottom": 1291.6500244140625,
+        "left": 33.11249923706055
+      },
+      "html": "<div class=\"load-more-anchor\" data-bs-feed=\"sentinel\"><div class=\"bili-video-card\" style=\"--cover-radio: 56.25%;\"><div class=\"bili-video-card__skeleton loading_animation\"><div class=\"bili-video-card__skeleton--cover\"></div><div class=\"bili-video-card__skeleton--info\"><div class=\"bili-video-card__skeleton--right\"><p class=\"bili-video-card__skeleton--text\"></p><p class=\"bili-video-card__skeleton--text short\"></p><p class=\"bili-video-card__skeleton--light\"></p></div></div></div><!----><!----></div></div>"
+    }
+  ],
+  "overflow": false,
+  "source_sha256": "09b3788ecf910aa68fd82eda9510f4bef0b3157ada674119db357ca14f21050d",
+  "loaded_without_scrolling": 22,
+  "banner_motion": [
+    {
+      "mode": "static",
+      "transform": "matrix(1.025, 0, 0, 1.025, -4.2, 0)",
+      "x": "-4.20px",
+      "layers": 0
+    },
+    {
+      "mode": "static",
+      "transform": "matrix(1.025, 0, 0, 1.025, 4.2, 0)",
+      "x": "4.20px",
+      "layers": 0
+    }
+  ],
+  "reduced_motion_banner": "none",
+  "scroll": [
+    {
+      "y": 1573.5999755859375,
+      "height": 3695,
+      "cards": 61,
+      "loaded": 49
+    },
+    {
+      "y": 2991.199951171875,
+      "height": 5114,
+      "cards": 82,
+      "loaded": 70
+    },
+    {
+      "y": 4409.60009765625,
+      "height": 6598,
+      "cards": 109,
+      "loaded": 97
+    }
+  ],
+  "result": "PASS"
+}

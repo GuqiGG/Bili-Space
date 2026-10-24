@@ -1,0 +1,1217 @@
+{
+  "home": {
+    "url": "https://www.bilibili.com/zh-Hans",
+    "title": "bilibili",
+    "roots": [
+      {
+        "tag": "DIV",
+        "id": "app",
+        "class": "",
+        "top": 64,
+        "height": 1540,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "search-panel nav-search-panel",
+        "top": 0,
+        "height": 0,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "13px 0px 16px"
+      },
+      {
+        "tag": "MAIN",
+        "id": "",
+        "class": "bili-feed4-layout",
+        "top": 64,
+        "height": 1540,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px 34.4px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "feed2",
+        "top": 64,
+        "height": 1540,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px"
+      }
+    ],
+    "children": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "browser-tip",
+        "top": 64,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "app",
+        "class": "",
+        "top": 64,
+        "height": 1540,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "bili-video-card__wrap __scale-wrap",
+            "top": 64,
+            "height": 0,
+            "bg": "rgba(0, 0, 0, 0)",
+            "margin": "0px",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "bili-feed4",
+            "top": 64,
+            "height": 1540,
+            "bg": "rgba(0, 0, 0, 0)",
+            "margin": "0px",
+            "padding": "0px"
+          }
+        ]
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "vite-legacy-polyfill",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "vite-legacy-entry",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "IFRAME",
+        "id": "GkHnzAyjil",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "IFRAME",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "bs-pip-controls",
+        "top": 650,
+        "height": 42,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "class": "",
+            "top": 650,
+            "height": 42,
+            "bg": "rgba(22, 22, 27, 0.85)",
+            "margin": "0px",
+            "padding": "8px 12px"
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "class": "",
+            "top": 650,
+            "height": 42,
+            "bg": "rgba(22, 22, 27, 0.85)",
+            "margin": "0px",
+            "padding": "8px 12px"
+          }
+        ]
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 704,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      }
+    ],
+    "inputs": [
+      {
+        "c": "nav-search-input",
+        "ph": ""
+      }
+    ],
+    "styles": [
+      "html[data-bs-ads=\"true\"] .bili-feed4-layout .recommended-container_floor-aside .container { grid-template-rows: auto !important; }"
+    ],
+    "text": "77万\n1782\n01:54:30\n《B 界 修 仙 传：长 篇 大 电 影》\n进击的金厂长\n· 2天前\n59.1万\n1105\n16:54\n逆天！神人母女偷钱炒外汇巨亏2000万，四旬老爹何时才能逃离"
+  },
+  "history": {
+    "url": "https://www.bilibili.com/zh-Hans/history",
+    "title": "历史记录",
+    "roots": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "search-panel nav-search-panel",
+        "top": 0,
+        "height": 0,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "13px 0px 16px"
+      },
+      {
+        "tag": "DIV",
+        "id": "app",
+        "class": "",
+        "top": 128,
+        "height": 1102,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      {
+        "tag": "MAIN",
+        "id": "",
+        "class": "history-record empty",
+        "top": 128,
+        "height": 308,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "30px 0px 0px"
+      }
+    ],
+    "children": [
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "HEADER",
+        "id": "biliMainHeader",
+        "class": "",
+        "top": 64,
+        "height": 64,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "bili-header bili-header--mini",
+            "top": 64,
+            "height": 0,
+            "bg": "rgba(0, 0, 0, 0)",
+            "margin": "0px",
+            "padding": "0px"
+          }
+        ]
+      },
+      {
+        "tag": "DIV",
+        "id": "app",
+        "class": "",
+        "top": 128,
+        "height": 1102,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "MAIN",
+            "id": "",
+            "class": "history-record empty",
+            "top": 128,
+            "height": 308,
+            "bg": "rgb(22, 22, 24)",
+            "margin": "0px",
+            "padding": "30px 0px 0px"
+          }
+        ]
+      },
+      {
+        "tag": "FOOTER",
+        "id": "biliMainFooter",
+        "class": "",
+        "top": 1230,
+        "height": 74,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "bili-footer-overseas",
+            "top": 1230,
+            "height": 74,
+            "bg": "rgb(246, 247, 248)",
+            "margin": "0px",
+            "padding": "30px 0px"
+          }
+        ]
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "vite-legacy-polyfill",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "vite-legacy-entry",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "bs-pip-controls",
+        "top": 1112,
+        "height": 42,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "class": "",
+            "top": 1112,
+            "height": 42,
+            "bg": "rgba(22, 22, 27, 0.85)",
+            "margin": "0px",
+            "padding": "8px 12px"
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "class": "",
+            "top": 1112,
+            "height": 42,
+            "bg": "rgba(22, 22, 27, 0.85)",
+            "margin": "0px",
+            "padding": "8px 12px"
+          }
+        ]
+      },
+      {
+        "tag": "IFRAME",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      }
+    ],
+    "inputs": [
+      {
+        "c": "nav-search-input",
+        "ph": ""
+      }
+    ],
+    "styles": [
+      ".right-channel-container.is-zh .channel-items__left[data-v-6980a397] { display: grid; width: 100%; grid-auto-flow: column; grid-column: span 4; gap: 10px; grid-template-rows: repeat(2, 1fr); position: relative; }",
+      "@media (max-width: 1099.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+      "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+      "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(11, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+22) { display: none !important; }\n}",
+      "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(12, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+24) { display: none !important; }\n}",
+      "@media (min-width: 2200px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(14, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+28) { display: none !important; }\n}",
+      ".right-channel-container.is-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+      ".right-channel-container.not-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+      "@media (max-width: 1099.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+      "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+      "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+      "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+      "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(3, 1fr); }\n}",
+      "@media (min-width: 2200px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(2, 1fr); }\n}",
+      ".bili-header .manga-left { border-right: .5px solid var(--line_regular); padding-right: 20px; display: grid; grid-template-columns: 136px 136px; gap: 16px; }",
+      ".big-logo__switch[data-v-76544956] { display: grid; grid-template-rows: 8px 12px; row-gap: 6px; justify-items: start; align-content: center; padding: 4px 0px 4px 4px; min-height: 32px; }",
+      "html[data-bs-ads=\"true\"] .bili-feed4-layout .recommended-container_floor-aside .container { grid-template-rows: auto !important; }"
+    ],
+    "text": "历史记录\n登录发现更多精彩\n立即登录\nbilibili\n用户协议\n隐私协议\nBilibili社区准则\n侵权申诉\n↙ 返回\nⅡ / ▶"
+  },
+  "dynamic": {
+    "url": "https://www.bilibili.com/zh-Hans",
+    "title": "bilibili",
+    "roots": [
+      {
+        "tag": "DIV",
+        "id": "app",
+        "class": "",
+        "top": 64,
+        "height": 2290,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "search-panel nav-search-panel",
+        "top": 0,
+        "height": 0,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "13px 0px 16px"
+      },
+      {
+        "tag": "MAIN",
+        "id": "",
+        "class": "bili-feed4-layout",
+        "top": 64,
+        "height": 2290,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "feed2",
+        "top": 64,
+        "height": 2290,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px"
+      }
+    ],
+    "children": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "browser-tip",
+        "top": 64,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "app",
+        "class": "",
+        "top": 64,
+        "height": 2290,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "bili-video-card__wrap __scale-wrap",
+            "top": 64,
+            "height": 0,
+            "bg": "rgba(0, 0, 0, 0)",
+            "margin": "0px",
+            "padding": "0px"
+          },
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "bili-feed4",
+            "top": 64,
+            "height": 2290,
+            "bg": "rgba(0, 0, 0, 0)",
+            "margin": "0px",
+            "padding": "0px"
+          }
+        ]
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "vite-legacy-polyfill",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "vite-legacy-entry",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "IFRAME",
+        "id": "h5LtOZ7Qje",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "IFRAME",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "bs-pip-controls",
+        "top": 650,
+        "height": 42,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "class": "",
+            "top": 650,
+            "height": 42,
+            "bg": "rgba(22, 22, 27, 0.85)",
+            "margin": "0px",
+            "padding": "8px 12px"
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "class": "",
+            "top": 650,
+            "height": 42,
+            "bg": "rgba(22, 22, 27, 0.85)",
+            "margin": "0px",
+            "padding": "8px 12px"
+          }
+        ]
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 704,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "lt-row",
+        "top": 703,
+        "height": 1,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "lt-col",
+            "top": 704,
+            "height": 1,
+            "bg": "rgba(0, 0, 0, 0)",
+            "margin": "0px 56px",
+            "padding": "0px"
+          }
+        ]
+      }
+    ],
+    "inputs": [
+      {
+        "c": "nav-search-input",
+        "ph": ""
+      }
+    ],
+    "styles": [
+      "html[data-bs-ads=\"true\"] .bili-feed4-layout .recommended-container_floor-aside .container { grid-template-rows: auto !important; }"
+    ],
+    "text": "170.4万\n3890\n04:58:59\n居然被电影骗了20年！一口气看完【哈利波特与魔法石】原著深度解析（和电影吐槽）\n卡酱目标全白金\n· 10月7日\n6.7万\n649\n07:43\n住进去指定疯！日"
+  },
+  "search": {
+    "url": "https://search.bilibili.com/zh-Hans/all?keyword=%E8%8B%8F%E4%B8%B9",
+    "title": "苏丹-哔哩哔哩_bilibili",
+    "roots": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "search-panel nav-search-panel",
+        "top": 0,
+        "height": 0,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "13px 0px 16px"
+      },
+      {
+        "tag": "DIV",
+        "id": "app",
+        "class": "",
+        "top": 128,
+        "height": 2223,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "search-header",
+        "top": 153,
+        "height": 107,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "search-input",
+        "top": 153,
+        "height": 44,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "25px 0px 15px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "search-panel search-panel-popover",
+        "top": 0,
+        "height": 0,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "13px 0px 16px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "search-content--gray search-content",
+        "top": 260,
+        "height": 2041,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "search-page search-page-all",
+        "top": 260,
+        "height": 2041,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "brand-ad-list search-all-list",
+        "top": 260,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "video i_wrapper search-all-list",
+        "top": 260,
+        "height": 1957,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "30px 64px 0px"
+      }
+    ],
+    "children": [
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "old-browser-tip",
+        "top": 64,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "bili-header-container",
+        "class": "",
+        "top": 64,
+        "height": 64,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "bili-header bili-header--mini",
+            "top": 64,
+            "height": 0,
+            "bg": "rgba(0, 0, 0, 0)",
+            "margin": "0px",
+            "padding": "0px"
+          }
+        ]
+      },
+      {
+        "tag": "DIV",
+        "id": "app",
+        "class": "",
+        "top": 128,
+        "height": 2223,
+        "bg": "rgb(22, 22, 24)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "search-layout clearfix",
+            "top": 128,
+            "height": 2223,
+            "bg": "rgba(0, 0, 0, 0)",
+            "margin": "0px",
+            "padding": "0px"
+          }
+        ]
+      },
+      {
+        "tag": "DIV",
+        "id": "biliMainFooter",
+        "class": "biliMainFooterWrapper",
+        "top": 2351,
+        "height": 78,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "bili-footer-overseas",
+            "top": 2351,
+            "height": 78,
+            "bg": "rgb(246, 247, 248)",
+            "margin": "0px",
+            "padding": "30px 0px"
+          }
+        ]
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "vite-legacy-polyfill",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "vite-legacy-entry",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "IFRAME",
+        "id": "3CWSee2E4S",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "IFRAME",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "class": "bs-pip-controls",
+        "top": 638,
+        "height": 38,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "class": "",
+            "top": 638,
+            "height": 38,
+            "bg": "rgba(22, 22, 27, 0.85)",
+            "margin": "0px",
+            "padding": "8px 12px"
+          },
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "class": "",
+            "top": 638,
+            "height": 38,
+            "bg": "rgba(22, 22, 27, 0.85)",
+            "margin": "0px",
+            "padding": "8px 12px"
+          }
+        ]
+      },
+      {
+        "tag": "SCRIPT",
+        "id": "",
+        "class": "",
+        "top": 0,
+        "height": 0,
+        "bg": "rgba(0, 0, 0, 0)",
+        "margin": "0px",
+        "padding": "0px",
+        "children": []
+      }
+    ],
+    "inputs": [
+      {
+        "c": "nav-search-input",
+        "ph": ""
+      },
+      {
+        "c": "search-input-el",
+        "ph": "输入关键字搜索"
+      }
+    ],
+    "styles": [
+      ".right-channel-container.is-zh .channel-items__left[data-v-6980a397] { display: grid; width: 100%; grid-auto-flow: column; grid-column: span 4; gap: 10px; grid-template-rows: repeat(2, 1fr); position: relative; }",
+      "@media (max-width: 1099.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+      "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(9, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+18) { display: none !important; }\n}",
+      "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(11, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+22) { display: none !important; }\n}",
+      "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(12, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+24) { display: none !important; }\n}",
+      "@media (min-width: 2200px) {\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] { grid-template-columns: repeat(14, 1fr); }\n  .right-channel-container.is-zh .channel-items__left[data-v-6980a397] > :nth-of-type(n+28) { display: none !important; }\n}",
+      ".right-channel-container.is-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+      ".right-channel-container.not-zh .channel-items__right[data-v-6980a397] { display: grid; grid-auto-flow: column; gap: 10px 4px; grid-column: span 1; grid-template-rows: repeat(2, 1fr); }",
+      "@media (max-width: 1099.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+      "@media (min-width: 1100px) and (max-width: 1366.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+      "@media (min-width: 1367px) and (max-width: 1700.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+      "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(4, 1fr); }\n}",
+      "@media (min-width: 1701px) and (max-width: 2199.9px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(3, 1fr); }\n}",
+      "@media (min-width: 2200px) {\n  .more-channel-popover.is-zh[data-v-6980a397] { grid-template-rows: repeat(2, 1fr); }\n}",
+      ".bili-header .manga-left { border-right: .5px solid var(--line_regular); padding-right: 20px; display: grid; grid-template-columns: 136px 136px; gap: 16px; }",
+      ".big-logo__switch[data-v-76544956] { display: grid; grid-template-rows: 8px 12px; row-gap: 6px; justify-items: start; align-content: center; padding: 4px 0px 4px 4px; min-height: 32px; }",
+      "html[data-bs-ads=\"true\"] .bili-feed4-layout .recommended-container_floor-aside .container { grid-template-rows: auto !important; }"
+    ],
+    "text": "搜索\n综合\n番剧\n0\n用户\n99+\n19.8万\n550\n24:35\n苏丹内战：本世纪最大屠杀，为何无人关注？\n青灯夜华\n· 8月14日\n1.8万\n94\n01:00:12\nAI短剧 | 新婚之夜读懂苏丹"
+  }
+}

@@ -1,0 +1,1 @@
+{"brandCentered":true,"maximizeSquare":true,"glyphFade":true,"providedMessageIcon":true,"videoHome":"https://www.bilibili.com/","headerTab":true,"hideHome":true,"hideMessages":true,"independentVideoHome":true}

@@ -1,0 +1,14 @@
+MODIFIED_FILE: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js [49099 bytes; SHA256 4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f]
+DIFF_FILE: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch [24876 bytes; SHA256 d5e9cdebf35562096fe67c1b56f79ff1a587bda07502981a8b5fde902c78047d]
+VERIFICATION: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt [42222 bytes; SHA256 3474a3f1929b3f8b80b61931817ec2b50af4ca8c0b7e881ce631134744fd9c64]
+ROLLBACK: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh [234677 bytes; SHA256 c8490ac5e22e82eeab7fcbadc03f8e8d714f0d6d80b129b610bc7cfbc3d2212d]
+BASELINE: {"settings":{"hideLiveCards":false,"blockAdCards":true,"videoProfileButton":true},"routes":["home","video","search","home","home"],"uids":["123","",""]}
+MODIFIED: {"settings":{"hideLiveCards":false,"blockAdCards":false,"videoProfileButton":false},"routes":["home","disabled","disabled","disabled","home"],"uids":["123","456",""]}
+ROLLBACK: {"settings":{"hideLiveCards":false,"blockAdCards":true,"videoProfileButton":true},"routes":["home","video","search","home","home"],"uids":["123","",""]}
+Verified: pristine target unchanged; rollback hash matches; diff reconstructs exact modified bytes.
+UI BASELINE: {"activeHistory":null,"avatar":null,"messages":null,"lightsSvg":0,"query":"","siteSearch":"block","loading":null,"nativeSearch":false,"channels":"none","feedColumns":"","searchBackground":"rgba(0, 0, 0, 0)"}
+UI MODIFIED: {"activeHistory":"¿˙ ∑","avatar":"https://i0.hdslb.com/bfs/face/test-avatar.png","messages":"https://message.bilibili.com/#/reply","lightsSvg":3,"query":"À’µ§","siteSearch":"none","loading":"true","nativeSearch":true,"channels":"none","feedColumns":"repeat(var(--bs-feed-columns),minmax(0,1fr))","searchBackground":"rgb(22, 22, 24)"}
+UI ROLLBACK: {"activeHistory":null,"avatar":null,"messages":null,"lightsSvg":0,"query":"","siteSearch":"block","loading":null,"nativeSearch":false,"channels":"none","feedColumns":"","searchBackground":"rgba(0, 0, 0, 0)"}
+HEADER BASELINE: {"brandCentered":false,"maximizeSquare":false,"glyphFade":false,"providedMessageIcon":false,"videoHome":null,"headerTab":false,"hideHome":false,"hideMessages":false,"independentVideoHome":false}
+HEADER MODIFIED: {"brandCentered":true,"maximizeSquare":true,"glyphFade":true,"providedMessageIcon":true,"videoHome":"https://www.bilibili.com/","headerTab":true,"hideHome":true,"hideMessages":true,"independentVideoHome":true}
+HEADER ROLLBACK: {"brandCentered":false,"maximizeSquare":false,"glyphFade":false,"providedMessageIcon":false,"videoHome":null,"headerTab":false,"hideHome":false,"hideMessages":false,"independentVideoHome":false}
