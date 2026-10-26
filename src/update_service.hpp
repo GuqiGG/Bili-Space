@@ -32,7 +32,7 @@ struct UpdateHttp{
     ~UpdateHttp(){if(request)WinHttpCloseHandle(request);if(connection)WinHttpCloseHandle(connection);if(session)WinHttpCloseHandle(session);}
     void open(const std::string& url){
         const std::string manifest="https://bili.gvqi.top/updates/windows-x64.json";if(url!=manifest&&!trustedUpdatePackage(url))throw std::runtime_error("更新地址不可信");
-        session=WinHttpOpen(L"Bili-Space/0.1.35",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);if(!session)throw std::runtime_error("更新网络初始化失败");WinHttpSetTimeouts(session,5000,5000,15000,15000);
+        session=WinHttpOpen(L"Bili-Space/0.1.36",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);if(!session)throw std::runtime_error("更新网络初始化失败");WinHttpSetTimeouts(session,5000,5000,15000,15000);
         const wchar_t* host=L"bili.gvqi.top";INTERNET_PORT port=443;DWORD flags=WINHTTP_FLAG_SECURE;
 #ifdef BILI_UPDATE_TEST
         if(updateTestPort){host=L"127.0.0.1";port=updateTestPort;flags=0;}

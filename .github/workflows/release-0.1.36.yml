@@ -1,0 +1,57 @@
+name: Build and release Bili-Space 0.1.36
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/release-0.1.36.yml']
+permissions:
+  contents: write
+concurrency:
+  group: release-0.1.36
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            src
+            assets
+            runtime
+            vendor
+            scripts
+            installer
+            tests
+            docs
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Regression tests
+        shell: pwsh
+        run: |
+          npm ci
+          node --test --test-concurrency=1 tests/*.test.cjs
+          if ($LASTEXITCODE) { throw 'Tests failed' }
+      - name: Build native client and packages
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .tools, verification | Out-Null
+          ./scripts/build.ps1
+          if ($LASTEXITCODE) { throw 'Build failed' }
+          python scripts/package.py
+          if ($LASTEXITCODE) { throw 'ZIP failed' }
+          python scripts/build_installer.py
+          if ($LASTEXITCODE) { throw 'Setup failed' }
+      - name: Publish ZIP, Setup and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: pwsh
+        run: |
+          python scripts/publish_current_release.py
+          if ($LASTEXITCODE) { throw 'Release publication failed' }

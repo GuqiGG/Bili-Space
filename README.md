@@ -16,6 +16,8 @@
 
 ## 为观看留出空间
 
+**[下载安装版或便携版](https://github.com/GuqiGG/Bili-Space/releases/latest)** · 安装版提供开始菜单与卸载入口，登录和设置会保留。Windows 10/11 x64，需要 WebView2 Runtime。
+
 保留 B站的播放器、弹幕与登录，让桌面体验更清爽。
 
 - **看得舒服** — 深浅主题、广告位清理、200% 音量与无边框画中画。
