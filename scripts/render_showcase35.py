@@ -17,13 +17,14 @@ async def main():
   else:raise RuntimeError('Initial fixture did not settle')
   await c.call('Page.stopLoading')
   await asyncio.sleep(.5)
-  await c.call('Emulation.setDeviceMetricsOverride',{'width':1600,'height':1020,'deviceScaleFactor':1,'mobile':False});await c.call('Emulation.setScriptExecutionDisabled',{'value':True})
+  await c.call('Emulation.setDeviceMetricsOverride',{'width':1600,'height':960,'deviceScaleFactor':1,'mobile':False});await c.call('Emulation.setScriptExecutionDisabled',{'value':True});await c.call('Emulation.setDefaultBackgroundColorOverride',{'color':{'r':0,'g':0,'b':0,'a':0}})
   html=(R/'docs/design/showcase.html').read_text(encoding='utf8')
   for n in ['home','settings']:html=html.replace('../images/'+n+'.png','data:image/png;base64,'+base64.b64encode((R/f'docs/images/{n}.png').read_bytes()).decode())
   tree=await c.call('Page.getFrameTree');await c.call('Page.setDocumentContent',{'frameId':tree['frameTree']['frame']['id'],'html':html});await asyncio.sleep(.8)
-  a=await c.call('Page.captureScreenshot',{'format':'png','captureBeyondViewport':False});(R/'docs/images/showcase.png').write_bytes(base64.b64decode(a['data']))
+  a=await c.call('Page.captureScreenshot',{'format':'png','captureBeyondViewport':False});(R/'verification/readme36-transparent.png').write_bytes(base64.b64decode(a['data']))
+  a=await c.call('Page.captureScreenshot',{'format':'webp','quality':90,'captureBeyondViewport':False});(R/'docs/images/showcase.webp').write_bytes(base64.b64decode(a['data']))
   tree=await c.call('DOM.getDocument',{'depth':5});assert 'Product Showcase' in str(tree),str(tree)[:500]
-  print('Rendered docs/images/showcase.png from actual screenshots with CSS perspective')
+  print('Rendered transparent readme36-transparent.png + showcase.webp from actual client screenshots')
 try:asyncio.run(main())
 finally:
  if proc:
