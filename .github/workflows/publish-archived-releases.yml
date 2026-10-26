@@ -1,0 +1,111 @@
+name: Publish archived Bili-Space releases
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/publish-archived-releases.yml']
+permissions:
+  contents: write
+concurrency:
+  group: archived-release-publisher
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Publish original archived packages and verify asset hashes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import os,json,urllib.request,urllib.error,urllib.parse,hashlib,zipfile,io,time
+          from pathlib import Path
+          REPO='GuqiGG/Bili-Space'
+          SOURCE='b1db5a83fb59d369234b37da12b2627c707dec3d'
+          EXPECTED=json.loads(r'''[{"file":"BetterBiliSpace-0.1.11-win64.zip","version":"0.1.11","size":52014562,"sha256":"e1b1b060fb42250b75519fc2eea148ad2e2c0b8a281f5d5eccd237ee00aa145d","crc":true},{"file":"BetterBiliSpace-0.1.13-win64.zip","version":"0.1.13","size":52020570,"sha256":"897300f0ff7a41a73ffda2948a47cf172bb13dae9d67ceecb40895fed1d348d1","crc":true},{"file":"BetterBiliSpace-0.1.15-win64.zip","version":"0.1.15","size":52025194,"sha256":"5a05450015068297ecea15402ea2aa3c9dd718129b4c75117d38052fe9bdc9f7","crc":true},{"file":"BetterBiliSpace-0.1.16-win64.zip","version":"0.1.16","size":52029111,"sha256":"074dde8a1c190199c1a2fc1b9346fe80cdff4d4a271edaeb12e337ec33a0edb7","crc":true},{"file":"BetterBiliSpace-0.1.17-win64.zip","version":"0.1.17","size":52029121,"sha256":"55a44a0a6e10685a29ac666c3286c909b1e151259c065d6b6e5eee030511834e","crc":true},{"file":"BetterBiliSpace-0.1.18-win64.zip","version":"0.1.18","size":52029729,"sha256":"f255fb9ee11cb7dbd8e709fe3d9121487dce142f273ffb0fae3d13c17f431a7c","crc":true},{"file":"BetterBiliSpace-0.1.19-win64.zip","version":"0.1.19","size":52030075,"sha256":"e7510d547b2e23aedffd435b3f3266c399173d57a970e6db85808569b30b74d6","crc":true},{"file":"BetterBiliSpace-0.1.20-win64.zip","version":"0.1.20","size":52037107,"sha256":"3c1a4bb31921c957f9721388bed7929be78279b109986088138df9294c779cad","crc":true},{"file":"BetterBiliSpace-0.1.21-win64.zip","version":"0.1.21","size":52040377,"sha256":"db9d49cf8c726bcd41b0168046def523852c0c1de6b0d0bc37928a9f6142f4fb","crc":true},{"file":"BetterBiliSpace-0.1.22-win64.zip","version":"0.1.22","size":52040068,"sha256":"32879f064d4108ddc66a306d1d85ae26a0635c90360e392569de1726d3fecbc0","crc":true},{"file":"BetterBiliSpace-0.1.23-win64.zip","version":"0.1.23","size":52042213,"sha256":"22617f12e8e62197f9f2a18e1b70f10acb677074dc73a3a4b49aaa7c95e1e3b6","crc":true},{"file":"BetterBiliSpace-0.1.24-win64.zip","version":"0.1.24","size":52043887,"sha256":"29aa7c27e9c0734cc166ecff8c6afdf63fdfaa02c27008778c5e0efcfdb6097b","crc":true},{"file":"BetterBiliSpace-0.1.25-win64.zip","version":"0.1.25","size":52047323,"sha256":"c235f4eb824a13c913d97741d46bd4fa5e8ac88c177f538ddfbc44808f58fb42","crc":true},{"file":"BetterBiliSpace-0.1.26-win64.zip","version":"0.1.26","size":52114748,"sha256":"945b25ac3ff3746ebf80ddcba5ba84164a206fe771b818be491150970b49b83a","crc":true},{"file":"BetterBiliSpace-0.1.27-win64.zip","version":"0.1.27","size":52115131,"sha256":"3a191151629779ebbe58ae9c5cb47b4d7a933aa82f0583b4dfce1d1ca89bcf1c","crc":true},{"file":"BetterBiliSpace-0.1.28-win64.zip","version":"0.1.28","size":52066427,"sha256":"cc8aae9bdf49bab0ea889e446d6c0f93ae04dcae2211fa05f5bf7ef67500a421","crc":true},{"file":"BetterBiliSpace-0.1.29-win64.zip","version":"0.1.29","size":52078245,"sha256":"aed753dc943f2eea1469ca4bd1c27c6ab0e6f911ba8d896c4fa76732a154ba6f","crc":true},{"file":"BetterBiliSpace-0.1.30-win64.zip","version":"0.1.30","size":52080340,"sha256":"4df9b50857372c53ca39d95495024694a451a6047167110a690a7cc9d9ced38c","crc":true},{"file":"BetterBiliSpace-0.1.31-win64.zip","version":"0.1.31","size":52086820,"sha256":"ef7f0f87d69a8eb1fe8f8f4eb30a722de02b21e6edef829afcc045859e5bc59b","crc":true},{"file":"BetterBiliSpace-0.1.32-win64.zip","version":"0.1.32","size":52091041,"sha256":"f0b96812bad42578576a429b049887207acb36ecbaa2141d4f1a9d6d8c1b001e","crc":true},{"file":"BetterBiliSpace-0.1.33-win64.zip","version":"0.1.33","size":52103674,"sha256":"8ab51104d925f9c9517518fd74fa3f18b79d09bb56e38202abb30ce0165b5f04","crc":true},{"file":"Bili-Space-0.1.34-win64.zip","version":"0.1.34","size":52176123,"sha256":"c7b459eab194720d5483344702052fe8800a90f25c911d23e19cac63103834eb","crc":true},{"file":"Bili-Space-0.1.35-win64.zip","version":"0.1.35","size":56193498,"sha256":"2d00033decf2ed39add85fb84413597deb21b6c7fcb785402f8483b3da7391a7","crc":true}]''')
+          TOKEN=os.environ['GH_TOKEN']
+          BASE='https://api.github.com/repos/'+REPO
+          OUT=Path('release-staging');OUT.mkdir(exist_ok=True)
+          
+          def api(path,method='GET',data=None,content_type='application/json'):
+           url=path if path.startswith('https://') else BASE+path
+           if not (url.startswith(BASE+'/') or url.startswith('https://uploads.github.com/repos/'+REPO+'/')):raise RuntimeError('Unexpected API host/path')
+           headers={'Authorization':'Bearer '+TOKEN,'User-Agent':'Bili-Space-archive-publisher','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':content_type}
+           body=json.dumps(data).encode() if data is not None and content_type=='application/json' else data
+           with urllib.request.urlopen(urllib.request.Request(url,data=body,method=method,headers=headers),timeout=240) as response:return json.load(response)
+          
+          def raw(path):
+           url='https://raw.githubusercontent.com/'+REPO+'/'+SOURCE+'/'+urllib.parse.quote(path,safe='/')
+           for attempt in range(3):
+            try:
+             with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'Bili-Space-archive-publisher'}),timeout=180) as response:return response.read()
+            except (urllib.error.URLError,TimeoutError):
+             if attempt==2:raise
+             time.sleep(3*(attempt+1))
+          
+          def safe_archive(data):
+           with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            if archive.testzip():raise RuntimeError('Bad ZIP CRC')
+            for name in archive.namelist():
+             parts=name.replace('\\','/').split('/')
+             if name.startswith('/') or '..' in parts or any(x.lower() in {'.appdata','cookies','login data','settings.json','.git'} for x in parts):raise RuntimeError('Unsafe/private archive path')
+          
+          def upload(release,name,data,mime):
+           digest='sha256:'+hashlib.sha256(data).hexdigest()
+           fresh=api('/releases/'+str(release['id']))
+           old=next((a for a in fresh['assets'] if a['name']==name),None)
+           if old:
+            if old.get('digest')!=digest or old['size']!=len(data) or old['state']!='uploaded':raise RuntimeError('Existing asset differs: '+name)
+            return old
+           url=release['upload_url'].split('{',1)[0]+'?'+urllib.parse.urlencode({'name':name})
+           result=api(url,'POST',data,mime)
+           if result.get('digest')!=digest or result['size']!=len(data) or result['state']!='uploaded':raise RuntimeError('Remote digest mismatch: '+name)
+           return result
+          
+          # All archive bytes come from the user's pre-existing immutable Git commit.
+          tree=api('/git/trees/'+SOURCE+'?recursive=1');assert not tree.get('truncated')
+          blobs={e['path']:e for e in tree['tree'] if e['type']=='blob'}
+          latest=sorted(EXPECTED,key=lambda p:tuple(map(int,p['version'].split('.'))))[-1]['version']
+          results=[]
+          for item in EXPECTED:
+           name=item['file'];version=item['version'];tag='v'+version
+           if version=='0.1.11':
+            # This historical build survived only as an extracted directory; repack its original Git blobs.
+            prefix='releases/BetterBiliSpace-0.1.11-win64/'
+            members=sorted((path,meta) for path,meta in blobs.items() if path.startswith(prefix))
+            assert len(members)==42
+            stream=io.BytesIO()
+            with zipfile.ZipFile(stream,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
+             for path,meta in members:
+              data=raw(path);assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==meta['sha']
+              info=zipfile.ZipInfo(path[len(prefix):],date_time=(1980,1,1,0,0,0));info.create_system=3;info.external_attr=0o100644<<16;info.compress_type=zipfile.ZIP_DEFLATED
+              archive.writestr(info,data,compress_type=zipfile.ZIP_DEFLATED,compresslevel=9)
+            data=stream.getvalue()
+           else:
+            data=raw('releases/'+name)
+            assert len(data)==item['size'] and hashlib.sha256(data).hexdigest()==item['sha256'],name
+           safe_archive(data);digest=hashlib.sha256(data).hexdigest()
+           try:release=api('/releases/tags/'+tag)
+           except urllib.error.HTTPError as error:
+            if error.code!=404:raise
+            body='## Bili-Space '+version+'\n\nWindows x64 历史安装包归档。\n\n### 安装\n完整解压后运行包内 EXE；需要 Microsoft Edge WebView2 Runtime。\n\n'
+            if version==latest:body='## Bili-Space '+version+'\n\n- README 品牌展示、真实截图与倾斜立体展示图。\n- 去除展示图外描边、叠层轮廓及右下角英文。\n- 精简设置、搜索建议和账户浮层文案。\n\n### 安装\n完整解压后运行 `Bili-Space.exe`。\n\n'
+            body+='### 注意\n旧版本仅供回溯，建议下载最新版本。超分/补帧为实验功能，可能卡顿或闪烁。\n\n### 校验与来源\n- SHA256：`'+digest+'`\n- 原始归档快照：`'+SOURCE+'`\n- 历史版本标签指向归档快照，不代表当时的源码构建提交；无足够历史记录时不伪造来源。\n'
+            if version=='0.1.11':body+='- 此版本由快照中原有的 42 个文件重新打包，未重新编译。\n'
+            release=api('/releases','POST',{'tag_name':tag,'target_commitish':SOURCE,'name':'Bili-Space '+version,'body':body,'draft':True,'prerelease':False,'make_latest':'false'})
+           asset=upload(release,name,data,'application/zip')
+           upload(release,'SHA256SUMS.txt',(digest+'  '+name+'\n').encode(),'text/plain')
+           release=api('/releases/'+str(release['id']),'PATCH',{'draft':False,'make_latest':'true' if version==latest else 'false'})
+           assert not release['draft']
+           results.append({'version':version,'url':release['html_url'],'asset':asset['browser_download_url'],'sha256':digest,'bytes':len(data)})
+           print('Published '+tag+' '+name+' sha256='+digest,flush=True)
+           del data
+          final=api('/releases?per_page=100')
+          for item in results:
+           release=next(r for r in final if r['tag_name']=='v'+item['version']);assert not release['draft'];asset=next(a for a in release['assets'] if a['browser_download_url']==item['asset']);assert asset.get('digest')=='sha256:'+item['sha256']
+          assert api('/releases/latest')['tag_name']=='v'+latest
+          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('# Bili-Space 历史版本发布\n\n'+'\n'.join('- ['+r['version']+']('+r['url']+') · ZIP + SHA256SUMS' for r in results),encoding='utf8')
+          print('COMPLETE: '+str(len(results))+' releases published and verified; latest=v'+latest,flush=True)
+          PY
