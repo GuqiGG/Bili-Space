@@ -26,6 +26,7 @@ jobs:
             installer
             tests
             docs
+            update-site
           sparse-checkout-cone-mode: true
       - uses: actions/setup-node@v4
         with:
@@ -55,3 +56,4 @@ jobs:
         run: |
           python scripts/publish_current_release.py
           if ($LASTEXITCODE) { throw 'Release publication failed' }
+
