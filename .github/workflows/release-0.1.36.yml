@@ -1,4 +1,4 @@
-name: Build and release Bili-Space 0.1.36
+name: Build and release Bili-Space 0.1.36 (verified assets)
 on:
   workflow_dispatch:
   push:
