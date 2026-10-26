@@ -10,3 +10,6 @@ verification/*.json
 
 # Local upstream reference checkout; not distributed
 vendor/Bili23-Downloader-source/
+
+# Keep release ZIPs; ignore extracted installation directories
+/releases/*/
