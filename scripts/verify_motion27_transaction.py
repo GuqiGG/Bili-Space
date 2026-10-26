@@ -1,0 +1,22 @@
+from pathlib import Path
+import json,subprocess,base64,hashlib,shutil
+R=Path.cwd();V=R/'verification';roles=[('ui-motion27','enhance.js',R/'assets/enhance.js'),('native-motion27','main.cpp',R/'src/main.cpp'),('bridge-motion27','bridge.js',R/'assets/bridge.js')];rb=V/'ROLLBACK.sh';text=rb.read_text();restored={};rollbacks={}
+for role,name,current in roles:
+ old=V/'motion27-baseline'/name
+ if '\n'+role+')' not in text:text=text.replace('case "${2:-blocker}" in','case "${2:-blocker}" in\n'+role+')\nbase64 -d > "$tmp" <<BASELINE_BYTES\n'+base64.b64encode(old.read_bytes()).decode()+'\nBASELINE_BYTES\n;;',1)
+rb.write_text(text,newline='\n');rb.chmod(0o755)
+for role,name,current in roles:
+ target=V/f'motion27-restored-{name}';target.write_bytes(current.read_bytes());cmd=['C:/Program Files/Git/bin/bash.exe',str(rb).replace('\\','/'),str(target).replace('\\','/'),role];p=subprocess.run(cmd,capture_output=True,text=True);assert p.returncode==0,(p.stdout,p.stderr);assert target.read_bytes()==(V/'motion27-baseline'/name).read_bytes();restored[name]=target;rollbacks[role]={'command':cmd,'stdout':p.stdout,'stderr':p.stderr,'exit':p.returncode,'restored_hash_equals_original':True}
+behavior={}
+for label,files in [('BASELINE',[V/'motion27-baseline/enhance.js',V/'motion27-baseline/main.cpp',V/'motion27-baseline/bridge.js']),('MODIFIED',[R/'assets/enhance.js',R/'src/main.cpp',R/'assets/bridge.js']),('ROLLBACK',[restored['enhance.js'],restored['main.cpp'],restored['bridge.js']])]:
+ cmd=['node',str(R/'tests/motion27-policy.cjs'),*map(str,files)];p=subprocess.run(cmd,capture_output=True,text=True);assert p.returncode==0,(label,p.stdout,p.stderr);d=json.loads(p.stdout);assert all(d.values())==(label=='MODIFIED'),(label,d);behavior[label]={'command':cmd,'stdout':p.stdout,'stderr':p.stderr,'exit':p.returncode,'hashes':{str(f):hashlib.sha256(f.read_bytes()).hexdigest() for f in files}};print(label,p.stdout.strip())
+work=V/'motion27-patch-build';(work/'a').mkdir(parents=True,exist_ok=True);(work/'b').mkdir(exist_ok=True);attrs=work/'binary.attributes';attrs.write_text('* -text -diff\n');pairs=[(V/'blocker.original.user.js',R/'assets/blocker.home.user.js','policy.user.js'),(V/'ui-v0.1.0/enhance.original.js',R/'assets/enhance.js','enhance.js'),(V/'ui-v0.1.0/main.original.cpp',R/'src/main.cpp','main.cpp'),(V/'ui-v0.1.4/bridge.original.js',R/'assets/bridge.js','bridge.js')];patch=''
+for old,current,name in pairs:
+ shutil.copyfile(old,work/'a'/name);shutil.copyfile(current,work/'b'/name);p=subprocess.run(['git','-c','core.attributesfile='+str(attrs),'diff','--no-index','--binary','--','a/'+name,'b/'+name],cwd=work,capture_output=True,text=True);assert p.returncode==1;patch+=p.stdout.replace('a/a/'+name+' b/b/'+name,'a/'+name+' b/'+name)
+(V/'blocker.home.patch').write_text(patch,encoding='utf8',newline='\n');reconstruction=V/'motion27-reconstructed';reconstruction.mkdir(exist_ok=True)
+for old,current,name in pairs:shutil.copyfile(old,reconstruction/name)
+p=subprocess.run(['git','-c','core.autocrlf=false','-c','core.attributesfile='+str(attrs),'apply','--binary','--directory=verification/motion27-reconstructed',str(V/'blocker.home.patch')],cwd=R,capture_output=True,text=True);assert p.returncode==0,(p.stdout,p.stderr)
+for old,current,name in pairs:assert (reconstruction/name).read_bytes()==current.read_bytes()
+ledger=json.loads((V/'VERIFICATION.txt').read_text(encoding='utf8'));ledger.setdefault('supplemental',{})['motion27']={'goals':'decoded frame reveals immediately without autoplay gate; right-to-left TV home transition','behaviors':behavior,'rollbacks':rollbacks,'cumulative_diff_reconstructs_all_four_files':True,'unit_output':(V/'motion27-unit.txt').read_text(encoding='utf8',errors='replace'),'build_output':(V/'motion27-build.txt').read_text(encoding='utf8',errors='replace'),'limitations':'Initial unit run retained obsolete callback implementation assertion: 106 pass, 1 fail. Updated to decoded-frame readiness contract; behavioral tests exercise paused ready media and home one-shot/reduced-motion handling. Runtime report motion27-runtime.json uses independent test profile and synthetic video, not network throughput benchmark.'};(V/'VERIFICATION.txt').write_text(json.dumps(ledger,ensure_ascii=False,indent=2),encoding='utf8')
+for path in [R/'assets/blocker.home.user.js',V/'blocker.home.patch',V/'VERIFICATION.txt',V/'ROLLBACK.sh']:
+ b=path.read_bytes();print(str(path),len(b),hashlib.sha256(b).hexdigest())

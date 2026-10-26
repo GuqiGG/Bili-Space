@@ -2112,6 +2112,12 @@ const chrome = (() => {
   // drag of the progress bar and every quality switch ended up back at that old position.
   // The moment of its last reload is known here, so its seek can be told from a viewer's
   // and undone. Kept across players: the retake after a fallback is a new player.
+  function shouldUndoNativeRestore(candidate, restoreTime, target, now) {
+    // An initial zero is not viewer intent: let Bilibili restore its saved position.
+    return candidate.startTime > 0 && !candidate.playbackActivated && candidate.metadataAt
+      && now - candidate.metadataAt < 250 && candidate.restoreUndoneAt !== candidate.metadataAt
+      && restoreTime && Math.abs(target - restoreTime) < 1 && Math.abs(target - candidate.startTime) >= 0.5;
+  }
   let nativeRestore = { key: "", time: 0 };
   function rememberNativeRestore(key, time) {
     if (Number(time) >= 1) nativeRestore = { key, time: Number(time) };
@@ -3191,9 +3197,7 @@ const chrome = (() => {
     function scheduleSeek() {
       const candidate = session;
       const target = Number(video.currentTime) || 0;
-      if (candidate && sessionIsCurrent(candidate) && !candidate.playbackActivated && candidate.metadataAt
-        && performance.now() - candidate.metadataAt < 250 && candidate.restoreUndoneAt !== candidate.metadataAt
-        && nativeRestore.time && Math.abs(target - nativeRestore.time) < 1 && Math.abs(target - candidate.startTime) >= 0.5) {
+      if (candidate && sessionIsCurrent(candidate) && shouldUndoNativeRestore(candidate, nativeRestore.time, target, performance.now())) {
         // The core restores once per metadata; a second seek to that position is the viewer's.
         candidate.restoreUndoneAt = candidate.metadataAt;
         nativeRestoresUndone += 1;
@@ -3462,7 +3466,7 @@ const chrome = (() => {
       // accelerated MediaSource is ready. Preserve that exact position: forcing
       // every handoff below two seconds back to zero produces a visible replay.
       time: initialTime,
-      forceTime: hasInitialTime,
+      forceTime: hasInitialTime && initialTime > 0,
       resume: initialResume,
       volume: original.volume,
       muted: original.muted,

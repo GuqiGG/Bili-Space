@@ -1,0 +1,3 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const {app}=require('./ui-harness.cjs');
+test('Ctrl+W sends native close without browser default',()=>{const a=app();try{const e=new a.w.KeyboardEvent('keydown',{key:'w',ctrlKey:true,bubbles:true,cancelable:true});a.w.document.dispatchEvent(e);assert.equal(e.defaultPrevented,true);assert.ok(a.messages.some(m=>m.type==='window'&&m.action==='close'));}finally{a.close();}});
+test('close preference and SR rate persist as typed config',()=>{const a=app();try{a.w.BiliSpace.update({srFps:120,closeAction:'exit'});assert.ok(a.messages.some(m=>m.type==='config'&&m.value.srFps===120&&m.value.closeAction==='exit'));}finally{a.close();}});

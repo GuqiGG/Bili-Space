@@ -1,0 +1,7 @@
+BASELINE {"wbiDash":false,"nativeMux":false,"toolbarTheme":false}
+MODIFIED {"wbiDash":true,"nativeMux":true,"toolbarTheme":true}
+ROLLBACK {"wbiDash":false,"nativeMux":false,"toolbarTheme":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 127120 51891199e8c4339db4fc902e42ac603d8d421dcc9d53a8555777a0eef4df3513
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 595379 78c4273ce6b9d80fe4b298f674202cf230b95ee533edbcb3ba1ce5bb6f704f75
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 6276330 5166c4dd31bb97c810796341f457f01e585ce31325706e882fe6c137631d905b

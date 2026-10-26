@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\probe_home.py", line 52, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\probe_home.py", line 28, in main
+    if report['banner_motion'][0]['mode']=='static':assert report['banner_motion'][0]['transform']!=report['banner_motion'][1]['transform'],report['banner_motion']
+                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [{'mode': 'static', 'transform': 'matrix(1.025, 0, 0, 1.025, 0, 0)', 'x': '', 'layers': 0}, {'mode': 'static', 'transform': 'matrix(1.025, 0, 0, 1.025, 0, 0)', 'x': '', 'layers': 0}]

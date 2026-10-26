@@ -7,7 +7,7 @@ async def main():
  label=sys.argv[1] if len(sys.argv)>1 else 'modified';baseline=label=='baseline'
  report={'label':label,'mode':'native WebView2 with representative promotion/message DOM and native IntersectionObserver; no real chat or account actions','sha256':hashlib.sha256((ROOT/'dist/assets/enhance.js').read_bytes()).hexdigest()}
  startup=subprocess.STARTUPINFO();startup.dwFlags|=subprocess.STARTF_USESHOWWINDOW;startup.wShowWindow=0
- p=subprocess.Popen([str(ROOT/'dist/BetterBiliSpace.exe'),'--test'],startupinfo=startup)
+ p=subprocess.Popen([str(ROOT/'dist/Bili-Space.exe'),'--test'],startupinfo=startup)
  try:
   for _ in range(80):
    try:
@@ -67,7 +67,7 @@ async def main():
    report['result']='OBSERVED BASELINE' if baseline else 'PASS'
  finally:
   if p.poll() is None:
-   ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Better Bili Space [test]'),0x10,0,0)
+   ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Bili-Space [test]'),0x10,0,0)
    try:p.wait(timeout=5)
    except subprocess.TimeoutExpired:p.terminate();p.wait()
   (OUT/('polish-'+label+'.json')).write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8')

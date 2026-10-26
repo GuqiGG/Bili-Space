@@ -7,7 +7,7 @@ def decode_output(data):
  try:return data.decode('utf8'),'utf8'
  except UnicodeDecodeError:return data.decode('gb18030'),'gb18030'
 events=[]
-for label,cmd in [('BUILD',['powershell','-NoProfile','-ExecutionPolicy','Bypass','-File',str(ROOT/'scripts/build.ps1')]),('UNIT_TESTS',['npm.cmd','test']),('TRANSACTION',['python',str(ROOT/'scripts/verify_transaction.py')]),('NATIVE_SMOKE',['python',str(ROOT/'scripts/smoke.py')]),('UI_REGRESSION',['python',str(ROOT/'scripts/regression_ui.py')]),('HOME_REGRESSION',['python',str(ROOT/'scripts/regression_home.py')]),('POLISH_REGRESSION',['python',str(ROOT/'scripts/regression_polish.py')]),('LIVE_HOME',['python',str(ROOT/'scripts/probe_home.py')]),('PACKAGE',['python',str(ROOT/'scripts/package.py')])]:
+for label,cmd in [('BUILD',['powershell','-NoProfile','-ExecutionPolicy','Bypass','-File',str(ROOT/'scripts/build.ps1')]),('UNIT_TESTS',['npm.cmd','test']),('TRANSACTION',['python',str(ROOT/'scripts/verify_transaction.py')]),('NATIVE_SMOKE',['python',str(ROOT/'scripts/smoke.py')]),('LATEST_REGRESSION',['python',str(ROOT/'scripts/regression_latest.py')]),('PLAYER_REGRESSION',['python',str(ROOT/'scripts/regression_player.py')]),('UI_REGRESSION',['python',str(ROOT/'scripts/regression_ui.py')]),('HOME_REGRESSION',['python',str(ROOT/'scripts/regression_home.py')]),('POLISH_REGRESSION',['python',str(ROOT/'scripts/regression_polish.py')]),('LIVE_HOME',['python',str(ROOT/'scripts/probe_home.py')]),('PACKAGE',['python',str(ROOT/'scripts/package.py')])]:
  p=subprocess.run(cmd,cwd=ROOT,capture_output=True)
  stdout,stdout_encoding=decode_output(p.stdout);stderr,stderr_encoding=decode_output(p.stderr)
  events.append({'label':label,'command':cmd,'stdout':stdout,'stderr':stderr,'stdout_encoding':stdout_encoding,'stderr_encoding':stderr_encoding,'exit_status':p.returncode})
@@ -19,15 +19,24 @@ for label,cmd in [('BUILD',['powershell','-NoProfile','-ExecutionPolicy','Bypass
 smoke=json.loads((OUT/'smoke.json').read_text(encoding='utf8'))
 assert smoke['result']=='PASS'
 for path,h in smoke['artifact_sha256'].items():assert sha(ROOT/path)==h,path
-for p in (ROOT/'assets').glob('*'):
- if p.is_file():assert sha(p)==sha(ROOT/'dist/assets'/p.name),p
+for p in (ROOT/'assets').rglob('*'):
+ if p.is_file():assert sha(p)==sha(ROOT/'dist/assets'/p.relative_to(ROOT/'assets')),p
 package=json.loads((OUT/'package.json').read_text())
 with zipfile.ZipFile(package['archive']) as z:
  assert z.testzip() is None
- for p in [ROOT/'dist/BetterBiliSpace.exe',ROOT/'dist/WebView2Loader.dll',*sorted((ROOT/'dist/assets').glob('*'))]:
+ for p in [ROOT/'dist/Bili-Space.exe',ROOT/'dist/WebView2Loader.dll',*sorted((ROOT/'dist/assets').rglob('*')),*sorted((ROOT/'dist/runtime').rglob('*'))]:
   if p.is_file():assert hashlib.sha256(z.read('BetterBiliSpace/'+p.relative_to(ROOT/'dist').as_posix())).hexdigest()==sha(p)
 ledger=json.loads((OUT/'VERIFICATION.txt').read_text(encoding='utf8'))
 ledger['delivery_events']=events
+ledger['latest_regression']=json.loads((OUT/'latest-regression.json').read_text(encoding='utf8'))
+assert ledger['latest_regression']['result']=='PASS'
+ledger['free_node_tests']=json.loads((OUT/'bundled-nodes-verified.json').read_text(encoding='utf8'))
+ledger['latest_errors']=[{'event':'initial flow policy fixture lacked a video quality control','exit_status':1,'stderr_file':str(OUT/'ui-v0.1.6/initial-flow-policy-fixture.stderr.txt'),'resolution':'append the same player fixture for both baseline and modified policy runs'},{'event':'RIFE + SR concurrent Asyncify runs failed with unaligned accesses / invalid pipeline','exit_status':1,'reports':[str(OUT/'rife-player-first.stderr.txt'),str(OUT/'rife-player-second.stderr.txt')],'resolution':'serialize session creation, all inference calls, CPU output copying and tensor disposal in exclusiveGpu queue; shared pipeline then passed'}, {'event':'RIFE helper spread a large mask into Math.min','exit_status':1,'resolution':'reduce mask range without expanding call arguments'}, {'event':'model-equivalence proof initially used unpadded width / wrong NumPy axes','exit_status':1,'resolution':'use model padded tensor size and explicit transpose; zero padding + border sampler reproduced full ONNX output within 3.2e-6'},{'event':'JSDOM does not compute shadow-root stylesheet resize','exit_status':1,'resolution':'unit verifies actual shadow CSS declaration; real WebView2 pointer drag separately observed 800x500 to700x440'},{'event':'initial player native test passed a pointer using default 32-bit ctypes arg conversion','exit_status':1,'stderr_file':str(OUT/'player-first.stderr.txt'),'resolution':'declare pointer-width SendMessageW argtypes; native resize / pixel blend / shared pipeline all passed'},{'event':'initial AI smoke observed old active scaler before a new frame','exit_status':1,'stderr_file':str(OUT/'ui-v0.1.4/initial-smoke-failure.stderr.txt'),'resolution':'explicitly stop existing AI before resizing fixture / starting the measured run'},{'event':'C++ compile GetDpiForWindow declaration unavailable','exit_status':1,'resolution':'resolve native DPI API dynamically'}, {'event':'ONNX asyncify module missing','resolution':'package matching runtime .mjs/.wasm; native AI rendering observed'}, {'event':'unit ad fixture mojibake / bridge lexical test scope / proxy UI changed','exit_status':1,'resolution':'restore UTF8 Chinese fixture and test current opt-in controls / bridge within same eval'}, {'event':'native arrow alignment assertion','exit_status':1,'report':str(OUT/'ui-v0.1.4/initial-arrow-failure.json'),'resolution':'remove stale optical translateY; native SVG and control centers verified'}]
+ledger['player_regression']=json.loads((OUT/'player-regression.json').read_text(encoding='utf8'))
+assert ledger['player_regression']['result']=='PASS' and ledger['player_regression']['sha256']['assets\\enhance.js']==sha(ROOT/'assets/enhance.js')
+ledger['rife_model_equivalence']=json.loads((OUT/'rife-flow-equivalence.json').read_text(encoding='utf8'))
+ledger['lossless_reference']=json.loads((OUT/'lossless-reference.json').read_text(encoding='utf8'))
+for name,record in ledger['lossless_reference']['files'].items():assert sha(Path(r'D:\Steam\steamapps\common\Lossless Scaling')/name)==record['sha256']
 ledger['native_smoke']=smoke
 ledger['live_video_observation']=json.loads((OUT/'live-video-sr.json').read_text(encoding='utf8'))
 ledger['live_video_observation_provenance']='Prior delivery evidence; video enhancement not re-tested against a live video in this turn (native local GPU smoke was repeated).'

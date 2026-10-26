@@ -1,38 +1,46 @@
 
-> better-bili-space@0.1.4 test
+> better-bili-space@0.1.7 test
 > node --test tests/*.test.cjs
 
-✔ explicit home, banner and right-side ad markers; no title-based false positive (132.4312ms)
-✔ native settings in lower left; Douyin font, channels, theme and progress options apply (51.4666ms)
-✔ sparkles control precedes resolution; performance/quality and multipliers exist (29.4693ms)
-✔ native PiP keeps a video-only DOM state and restores normal chrome (30.7291ms)
-✔ WebGL unavailable fails visibly without hiding original video (28.9018ms)
-✔ incremental ad card insertion is detected (285.0981ms)
-✔ modified blocker hard-locks optional features and non-home routes (44.1944ms)
-✔ requested message SVG and square maximize glyph appear in the centered-title header (140.2483ms)
-✔ header settings individually hide all eight optional items without hiding window controls (71.0762ms)
-✔ video webpage has an independent homepage anchor, even with the top Home item disabled (24.968ms)
-✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (174.2898ms)
-✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (327.9694ms)
-✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (29.2544ms)
-✔ promotion containing video markup stays hidden and is never converted to display contents (166.7173ms)
-✔ message dark theme covers the background, translucent sidebar RGB tokens and header reserve (64.0772ms)
-✔ category disclosure is click-only, replaces primary navigation and restores its saved visibility (941.235ms)
-✔ native banner layers and handlers are preserved; center text does not intercept the pointer (29.5656ms)
-✔ homepage prefetch uses the existing loader and respects Save-Data instead of issuing duplicate API requests (20.1388ms)
-✔ layout-only changes wake a scroll-based site loader without scrolling the viewport; Save-Data disables the wake (1115.9591ms)
-✔ history/locale history and dynamic highlight their own navigation, never home (194.289ms)
-✔ SPA route changes update selected nav and search query without wiping pending edits (35.228ms)
-✔ login status renders API avatar; messages link is present; no text impersonating a profile (49.8964ms)
-✔ signed out retains a working login link (46.5519ms)
-✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (40.2018ms)
-✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (19.4626ms)
-✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (33.1683ms)
-ℹ tests 26
+✔ explicit home, banner and right-side ad markers; no title-based false positive (277.7278ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (139.7948ms)
+✔ sparkles control precedes resolution; performance/quality and multipliers exist (68.8576ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (55.8541ms)
+✔ WebGPU unavailable fails visibly without hiding original video (43.5203ms)
+✔ incremental ad card insertion is detected (256.9744ms)
+✔ modified blocker hard-locks optional features and non-home routes (44.1683ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (253.6431ms)
+✔ header settings individually hide all eight optional items without hiding window controls (155.8038ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (47.9769ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (277.828ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (374.5954ms)
+✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (41.3666ms)
+✔ centered vector chevron and persisted category whitelist leave no hidden-link placeholders (323.0591ms)
+✔ proxy UI is explicit opt-in, never enables a public node on mount (115.3581ms)
+✔ BTR persisted settings cannot re-enable the launcher but keep engine fields (68.7695ms)
+✔ short wheel inertia progresses, clamps and cancels; precision / reduced-motion remain native (93.0948ms)
+✔ SR and interpolation are adjacent before native quality; supplied three-frame SVG is used (258.8744ms)
+✔ player menus are exclusive, Escape closes them, FI settings send typed persisted config (157.5472ms)
+✔ settings panel can resize in both directions and renderer waits hidden for actual frames (62.7827ms)
+✔ AI optical flow replaces blend; flow scale is selectable and unavailable AI preserves original (65.5935ms)
+✔ promotion containing video markup stays hidden and is never converted to display contents (270.9426ms)
+✔ message dark theme covers the background, translucent sidebar RGB tokens and header reserve (123.4464ms)
+✔ category disclosure is click-only, replaces primary navigation and restores its saved visibility (957.5988ms)
+✔ native banner layers and handlers are preserved; center text does not intercept the pointer (32.2092ms)
+✔ homepage prefetch uses the existing loader and respects Save-Data instead of issuing duplicate API requests (24.2367ms)
+✔ layout-only changes wake a scroll-based site loader without scrolling the viewport; Save-Data disables the wake (1107.2471ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (434.5825ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (69.9783ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (63.4348ms)
+✔ signed out retains a working login link (45.0534ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (37.1117ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (36.191ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (28.5163ms)
+ℹ tests 34
 ℹ suites 0
-ℹ pass 26
+ℹ pass 34
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 2803.0768
+ℹ duration_ms 3083.9727

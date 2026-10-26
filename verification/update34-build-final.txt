@@ -1,0 +1,3 @@
+Built: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\dist\Bili-Space.exe
+
+STDERR:

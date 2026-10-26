@@ -1,0 +1,7 @@
+BASELINE {"headerVideoLink":false,"nativeClipboard":false,"progressBesideButton":false,"measuredProgress":false,"wholeMetricWrap":false}
+MODIFIED {"headerVideoLink":true,"nativeClipboard":true,"progressBesideButton":true,"measuredProgress":true,"wholeMetricWrap":true}
+ROLLBACK {"headerVideoLink":false,"nativeClipboard":false,"progressBesideButton":false,"measuredProgress":false,"wholeMetricWrap":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 132081 60ad85c30a0ae5e88e2ef033fdcd66c69e03c60c4b21427af97f7edd45112880
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 649536 f23693540f1674791c90fb4480b565480c66a08a32d9ad9cc641f405baa4ebcc
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 6944766 9cf1ee21a45d88c117591e908bb15ce8199ac828a4ada0a8b4ef84c4d596a601

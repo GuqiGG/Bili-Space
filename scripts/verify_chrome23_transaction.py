@@ -1,0 +1,26 @@
+from pathlib import Path
+import json,subprocess,base64,hashlib,shutil
+R=Path.cwd();V=R/'verification';rb=V/'ROLLBACK.sh';text=rb.read_text();roles=[('ui-chrome23','enhance.js',R/'assets/enhance.js'),('native-chrome23','main.cpp',R/'src/main.cpp'),('blocker-chrome23','blocker.home.user.js',R/'assets/blocker.home.user.js')]
+for role,name,current in roles:
+ old=V/'chrome23-baseline'/name
+ if '\n'+role+')' not in text:text=text.replace('case "${2:-blocker}" in','case "${2:-blocker}" in\n'+role+')\nbase64 -d > "$tmp" <<BASELINE_BYTES\n'+base64.b64encode(old.read_bytes()).decode()+'\nBASELINE_BYTES\n;;',1)
+rb.write_text(text,newline='\n');rb.chmod(0o755);checks={};restored={}
+for role,name,current in roles:
+ target=V/f'chrome23-restored-{name}';target.write_bytes(current.read_bytes());command=['C:/Program Files/Git/bin/bash.exe',str(rb).replace('\\','/'),str(target).replace('\\','/'),role];p=subprocess.run(command,capture_output=True,text=True);assert p.returncode==0,(p.stdout,p.stderr);assert target.read_bytes()==(V/'chrome23-baseline'/name).read_bytes();restored[name]=target;checks[role]={'command':command,'stdout':p.stdout,'stderr':p.stderr,'exit':p.returncode,'restored_hash_equals_original':True}
+behavior={}
+for label,paths in [('BASELINE',[V/'chrome23-baseline/enhance.js',V/'chrome23-baseline/main.cpp',V/'chrome23-baseline/blocker.home.user.js']),('MODIFIED',[R/'assets/enhance.js',R/'src/main.cpp',R/'assets/blocker.home.user.js']),('ROLLBACK',[restored['enhance.js'],restored['main.cpp'],restored['blocker.home.user.js']])]:
+ command=['node',str(R/'tests/chrome23-policy.cjs'),*map(str,paths)];p=subprocess.run(command,capture_output=True,text=True);assert p.returncode==0,(label,p.stdout,p.stderr);values=json.loads(p.stdout);assert all(values.values())==(label=='MODIFIED'),(label,values);behavior[label]={'command':command,'stdout':p.stdout,'stderr':p.stderr,'exit':p.returncode,'hashes':{str(f):hashlib.sha256(f.read_bytes()).hexdigest() for f in paths}};print(label,p.stdout.strip())
+# Rebuild the same cumulative DIFF role, preserving original binary bytes and every historical baseline.
+work=V/'chrome23-patch-build';(work/'a').mkdir(parents=True,exist_ok=True);(work/'b').mkdir(exist_ok=True);attrs=work/'binary.attributes';attrs.write_text('* -text -diff\n')
+pairs=[(V/'blocker.original.user.js',R/'assets/blocker.home.user.js','policy.user.js'),(V/'ui-v0.1.0/enhance.original.js',R/'assets/enhance.js','enhance.js'),(V/'ui-v0.1.0/main.original.cpp',R/'src/main.cpp','main.cpp'),(V/'ui-v0.1.4/bridge.original.js',R/'assets/bridge.js','bridge.js')]
+patch=''
+for old,current,name in pairs:
+ shutil.copyfile(old,work/'a'/name);shutil.copyfile(current,work/'b'/name);p=subprocess.run(['git','-c','core.attributesfile='+str(attrs),'diff','--no-index','--binary','--','a/'+name,'b/'+name],cwd=work,capture_output=True,text=True);assert p.returncode==1;patch+=p.stdout.replace('a/a/'+name+' b/b/'+name,'a/'+name+' b/'+name)
+(V/'blocker.home.patch').write_text(patch,encoding='utf8',newline='\n')
+reconstruction=V/'chrome23-reconstructed';reconstruction.mkdir(exist_ok=True)
+for old,current,name in pairs:shutil.copyfile(old,reconstruction/name)
+p=subprocess.run(['git','-c','core.autocrlf=false','-c','core.attributesfile='+str(attrs),'apply','--binary','--directory=verification/chrome23-reconstructed',str(V/'blocker.home.patch')],cwd=R,capture_output=True,text=True);assert p.returncode==0,(p.stdout,p.stderr)
+for old,current,name in pairs:assert (reconstruction/name).read_bytes()==current.read_bytes()
+ledger=json.loads((V/'VERIFICATION.txt').read_text(encoding='utf8'));ledger.setdefault('supplemental',{})['chrome23']={'goals':'tray pause; keyboard 200% and taller native track; first-frame loader without full-window scale; Home text/alignment; elastic account popover; optional traffic lights/right SVG controls; inline homepage blocker','behaviors':behavior,'rollback_checks':checks,'cumulative_diff_reconstructs_all_four_files':True,'unit_output':(V/'chrome23-unit.txt').read_text(encoding='utf8',errors='replace'),'build_output':(V/'chrome23-build.txt').read_text(encoding='utf8',errors='replace'),'runtime_reports':['chrome23-runtime.json','chrome23-live.json','chrome23-responsive-live.json'],'video_review':{'path':'C:/Users/guqig/Videos/2026-10-25 20-05-22.mp4','fps':120,'dense_visual_samples':46,'consecutive_frame_deltas':541,'observed':'recording 7.1s cover,7.2s player,7.4s player layout changes','interpretation':'code delayed settling until load and selected first global video; full-layer scale caused extra spatial movement'},'limitations':'Tests used disposable profile and synthetic stream plus public Bili playback. No private account login accessed and no actual account blocked. New header mode verified at CSS widths480/800/1280; actual live layout480..1920. Font glyph shapes may vary with installed fonts. Initial unit source replacement typo, closed-jsdom microtask error, and muted-zero volume test setup were corrected; retained logs where available.'};(V/'VERIFICATION.txt').write_text(json.dumps(ledger,ensure_ascii=False,indent=2),encoding='utf8')
+for path in [R/'assets/blocker.home.user.js',V/'blocker.home.patch',V/'VERIFICATION.txt',V/'ROLLBACK.sh']:
+ data=path.read_bytes();print(str(path),len(data),hashlib.sha256(data).hexdigest())

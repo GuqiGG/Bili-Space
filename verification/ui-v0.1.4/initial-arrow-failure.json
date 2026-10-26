@@ -1,0 +1,18 @@
+{
+  "sha256": {
+    "dist\\BetterBiliSpace.exe": "bc0ff3fe13409f36795a1c648493feedf6d658ad855a7f3a2d9e74e10e60554a",
+    "assets\\enhance.js": "8e95b9757413c5d92fd92715748e5413e88c68b1d85afd30aa6a23d2c8655562",
+    "assets\\bridge.js": "1faea2be7fb3e0ac9dc5970b44258bd7351f7624c2b1534a59bb13fec163de74"
+  },
+  "arrow": {
+    "header": 29,
+    "button": 28.600000381469727,
+    "svg": 27.200000762939453,
+    "lights": 28.600000381469727,
+    "names": [
+      "番剧",
+      "漫画",
+      "游戏"
+    ]
+  }
+}

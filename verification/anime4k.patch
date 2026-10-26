@@ -1,0 +1,176 @@
+--- a/enhance.js
++++ b/enhance.js
+@@ -372,8 +372,8 @@
+ html[data-bs-pip=true] .bs-gpu-canvas{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important}
+ html[data-bs-full=true] body{padding-top:0!important}
+ .bs-gpu-canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:2;background:#000}
+-.bs-player-tool{position:relative;display:inline-flex;align-items:center;align-self:center;height:var(--bs-player-height,32px);vertical-align:middle;margin:0;flex:0 0 auto;color:var(--bs-player-color,#fff);font:inherit;opacity:var(--bs-player-opacity,1)}
+-.bs-player-tool button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:0 5px;line-height:1;font-size:var(--bs-player-font,12px);height:100%;white-space:nowrap;opacity:1;transition:opacity 150ms}.bs-player-tool button:hover,.bs-player-tool button:focus-visible{opacity:1}.bs-player-tool button[aria-expanded=true]{opacity:1}
++.bs-player-tool{position:relative;display:inline-flex;align-items:center;align-self:center;height:var(--bs-player-height,32px);vertical-align:top;margin:0;top:var(--bs-player-offset,0px);flex:0 0 auto;color:var(--bs-player-color,#fff);font:inherit;opacity:var(--bs-player-opacity,1)}
++.bs-player-tool button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:0 5px;line-height:1;font-size:var(--bs-player-font,12px);height:100%;box-sizing:border-box;transform:none;vertical-align:middle;white-space:nowrap;opacity:1;transition:opacity 150ms}.bs-player-tool button:hover,.bs-player-tool button:focus-visible{opacity:1}.bs-player-tool button[aria-expanded=true]{opacity:1}
+ .bs-player-tool svg{width:16px;height:16px;display:block;flex-shrink:0}.bs-fi-canvas{z-index:3}
+ @media(max-width:620px){.bs-player-tool>button span{display:none}.bs-player-tool>button{padding:0 4px}}
+ .bs-sr-menu{position:absolute;bottom:calc(100% + 12px);right:0;width:248px;max-width:calc(100vw - 24px);max-height:min(380px,60vh);overflow:auto;background:var(--bs-player-menu-bg,rgba(21,21,21,.9));color:var(--bs-player-menu-color,#fff);padding:14px 16px;border:0;border-radius:var(--bs-player-menu-radius,4px);box-shadow:none;font-family:inherit;font-size:var(--bs-player-menu-font,12px);font-weight:400;line-height:1.6;z-index:50}
+@@ -491,7 +491,7 @@
+   if(currentTab==='appearance')return `<h2>让空间，像你。</h2><p class="subtitle">少一点干扰，多一点喜欢。每次调整，都会自动保存。</p><div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W<span class="hint">自动保存，不再反复询问；托盘右键始终可退出。</span></label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色<span class="hint">属于你的那一点颜色。</span></label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','使用你已安装的 DouyinSans；未安装时回退到系统字体。')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','让界面跟着屏幕变大，而不是缩在左上角。')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">按这个内容宽度排版；数值越小，界面越大。</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div><div class="note">${icon('appearance')} 内容保持清晰，装饰适可而止。支持键盘操作与系统减少动态效果设置。</div>`;
+   if(currentTab==='progress')return `<h2>掌握每一秒。</h2><p class="subtitle">进度条的颜色、粗细与形状，由你决定。</p><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','保持原生拖动与预览行为。')}${toggle('progressAlways','始终显示播放控制条','关闭时跟随 B站播放器自动隐藏。')}`;
+   if(currentTab==='clean')return `<h2>只留下想看的。</h2><p class="subtitle">识别明确的广告容器，不根据标题猜测，不删除评论和正常推荐。</p>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('showChannels','显示首页频道分区','图二中的动态、热门、番剧、动画等频道导航。')}<div class="note"><strong>非破坏式净化</strong><br>隐藏广告节点而非删除，关闭开关即可恢复。不会隐藏普通直播卡片，也不改写评论。网站更新后规则可能需要维护。</div><div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
+-  if(currentTab==='play')return `<h2>细节，多看一点。</h2><p class="subtitle">超分入口也在播放器分辨率左侧。画中画没有标题栏。</p><div class="row"><label for="pref-srMode">超分辨率<span class="hint">本地 ESPCN 神经网络 / WebGPU；帧不上传，不出本机。</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">60/120fps 为调度上限，不保证实际性能；不会增加源视频帧数。</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率<span class="hint">模型固定 ×3 推理，再按目标倍率缩放；只处理真正需要放大的画面。</span></label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'} · RIFE 光流重投影，单帧队列 + 推理延迟</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div><div class="note"><strong>真实处理，可随时关闭</strong><br>使用随客户端打包的 ESPCN ×3 权重在本机推理，按画面实际显示尺寸决定输出大小：源已经比显示更清晰时不浪费算力，并会写明原因。跨域帧不可读取、GPU 不可用或受保护的视频会停止增强并保留原生播放，不假报成功。画中画复用当前播放窗口，Esc 或右下角按钮返回。</div>`;
++  if(currentTab==='play')return `<h2>细节，多看一点。</h2><p class="subtitle">超分入口也在播放器分辨率左侧。画中画没有标题栏。</p><div class="row"><label for="pref-srMode">超分辨率<span class="hint">本地 Anime4K CNN / WebGPU；帧不上传，不出本机。</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">60/120fps 为调度上限，不保证实际性能；不会增加源视频帧数。</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率<span class="hint">Anime4K 固定 ×2 推理，再按目标倍率缩放；只处理真正需要放大的画面。</span></label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'} · RIFE 光流重投影，约 33ms 呈现缓冲 + 推理延迟</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div><div class="note"><strong>真实处理，可随时关闭</strong><br>使用随客户端打包的 Anime4K CNN 着色器在本机 GPU 推理，按画面实际显示尺寸决定输出大小：源已经比显示更清晰时不浪费算力，并会写明原因。跨域帧不可读取、GPU 不可用或受保护的视频会停止增强并保留原生播放，不假报成功。画中画复用当前播放窗口，Esc 或右下角按钮返回。</div>`;
+   return `<h2>熟悉的能力，内置。</h2><p class="subtitle">本地固定版本，不下载远程更新，不绕过会员、地区或版权限制。</p>${toggle('btr','Bilibili 线程撕裂者','多 CDN / Range 并发缓冲。开关变更后需刷新页面。')}<div class="actions"><button id="btr-settings" class="link">打开线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页推荐按钮。视频页、搜索页、隐藏直播与插件广告过滤均关闭。拉黑会同步至 B站账号。</span></div><span class="status">首页限定</span></div><div class="note">线程撕裂者：2026.10.24.1 · MIT<br>一键拉黑：1.6.4 · 本地首页限定适配 · MIT<br>登录后点击拉黑才会执行账号操作。本客户端未自动替你拉黑任何人。</div>`;
+ }
+ function renderSettings(){
+@@ -518,7 +518,7 @@
+ }
+ function mountShell(){
+   root=document.createElement('bili-space-shell');root.id='bili-space-root';shadow=root.attachShadow({mode:'open'});
+-  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left"><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="account" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.7 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
++  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left"><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="account" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.8 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
+   document.documentElement.append(root);
+   const dialog=$('.dialog',shadow);if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(([entry])=>{if(entry.contentRect.width>0)dialog.dataset.compact=String(entry.contentRect.width<620);});observer.observe(dialog);}
+   shadow.addEventListener('click',e=>{
+@@ -592,11 +592,11 @@
+   native('window',{action:'pip'});
+ }
+ function syncPlayerAppearance(quality){
+-  const reference=$('.bpx-player-ctrl-quality-result,.bilibili-player-video-quality-menu',quality)||quality;
++  const reference=$('.bpx-player-ctrl-quality-result,.bpx-player-ctrl-quality-text',quality)||quality;
+   const css=getComputedStyle(reference),sample=$('.bpx-player-ctrl-quality-menu,.bpx-player-ctrl-playbackrate-menu,.bilibili-player-video-quality-menu');
+   const menu=sample&&getComputedStyle(sample),background=menu?.backgroundColor;
+   $$('.bs-player-tool',quality.parentElement).forEach(el=>{
+-    el.style.setProperty('--bs-player-height',Math.min(36,Math.max(24,quality.getBoundingClientRect().height||32))+'px');el.style.fontFamily=css.fontFamily;el.style.fontWeight=css.fontWeight;el.style.setProperty('--bs-player-color',css.color);el.style.setProperty('--bs-player-font',Math.min(14,parseFloat(css.fontSize)||12)+'px');el.style.setProperty('--bs-player-opacity',css.opacity);
++    const rect=quality.getBoundingClientRect();el.style.setProperty('--bs-player-height',rect.height+'px');el.style.setProperty('--bs-player-offset','0px');const own=el.getBoundingClientRect();el.style.setProperty('--bs-player-offset',(rect.top-own.top)+'px');el.style.fontFamily=css.fontFamily;el.style.fontWeight=css.fontWeight;el.style.setProperty('--bs-player-color',css.color);el.style.setProperty('--bs-player-font',css.fontSize);el.style.setProperty('--bs-player-opacity',css.opacity);
+     el.style.setProperty('--bs-player-menu-bg',background&&background!=='rgba(0, 0, 0, 0)'?background:'rgba(21,21,21,.9)');
+     el.style.setProperty('--bs-player-menu-radius',menu?.borderRadius||'4px');el.style.setProperty('--bs-player-menu-font',menu?.fontSize||'12px');el.style.setProperty('--bs-player-menu-color',menu?.color||css.color);
+   });
+@@ -605,11 +605,12 @@
+   const quality=$('.bpx-player-ctrl-quality,.bilibili-player-video-btn-quality');if(!quality)return;
+   if($('.bs-player-tool',quality.parentElement)){syncPlayerAppearance(quality);return;}
+   const sr=document.createElement('div');sr.className='bs-player-tool';sr.dataset.kind='sr';
+-  sr.innerHTML=`<button class="bs-sr-toggle" aria-label="超分辨率设置" aria-expanded="false">${ICON_SPARKLES}<span>超分</span></button><div class="bs-sr-menu" hidden><strong>本地 AI 超分</strong><label>模式<select aria-label="超分模式"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></label><label>倍率<select aria-label="超分倍率"><option value="1">1× 原生</option><option value="2">2×</option><option value="3">3×</option></select></label><label>目标帧率<select aria-label="超分帧率" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></label><p>本地 ESPCN ×3；目标 60/120fps，实际受源帧率与 GPU 推理耗时限制；超分不凭空生成新帧。</p><output></output><button class="bs-pip" aria-label="进入无标题栏画中画">↗ 画中画</button></div>`;
++  sr.innerHTML=`<button class="bs-sr-toggle" aria-label="超分辨率设置" aria-expanded="false">${ICON_SPARKLES}<span>超分</span></button><div class="bs-sr-menu" hidden><strong>本地 AI 超分</strong><label>模式<select aria-label="超分模式"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></label><label>倍率<select aria-label="超分倍率"><option value="1">1× 原生</option><option value="2">2×</option><option value="3">3×</option></select></label><label>目标帧率<select aria-label="超分帧率" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></label><p>Anime4K CNN ×2；目标 60/120fps，实际受源帧率与 GPU 推理耗时限制；超分不凭空生成新帧。</p><output></output><button class="bs-pip" aria-label="进入无标题栏画中画">↗ 画中画</button></div>`;
+   const fi=document.createElement('div');fi.className='bs-player-tool';fi.dataset.kind='fi';
+   const framesIcon=typeof ICON_FRAMES==='undefined'?'<svg viewBox="0 0 30 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="18" rx="2"/><rect x="6" y="7" width="18" height="18" rx="2" opacity=".5"/><rect x="9" y="7" width="18" height="18" rx="2" opacity=".2"/></svg>':ICON_FRAMES;
+-  fi.innerHTML=`<button class="bs-fi-toggle" aria-label="补帧设置" aria-expanded="false">${framesIcon}<span>补帧</span></button><div class="bs-fi-menu bs-sr-menu" hidden><strong>本地 AI 光流补帧</strong><label>模式<select aria-label="补帧模式"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></label><label>目标<select aria-label="补帧帧率"><option value="60">60 fps</option><option value="120">120 fps</option></select></label><p>RIFE 预测双向中间光流和遮挡掩码，在原始分辨率重投影。光流估计上限 640×384，原始画面保持全分辨率。约一帧队列加推理延迟；遮挡处可能有伪影，实际帧率受屏幕 / 显卡限制。</p><label>光流规模<select aria-label="光流规模"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></label><output class="bs-fi-status"></output></div>`;
++  fi.innerHTML=`<button class="bs-fi-toggle" aria-label="补帧设置" aria-expanded="false">${framesIcon}<span>补帧</span></button><div class="bs-fi-menu bs-sr-menu" hidden><strong>本地 AI 光流补帧</strong><label>模式<select aria-label="补帧模式"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></label><label>目标<select aria-label="补帧帧率"><option value="60">60 fps</option><option value="120">120 fps</option></select></label><p>RIFE 预测双向中间光流和遮挡掩码，在原始分辨率重投影。光流估计上限 640×384，原始画面保持全分辨率。约 33ms 呈现缓冲加推理延迟；遮挡处可能有伪影，实际帧率受屏幕 / 显卡限制。</p><label>光流规模<select aria-label="光流规模"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></label><output class="bs-fi-status"></output></div>`;
+   quality.before(sr,fi);
++  if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(()=>{if(!quality.isConnected){observer.disconnect();return;}syncPlayerAppearance(quality);});observer.observe(quality);}
+   const sync=()=>{const ss=$$('select',sr),fs=$$('select',fi);ss[0].value=PREFS.srMode;ss[1].value=PREFS.srScale;ss[2].value=String(PREFS.srFps);fs[0].value=PREFS.fiMode;fs[1].value=String(PREFS.fiFps);fs[2].value=String(PREFS.fiFlowScale);$('output',sr).textContent=status;$('output',fi).textContent=interpolator?.status||'未开启';};
+   const positionMenu=menu=>{menu.style.transform='';const r=menu.getBoundingClientRect();const dx=r.left<12?12-r.left:r.right>innerWidth-12?innerWidth-12-r.right:0;if(dx)menu.style.transform=`translateX(${dx}px)`;};
+   for(const control of [sr,fi]){
+@@ -659,7 +660,7 @@
+     localRifeSession().then(()=>{if(!this.stopped&&this.inferences===0){this.status='RIFE 已就绪，等待相邻真实帧';this.showStatus();}}).catch(e=>this.fail('AI 光流不可用：'+e.message));
+   }
+   queueCapture(){if(this.stopped)return;this.captureHandle=this.video.requestVideoFrameCallback?this.video.requestVideoFrameCallback(this.capture):requestAnimationFrame(this.capture);}
+-  capture(now){if(this.stopped)return;if(!this.video.isConnected){this.stop();scheduleScan();return;}if(!document.hidden&&!this.video.paused&&!this.video.seeking&&this.video.readyState>=2&&!(gpu&&!gpu.stopped&&gpu.video===this.video&&gpu.frames>0&&gpu.canvas.width>0))this.push(this.video,now);this.queueCapture();}
++  capture(now){if(this.stopped)return;if(!this.video.isConnected){this.stop();scheduleScan();return;}if(!document.hidden&&!this.video.paused&&!this.video.seeking&&this.video.readyState>=2)this.push(this.video,now);this.queueCapture();}
+   push(source,now){
+     if(this.stopped||this.video.seeking)return;
+     try{
+@@ -692,13 +693,13 @@
+     const count=fw*fh,field=new Float32Array(count*4);for(let i=0,j=0;i<count;i++,j+=4){field[j]=result.flow[i];field[j+1]=result.flow[count+i];field[j+2]=result.flow[2*count+i];field[j+3]=result.flow[3*count+i];}
+     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,this.textures[2]);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,fw,fh,0,gl.RGBA,gl.FLOAT,field);
+     gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,this.textures[3]);gl.texImage2D(gl.TEXTURE_2D,0,gl.LUMINANCE,fw,fh,0,gl.LUMINANCE,gl.FLOAT,result.mask);
+-    if(gl.getError()!==gl.NO_ERROR)throw Error('光流 / 遮挡纹理上传失败');gl.useProgram(this.program);gl.uniform2f(this.flowSize,fw,fh);this.lastInput=performance.now();this.interval=pair.interval;this.ready=true;
++    if(gl.getError()!==gl.NO_ERROR)throw Error('光流 / 遮挡纹理上传失败');gl.useProgram(this.program);gl.uniform2f(this.flowSize,fw,fh);this.lastInput=pair.time-pair.interval;this.interval=pair.interval;this.presentationDelay=33;this.ready=true;
+   }
+   draw(phase){const gl=this.gl;gl.useProgram(this.program);this.textures.forEach((t,i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,t);});gl.uniform1f(this.phase,phase);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);if(gl.getError()!==gl.NO_ERROR)throw Error('光流重投影失败');}
+   render(now){
+     if(this.stopped)return;if(this.video.paused||document.hidden){this.canvas.style.visibility='hidden';restoreVideo(this.video,this);}
+     if(this.ready&&!document.hidden&&!this.video.paused&&!this.video.seeking&&now-this.lastDraw>=1000/this.fps-2){
+-      try{const phase=Math.max(0,Math.min(1,(now-this.lastInput)/this.interval));this.draw(phase);this.lastDraw=now;this.frames++;if(phase>.01&&phase<.99)this.generated++;this.canvas.style.visibility='visible';this.video.style.opacity='0';this.status=`RIFE AI 光流 · ${this.estimate.join('×')} 估计 · ${this.inferenceMs.toFixed(0)}ms · 中间帧 ${this.generated} · 目标 ${this.fps}fps`;this.showStatus();}catch(e){this.fail(e.message);return;}
++      try{const phase=Math.max(0,Math.min(1,(now-(this.presentationDelay||0)-this.lastInput)/this.interval));this.draw(phase);this.lastDraw=now;this.frames++;if(phase>.01&&phase<.99)this.generated++;this.canvas.style.visibility='visible';this.video.style.opacity='0';this.status=`RIFE AI 光流 · ${this.estimate.join('×')} 估计 · ${this.inferenceMs.toFixed(0)}ms · 中间帧 ${this.generated} · 目标 ${this.fps}fps`;this.showStatus();}catch(e){this.fail(e.message);return;}
+     }
+     this.raf=requestAnimationFrame(this.render);
+   }
+@@ -816,7 +817,7 @@
+       if(this.canvas.width!==outW||this.canvas.height!==outH){this.canvas.width=outW;this.canvas.height=outH;}
+       this.ctx.imageSmoothingEnabled=true;this.ctx.imageSmoothingQuality='high';
+       this.ctx.drawImage(out,0,0,outW,outH);
+-      this.canvas.style.visibility='visible';interpolator?.push(this.canvas,performance.now());
++      this.canvas.style.visibility='visible';
+       this.video.style.opacity='0';this.frames++;this.last=now;this.inferenceMs=performance.now()-begin;
+       this.stamps.push(now);while(this.stamps.length&&now-this.stamps[0]>1500)this.stamps.shift();
+       const fps=this.stamps.length>1?Math.round((this.stamps.length-1)*1000/(now-this.stamps[0])):0;
+@@ -848,11 +849,70 @@
+   const label=shadow&&$('#gpu-status',shadow);if(label)label.textContent=status;
+   $$('.bs-player-tool[data-kind=sr] output').forEach(el=>el.textContent=status);
+ }
++
++class Anime4KScaler {
++  constructor(video,mode,scale){
++    if(!navigator.gpu||!window['anime4k-webgpu'])throw Error('Anime4K WebGPU 不可用');
++    this.video=video;this.mode=mode;this.scale=scale;this.frames=0;this.stopped=false;this.last=-Infinity;
++    rememberVideo(video);this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas bs-anime4k-canvas';this.canvas.style.zIndex='4';this.canvas.style.visibility='hidden';
++    if(getComputedStyle(video.parentElement).position==='static')video.parentElement.style.position='relative';video.parentElement.append(this.canvas);
++    this.loop=this.loop.bind(this);this.init().then(()=>{if(!this.stopped)this.raf=requestAnimationFrame(this.loop);}).catch(e=>this.fail(e.message));
++  }
++  async init(){
++    const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('无 WebGPU 显卡');
++    this.device=await adapter.requestDevice();if(this.stopped){this.device.destroy();return;}
++    this.device.addEventListener('uncapturederror',e=>{e.preventDefault();if(!this.stopped)this.fail(e.error.message);});
++    this.device.lost.then(info=>{if(!this.stopped)this.fail('GPU 已丢失：'+info.message);});
++    this.context=this.canvas.getContext('webgpu');if(!this.context)throw Error('WebGPU 画布不可用');
++    this.format=navigator.gpu.getPreferredCanvasFormat();this.context.configure({device:this.device,format:this.format,alphaMode:'opaque'});
++    const code=`@group(0) @binding(0) var image:texture_2d<f32>; @group(0) @binding(1) var samp:sampler;
++      struct Out{@builtin(position) pos:vec4f,@location(0) uv:vec2f};
++      @vertex fn vs(@builtin(vertex_index) i:u32)->Out{var pts=array<vec2f,3>(vec2f(-1.,-1.),vec2f(3.,-1.),vec2f(-1.,3.));var o:Out;o.pos=vec4f(pts[i],0.,1.);o.uv=vec2f((pts[i].x+1.)*.5,(1.-pts[i].y)*.5);return o;}
++      @fragment fn fs(o:Out)->@location(0) vec4f{return vec4f(textureSample(image,samp,o.uv).rgb,1.);}`;
++    const module=this.device.createShaderModule({code});this.present=this.device.createRenderPipeline({layout:'auto',vertex:{module,entryPoint:'vs'},fragment:{module,entryPoint:'fs',targets:[{format:this.format}]},primitive:{topology:'triangle-list'}});
++    this.sampler=this.device.createSampler({magFilter:'linear',minFilter:'linear'});
++  }
++  setup(w,h){
++    if(this.w===w&&this.h===h)return;
++    // Input-size changes discard all intermediate textures instead of leaking them.
++    if(this.input)this.releaseTextures();this.w=w;this.h=h;
++    this.input=this.device.createTexture({size:[w,h],format:'rgba16float',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.RENDER_ATTACHMENT});
++    const lib=window['anime4k-webgpu'];this.pipeline=new (this.mode==='quality'?lib.CNNx2UL:lib.CNNx2M)({device:this.device,inputTexture:this.input});
++    this.bind=this.device.createBindGroup({layout:this.present.getBindGroupLayout(0),entries:[{binding:0,resource:this.pipeline.getOutputTexture().createView()},{binding:1,resource:this.sampler}]});
++  }
++  releaseTextures(){
++    const seen=new Set();const visit=o=>{if(!o||typeof o!=='object'||seen.has(o))return;seen.add(o);if(typeof o.destroy==='function'&&typeof o.createView==='function'){o.destroy();return;}if(Array.isArray(o))o.forEach(visit);else if(o!==this.device)for(const [key,v] of Object.entries(o))if(key!=='device')visit(v);};visit(this.pipeline);this.input?.destroy();this.input=null;this.pipeline=null;
++  }
++  async loop(now){
++    if(this.stopped)return;
++    try{
++      if(!this.video.isConnected){this.stop();return;}
++      const fi=interpolator&&!interpolator.stopped&&interpolator.ready&&interpolator.canvas.style.visibility==='visible'?interpolator:null;
++      const source=fi?fi.canvas:this.video,w=source.videoWidth||source.width,h=source.videoHeight||source.height;
++      const stamp=fi?fi.frames:this.video.currentTime;
++      if(this.video.readyState>=2&&!this.video.paused&&!document.hidden&&w&&h&&this.scale>1&&stamp!==this.lastStamp&&now-this.last>=1000/PREFS.srFps-1){
++        this.setup(w,h);const rect=this.video.getBoundingClientRect();const factor=Math.min(this.scale,Math.max(1,rect.width*devicePixelRatio/w,rect.height*devicePixelRatio/h),Math.sqrt(4.2e6/(w*h)));
++        this.canvas.width=Math.max(1,Math.round(w*factor));this.canvas.height=Math.max(1,Math.round(h*factor));
++        const begin=performance.now();this.device.queue.copyExternalImageToTexture({source},{texture:this.input},[w,h]);
++        const encoder=this.device.createCommandEncoder();this.pipeline.pass(encoder);
++        const pass=encoder.beginRenderPass({colorAttachments:[{view:this.context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:1},loadOp:'clear',storeOp:'store'}]});pass.setPipeline(this.present);pass.setBindGroup(0,this.bind);pass.draw(3);pass.end();this.device.queue.submit([encoder.finish()]);
++        await this.device.queue.onSubmittedWorkDone();if(this.stopped)return;
++        this.frames++;this.last=now;this.lastStamp=stamp;this.canvas.style.visibility='visible';this.video.style.opacity='0';
++        this.inferenceMs=performance.now()-begin;status=`Anime4K CNN ×2 · ${w}×${h} · ${this.inferenceMs.toFixed(1)}ms · 目标 ${PREFS.srFps}fps`;updateStatus();
++      }
++      if(this.scale<=1){this.canvas.style.visibility='hidden';restoreVideo(this.video,this);}
++    }catch(e){this.fail(e.message);return;}
++    this.raf=requestAnimationFrame(this.loop);
++  }
++  fail(message){this.stop();status='Anime4K 未启用：'+message+'；恢复原生播放';updateStatus();diagnostic(status);}
++  stop(){if(this.stopped)return;this.stopped=true;cancelAnimationFrame(this.raf);this.releaseTextures();this.context?.unconfigure();this.device?.destroy();this.canvas.remove();restoreVideo(this.video,this);}
++}
++
+ function startGpu(){
+   gpu?.stop();gpu=null;
+   if(PREFS.srMode==='off'){status='未开启';updateStatus();return;}
+   const video=$('video');if(!video){status='等待视频';updateStatus();return;}
+-  try{status='等待可读取的视频帧';gpu=new AIScaler(video,PREFS.srMode,PREFS.srScale);updateStatus();}
++  try{status='等待可读取的视频帧';gpu=new Anime4KScaler(video,PREFS.srMode,PREFS.srScale);updateStatus();}
+   catch(e){status=e.message;updateStatus();toast('增强不可用，原生播放不受影响：'+e.message);diagnostic(status);}
+ }
+ 
+--- a/main.cpp
++++ b/main.cpp
+@@ -244,6 +244,7 @@
+     // Upstream only executes on bilibili.com; fixture policy tests load it separately.
+     s+="if(host==='www.bilibili.com'){(()=>{\n"+read(root/L"assets/blocker.home.user.js")+"\n})();}\n";
+     s+=read(root/L"assets/ai/ort.webgpu.min.js");s+="\n";
++    s+=read(root/L"assets/ai/anime4k-webgpu.js");s+="\n";
+     s+=read(root/L"assets/enhance.js");return s+"\n})();";
+ }
+ void refreshInjection(){

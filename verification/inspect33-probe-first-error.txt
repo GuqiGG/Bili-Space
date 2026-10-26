@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\inspect_metrics33_live.py", line 42, in <module>
+    asyncio.run(main());print(json.dumps(report,ensure_ascii=False,indent=2))
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\inspect_metrics33_live.py", line 29, in main
+    else:assert row['icons'][1]['top']>row['icons'][0]['top'],row
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'width': 169, 'display': 'grid', 'columns': '18px 30.9125px 22px 14.9375px', 'icons': [{'left': 901.1625366210938, 'right': 919.1625366210938, 'top': 587.4000244140625, 'bottom': 605.4000244140625}, {'left': 962.0750122070312, 'right': 980.0750122070312, 'top': 587.4000244140625, 'bottom': 605.4000244140625}], 'texts': [{'text': '9.8��', 'boxes': [{'left': 923.1625366210938, 'right': 954.0750122070312, 'top': 588.2000122070312, 'bottom': 604.2000122070312}]}, {'text': '40', 'boxes': [{'left': 984.0750122070312, 'right': 999.0125122070312, 'top': 588.2000122070312, 'bottom': 604.2000122070312}]}]}

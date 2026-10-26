@@ -1,0 +1,18 @@
+{"loader": {"documentReady": "interactive", "currentTime": 0.203574, "events": [{"event": "enter", "time": 89.90000000037253, "videoReady": 0}, {"event": "exit", "time": 204.70000000018626, "videoReady": 4}, {"event": "removed", "time": 328.90000000037253, "videoReady": 4}], "mainReady": 4, "previewReady": 0}, "volume": {"percent": "150", "gain": "gain-150", "trackHeight": 110}}
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_chrome23_runtime.py", line 64, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_chrome23_runtime.py", line 33, in main
+    assert report['volume']['percent']=='200' and report['volume']['gain']=='gain-200' and report['volume']['trackHeight']>=100,report['volume']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'percent': '150', 'gain': 'gain-150', 'trackHeight': 110}

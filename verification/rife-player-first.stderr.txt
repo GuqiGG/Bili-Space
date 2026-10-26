@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_player.py", line 51, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_player.py", line 37, in main
+    await c.js('BiliSpace.update({srMode:"quality",srScale:2})');await wait(c,'BiliSpace.state.frames>5&&document.querySelector(".bs-fi-canvas")?.width===1280');report['combined']=await c.js('({ai:BiliSpace.state.frames,fi:BiliSpace.state.interpolation,aiSize:[document.querySelector(".bs-gpu-canvas:not(.bs-fi-canvas)").width,document.querySelector(".bs-gpu-canvas:not(.bs-fi-canvas)").height],fiSize:[document.querySelector(".bs-fi-canvas").width,document.querySelector(".bs-fi-canvas").height]})');assert report['combined']['aiSize']==report['combined']['fiSize']==[1280,720]
+                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_player.py", line 12, in wait
+    raise AssertionError(exp)
+AssertionError: BiliSpace.state.frames>5&&document.querySelector(".bs-fi-canvas")?.width===1280

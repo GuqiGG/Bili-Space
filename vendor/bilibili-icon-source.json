@@ -1,0 +1,18 @@
+{
+  "sources": [
+    {
+      "path": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\branding\\bilibili-source.svg",
+      "url": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/bilibili.svg",
+      "bytes": 1381,
+      "sha256": "0b31005ccf765a9d37be2c42f1d36e44572ccadb088250626d9905ae5d4f3d21"
+    },
+    {
+      "path": "C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\assets\\branding\\bilibili-reference.png",
+      "url": "https://icons.iconarchive.com/icons/simpleicons-team/simple/512/bilibili-icon.png",
+      "bytes": 7105,
+      "sha256": "4081e77f919c62719c65ee7638b1746021e7b43a18c635d524f683cafe73d4c4"
+    }
+  ],
+  "icon_library": "Simple Icons",
+  "note": "CC0 icon artwork; Bilibili trademark rights remain with its owner. Independent third-party client, no affiliation claim."
+}

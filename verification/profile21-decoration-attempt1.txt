@@ -1,0 +1,18 @@
+{"decorations": {"name": "\u88c5\u626e\u6d4b\u8bd5\uff08\u6a21\u62df\u8d26\u6237\uff09", "banner": "https://i0.hdslb.com/bfs/static/jinkela/long/images/fresh_space_toutu_greenery.png", "bannerLoaded": true, "pendant": "https://i2.hdslb.com/bfs/garb/open/efe5e579cbb95a404c2ba289f37c5965dee7a3a2.png", "badge": "https://i0.hdslb.com/bfs/seed/jinkela/short/user-avatar/big-vip.svg", "label": "\u5341\u5e74\u5927\u4f1a\u5458"}, "bounds": []}
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_profile21_decorations.py", line 46, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_profile21_decorations.py", line 38, in main
+    r=await c.js("(()=>{const b=document.querySelector('#bili-space-root').shadowRoot.querySelector('#account-card').getBoundingClientRect();return {left:b.left,right:b.right,width:innerWidth};})()");assert r['left']>=0 and r['right']<=w;report['bounds'].append(r)
+                                                                                                                                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

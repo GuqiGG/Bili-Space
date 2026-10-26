@@ -1,0 +1,19 @@
+{"chips": {"labels": ["\u5b98\u7f51\u7532\u00d7", "\u5b98\u7f51\u4e59\u00d7"], "positions": [{"x": 610.7999877929688, "y": 94.80000305175781}, {"x": 691.7999877929688, "y": 94.80000305175781}], "heading": ["\u641c\u7d22\u5386\u53f2\u6e05\u7a7a", "\u731c\u4f60\u60f3\u641c"]}, "officialAfterDelete": [{"value": "\u5b98\u7f51\u4e59", "timestamp": 2}], "officialAfterClear": [], "bannerDebug": {"u": "https://api.bilibili.com/x/space/wbi/acc/info?mid=2&platform=web&web_location=1550101&wts=1792930237&w_rid=2dd724d0561cfe6dcb9968821261a55c", "response": {"code": 0, "top_photo_v2": {"sid": 1, "l_img": "https://i1.hdslb.com/bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png", "l_200h_img": "https://i0.hdslb.com/bfs/activity-plat/static/0977767b2e79d8ad0a36a731068a83d7/1sz3p8w2Sk.png"}}, "text": "\u5b98\u65b9\u7a7a\u95f4\u63a5\u53e3\u6d4b\u8bd5\uff08\u975e\u771f\u5b9e\u767b\u5f55\uff09\u7b49\u7ea7 \u2014\u2014\u7c89\u4e1d\u2014\u5173\u6ce8\u2014\u83b7\u8d5e\u6570\u636e\u6765\u81ea B\u7ad9\uff1b\u672a\u83b7\u53d6\u7684\u9879\u76ee\u663e\u793a \u2014\uff1b\u4e3b\u9875\u6a2a\u5e45\u6682\u672a\u83b7\u53d6"}}
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_official22_runtime.py", line 53, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_official22_runtime.py", line 44, in main
+    await wait(c,"!!document.querySelector('#bili-space-root').shadowRoot.querySelector('.account-banner img')")
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_official22_runtime.py", line 10, in wait
+    raise AssertionError(expr)
+AssertionError: !!document.querySelector('#bili-space-root').shadowRoot.querySelector('.account-banner img')

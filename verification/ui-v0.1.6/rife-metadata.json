@@ -1,0 +1,56 @@
+{
+  "_id": "6ab0fb6b3f0d6fa6046f9e4d",
+  "id": "edgetools/rife",
+  "private": false,
+  "pipeline_tag": "video-to-video",
+  "library_name": "onnx",
+  "tags": [
+    "onnx",
+    "rife",
+    "frame-interpolation",
+    "video",
+    "webgpu",
+    "video-to-video",
+    "license:mit",
+    "region:us"
+  ],
+  "downloads": 0,
+  "likes": 0,
+  "modelId": "edgetools/rife",
+  "author": "edgetools",
+  "sha": "321b593c5f36c26f5b08fa2838dcf5eece382fa0",
+  "lastModified": "2026-09-21T18:47:43.000Z",
+  "gated": false,
+  "disabled": false,
+  "model-index": null,
+  "config": {},
+  "cardData": {
+    "license": "mit",
+    "library_name": "onnx",
+    "pipeline_tag": "video-to-video",
+    "tags": [
+      "rife",
+      "frame-interpolation",
+      "video",
+      "onnx",
+      "webgpu"
+    ]
+  },
+  "siblings": [
+    {
+      "rfilename": ".gitattributes"
+    },
+    {
+      "rfilename": "LICENSE"
+    },
+    {
+      "rfilename": "README.md"
+    },
+    {
+      "rfilename": "rife49.onnx"
+    }
+  ],
+  "spaces": [],
+  "createdAt": "2026-09-21T09:39:55.000Z",
+  "usedStorage": 21458882
+}

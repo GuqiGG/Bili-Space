@@ -1,0 +1,7 @@
+BASELINE {"videoModeWaits":false,"officialBackup":false,"svgRotation":false,"parsedCdnPorts":false,"nativeModeValidation":false}
+MODIFIED {"videoModeWaits":true,"officialBackup":true,"svgRotation":true,"parsedCdnPorts":true,"nativeModeValidation":true}
+ROLLBACK {"videoModeWaits":false,"officialBackup":false,"svgRotation":false,"parsedCdnPorts":false,"nativeModeValidation":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 128418 4852e35aa2ec8b380b9d81ba3c3c997d77ada4893797cbd98f17735d8e0aa1de
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 622173 d1ed11f22fe77739d64cc0579ff8f6a12ce230b5026a00fc46f32f93e0dce522
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 6608780 bc8eb048eaddea247e0a7aebf489c601fa02c567aad8915a1c286de25f827f31

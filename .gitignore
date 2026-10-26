@@ -7,3 +7,6 @@ third_party/
 __pycache__/
 verification/*.png
 verification/*.json
+
+# Local upstream reference checkout; not distributed
+vendor/Bili23-Downloader-source/

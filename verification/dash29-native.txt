@@ -1,0 +1,37 @@
+{
+  "ok": {
+    "exit": 0,
+    "bytes": 29255,
+    "sha256": "2ed2aae37cb4a64db1a37c08dc9a8d9b55fa3150b21347d01da69e19e7581194",
+    "partial_cleaned": true
+  },
+  "truncated": {
+    "exit": 0,
+    "bytes": 17,
+    "sha256": "17f051c10849630365590a9416caaaa05f93346ae7ee06917005f9e2c76ad0c7",
+    "partial_cleaned": true
+  },
+  "404": {
+    "exit": 0,
+    "bytes": 17,
+    "sha256": "17f051c10849630365590a9416caaaa05f93346ae7ee06917005f9e2c76ad0c7",
+    "partial_cleaned": true
+  },
+  "input": {
+    "samples_and_last_timestamps": "24 11489000\n53 11091875"
+  },
+  "output": {
+    "samples_and_last_timestamps": "24 11488571\n53 11091875"
+  },
+  "v": {
+    "bytes": 8893,
+    "sha256": "ceee989df8b3b0387f0bbfedae9c3d05ca61bd18c4a0d7ae58977cfa24aa6a09",
+    "lossless_equal": true
+  },
+  "a": {
+    "bytes": 18298,
+    "sha256": "e149474a9783257a273362c568f2ecc6cb5f7c5e56169491f1fc7f99aec934f0",
+    "lossless_equal": true
+  },
+  "pass": true
+}

@@ -1,0 +1,7 @@
+BASELINE {"installed": false, "activationRestoresWebFocus": false, "nativeFocusRestoresWebFocus": false}
+MODIFIED {"installed":true,"activationRestoresWebFocus":true,"nativeFocusRestoresWebFocus":true,"mockChecks":12}
+ROLLBACK {"installed": false, "activationRestoresWebFocus": false, "nativeFocusRestoresWebFocus": false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49099 4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 91572 768986706f8b560f43718866a87e706d7c68d877f928624c7b3df27fb402a391
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 360287 d8a9120ebda6c89722144fdb1f88d565c4e4fb75ff13f88b8389942e7ed31546
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 3318601 a9229a6f55f382a716c9dd0739b991154cd732cfd29717b4080e1680745bfaa1

@@ -1,0 +1,36 @@
+{
+  "mihomo_version": "v1.19.33",
+  "mihomo_url": "https://github.com/MetaCubeX/mihomo/releases/download/v1.19.33/mihomo-windows-amd64-compatible-v1.19.33.zip",
+  "mihomo_sha256": "926bfea2ce48a247d6a7ce4cf641980e416202d5e40fe4ee5c949089ace0e197",
+  "model_source": "https://github.com/onnx/models/tree/main/validated/vision/super_resolution/sub_pixel_cnn_2016",
+  "model_sha256": "351d5d7c3982a9930e3bd940d623efef9ce721377c08677d1c2a18c6e0002ff8",
+  "onnxruntime_web": "1.30.0",
+  "transform": "replace fixed reshape/transpose pixel shuffle by CRD DepthToSpace; same learned weights, dynamic H/W; initializer graph inputs removed for constant-weight optimization",
+  "dynamic_model_sha256": "351d5d7c3982a9930e3bd940d623efef9ce721377c08677d1c2a18c6e0002ff8",
+  "runtime_files": {
+    "ort-wasm-simd-threaded.asyncify.mjs": "3d1c85995364bb643302fc6fd877a0c3ba5ae72401815e0f24828a53d9191e28",
+    "ort-wasm-simd-threaded.asyncify.wasm": "39f9f0894d478800487ed9f7dbe92618498db320cf55c8e3d89adff8dce658da"
+  },
+  "rife": {
+    "name": "RIFE v4.9 learned intermediate optical flow / occlusion mask",
+    "algorithm_source": "https://github.com/hzwer/Practical-RIFE",
+    "model_source": "https://huggingface.co/edgetools/rife",
+    "revision": "321b593c5f36c26f5b08fa2838dcf5eece382fa0",
+    "source_sha256": "76e4cef9ab42fa7dd4e8f6e4aba47462051e3faa969e4bca6479784fbab0ac6f",
+    "packaged_model_sha256": "9cc700e8b1c023fa5a522442c32e1f76e09eb61ff8514e52f569008d64a81ecc",
+    "license": "MIT",
+    "transformation": "Extract final learned flow /Add_22_output_0 and sigmoid occlusion mask /Sigmoid_output_0; retain learned weights; full-resolution motion-compensated reprojection in client",
+    "max_flow_estimate": [
+      640,
+      384
+    ],
+    "scales_percent": [
+      25,
+      50,
+      100
+    ],
+    "prediction_timestep": 0.5,
+    "rendering": "At .5 reconstruct exact RIFE warped/masked result; other phases scale midpoint motion and renormalize occlusion weights (not separate neural inference per phase)",
+    "lossless_scaling_reference": "Local files examined read-only for Flow Scale / Queue Target concepts. No proprietary DLL, shader, or model copied into this distribution."
+  }
+}

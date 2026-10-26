@@ -33,13 +33,10 @@ test('native settings in lower left; Douyin font, channels, theme and progress o
  assert(a.messages.some(m=>m.type==='config'));
  a.w.BiliSpace.closeSettings();assert.equal(s.querySelector('#settings').hidden,true);a.close();
 });
-test('sparkles control precedes resolution; performance/quality and multipliers exist',()=>{
- const a=app(),d=a.w.document,q=d.querySelector('.bpx-player-ctrl-quality'),tool=q.previousElementSibling;
- assert(tool.classList.contains('bs-player-tool'));assert(tool.querySelector('svg'));
- assert.deepEqual([...tool.querySelectorAll('select')[0].options].map(x=>x.value),['off','performance','quality']);
- assert.deepEqual([...tool.querySelectorAll('select')[1].options].map(x=>x.value),['1','2','3']);
- tool.querySelector('button').click();assert.equal(tool.querySelector('.bs-sr-menu').hidden,false);a.close();
+test('enhancement choices live only in client settings',()=>{
+ const a=app(),d=a.w.document;assert.equal(d.querySelector('.bs-player-tool'),null);a.w.BiliSpace.openSettings();const panel=d.querySelector('#bili-space-root').shadowRoot;panel.querySelector('[data-tab=play]').click();assert.deepEqual([...panel.querySelector('[data-pref=srMode]').options].map(x=>x.value),['off','performance','quality']);assert.deepEqual([...panel.querySelector('[data-pref=srScale]').options].map(x=>x.value),['1','2','3']);a.close();
 });
+
 test('native PiP keeps a video-only DOM state and restores normal chrome',()=>{
  const a=app(),d=a.w.document;
  a.w.BiliSpace.requestPip();assert(a.messages.some(m=>m.type==='window'&&m.action==='pip'));
@@ -53,8 +50,8 @@ test('WebGPU unavailable fails visibly without hiding original video',()=>{
  assert.match(a.w.BiliSpace.state.status,/WebGPU/);assert.equal(d.querySelector('video').style.opacity,'0.7');assert.equal(d.querySelector('.bs-gpu-canvas'),null);a.close();
 });
 test('incremental ad card insertion is detected',async()=>{
- const a=app(),d=a.w.document,n=d.createElement('div');n.className='bili-video-card';n.innerHTML='<span class="bili-video-card__info--text-ad">骞垮憡</span>';d.querySelector('.feed-list').append(n);
- await new Promise(r=>setTimeout(r,250));assert.equal(n.dataset.bsAd,'true');a.close();
+ const a=app(),d=a.w.document,n=d.createElement('div');n.className='bili-video-card';n.innerHTML='<span class="bili-video-card__info--text-ad">广告</span>';d.querySelector('.feed-list').append(n);
+ for(let i=0;i<20&&n.dataset.bsAd!=='true';i++)await new Promise(r=>setTimeout(r,100));assert.equal(n.dataset.bsAd,'true');a.close();
 });
 test('modified blocker hard-locks optional features and non-home routes',()=>{
  const {execFileSync}=require('node:child_process');

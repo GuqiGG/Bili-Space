@@ -1,0 +1,21 @@
+forced-debug {'url': 'about:blank', 'html': '<html><head></head><body></body></html>'}
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_update34_ui.py", line 79, in <module>
+    try:asyncio.run(main())
+        ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_update34_ui.py", line 63, in main
+    report['forced']=await c.js("({url:location.href,notes:document.querySelector('#notes').textContent,images:document.querySelectorAll('img').length,ignore:!!document.querySelector('[data-action=ignore]'),buttons:[...document.querySelectorAll('button')].map(b=>b.textContent)})")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_update34_ui.py", line 17, in js
+    if 'exceptionDetails' in a:raise RuntimeError(a['exceptionDetails'])
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: {'exceptionId': 1, 'text': 'Uncaught', 'lineNumber': 0, 'columnNumber': 58, 'scriptId': '7', 'exception': {'type': 'object', 'subtype': 'error', 'className': 'TypeError', 'description': "TypeError: Cannot read properties of null (reading 'textContent')\n    at <anonymous>:1:59", 'objectId': '-3005695696720025350.1.2'}}

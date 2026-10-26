@@ -1,0 +1,54 @@
+
+> better-bili-space@0.1.10 test
+> node --test tests/*.test.cjs
+
+✔ Anime4K GPU path follows raw-frame interpolation and avoids CPU SR feedback (1.9135ms)
+✔ explicit home, banner and right-side ad markers; no title-based false positive (305.4561ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (149.4112ms)
+✔ sparkles control precedes resolution; performance/quality and multipliers exist (71.3018ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (51.9123ms)
+✔ WebGPU unavailable fails visibly without hiding original video (55.1922ms)
+✔ incremental ad card insertion is detected (257.181ms)
+✔ modified blocker hard-locks optional features and non-home routes (43.9742ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (285.3147ms)
+✔ header settings individually hide all eight optional items without hiding window controls (164.6075ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (64.5701ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (313.5223ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (368.163ms)
+✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (41.5759ms)
+✔ centered vector chevron and persisted category whitelist leave no hidden-link placeholders (351.3739ms)
+✔ proxy UI is explicit opt-in, never enables a public node on mount (127.7ms)
+✔ BTR persisted settings cannot re-enable the launcher but keep engine fields (62.7371ms)
+✔ short wheel inertia progresses, clamps and cancels; precision / reduced-motion remain native (92.8913ms)
+✔ description link repair changes only known URL hostname; other emoji preserved (184.1269ms)
+✔ only sticker embedded in recognized Lanzou host is removed (70.7185ms)
+✔ late description text is linkified (400.6677ms)
+✔ SR and interpolation are adjacent before native quality; supplied three-frame SVG is used (297.0001ms)
+✔ player menus are exclusive, Escape closes them, FI settings send typed persisted config (162.5681ms)
+✔ settings panel can resize in both directions and renderer waits hidden for actual frames (62.765ms)
+✔ AI optical flow replaces blend; flow scale is selectable and unavailable AI preserves original (64.7749ms)
+✔ promotion containing video markup stays hidden and is never converted to display contents (301.2403ms)
+✔ message dark theme covers the background, translucent sidebar RGB tokens and header reserve (127.9834ms)
+✔ category disclosure is click-only, replaces primary navigation and restores its saved visibility (959.8016ms)
+✔ native banner layers and handlers are preserved; center text does not intercept the pointer (36.5237ms)
+✔ homepage prefetch uses the existing loader and respects Save-Data instead of issuing duplicate API requests (26.0248ms)
+✔ layout-only changes wake a scroll-based site loader without scrolling the viewport; Save-Data disables the wake (1132.8358ms)
+✔ Ctrl+W sends native close without browser default (302.0129ms)
+✔ close preference and SR rate persist as typed config (152.4183ms)
+✔ jittered inference arrival never rewinds source presentation or invents quarter phases (2.1683ms)
+✔ future pair waits for presentation clock; queue bounded and reset starts clean (0.3616ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (501.0538ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (67.2056ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (63.6946ms)
+✔ signed out retains a working login link (60.5102ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (36.4525ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (34.1958ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (26.7478ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3264.9121

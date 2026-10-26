@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\smoke.py", line 133, in <module>
+    if __name__=='__main__':asyncio.run(main())
+                            ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\smoke.py", line 73, in main
+    assert observed['gpu']['frames']>0 and observed['gpu']['canvas']=={'width':1280,'height':720}, observed['gpu']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'prefs': {'theme': 'dark', 'accent': '#5aaf9a', 'progressColor': '#5aaf9a', 'progressHeight': 8, 'progressRadius': 12, 'progressAlways': False, 'progressThumb': True, 'showChannels': False, 'hideAds': True, 'btr': True, 'font': True, 'zoom': 100, 'srMode': 'quality', 'srScale': 2, 'headerHome': True, 'headerDynamic': True, 'headerHistory': True, 'headerBrand': True, 'headerSearch': True, 'headerMessages': True, 'headerAccount': True, 'headerBack': True, 'autoZoom': True, 'autoZoomTarget': 1280, 'proxy': False, 'proxyAll': False, 'proxyNode': '', 'categoryPreset': 0, 'categorySelection': [0, 2, 5]}, 'status': '本地 AI ESPCN ×3 · 640×360 → 933×525（1.46×）· 23ms/帧 · 24fps', 'frames': 35, 'stopped': False, 'pip': False, 'full': False, 'route': 'other', 'loading': False, 'ads': 4, 'proxy': {'enabled': False, 'message': '代理已关闭', 'node': None, 'nodes': [], 'port': 0, 'running': False}, 'canvas': {'width': 933, 'height': 525}, 'opacity': ''}

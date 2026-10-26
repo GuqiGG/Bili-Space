@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "tests/scroll-policy.cjs",
+    "assets/enhance.js"
+  ],
+  "stdout": "{\"scrollbarWidth\":\"none\",\"wheel120Intercepted\":true,\"during\":42.603,\"end\":120}\n",
+  "stderr": "",
+  "exit_status": 0,
+  "hashes": {
+    "enhance.original.js": "c2bc186734a30ea57915acd4b7b341fe3717ecbcc06b6488b80b654cdd89bb5a",
+    "main.original.cpp": "32510602610c1fa746c50d79487e905cf51885890265fee495bad08afc53e5cb"
+  }
+}

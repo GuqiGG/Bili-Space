@@ -1,0 +1,23 @@
+forced-debug {'url': 'about:blank', 'html': '<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bili-Space �� �������</title><style>\n:root{color-scheme:dark;font:16px \'Segoe UI\',\'Microsoft YaHei\',sans-serif;background:#161618;col'}
+{
+  "about": {
+    "version": "0.1.34",
+    "author": "δ����",
+    "footer": "Bili-Space0.1.34 �� Ϊרע������޸ļ�ʱ��Ч �� �Զ�����",
+    "bodyWidth": 1092,
+    "width": 1092
+  },
+  "forced": {
+    "url": "about:blank",
+    "notes": "ǿ����������</script><img src=x>",
+    "images": 0,
+    "ignore": false,
+    "buttons": [
+      "���ظ��°���У�飩",
+      "���¼��",
+      "�򿪸��°�Ŀ¼",
+      "�˳��ͻ���"
+    ]
+  },
+  "afterBypass": "about:blank"
+}

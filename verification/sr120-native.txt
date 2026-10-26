@@ -1,0 +1,7 @@
+BASELINE {"exit":{"saved_action":"missing","srFps":0,"visible":false,"window_retained":true},"tray":{"saved_action":"missing","srFps":0,"visible":false,"window_retained":true}}
+MODIFIED {"exit":{"saved_action":"exit","srFps":120,"visible":false,"window_retained":false},"tray":{"saved_action":"tray","srFps":120,"visible":false,"window_retained":true}}
+ROLLBACK {"exit":{"saved_action":"missing","srFps":0,"visible":false,"window_retained":true},"tray":{"saved_action":"missing","srFps":0,"visible":false,"window_retained":true}}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49099
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 91572
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 145240
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 1085857

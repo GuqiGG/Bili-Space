@@ -1,0 +1,198 @@
+--- a/enhance.js
++++ b/enhance.js
+@@ -1,6 +1,6 @@
+ /* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */
+ const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
+-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',fiMode:'off',fiFps:60,fiFlowScale:50,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
++const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',clipboardAutoOpen:true,fiMode:'off',fiFps:60,fiFlowScale:50,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
+ const PREFS = { ...DEFAULTS, ...INITIAL };
+ const $ = (q, root=document) => root.querySelector(q);
+ const $$ = (q, root=document) => [...root.querySelectorAll(q)];
+@@ -246,9 +246,46 @@
+     }
+   }
+ }
++
++function cleanDescriptionUrl(raw){
++  let text=raw.replace(/[。。，，；;！!？?、）)\]】》]+$/u,'');
++  const m=text.match(/^(https?:\/\/)([^/?#]+)([\s\S]*)$/i);if(!m)return null;
++  let host=m[2];
++  // Only the known Lanzou domain family permits removing non-ASCII obfuscation.
++  const ascii=host.replace(/[^\x00-\x7f]/gu,'');
++  if(/^(?:[a-z0-9-]+\.)+lanzou[a-z]?\.com$/i.test(ascii))host=ascii;
++  try{const url=new URL(m[1]+host+m[3]);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)return null;return url.href;}catch{return null;}
++}
++function linkifyDescriptions(){
++  const roots=$$('.basic-desc-info,.video-desc .desc-info-text,.video-desc-container .desc-info-text,#v_desc .info');
++  for(const root of roots){
++    // A sticker inside a known Lanzou hostname is URL obfuscation; unrelated stickers stay.
++    for(const img of $$('img',root)){
++      if(img.closest('a'))continue;const before=img.previousSibling,after=img.nextSibling;
++      if(before?.nodeType!==3||after?.nodeType!==3)continue;
++      const left=before.nodeValue.match(/https?:\/\/[^\s/?#]+$/i),right=after.nodeValue.match(/^[^\s<>"“”]+/u);if(!left||!right)continue;
++      const candidate=left[0]+right[0],host=candidate.match(/^https?:\/\/([^/?#]+)/i)?.[1]?.replace(/[^\x00-\x7f]/gu,'');
++      if(!host||!/^(?:[a-z0-9-]+\.)+lanzou[a-z]?\.com$/i.test(host))continue;
++      const cleaned=cleanDescriptionUrl(candidate);if(!cleaned)continue;
++      before.nodeValue=before.nodeValue.slice(0,left.index)+candidate;after.nodeValue=after.nodeValue.slice(right[0].length);img.remove();
++    }
++    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement?.closest('a,script,style,button,textarea,[contenteditable=true]')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
++    const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
++    for(const node of nodes){
++      const text=node.nodeValue,pattern=/https?:\/\/[^\s<>"“”]+/giu;let match,last=0,changed=false;const fragment=document.createDocumentFragment();
++      while((match=pattern.exec(text))){const cleaned=cleanDescriptionUrl(match[0]);if(!cleaned)continue;const stripped=match[0].replace(/[。。，，；;！!？?、）)\]】》]+$/u,'');fragment.append(document.createTextNode(text.slice(last,match.index)));const a=document.createElement('a');a.href=cleaned;a.textContent=cleaned;a.dataset.bsDescriptionLink='true';a.style.cssText='color:#00aeec!important;cursor:pointer;text-decoration:underline;overflow-wrap:anywhere';a.rel='noopener noreferrer';fragment.append(a);last=match.index+stripped.length;changed=true;}
++      if(changed){fragment.append(document.createTextNode(text.slice(last)));node.replaceWith(fragment);}
++    }
++    for(const a of $$('a[href]',root)){
++      if(a.dataset.bsExternalBound)continue;const cleaned=cleanDescriptionUrl(a.getAttribute('href')||'')||cleanDescriptionUrl(a.textContent.trim());if(!cleaned)continue;
++      const labelUrl=cleanDescriptionUrl(a.textContent.trim());if(labelUrl&&a.textContent!==labelUrl)a.textContent=labelUrl;a.dataset.bsExternalBound='true';a.href=cleaned;a.style.setProperty('color','#00aeec','important');a.addEventListener('click',e=>{if(e.button!==0)return;e.preventDefault();e.stopImmediatePropagation();native('open-external',{url:a.href});},true);
++    }
++  }
++}
++
+ function scheduleScan(){
+   if(scanTimer)return;
+-  scanTimer=setTimeout(()=>{scanTimer=0;syncRoute();markAds();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==$('video')))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==$('video')))startGpu();},180);
++  scanTimer=setTimeout(()=>{scanTimer=0;syncRoute();markAds();linkifyDescriptions();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==$('video')))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==$('video')))startGpu();},180);
+ }
+ 
+ // Short wheel easing only: precision gestures retain the OS's own momentum.
+@@ -488,7 +525,7 @@
+     return `<h2>番剧与访问，一个开关。</h2><p class="subtitle">内置 Mihomo（Clash 兼容内核）。只代理这个客户端，不改系统代理，不开 TUN，不接管全局网络。</p><div class="row"><label for="proxy-switch">代理开关<span class="hint">${on?'当前已开启。关闭后立即改为直连。':'当前关闭。开启后客户端会自动重启一次以接管网络。'}</span></label><input id="proxy-switch" type="checkbox" data-action="proxy-toggle" ${on?'checked':''}></div><div class="note" id="proxy-status">${proxyLine()}</div><div class="row"><label for="proxy-node">当前节点<span class="hint">切换节点即时生效，不需要重启。</span></label><select id="proxy-node" aria-label="代理节点"></select></div>${toggle('proxyAll','全局代理','默认只代理 B站相关域名，其余流量直连。开启后所有流量走节点。')}<div class="actions"><button class="link" id="proxy-free">用内置免费节点</button><button class="link" id="proxy-import">导入 Clash 配置…</button><button class="link" id="proxy-check">检测出口地区</button></div><div class="note" id="proxy-region">点“检测出口地区”查看当前 IP 落在哪个国家或地区。</div><div class="note"><strong>为什么开了代理还看不了番剧？</strong><br>B站番剧按 IP 地区授权。“仅限中国大陆”的番剧必须用中国大陆出口；公开免费节点基本都在日本、香港、新加坡、美国，能加速访问和部分港澳台版权内容，但不能解锁只在大陆授权的番剧。要解决这一点，导入你自己的回国订阅，或换用带大陆出口的服务。免费节点由公开订阅整理并实测可用，运营者不可审计，不要用它登录敏感账号。</div>`;
+   }
+   if(currentTab==='header')return `<h2>顶部，只放你需要的。</h2><p class="subtitle">选择客户端顶部显示的内容，立即生效并自动保存。标题始终按窗口居中。</p>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,key==='headerBrand'?'在窗口正中显示 Bili Space。':'控制顶部的'+label+'是否显示。')).join('')}<div class="note">红黄绿窗口控制始终保留，避免隐藏后无法操作窗口。视频网页中的“首页”按钮独立保留，不受顶部导航开关影响。</div><div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>`;
+-  if(currentTab==='appearance')return `<h2>让空间，像你。</h2><p class="subtitle">少一点干扰，多一点喜欢。每次调整，都会自动保存。</p><div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W<span class="hint">自动保存，不再反复询问；托盘右键始终可退出。</span></label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色<span class="hint">属于你的那一点颜色。</span></label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','使用你已安装的 DouyinSans；未安装时回退到系统字体。')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','让界面跟着屏幕变大，而不是缩在左上角。')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">按这个内容宽度排版；数值越小，界面越大。</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div><div class="note">${icon('appearance')} 内容保持清晰，装饰适可而止。支持键盘操作与系统减少动态效果设置。</div>`;
++  if(currentTab==='appearance')return `<h2>让空间，像你。</h2><p class="subtitle">少一点干扰，多一点喜欢。每次调整，都会自动保存。</p><div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W<span class="hint">自动保存，不再反复询问；托盘右键始终可退出。</span></label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div>${toggle('clipboardAutoOpen','剪贴板 BV 自动跳转','仅在客户端运行时读取新复制的文本；识别完整 BV 号或 B站视频链接，不记录剪贴板内容，不弹出或抢焦点。')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色<span class="hint">属于你的那一点颜色。</span></label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','使用你已安装的 DouyinSans；未安装时回退到系统字体。')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','让界面跟着屏幕变大，而不是缩在左上角。')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">按这个内容宽度排版；数值越小，界面越大。</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div><div class="note">${icon('appearance')} 内容保持清晰，装饰适可而止。支持键盘操作与系统减少动态效果设置。</div>`;
+   if(currentTab==='progress')return `<h2>掌握每一秒。</h2><p class="subtitle">进度条的颜色、粗细与形状，由你决定。</p><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','保持原生拖动与预览行为。')}${toggle('progressAlways','始终显示播放控制条','关闭时跟随 B站播放器自动隐藏。')}`;
+   if(currentTab==='clean')return `<h2>只留下想看的。</h2><p class="subtitle">识别明确的广告容器，不根据标题猜测，不删除评论和正常推荐。</p>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('showChannels','显示首页频道分区','图二中的动态、热门、番剧、动画等频道导航。')}<div class="note"><strong>非破坏式净化</strong><br>隐藏广告节点而非删除，关闭开关即可恢复。不会隐藏普通直播卡片，也不改写评论。网站更新后规则可能需要维护。</div><div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
+   if(currentTab==='play')return `<h2>细节，多看一点。</h2><p class="subtitle">超分入口也在播放器分辨率左侧。画中画没有标题栏。</p><div class="row"><label for="pref-srMode">超分辨率<span class="hint">本地 Anime4K CNN / WebGPU；帧不上传，不出本机。</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">60/120fps 为调度上限，不保证实际性能；不会增加源视频帧数。</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率<span class="hint">Anime4K 固定 ×2 推理，再按目标倍率缩放；只处理真正需要放大的画面。</span></label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'} · RIFE 光流重投影，按源帧率固定的短呈现缓冲 + 推理延迟</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div><div class="note"><strong>真实处理，可随时关闭</strong><br>使用随客户端打包的 Anime4K CNN 着色器在本机 GPU 推理，按画面实际显示尺寸决定输出大小：源已经比显示更清晰时不浪费算力，并会写明原因。跨域帧不可读取、GPU 不可用或受保护的视频会停止增强并保留原生播放，不假报成功。画中画复用当前播放窗口，Esc 或右下角按钮返回。</div>`;
+@@ -518,7 +555,7 @@
+ }
+ function mountShell(){
+   root=document.createElement('bili-space-shell');root.id='bili-space-root';shadow=root.attachShadow({mode:'open'});
+-  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left"><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="account" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.9 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
++  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left"><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="account" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.10 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
+   document.documentElement.append(root);
+   const dialog=$('.dialog',shadow);if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(([entry])=>{if(entry.contentRect.width>0)dialog.dataset.compact=String(entry.contentRect.width<620);});observer.observe(dialog);}
+   shadow.addEventListener('click',e=>{
+@@ -939,7 +976,7 @@
+   mountShell();installWheelInertia();
+   // One-time migration: profiles that never touched the category list still carry all 18.
+   if(!Number(INITIAL.categoryPreset)&&Array.isArray(PREFS.categorySelection)&&PREFS.categorySelection.length===CATEGORIES.length)update({categorySelection:DEFAULT_CATEGORIES.slice(),categoryPreset:1});
+-  applyPreferences();markAds();mountHomeBanner();compactHomeFeed();mountPlayerTools();startGpu();startInterpolation();refreshAccount();
++  applyPreferences();markAds();linkifyDescriptions();mountHomeBanner();compactHomeFeed();mountPlayerTools();startGpu();startInterpolation();refreshAccount();
+   if(pageKind()==='search'&&document.readyState!=='complete')setLoading(true);
+   window.addEventListener('load',()=>setLoading(false),{once:true});
+   window.addEventListener('focus',()=>refreshAccount());
+@@ -950,8 +987,8 @@
+   window.addEventListener('popstate',()=>{syncRoute();scheduleScan();});
+   window.addEventListener('hashchange',syncRoute);
+   const observer=new MutationObserver(records=>{
+-    if(records.some(r=>[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.('#bili-space-root,.bs-player-tool,.bs-gpu-canvas'))))scheduleScan();
+-  });observer.observe(document.body,{childList:true,subtree:true});
++    if(records.some(r=>((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.('#bili-space-root,.bs-player-tool,.bs-gpu-canvas'))))scheduleScan();
++  });observer.observe(document.body,{childList:true,subtree:true,characterData:true});
+   mediaTheme.addEventListener('change',applyPreferences);
+   const controls=document.createElement('div');controls.className='bs-pip-controls';controls.innerHTML='<button type="button" aria-label="返回客户端">↙ 返回</button><button type="button" aria-label="播放或暂停">Ⅱ / ▶</button>';
+   document.body.append(controls);$('button',controls).onclick=()=>native('window',{action:'pip'});$$('button',controls)[1].onclick=()=>{const v=$('video');if(v){if(v.paused)v.play().catch(()=>{});else v.pause();}};
+--- a/main.cpp
++++ b/main.cpp
+@@ -20,6 +20,7 @@
+ #include <filesystem>
+ #include <fstream>
+ #include <functional>
++#include <regex>
+ #include <string>
+ #include <sstream>
+ #include "json.hpp"
+@@ -31,6 +32,7 @@
+ ICoreWebView2* webview{};
+ fs::path root, dataPath;
+ bool testing=false, pip=false, full=false;
++std::wstring lastClipboardVideo;
+ RECT savedRect{};
+ constexpr UINT trayMessage=WM_APP+71;
+ NOTIFYICONDATAW trayIcon{};bool trayReady=false;
+@@ -48,6 +50,7 @@
+ bool injectionPending=false, injectionDirty=false;
+ json config, gm;
+ void save();
++bool externalWebUrl(const std::wstring& uri);
+ HANDLE proxyProcess{},proxyJob{};int proxyPort{},proxyControlPort{};std::string proxyStatus="代理已关闭",proxySecret;
+ bool proxyEnabled=false,proxyRunning=false;
+ 
+@@ -202,7 +205,7 @@
+ };
+ template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
+ 
+-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
++json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"clipboardAutoOpen",true},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+ void save(){
+     auto tmp=dataPath/L"settings.tmp";
+     {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm}}).dump(2);if(!f){log("settings write failed");return;}}
+@@ -307,6 +310,7 @@
+         }else if(type=="navigate"){
+             auto uri=wide(m.value("url",std::string{}));
+             if(uri.size()<=4096&&uri.rfind(L"https://search.bilibili.com/all?keyword=",0)==0)webview->Navigate(uri.c_str());
++        }else if(type=="open-external"){auto uri=wide(m.value("url",std::string{}));if(externalWebUrl(uri))ShellExecuteW(windowHandle,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);
+         }else if(type=="proxy"){proxyAction(m.value("action",std::string{}),m.value("node",std::string{}),m.value("url",std::string{}));
+         }else if(type=="config"){
+             mergeConfig(m.at("value"));save();applyZoom();refreshInjection();
+@@ -319,6 +323,32 @@
+         }else if(type=="diagnostic")log(m.value("message",std::string{}));
+     }catch(const std::exception& e){log(std::string("message rejected: ")+e.what());}
+ }
++
++std::wstring clipboardVideoUrl(std::wstring text){
++    if(text.size()>16384)return L"";
++    auto start=text.find_first_not_of(L" \r\n\t"),end=text.find_last_not_of(L" \r\n\t");if(start==std::wstring::npos)return L"";text=text.substr(start,end-start+1);
++    static const std::wregex plain(L"[Bb][Vv][A-Za-z0-9]{10}");
++    static const std::wregex link(LR"((https?://)?(www\.|m\.)?bilibili\.com/video/([Bb][Vv][A-Za-z0-9]{10})(?=[/?#\s<>]|$)([/?#][^\s<>]*)?)",std::regex_constants::icase);
++    std::wstring id,query;std::wsmatch match;
++    if(std::regex_match(text,plain))id=text;
++    else if(std::regex_search(text,match,link)){
++        if(match.position()>0){auto c=text[match.position()-1];if(iswalnum(c)||c==L'.'||c==L'/'||c==L'@'||c==L'-')return L"";}
++        id=match[3].str();auto tail=match[4].str();static const std::wregex param(LR"([?&](t|p)=([0-9]+(\.[0-9]+)?)(?=&|#|$))");
++        for(std::wsregex_iterator it(tail.begin(),tail.end(),param),last;it!=last;++it){if(query.size()>100)break;query+=(query.empty()?L"?":L"&")+(*it)[1].str()+L"="+(*it)[2].str();}
++    }else return L"";
++    id[0]=L'B';id[1]=L'V';return L"https://www.bilibili.com/video/"+id+query;
++}
++bool externalWebUrl(const std::wstring& uri){
++    if(uri.size()>4096||uri.find_first_of(L"\r\n\t")!=std::wstring::npos)return false;
++    URL_COMPONENTS c{};c.dwStructSize=sizeof(c);c.dwHostNameLength=c.dwUserNameLength=c.dwPasswordLength=DWORD(-1);
++    return WinHttpCrackUrl(uri.c_str(),DWORD(uri.size()),0,&c)&&c.dwHostNameLength&&c.dwUserNameLength==0&&c.dwPasswordLength==0&&(c.nScheme==INTERNET_SCHEME_HTTP||c.nScheme==INTERNET_SCHEME_HTTPS);
++}
++void checkClipboardVideo(){
++    if(!webview||!config.value("clipboardAutoOpen",true)||!IsClipboardFormatAvailable(CF_UNICODETEXT)||!OpenClipboard(windowHandle))return;
++    std::wstring text;auto data=GetClipboardData(CF_UNICODETEXT);if(data){auto size=GlobalSize(data);if(size&&size<=32770){auto value=static_cast<const wchar_t*>(GlobalLock(data));if(value){const auto count=size/sizeof(wchar_t);size_t n=0;while(n<count&&value[n])n++;if(n<count)text.assign(value,n);GlobalUnlock(data);}}}CloseClipboard();
++    auto uri=clipboardVideoUrl(text);if(uri.empty()){lastClipboardVideo.clear();return;}if(uri!=lastClipboardVideo){lastClipboardVideo=uri;webview->Navigate(uri.c_str());}
++}
++
+ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
+     if(msg==taskbarCreated&&!testing){installTray();return 0;}
+     if(msg==trayMessage){
+@@ -333,6 +363,7 @@
+         }
+     }
+     switch(msg){
++    case WM_CLIPBOARDUPDATE:if(!testing)checkClipboardVideo();return 0;
+     case WM_NCCALCSIZE:
+         if(full&&wp)return 0;
+         if(wp){
+@@ -353,7 +384,7 @@
+     case WM_DPICHANGED:{auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
+     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
+     case WM_CLOSE:if(pip){togglePip(false);return 0;}if(trayReady&&!testing&&config.value("closeAction",std::string("tray"))=="tray"){ShowWindow(hwnd,SW_HIDE);return 0;}DestroyWindow(hwnd);return 0;
+-    case WM_DESTROY:if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
++    case WM_DESTROY:RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
+     }
+     return DefWindowProcW(hwnd,msg,wp,lp);
+ }
+@@ -417,7 +448,7 @@
+             auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([](ICoreWebView2*,auto args){LPWSTR uri{};args->get_Uri(&uri);args->put_Handled(TRUE);if(uri){webview->Navigate(uri);CoTaskMemFree(uri);}return S_OK;});webview->add_NewWindowRequested(ph,&token);ph->Release();
+             auto fh=callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2*,IUnknown*){BOOL on{};webview->get_ContainsFullScreenElement(&on);toggleFull(on);return S_OK;});webview->add_ContainsFullScreenElementChanged(fh,&token);fh->Release();
+             auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL success{};args->get_IsSuccess(&success);execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});webview->add_NavigationCompleted(ready,&token);ready->Release();
+-            auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));webview->Navigate(target.c_str());}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
++            auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));webview->Navigate(target.c_str());if(!testing)AddClipboardFormatListener(windowHandle);}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
+             webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();return S_OK;
+         });env->CreateCoreWebView2Controller(windowHandle,h);h->Release();return S_OK;
+     });

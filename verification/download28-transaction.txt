@@ -1,0 +1,7 @@
+BASELINE {"interfaceWithoutFrames":false,"homeAnimationRemoved":false,"nativeNoExternal":false}
+MODIFIED {"interfaceWithoutFrames":true,"homeAnimationRemoved":true,"nativeNoExternal":true}
+ROLLBACK {"interfaceWithoutFrames":false,"homeAnimationRemoved":false,"nativeNoExternal":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 124053 2ebd0cfa5a3ff1ea27f2f829bcbc6a17faad3f1975401b7dd83dfea764f655f6
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 569625 d80563ab22c47550b8a26fa6071c984d7119efd02b18f0d3efe15d3243a5a717
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 5953080 646cbb445ab8dba8fe11c183b86e0fff6495a5d57170ff6ac3c81e8c5ba80a94

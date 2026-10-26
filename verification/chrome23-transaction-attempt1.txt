@@ -1,0 +1,8 @@
+BASELINE {"trayPause":false,"arrow200":false,"windowControlSwitch":false,"homeWordRetained":false,"springPopover":false,"loaderBeforeWindowLoad":false,"tallVolume":false,"inlineBlocker":false}
+MODIFIED {"trayPause":true,"arrow200":true,"windowControlSwitch":true,"homeWordRetained":true,"springPopover":true,"loaderBeforeWindowLoad":true,"tallVolume":true,"inlineBlocker":true}
+ROLLBACK {"trayPause":false,"arrow200":false,"windowControlSwitch":false,"homeWordRetained":false,"springPopover":false,"loaderBeforeWindowLoad":false,"tallVolume":false,"inlineBlocker":false}
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_chrome23_transaction.py", line 23, in <module>
+    for old,current,name in pairs:assert (reconstruction/name).read_bytes()==current.read_bytes()
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

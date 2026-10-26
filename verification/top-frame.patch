@@ -1,0 +1,32 @@
+--- a/main.cpp
++++ b/main.cpp
+@@ -332,7 +332,15 @@
+         }
+     }
+     switch(msg){
+-    case WM_NCCALCSIZE:if(full&&wp)return 0;break; // Keep native non-client resize borders outside WebView2.
++    case WM_NCCALCSIZE:
++        if(full&&wp)return 0;
++        if(wp){
++            auto bounds=reinterpret_cast<NCCALCSIZE_PARAMS*>(lp);const LONG top=bounds->rgrc[0].top;
++            auto result=DefWindowProcW(hwnd,msg,wp,lp);
++            // Keep side/bottom system resize borders, not the raised top frame.
++            bounds->rgrc[0].top=top+(IsZoomed(hwnd)?GetSystemMetrics(SM_CYFRAME)+GetSystemMetrics(SM_CXPADDEDBORDER):1);
++            return result;
++        }break;
+     case WM_NCHITTEST:{
+         RECT r;GetWindowRect(hwnd,&r);int x=GET_X_LPARAM(lp),y=GET_Y_LPARAM(lp),b=IsZoomed(hwnd)||full?0:6;
+         bool l=x<r.left+b,t=y<r.top+b,rr=x>=r.right-b,bb=y>=r.bottom-b;
+@@ -374,6 +382,7 @@
+     CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);
+     WNDCLASSW wc{};wc.hIcon=LoadIconW(instance,MAKEINTRESOURCEW(1));wc.lpfnWndProc=proc;wc.hInstance=instance;wc.lpszClassName=L"BetterBiliSpace";wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hbrBackground=CreateSolidBrush(RGB(20,20,22));RegisterClassW(&wc);
+     windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Better Bili Space [test]":L"Better Bili Space",WS_POPUP|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,100,80,1380,880,nullptr,nullptr,instance,nullptr);
++    DWORD borderColor=0xFFFFFFFE;DwmSetWindowAttribute(windowHandle,34,&borderColor,sizeof(borderColor));
+     BOOL dark=TRUE;DwmSetWindowAttribute(windowHandle,20,&dark,sizeof(dark));int corner=2;DwmSetWindowAttribute(windowHandle,33,&corner,sizeof(corner));
+     if(!testing)installTray();
+     ShowWindow(windowHandle,SW_SHOW);UpdateWindow(windowHandle);
+@@ -415,3 +424,4 @@
+     if(FAILED(hr)){log("environment start failed: "+std::to_string(hr));DestroyWindow(windowHandle);return 2;}
+     MSG msg;while(GetMessageW(&msg,nullptr,0,0)>0){TranslateMessage(&msg);DispatchMessageW(&msg);}CoUninitialize();return 0;
+ }
++

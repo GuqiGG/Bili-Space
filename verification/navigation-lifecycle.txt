@@ -1,0 +1,1 @@
+{"startup": {"animation": "spin", "curve": "cubic-bezier(0.77, 0, 0.175, 1)", "width": 61.43997573852539}, "toolbarControls": 0, "settingsWarning": true, "close": {"exists": true, "tv": true, "curve": "cubic-bezier(0.77, 0, 0.175, 1)"}, "windowShrink": {"before": 1104, "during": 941}, "exit_status": 0, "result": "PASS"}

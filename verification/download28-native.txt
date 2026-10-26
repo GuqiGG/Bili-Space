@@ -1,0 +1,30 @@
+{
+  "ok": {
+    "exit": 0,
+    "bytes": 210032,
+    "sha256": "eb2660570d6c57ce1fbc80aa6bde34847a68b6e91ccd627e1197f71569a7eb9f",
+    "expected_matches": true,
+    "partial_cleaned": true
+  },
+  "truncated": {
+    "exit": 0,
+    "bytes": 17,
+    "sha256": "17f051c10849630365590a9416caaaa05f93346ae7ee06917005f9e2c76ad0c7",
+    "expected_matches": true,
+    "partial_cleaned": true
+  },
+  "404": {
+    "exit": 0,
+    "bytes": 17,
+    "sha256": "17f051c10849630365590a9416caaaa05f93346ae7ee06917005f9e2c76ad0c7",
+    "expected_matches": true,
+    "partial_cleaned": true
+  },
+  "invalid": {
+    "exit": 0,
+    "bytes": 17,
+    "sha256": "17f051c10849630365590a9416caaaa05f93346ae7ee06917005f9e2c76ad0c7",
+    "expected_matches": true,
+    "partial_cleaned": true
+  }
+}

@@ -1,16 +1,17 @@
 {
   "artifact_sha256": {
-    "dist\\BetterBiliSpace.exe": "82fb11af72d210677de2f3d085eb6baf2713201e8b62cc16058efdce9b61c147",
+    "dist\\BetterBiliSpace.exe": "2bd2b170759cf40f201766527f4188d492915fe5e35f8fc1f3d4d5bfa2395b2f",
     "dist\\assets\\blocker.home.user.js": "4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f",
-    "dist\\assets\\bridge.js": "770e08eaafcca1de02341de87e86dcb31a4de290234ac01c9e3968851d9b4cf8",
+    "dist\\assets\\bridge.js": "74569baeb810af6332e82ff2c7039e5f2e542f87e4a5c9be5b66e71c2854499c",
     "dist\\assets\\btr.user.js": "995a2edaaa96732a9a4fd2482652aeb951f2f359c1a4f6f749838643582879c1",
-    "dist\\assets\\enhance.js": "09b3788ecf910aa68fd82eda9510f4bef0b3157ada674119db357ca14f21050d",
+    "dist\\assets\\enhance.js": "adeaa3b1bd848b745a3a3f07f9406113bd5b76af252e3c4db3ba28947ba7d073",
     "dist\\assets\\fixture.html": "25261bdd6bc7cfeade65aff96450f7fe53a449b2ed681f34e932f911e8f0fa17",
+    "dist\\assets\\frame-interpolation.svg": "6f2f9d55cf7132bfedee554ef69027df6046405b99fdc06047d32043a5c75900",
     "dist\\assets\\message-square-more.svg": "b3216d22b398ab20e19b4b3f2637f7ad7f6a2f9fca6bf7c8d9f65455b39ad78b",
     "dist\\assets\\settings.svg": "f904d96fdbc562e72e9547ce437ecd4ab9c6ea83bfd7eccd9b53d803ca335669",
     "dist\\assets\\sparkles.svg": "df560e8955d1f02b4d64265aafcee4a350223aaed4bbd6377b741a8be7772eaa"
   },
-  "process_pid": 36824,
+  "process_pid": 35504,
   "initial": {
     "state": {
       "prefs": {
@@ -27,7 +28,10 @@
         "font": true,
         "zoom": 100,
         "srMode": "off",
-        "srScale": 3,
+        "srScale": 2,
+        "fiMode": "off",
+        "fiFps": 60,
+        "fiFlowScale": 50,
         "headerHome": true,
         "headerDynamic": true,
         "headerHistory": true,
@@ -35,7 +39,18 @@
         "headerSearch": true,
         "headerMessages": true,
         "headerAccount": true,
-        "headerBack": true
+        "headerBack": true,
+        "autoZoom": true,
+        "autoZoomTarget": 1280,
+        "proxy": false,
+        "proxyAll": false,
+        "proxyNode": "",
+        "categoryPreset": 0,
+        "categorySelection": [
+          0,
+          2,
+          5
+        ]
       },
       "status": "\u672a\u5f00\u542f",
       "frames": 0,
@@ -44,7 +59,17 @@
       "full": false,
       "route": "other",
       "loading": false,
-      "ads": 4
+      "ads": 4,
+      "proxy": {
+        "enabled": false,
+        "message": "\u4ee3\u7406\u5df2\u5173\u95ed",
+        "node": null,
+        "nodes": [],
+        "port": 0,
+        "running": false,
+        "testing": true
+      },
+      "interpolation": null
     },
     "btr": true,
     "font": true,
@@ -59,7 +84,18 @@
   },
   "native_persistence": {
     "accent": "#5aaf9a",
+    "autoZoom": true,
+    "autoZoomTarget": 1280,
     "btr": true,
+    "categoryPreset": 0,
+    "categorySelection": [
+      0,
+      2,
+      5
+    ],
+    "fiFlowScale": 50,
+    "fiFps": 60,
+    "fiMode": "off",
     "font": true,
     "headerAccount": true,
     "headerBack": true,
@@ -75,9 +111,12 @@
     "progressHeight": 8,
     "progressRadius": 12,
     "progressThumb": true,
+    "proxy": false,
+    "proxyAll": false,
+    "proxyNode": "",
     "showChannels": false,
     "srMode": "off",
-    "srScale": 3,
+    "srScale": 2,
     "theme": "dark",
     "zoom": 100
   },
@@ -97,6 +136,9 @@
       "zoom": 100,
       "srMode": "quality",
       "srScale": 2,
+      "fiMode": "off",
+      "fiFps": 60,
+      "fiFlowScale": 50,
       "headerHome": true,
       "headerDynamic": true,
       "headerHistory": true,
@@ -104,16 +146,37 @@
       "headerSearch": true,
       "headerMessages": true,
       "headerAccount": true,
-      "headerBack": true
+      "headerBack": true,
+      "autoZoom": true,
+      "autoZoomTarget": 1280,
+      "proxy": false,
+      "proxyAll": false,
+      "proxyNode": "",
+      "categoryPreset": 0,
+      "categorySelection": [
+        0,
+        2,
+        5
+      ]
     },
-    "status": "640\u00d7360 \u2192 1280\u00d7720 \u00b7 2.00\u00d7 \u00b7 \u8d28\u91cf \u00b7 GPU",
-    "frames": 61,
+    "status": "\u672c\u5730 AI ESPCN \u00d73 \u00b7 640\u00d7360 \u2192 1280\u00d7720\uff082.00\u00d7\uff09\u00b7 31ms/\u5e27 \u00b7 20fps",
+    "frames": 4,
     "stopped": false,
     "pip": false,
     "full": false,
     "route": "other",
     "loading": false,
     "ads": 4,
+    "proxy": {
+      "enabled": false,
+      "message": "\u4ee3\u7406\u5df2\u5173\u95ed",
+      "node": null,
+      "nodes": [],
+      "port": 0,
+      "running": false,
+      "testing": true
+    },
+    "interpolation": null,
     "canvas": {
       "width": 1280,
       "height": 720
@@ -137,6 +200,9 @@
         "zoom": 100,
         "srMode": "quality",
         "srScale": 2,
+        "fiMode": "off",
+        "fiFps": 60,
+        "fiFlowScale": 50,
         "headerHome": true,
         "headerDynamic": true,
         "headerHistory": true,
@@ -144,16 +210,37 @@
         "headerSearch": true,
         "headerMessages": true,
         "headerAccount": true,
-        "headerBack": true
+        "headerBack": true,
+        "autoZoom": true,
+        "autoZoomTarget": 1280,
+        "proxy": false,
+        "proxyAll": false,
+        "proxyNode": "",
+        "categoryPreset": 0,
+        "categorySelection": [
+          0,
+          2,
+          5
+        ]
       },
-      "status": "640\u00d7360 \u2192 1280\u00d7720 \u00b7 2.00\u00d7 \u00b7 \u8d28\u91cf \u00b7 GPU",
-      "frames": 86,
+      "status": "\u753b\u9762\u5df2\u7ecf\u4e0d\u6bd4\u6e90\u66f4\u5927\uff0cAI \u63a8\u7406\u4e0d\u4f1a\u5e26\u6765\u53ef\u89c1\u63d0\u5347",
+      "frames": 6,
       "stopped": false,
       "pip": true,
       "full": false,
       "route": "other",
       "loading": false,
-      "ads": 4
+      "ads": 4,
+      "proxy": {
+        "enabled": false,
+        "message": "\u4ee3\u7406\u5df2\u5173\u95ed",
+        "node": null,
+        "nodes": [],
+        "port": 0,
+        "running": false,
+        "testing": true
+      },
+      "interpolation": null
     },
     "width": 384,
     "height": 216,
@@ -187,6 +274,9 @@
       "zoom": 100,
       "srMode": "off",
       "srScale": 2,
+      "fiMode": "off",
+      "fiFps": 60,
+      "fiFlowScale": 50,
       "headerHome": true,
       "headerDynamic": true,
       "headerHistory": true,
@@ -194,7 +284,18 @@
       "headerSearch": true,
       "headerMessages": true,
       "headerAccount": true,
-      "headerBack": true
+      "headerBack": true,
+      "autoZoom": true,
+      "autoZoomTarget": 1280,
+      "proxy": false,
+      "proxyAll": false,
+      "proxyNode": "",
+      "categoryPreset": 0,
+      "categorySelection": [
+        0,
+        2,
+        5
+      ]
     },
     "status": "\u672a\u5f00\u542f",
     "frames": 0,
@@ -203,7 +304,17 @@
     "full": false,
     "route": "other",
     "loading": false,
-    "ads": 4
+    "ads": 4,
+    "proxy": {
+      "enabled": false,
+      "message": "\u4ee3\u7406\u5df2\u5173\u95ed",
+      "node": null,
+      "nodes": [],
+      "port": 0,
+      "running": false,
+      "testing": true
+    },
+    "interpolation": null
   },
   "performance": {
     "prefs": {
@@ -221,6 +332,9 @@
       "zoom": 100,
       "srMode": "performance",
       "srScale": 3,
+      "fiMode": "off",
+      "fiFps": 60,
+      "fiFlowScale": 50,
       "headerHome": true,
       "headerDynamic": true,
       "headerHistory": true,
@@ -228,16 +342,37 @@
       "headerSearch": true,
       "headerMessages": true,
       "headerAccount": true,
-      "headerBack": true
+      "headerBack": true,
+      "autoZoom": true,
+      "autoZoomTarget": 1280,
+      "proxy": false,
+      "proxyAll": false,
+      "proxyNode": "",
+      "categoryPreset": 0,
+      "categorySelection": [
+        0,
+        2,
+        5
+      ]
     },
-    "status": "640\u00d7360 \u2192 1920\u00d71080 \u00b7 3.00\u00d7 \u00b7 \u6027\u80fd \u00b7 GPU",
-    "frames": 23,
+    "status": "\u672c\u5730 AI ESPCN \u00d73 \u00b7 640\u00d7360 \u2192 1600\u00d7900\uff082.50\u00d7\uff09\u00b7 138ms/\u5e27 \u00b7 15fps",
+    "frames": 25,
     "stopped": false,
     "pip": false,
     "full": false,
     "route": "other",
     "loading": false,
-    "ads": 4
+    "ads": 4,
+    "proxy": {
+      "enabled": false,
+      "message": "\u4ee3\u7406\u5df2\u5173\u95ed",
+      "node": null,
+      "nodes": [],
+      "port": 0,
+      "running": false,
+      "testing": true
+    },
+    "interpolation": null
   },
   "context_loss": {
     "state": {
@@ -254,8 +389,11 @@
         "btr": true,
         "font": true,
         "zoom": 100,
-        "srMode": "performance",
+        "srMode": "quality",
         "srScale": 3,
+        "fiMode": "off",
+        "fiFps": 60,
+        "fiFlowScale": 50,
         "headerHome": true,
         "headerDynamic": true,
         "headerHistory": true,
@@ -263,16 +401,37 @@
         "headerSearch": true,
         "headerMessages": true,
         "headerAccount": true,
-        "headerBack": true
+        "headerBack": true,
+        "autoZoom": true,
+        "autoZoomTarget": 1280,
+        "proxy": false,
+        "proxyAll": false,
+        "proxyNode": "",
+        "categoryPreset": 0,
+        "categorySelection": [
+          0,
+          2,
+          5
+        ]
       },
-      "status": "GPU \u4e0a\u4e0b\u6587\u4e22\u5931\uff0c\u5df2\u6062\u590d\u539f\u751f\u64ad\u653e",
-      "frames": 23,
+      "status": "WebGPU \u672c\u5730 AI \u4e0d\u53ef\u7528\uff1b\u5df2\u4fdd\u7559\u539f\u751f\u64ad\u653e",
+      "frames": 0,
       "stopped": true,
       "pip": false,
       "full": false,
       "route": "other",
       "loading": false,
-      "ads": 4
+      "ads": 4,
+      "proxy": {
+        "enabled": false,
+        "message": "\u4ee3\u7406\u5df2\u5173\u95ed",
+        "node": null,
+        "nodes": [],
+        "port": 0,
+        "running": false,
+        "testing": true
+      },
+      "interpolation": null
     },
     "opacity": "",
     "canvas": false
@@ -301,6 +460,9 @@
         "zoom": 100,
         "srMode": "off",
         "srScale": 3,
+        "fiMode": "off",
+        "fiFps": 60,
+        "fiFlowScale": 50,
         "headerHome": true,
         "headerDynamic": true,
         "headerHistory": true,
@@ -308,7 +470,18 @@
         "headerSearch": true,
         "headerMessages": true,
         "headerAccount": true,
-        "headerBack": true
+        "headerBack": true,
+        "autoZoom": true,
+        "autoZoomTarget": 1280,
+        "proxy": false,
+        "proxyAll": false,
+        "proxyNode": "",
+        "categoryPreset": 0,
+        "categorySelection": [
+          0,
+          2,
+          5
+        ]
       },
       "status": "\u672a\u5f00\u542f",
       "frames": 0,
@@ -317,9 +490,77 @@
       "full": false,
       "route": "home",
       "loading": false,
-      "ads": 0
+      "ads": 0,
+      "proxy": {
+        "enabled": false,
+        "message": "\u4ee3\u7406\u5df2\u5173\u95ed",
+        "node": null,
+        "nodes": [],
+        "port": 0,
+        "running": false,
+        "testing": true
+      },
+      "interpolation": null
     },
-    "text": "bili space\n9.1\u4e07\n434\n02:15\n\u7eaf\u5c5e\u79d1\u666e \u4ec5\u4f9b\u5b66\u4e60\uff01 \u201c\u5168\u7535\u63a8\u8fdb\u201d\u6838\u52a8\u529b\u822a\u6bcd\n\u592e\u89c6\u7f51\n\u00b7 2\u5929\u524d\n795.1\u4e07\n5623\n11:20\n\u53f2\u4e0a\u6700\u6ca1\u7528\u6bd4\u8d5b\n\u8001\u756a\u8304\n\u00b7 9\u670817\u65e5\n78.9\u4e07\n1433\n05:58\n20\u4e07\u7684\u8d8a\u91ce\u8f66\uff0c\u600e\u4e48\u505a\u5230\u65e2\u8981\u53c8\u8981\uff1f\n\u6240\u957fWy\n\u00b7 10\u670816\u65e5\n227.2\u4e07\n1278\n02:12\n\u300a\u5411\u5730\u7403\u548c\u5927\u81ea\u7136\u53d1\u8a93\u300b\n\u8def\u897f\u6cd5Lusiferr\n\u00b7 10\u670810\u65e5\n18.9\u4e07\n1496\n16:01\n\u3010FGO\u68c9\u88ab\u3011\u6700\u7ec8\u4e07\u5723\u8282\u653b\u7565 \u7ec8\u9f99\u5a18\u89e3\u6790\u300190++\u914d\u961f\u3001\u9ad8\u96be\u6253\u6cd5\u4e0e\u7ec8\u7ae0\u51b2\u523a\u5956\u52b1\n\u53eb\u6211\u68c9\u88ab\n\u00b7 3\u5929\u524d\n79.2\u4e07\n391\n09:26\n\u505aAI\u77ed\u5267\uff0c\u672c\u57300\u8d39\u7528\u771f\u7684\u53ef\u4ee5\u5417\uff1f\u8054\u60f3"
+    "text": "Bili space\n17.9\u4e07\n160\n01:03\n\u3010FX\u6218\u58eb\u4e45\u7559\u7f8e\u3011\u4f46\u662f\u5200\u5ba2\u5854 ALL!!!\n\u6211\u4f1a\u526a\u683c\u8c03\n\u00b7 \u6628\u5929 17:35\n175.5\u4e07\n7778\n36:49\n\u82ac\u5170\u5c0f\u9f99\u867e\u6cdb\u6ee5\uff01\u73b0\u9493\u73b0\u5403\u5c0f\u9f99\u867e\u5e72\u7206\u6876\u592a\u70b8\u88c2\uff01\u4e2d\u5f0f\u5c0f\u9f99\u867e\u76db\u5bb4\u849c\u84c9\u9ebb\u8fa3\u82b1\u5f0f\u505a\u6cd5\u9707\u788e\u82ac\u5170\u4eba\uff01\n\u96e8\u742a\u5728\u82ac\u5170\n\u00b7 10\u670818\u65e5\n55.8\u4e07\n378\n53:25\n\u3010\u5916\u5356\u9006\u5929\u804a\u5929\u5408\u96c6\u7248\u30112\n\u5916\u5356\u53ea\u662f\u517c\u804c\n\u00b7 10\u670818\u65e5\n5.7\u4e07\n533\n24:42\n\u300a\u9886\u8896\u4e4b\u8bc1\u300b\u5982\u4f55\u8bde\u751f\uff1f\u662f\u8c01\u8bbe\u8ba1\u4e86\u8fd9\u7248\u64ce\u5929\u67f1\uff1f\n\u8111\u5f17\u8bf4\u8bdd\u4e0d\u5206nl\n\u00b7 14\u5c0f\u65f6\u524d\n55.4\u4e07\n107\n02:47\n\u5e55\u540e\u82b1\u7d6e\u516c\u5f00\uff1f\u6211\u4eec\u7684\u7cbe\u795e\u72b6\u6001\u90fd\u5f88\u597d\u3010AI\u5168\u6c11\u5236\u4f5c\u4eba\u3011\n\u522b\u95f9\u4e86\u8c46\u5228\n\u00b7 2\u5929\u524d\n14"
+  },
+  "real_origin_synthetic_ai": {
+    "prefs": {
+      "theme": "dark",
+      "accent": "#fb7299",
+      "progressColor": "#fb7299",
+      "progressHeight": 4,
+      "progressRadius": 12,
+      "progressAlways": false,
+      "progressThumb": true,
+      "showChannels": true,
+      "hideAds": true,
+      "btr": true,
+      "font": true,
+      "zoom": 100,
+      "srMode": "quality",
+      "srScale": 2,
+      "fiMode": "off",
+      "fiFps": 60,
+      "fiFlowScale": 50,
+      "headerHome": true,
+      "headerDynamic": true,
+      "headerHistory": true,
+      "headerBrand": true,
+      "headerSearch": true,
+      "headerMessages": true,
+      "headerAccount": true,
+      "headerBack": true,
+      "autoZoom": true,
+      "autoZoomTarget": 1280,
+      "proxy": false,
+      "proxyAll": false,
+      "proxyNode": "",
+      "categoryPreset": 0,
+      "categorySelection": [
+        0,
+        2,
+        5
+      ]
+    },
+    "status": "\u672c\u5730 AI ESPCN \u00d73 \u00b7 320\u00d7180 \u2192 640\u00d7360\uff082.00\u00d7\uff09\u00b7 9ms/\u5e27 \u00b7 10fps",
+    "frames": 4,
+    "stopped": false,
+    "pip": false,
+    "full": false,
+    "route": "home",
+    "loading": false,
+    "ads": 0,
+    "proxy": {
+      "enabled": false,
+      "message": "\u4ee3\u7406\u5df2\u5173\u95ed",
+      "node": null,
+      "nodes": [],
+      "port": 0,
+      "running": false,
+      "testing": true
+    },
+    "interpolation": null
   },
   "result": "PASS",
   "process_exit": 0

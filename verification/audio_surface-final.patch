@@ -1,0 +1,340 @@
+--- a/enhance.js
++++ b/enhance.js
+@@ -1,7 +1,7 @@
+ /* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */
+ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>';
+ const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
+-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
++const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
+ const PREFS = { ...DEFAULTS, ...INITIAL };
+ const $ = (q, root=document) => root.querySelector(q);
+ const $$ = (q, root=document) => [...root.querySelectorAll(q)];
+@@ -65,11 +65,12 @@
+   mountHomeBanner();
+   compactHomeFeed();
+   if(!shadow)return;
++  const topHome=$('.video-home-top',shadow);if(topHome)topHome.hidden=kind!=='video';$('.header-left',shadow).dataset.video=String(kind==='video');
+   $$('nav a[data-route]',shadow).forEach(a=>{
+     if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+   });
+   if(key!==routeKey){
+-    routeKey=key;
++    const previous=routeKey;routeKey=key;if(previous&&kind==='video'){beginVideoLoading();setTimeout(()=>settleVideoLoading(),200);}
+     const query=new URLSearchParams(location.search).get('keyword');
+     if(query!==null)$('.search input',shadow).value=query;
+   }
+@@ -102,7 +103,7 @@
+ function compactHomeFeed(){
+   if(pageKind()!=='home')return;
+   markAds();
+-  const cardSelector='.feed-card,.bili-video-card,.floor-single-card';
++  const cardSelector='.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card';
+   for(const layout of $$('.bili-feed4-layout')){
+     const feeds=$$('.feed2',layout);
+     const hosts=feeds.length?feeds:$$('.recommended-container_floor-aside,.recommended-container_overseas',layout);
+@@ -117,7 +118,7 @@
+         // Keep Vue-owned nodes and their event handlers; flatten layout boxes only.
+         const outer=card.parentElement.closest(cardSelector);
+         if(outer&&host.contains(outer))continue;
+-        card.dataset.bsFeed='card';
++        card.dataset.bsFeed='card';const inner=card.matches('.bili-video-card')?null:$('.bili-video-card',card);if(inner&&getComputedStyle(inner).display==='none')card.dataset.bsEmpty='true';else delete card.dataset.bsEmpty;
+         for(let p=card.parentElement;p&&p!==host;p=p.parentElement)p.dataset.bsFeed='wrapper';
+       }
+       wakeHomeLoader(host);
+@@ -161,7 +162,22 @@
+   nav.style.transform='none';
+   if(keyboard)lane.classList.add('instant');else lane.classList.remove('instant');
+ }
++let videoLoadTimer,videoWaitTimer;const videoLoadingEvents=[];function recordVideoLoading(event){videoLoadingEvents.push({event,time:performance.now(),videoReady:$('video')?.readyState});if(videoLoadingEvents.length>24)videoLoadingEvents.shift();}
++function beginVideoLoading(){
++  let layer=$('#bs-video-loading');if(layer){clearTimeout(videoLoadTimer);clearTimeout(videoWaitTimer);delete layer.dataset.waiting;layer.classList.remove('leaving');return;}
++  recordVideoLoading('enter');layer=document.createElement('div');layer.id='bs-video-loading';layer.setAttribute('role','status');layer.setAttribute('aria-live','polite');layer.innerHTML='<div>'+ICON_TV+'<p>正在打开视频…</p><button type="button">显示页面</button></div>';document.documentElement.append(layer);$('button',layer).onclick=()=>finishVideoLoading();
++}
++function finishVideoLoading(){
++  const layer=$('#bs-video-loading');if(!layer)return;clearTimeout(videoWaitTimer);clearTimeout(videoLoadTimer);if(!layer.classList.contains('leaving'))recordVideoLoading('exit');layer.classList.add('leaving');const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;videoLoadTimer=setTimeout(()=>{layer.remove();recordVideoLoading('removed');},reduced?0:180);
++}
++function settleVideoLoading(failed=false){
++  const layer=$('#bs-video-loading');if(!layer)return;if(failed){finishVideoLoading();return;}
++  if(layer.dataset.waiting)return;layer.dataset.waiting='true';const start=performance.now();
++  const wait=()=>{if($('#bs-video-loading')!==layer)return;const video=$('video');if(video&&(video.readyState>=2||(video.paused&&video.readyState>=1))){finishVideoLoading();return;}if(performance.now()-start>8000){finishVideoLoading();toast('视频仍在准备中，已显示原生播放器，可继续等待或重试。');return;}videoWaitTimer=setTimeout(wait,100);};wait();
++}
++
+ function setLoading(on,failed=false){
++  if(on&&pageKind()==='video')beginVideoLoading();if(!on)settleVideoLoading(failed);
+   if(!shadow)return;
+   const form=$('.search',shadow);form.setAttribute('aria-busy',String(on));
+   $('#search-status',shadow).textContent=on?'正在加载搜索结果…':failed?'加载失败，请重试':'';
+@@ -201,6 +217,7 @@
+   syncRoute();
+   const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);
+   html.dataset.bsTheme=dark?'dark':'light';
++  html.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const early=$('#bs-navigation-surface');if(early)early.textContent=`html,body,#app{background-color:${dark?'#161618':'#fafafa'}!important}`;native('surface',{dark});applyAudioBoost();
+   html.classList.toggle('night-mode',dark);
+   html.classList.toggle('bili_dark',dark);
+   html.dataset.bsFont=String(PREFS.font);
+@@ -288,7 +305,7 @@
+ 
+ function scheduleScan(){
+   if(scanTimer)return;
+-  scanTimer=setTimeout(()=>{scanTimer=0;syncRoute();markAds();linkifyDescriptions();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==$('video')))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==$('video')))startGpu();},180);
++  scanTimer=setTimeout(()=>{scanTimer=0;syncRoute();markAds();linkifyDescriptions();applyAudioBoost();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==$('video')))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==$('video')))startGpu();},180);
+ }
+ 
+ // Short wheel easing only: precision gestures retain the OS's own momentum.
+@@ -336,6 +353,7 @@
+ 
+ const pageCss = `
+ @font-face{font-family:BiliDouyin;src:local("DouyinSans Bold"),local("DOUYINSANSBOLD-GB"),local("抖音美好体 Bold");font-display:swap}
++#bs-video-loading{position:fixed;inset:var(--bs-header-height,58px) 0 0;z-index:2147483000;display:grid;place-items:center;text-align:center;background:var(--bg1,#161618);color:var(--text1,#eeeef0);animation:bs-loading-in 180ms cubic-bezier(.23,1,.32,1) both}#bs-video-loading svg{width:56px;height:56px;color:var(--bs-accent,#fb7299);animation:bs-loading-spin 700ms cubic-bezier(.77,0,.175,1) infinite}#bs-video-loading button{color:inherit;background:transparent;border:1px solid #8886;border-radius:8px;padding:6px 12px;cursor:pointer}#bs-video-loading.leaving{animation:bs-loading-out 180ms cubic-bezier(.23,1,.32,1) forwards;pointer-events:none}@keyframes bs-loading-in{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}@keyframes bs-loading-out{to{opacity:0;transform:scale(1.02)}}@keyframes bs-loading-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#bs-video-loading,#bs-video-loading svg{animation:none!important}#bs-video-loading.leaving{opacity:0}}
+ #bs-close-animation{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:var(--bg1,#161618);color:var(--bs-accent,#fb7299);text-align:center;animation:bs-close-in 180ms cubic-bezier(.23,1,.32,1) both}#bs-close-animation svg{width:64px;height:64px;animation:bs-tv-exit 240ms cubic-bezier(.77,0,.175,1) both}#bs-close-animation p{color:var(--text1,#eeeef0)}@keyframes bs-close-in{from{opacity:0}to{opacity:1}}@keyframes bs-tv-exit{to{transform:rotate(360deg) scale(.96)}}@media(prefers-reduced-motion:reduce){#bs-close-animation,#bs-close-animation svg{animation:none!important}}
+ :root{--bs-accent:#fb7299;--bs-progress:#fb7299;--bs-progress-height:4px;--bs-progress-radius:6px;--bs-feed-columns:4;--bs-header-height:58px;scroll-padding-top:70px}
+ html[data-bs-font=true] body,html[data-bs-font=true] button,html[data-bs-font=true] input,html[data-bs-font=true] textarea{font-family:BiliDouyin,"Microsoft YaHei UI",sans-serif!important}
+@@ -362,6 +380,8 @@
+ html[data-bs-channels=false] .bili-header__channel,html[data-bs-channels=false] .channel-container,html[data-bs-channels=false] .bili-feed4-layout .channel-floor{display:none!important}
+ html[data-bs-page=home] .bili-feed4-layout{width:auto!important;margin-left:clamp(20px,3vw,48px)!important;margin-right:clamp(20px,3vw,48px)!important}
+ html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=grid]{display:grid!important;position:relative!important;grid-template-columns:repeat(var(--bs-feed-columns),minmax(0,1fr))!important;grid-template-rows:none!important;grid-template-areas:none!important;grid-auto-flow:row dense!important;grid-auto-rows:auto!important;gap:28px 20px!important;align-items:start!important;align-content:start!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:20px 0 0!important}
++html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card][data-bs-empty=true]{display:none!important}
++html[data-bs-page=home][data-bs-ads=true] .fixed-channel-shim{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;pointer-events:none!important}
+ html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=wrapper]{display:contents!important}
+ html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=wrapper]::before,html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=wrapper]::after{content:none!important}
+ html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card]{position:relative!important;inset:auto!important;grid-area:auto!important;order:0!important;width:auto!important;min-width:0!important;max-width:100%!important;height:auto!important;min-height:0!important;margin:0!important;align-self:start!important}
+@@ -388,7 +408,7 @@
+ html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(.left-container,.right-container){width:100%!important;max-width:100%!important;min-width:0!important;margin-inline:0!important;box-sizing:border-box!important}
+ html[data-bs-page=video] :is(.video-info-container,.video-title,.up-info-container,.video-desc-container,.video-toolbar-container,.video-toolbar-left,.video-toolbar-right){min-width:0!important;max-width:100%!important;box-sizing:border-box!important;overflow-wrap:anywhere}
+ html[data-bs-page=video] .video-title{white-space:normal!important;height:auto!important}
+-html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(#bilibili-player,#bilibili-player-wrap,#playerWrap,.bpx-player-container,.bpx-player-sending-bar){width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
++html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(#bilibili-player,#bilibili-player-wrap,#playerWrap,.bpx-player-container:not([data-screen=mini]):not(.bpx-state-mini):not(.bpx-state-miniscreen),.bpx-player-sending-bar){width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+ html[data-bs-page=video] .video-toolbar-container{flex-wrap:wrap!important;gap:12px!important}
+ html[data-bs-page=video] .bpx-player-dm-input{min-width:0!important;flex:1!important}
+ @media(max-width:1060px){
+@@ -396,6 +416,11 @@
+ html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(.video-container-v1,.video-container-v2){grid-template-columns:minmax(0,1fr)!important;gap:20px!important}
+ html[data-bs-page=video] .right-container{position:static!important;inset:auto!important}
+ }
++
++
++/* The website's scroll mini-player is not the full-width main player. */
++html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(.bpx-player-container[data-screen=mini],.bpx-player-container.bpx-state-mini,.bpx-player-container.bpx-state-miniscreen,.bilibili-player.mode-miniscreen){position:fixed!important;width:min(360px,calc(100vw - 32px))!important;max-width:calc(100vw - 32px)!important;min-width:0!important;height:auto!important;aspect-ratio:16/9!important;max-height:calc(100vh - 100px)!important;left:auto!important;right:20px!important;top:auto!important;bottom:24px!important;transform:none!important}
++html[data-bs-page=video] :is([data-screen=mini],.bpx-state-mini,.bpx-state-miniscreen) .bpx-player-video-area{width:100%!important;height:100%!important;aspect-ratio:16/9}
+ 
+ html[data-bs-theme=dark] :is(.search-content,.search-layout,.search-header,.search-page,.history-record,.history-page,.bili-footer-overseas){background:#161618!important;color:var(--text1)!important}
+ html[data-bs-theme=dark] :is(.channel-link,.channel-link__right,.channel-items__left>a,.channel-items__right>a,.vui_button,.vui_button--default,.history-filter,.history-filter-bar,.filter-item,.filter-select,.vui_popover__content,.vui_select__dropdown,.vui_dropdown__menu,.bili-dyn-list__item,.bili-dyn-publishing,.bili-dyn-sidebar,.bili-dyn-my-info,.bili-dyn-up-list,.bili-dyn-topic-box){background:#26262b!important;color:#d4d4dc!important;border-color:#38383f!important}
+@@ -458,6 +483,7 @@
+ *{box-sizing:border-box}button,input,select{font:inherit}button,a,input,select{pointer-events:auto}button{cursor:pointer;color:inherit}button:active{transform:scale(.97)}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}[hidden]{display:none!important}
+ svg{width:20px;height:20px;vertical-align:middle}a{color:inherit;text-decoration:none}
+ header{height:var(--bs-header-height,58px);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:16px;padding:0 24px;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);pointer-events:auto;user-select:none}
++.video-home-top{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;font-size:14px;font-weight:600;white-space:nowrap}.video-home-top[hidden]{display:none}.video-home-top svg{width:22px;height:22px;color:var(--accent)}.header-left[data-video=true] nav [data-route=home]{display:none}
+ .header-left{grid-column:1;grid-row:1;display:flex;align-items:center;gap:16px;min-width:0;max-width:100%;height:100%}.header-right{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:14px;min-width:0;height:100%}
+ .back{flex-shrink:0}.nav-lane{position:relative;flex:1;min-width:0;height:100%;display:flex;align-items:center;overflow:hidden}.nav-lane .primary-nav{transition:transform 240ms cubic-bezier(0.23,1,0.32,1);will-change:transform}
+ .category-links{position:absolute;left:0;top:0;height:100%;width:var(--category-space,0px);display:flex;align-items:center;gap:18px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 16px),transparent);opacity:0;transform:translateX(-12px);transition:opacity 180ms ease,transform 240ms cubic-bezier(0.23,1,0.32,1);pointer-events:none}.category-links::-webkit-scrollbar{display:none}
+@@ -552,7 +578,7 @@
+   if(currentTab==='appearance')return `<h2>让空间，像你。</h2><p class="subtitle">少一点干扰，多一点喜欢。每次调整，都会自动保存。</p><div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W<span class="hint">自动保存，不再反复询问；托盘右键始终可退出。</span></label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div>${toggle('clipboardAutoOpen','剪贴板 BV 自动跳转','仅在客户端运行时读取新复制的文本；识别完整 BV 号或 B站视频链接，不记录剪贴板内容，不弹出或抢焦点。')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色<span class="hint">属于你的那一点颜色。</span></label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','使用你已安装的 DouyinSans；未安装时回退到系统字体。')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','让界面跟着屏幕变大，而不是缩在左上角。')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">按这个内容宽度排版；数值越小，界面越大。</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div><div class="note">${icon('appearance')} 内容保持清晰，装饰适可而止。支持键盘操作与系统减少动态效果设置。</div>`;
+   if(currentTab==='progress')return `<h2>掌握每一秒。</h2><p class="subtitle">进度条的颜色、粗细与形状，由你决定。</p><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','保持原生拖动与预览行为。')}${toggle('progressAlways','始终显示播放控制条','关闭时跟随 B站播放器自动隐藏。')}`;
+   if(currentTab==='clean')return `<h2>只留下想看的。</h2><p class="subtitle">识别明确的广告容器，不根据标题猜测，不删除评论和正常推荐。</p>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('showChannels','显示首页频道分区','图二中的动态、热门、番剧、动画等频道导航。')}<div class="note"><strong>非破坏式净化</strong><br>隐藏广告节点而非删除，关闭开关即可恢复。不会隐藏普通直播卡片，也不改写评论。网站更新后规则可能需要维护。</div><div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
+-  if(currentTab==='play')return `<h2>细节，多看一点。</h2><p class="subtitle">实验功能仅在客户端设置中提供；画中画没有标题栏。</p><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分和补帧可能卡顿、闪烁、抖动或产生伪影，不保证改善画质。开启即表示你了解测试风险，异常请关闭。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">本地 Anime4K CNN / WebGPU；帧不上传，不出本机。</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">60/120fps 为调度上限，不保证实际性能；不会增加源视频帧数。</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率<span class="hint">Anime4K 固定 ×2 推理，再按目标倍率缩放；只处理真正需要放大的画面。</span></label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-fiFlowScale">光流规模</label><select id="pref-fiFlowScale" data-pref="fiFlowScale"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'} · RIFE 光流重投影，按源帧率固定的短呈现缓冲 + 推理延迟</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div><div class="note"><strong>真实处理，可随时关闭</strong><br>使用随客户端打包的 Anime4K CNN 着色器在本机 GPU 推理，按画面实际显示尺寸决定输出大小：源已经比显示更清晰时不浪费算力，并会写明原因。跨域帧不可读取、GPU 不可用或受保护的视频会停止增强并保留原生播放，不假报成功。画中画复用当前播放窗口，Esc 或右下角按钮返回。</div>`;
++  if(currentTab==='play')return `<h2>细节，多看一点。</h2><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">最高 200%，与播放器音量叠加。先调低原音量，过度放大会失真；不支持安全处理时保留原声。</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><p class="subtitle">实验功能仅在客户端设置中提供；画中画没有标题栏。</p><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分和补帧可能卡顿、闪烁、抖动或产生伪影，不保证改善画质。开启即表示你了解测试风险，异常请关闭。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">本地 Anime4K CNN / WebGPU；帧不上传，不出本机。</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">60/120fps 为调度上限，不保证实际性能；不会增加源视频帧数。</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率<span class="hint">Anime4K 固定 ×2 推理，再按目标倍率缩放；只处理真正需要放大的画面。</span></label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-fiFlowScale">光流规模</label><select id="pref-fiFlowScale" data-pref="fiFlowScale"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'} · RIFE 光流重投影，按源帧率固定的短呈现缓冲 + 推理延迟</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div><div class="note"><strong>真实处理，可随时关闭</strong><br>使用随客户端打包的 Anime4K CNN 着色器在本机 GPU 推理，按画面实际显示尺寸决定输出大小：源已经比显示更清晰时不浪费算力，并会写明原因。跨域帧不可读取、GPU 不可用或受保护的视频会停止增强并保留原生播放，不假报成功。画中画复用当前播放窗口，Esc 或右下角按钮返回。</div>`;
+   return `<h2>熟悉的能力，内置。</h2><p class="subtitle">本地固定版本，不下载远程更新，不绕过会员、地区或版权限制。</p>${toggle('btr','Bilibili 线程撕裂者','多 CDN / Range 并发缓冲。开关变更后需刷新页面。')}<div class="actions"><button id="btr-settings" class="link">打开线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页推荐按钮。视频页、搜索页、隐藏直播与插件广告过滤均关闭。拉黑会同步至 B站账号。</span></div><span class="status">首页限定</span></div><div class="note">线程撕裂者：2026.10.24.1 · MIT<br>一键拉黑：1.6.4 · 本地首页限定适配 · MIT<br>登录后点击拉黑才会执行账号操作。本客户端未自动替你拉黑任何人。</div>`;
+ }
+ function renderSettings(){
+@@ -561,7 +587,7 @@
+   // Preserve the active slider while dragging rather than replacing its DOM node.
+   if(panel.contains(shadow.activeElement)&&shadow.activeElement?.matches('input[type=range],input[type=color]')){
+     const input=shadow.activeElement;
+-    if(input.type==='range')input.nextElementSibling.textContent=PREFS[input.dataset.pref]+(input.dataset.pref==='zoom'?'%':'px');
++    if(input.type==='range')input.nextElementSibling.textContent=PREFS[input.dataset.pref]+(['zoom','volumeBoost'].includes(input.dataset.pref)?'%':'px');
+     const preview=$('.preview',panel);if(preview){preview.style.setProperty('--height',PREFS.progressHeight+'px');preview.style.setProperty('--radius',PREFS.progressRadius+'px');preview.style.setProperty('--progress',PREFS.progressColor);}return;
+   }
+   panel.innerHTML=tabContent();
+@@ -579,7 +605,7 @@
+ }
+ function mountShell(){
+   root=document.createElement('bili-space-shell');root.id='bili-space-root';shadow=root.attachShadow({mode:'open'});
+-  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left"><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="account" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.13 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
++  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="account" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.15 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
+   document.documentElement.append(root);
+   const dialog=$('.dialog',shadow);if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(([entry])=>{if(entry.contentRect.width>0)dialog.dataset.compact=String(entry.contentRect.width<620);});observer.observe(dialog);}
+   shadow.addEventListener('click',e=>{
+@@ -643,7 +669,7 @@
+   left.addEventListener('focusout',()=>setTimeout(()=>{if(!left.contains(shadow.activeElement))setCategories(false);},0));
+   left.addEventListener('keydown',e=>{if(e.key==='Escape'){setCategories(false,true);trigger.focus();e.stopPropagation();}if(e.target===trigger&&e.key==='ArrowDown'){e.preventDefault();setCategories(true,true);$('#header-categories a:not([hidden])',shadow)?.focus();}});
+   document.addEventListener('pointerdown',e=>{if(!e.composedPath().includes(left))setCategories(false);},{passive:true});
+-  window.addEventListener('resize',()=>setCategories(trigger.getAttribute('aria-expanded')==='true'));
++  let feedResize;window.addEventListener('resize',()=>{setCategories(trigger.getAttribute('aria-expanded')==='true');cancelAnimationFrame(feedResize);feedResize=requestAnimationFrame(()=>{compactHomeFeed();window.dispatchEvent(new Event('scroll'));});});
+   setCategories(false);
+   renderSettings();
+ }
+@@ -975,6 +1001,28 @@
+   catch(e){status=e.message;updateStatus();toast('增强不可用，原生播放不受影响：'+e.message);diagnostic(status);}
+ }
+ 
++let audioContext,audioVideo;const audioGraphs=new WeakMap(),audioStarting=new WeakSet();
++function applyAudioBoost(){
++  const video=$('video');if(!video)return;
++  const amount=Math.max(1,Math.min(2,Number(PREFS.volumeBoost||100)/100));
++  if(audioVideo&&audioVideo!==video){const old=audioGraphs.get(audioVideo);if(old)old.gain.gain.value=1;}audioVideo=video;
++  let graph=audioGraphs.get(video);if(!graph&&amount<=1)return;
++  if(!graph){
++    try{
++      const src=video.currentSrc||video.src;
++      if(src&&!src.startsWith('blob:')&&!video.crossOrigin&&new URL(src,location.href).origin!==location.origin){video.dataset.bsAudio='unsupported-cors';return;}
++      const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
++      audioContext=audioContext||new Audio();
++      if(audioContext.state!=='running'){
++        video.dataset.bsAudio='pending-gesture';if(!audioStarting.has(video)){audioStarting.add(video);audioContext.resume().then(()=>{audioStarting.delete(video);if(audioContext.state==='running')applyAudioBoost();}).catch(()=>audioStarting.delete(video));}return;
++      }
++      const source=audioContext.createMediaElementSource(video),gain=audioContext.createGain();source.connect(gain);gain.connect(audioContext.destination);graph={source,gain};audioGraphs.set(video,graph);
++      video.addEventListener('play',()=>audioContext?.resume().catch(()=>{}));
++    }catch(e){diagnostic('音量增益不可用，保留原声：'+e.message);return;}
++  }
++  graph.gain.gain.value=amount;video.dataset.bsAudio='gain-'+Math.round(amount*100);audioContext.resume().catch(()=>{});
++}
++
+ function beginClose(){
+   if(document.querySelector('#bs-close-animation'))return;
+   const layer=document.createElement('div');layer.id='bs-close-animation';layer.setAttribute('role','status');layer.setAttribute('aria-label','正在关闭 Bili Space');layer.innerHTML='<div>'+ICON_TV+'<p>Bili Space</p></div>';
+@@ -985,6 +1033,8 @@
+ function boot(){
+   style=document.createElement('style');style.id='bili-space-style';style.textContent=pageCss;document.documentElement.append(style);
+   mountShell();installWheelInertia();
++  if(pageKind()==='video'){beginVideoLoading();if(document.readyState==='complete')settleVideoLoading();}
++  document.addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;const link=e.target.closest?.('a[href]');if(!link)return;try{const url=new URL(link.href,location.href);if(/(^|\.)bilibili\.com$/i.test(url.hostname)&&/\/video\/BV[a-z0-9]{10}/i.test(url.pathname))beginVideoLoading();}catch{}},true);
+   // One-time migration: profiles that never touched the category list still carry all 18.
+   if(!Number(INITIAL.categoryPreset)&&Array.isArray(PREFS.categorySelection)&&PREFS.categorySelection.length===CATEGORIES.length)update({categorySelection:DEFAULT_CATEGORIES.slice(),categoryPreset:1});
+   if(!PREFS.experimentalControlsV1)update({srMode:'off',fiMode:'off',experimentalControlsV1:true});
+@@ -999,19 +1049,21 @@
+   window.addEventListener('popstate',()=>{syncRoute();scheduleScan();});
+   window.addEventListener('hashchange',syncRoute);
+   const observer=new MutationObserver(records=>{
+-    if(records.some(r=>((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.('#bili-space-root,.bs-player-tool,.bs-gpu-canvas'))))scheduleScan();
+-  });observer.observe(document.body,{childList:true,subtree:true,characterData:true});
++    if(pageKind()==='home'&&records.some(r=>r.type==='childList'&&[...r.addedNodes].some(n=>n.nodeType===1&&n.closest?.('.bili-feed4-layout'))))compactHomeFeed();
++    if(records.some(r=>(r.type==='attributes'&&r.target.closest?.('.bili-feed4-layout')&&r.target.matches?.('.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card'))||((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.('#bili-space-root,.bs-player-tool,.bs-gpu-canvas')))){if(pageKind()==='home')compactHomeFeed();scheduleScan();}
++  });observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','style']});
+   mediaTheme.addEventListener('change',applyPreferences);
++  document.addEventListener('pointerdown',applyAudioBoost,{passive:true});document.addEventListener('keydown',applyAudioBoost);
+   const controls=document.createElement('div');controls.className='bs-pip-controls';controls.innerHTML='<button type="button" aria-label="返回客户端">↙ 返回</button><button type="button" aria-label="播放或暂停">Ⅱ / ▶</button>';
+   document.body.append(controls);$('button',controls).onclick=()=>native('window',{action:'pip'});$$('button',controls)[1].onclick=()=>{const v=$('video');if(v){if(v.paused)v.play().catch(()=>{});else v.pause();}};
+   document.addEventListener('keydown',e=>{
+     if(e.ctrlKey&&e.key.toLowerCase()==='w'){e.preventDefault();e.stopImmediatePropagation();native('window',{action:'close'});return;}
+     if(e.ctrlKey&&e.key===','){e.preventDefault();openSettings();}
+-    if(e.key==='Escape'){closeSettings();if(pipActive)native('window',{action:'pip'});}
++    if(e.key==='Escape'){if(!$('#settings',shadow).hidden)closeSettings();if(pipActive)native('window',{action:'pip'});}
+     if(e.key==='F5'){e.preventDefault();native('window',{action:'reload'});}
+   });
+   document.addEventListener('mousedown',e=>{if(pipActive&&e.button===0&&!e.target.closest('button'))native('window',{action:'drag'});});
+-  window.BiliSpace={beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
++  window.BiliSpace={beginVideoLoading,finishVideoLoading,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
+     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
+     acceptConfig(next,ack){if(ack<revision)return;Object.assign(PREFS,next);applyPreferences();},
+     setPip(on){
+@@ -1024,7 +1076,7 @@
+       }
+     },
+     setFullscreen(on){fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
+-    get state(){return {prefs:{...PREFS},status,frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
++    get state(){return {prefs:{...PREFS},status,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,audioState:$('video')?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
+   };
+   if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.testInterpolation=async()=>{
+     const stage=new FrameInterpolator($('video'),60,false),w=192,h=128;
+--- a/main.cpp
++++ b/main.cpp
+@@ -33,12 +33,12 @@
+ fs::path root, dataPath;
+ bool testing=false, pip=false, full=false,lifecyclePreview=false;
+ std::wstring lastClipboardVideo,startupTarget;bool closePending=false;
+-RECT savedRect{};
++RECT savedRect{},closeRect{};ULONGLONG closeStarted{};
+ constexpr UINT trayMessage=WM_APP+71;
+ NOTIFYICONDATAW trayIcon{};bool trayReady=false;
+ UINT taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
+ void execute(const std::string&);
+-void restoreFromTray(){closePending=false;KillTimer(windowHandle,72);execute("document.querySelector('#bs-close-animation')?.remove()");ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
++void restoreFromTray(){if(closePending)SetWindowPos(windowHandle,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);closePending=false;KillTimer(windowHandle,72);KillTimer(windowHandle,74);execute("document.querySelector('#bs-close-animation')?.remove()");ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
+ void installTray(){
+     trayIcon={};trayIcon.cbSize=sizeof(trayIcon);trayIcon.hWnd=windowHandle;trayIcon.uID=1;
+     trayIcon.uFlags=NIF_MESSAGE|NIF_ICON|NIF_TIP;trayIcon.uCallbackMessage=trayMessage;
+@@ -206,7 +206,7 @@
+ };
+ template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
+ 
+-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
++json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+ void save(){
+     auto tmp=dataPath/L"settings.tmp";
+     {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm}}).dump(2);if(!f){log("settings write failed");return;}}
+@@ -227,7 +227,7 @@
+         else if(value.is_boolean()&&defaults()[key].is_boolean())config[key]=value;
+         else if(value.is_number_integer()){
+             int n=value.get<int>();
+-            if((key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||((key=="fiFps"||key=="srFps")&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
++            if((key=="volumeBoost"&&n>=100&&n<=200)||(key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||((key=="fiFps"||key=="srFps")&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
+         }
+     }
+ }
+@@ -239,10 +239,11 @@
+     std::string s="(()=>{if(window.top!==window)return; const host=location.hostname;if(!(['www.bilibili.com','search.bilibili.com','space.bilibili.com','live.bilibili.com','t.bilibili.com','passport.bilibili.com','account.bilibili.com','message.bilibili.com','manga.bilibili.com'].includes(host)";
+     if(testing)s+="||host==='bili-space.local'";
+     s+="))return;\nconst INITIAL="+config.dump()+";const GM_INITIAL="+gm.dump()+";const RUNTIME="+proxyState().dump()+";\n";
++    s+="RUNTIME.testing="+std::string(testing?"true":"false")+";\n";
++    s+=R"JS((()=>{const dark=INITIAL.theme==='dark'||(INITIAL.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);const paint=()=>{if(!document.documentElement)return false;document.documentElement.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const style=document.createElement('style');style.id='bs-navigation-surface';style.textContent='html,body,#app{background-color:'+(dark?'#161618':'#fafafa')+'!important}';document.documentElement.append(style);return true;};if(!paint()){const observer=new MutationObserver(()=>{if(paint())observer.disconnect();});observer.observe(document,{childList:true,subtree:true});}if(RUNTIME.testing){window.__bsSurfaceSamples=[];const sample=()=>{if(document.documentElement)window.__bsSurfaceSamples.push(getComputedStyle(document.documentElement).backgroundColor);if(window.__bsSurfaceSamples.length<12)requestAnimationFrame(sample);};requestAnimationFrame(sample);}})();)JS";
+     auto settings=read(root/L"assets/settings.svg"), sparkles=read(root/L"assets/sparkles.svg");
+     s+="const ICON_SETTINGS="+json(settings).dump()+", ICON_SPARKLES="+json(sparkles).dump()+", ICON_MESSAGE="+json(read(root/L"assets/message-square-more.svg")).dump()+";\n";
+     s+="const ICON_FRAMES="+json(read(root/L"assets/frame-interpolation.svg")).dump()+";\n";
+-    s+="RUNTIME.testing="+std::string(testing?"true":"false")+";\n";
+     s+=read(root/L"assets/bridge.js");
+     s+="\nif(INITIAL.btr){(()=>{\n"+read(root/L"assets/btr.user.js")+"\n})();}\n";
+     // Upstream only executes on bilibili.com; fixture policy tests load it separately.
+@@ -260,6 +261,8 @@
+     auto h=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([](HRESULT hr,LPCWSTR id){injectionPending=false;if(SUCCEEDED(hr)&&id)injectionId=id;else log("injection failed");if(injectionDirty)refreshInjection();return S_OK;});
+     webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),h);h->Release();
+ }
++void setSurface(bool dark){if(!controller)return;ICoreWebView2Controller2* c{};if(SUCCEEDED(controller->QueryInterface(__uuidof(ICoreWebView2Controller2),reinterpret_cast<void**>(&c)))){COREWEBVIEW2_COLOR color{255,BYTE(dark?22:250),BYTE(dark?22:250),BYTE(dark?24:250)};c->put_DefaultBackgroundColor(color);c->Release();}}
++
+ void applyZoom(){
+     if(!controller)return;
+     RECT r{};GetClientRect(windowHandle,&r);
+@@ -312,6 +315,7 @@
+         }else if(type=="navigate"){
+             auto uri=wide(m.value("url",std::string{}));
+             if(uri.size()<=4096&&uri.rfind(L"https://search.bilibili.com/all?keyword=",0)==0)webview->Navigate(uri.c_str());
++        }else if(type=="surface"){if(m.contains("dark")&&m["dark"].is_boolean())setSurface(m["dark"].get<bool>());
+         }else if(type=="open-external"){auto uri=wide(m.value("url",std::string{}));if(externalWebUrl(uri))ShellExecuteW(windowHandle,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);
+         }else if(type=="proxy"){proxyAction(m.value("action",std::string{}),m.value("node",std::string{}),m.value("url",std::string{}));
+         }else if(type=="config"){
+@@ -385,9 +389,9 @@
+     case WM_SIZE:fit();return 0;
+     case WM_DPICHANGED:{auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
+     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
+-    case WM_CLOSE:if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview){DestroyWindow(hwnd);return 0;}if(!closePending){closePending=true;execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,72,280,nullptr);}return 0;
+-    case WM_TIMER:if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
+-    case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){ShowWindow(hwnd,SW_HIDE);execute("document.querySelector('#bs-close-animation')?.remove()");return 0;}DestroyWindow(hwnd);return 0;
++    case WM_CLOSE:if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview){DestroyWindow(hwnd);return 0;}if(!closePending){closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
++    case WM_TIMER:if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
++    case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");return 0;}DestroyWindow(hwnd);return 0;
+     case WM_DESTROY:RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
+     }
+     return DefWindowProcW(hwnd,msg,wp,lp);
+@@ -430,7 +434,7 @@
+         if(FAILED(hr)||!env){log("WebView2 environment failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"请安装 Microsoft Edge WebView2 Evergreen Runtime 后重试。",L"启动失败",MB_OK);DestroyWindow(windowHandle);return S_OK;}
+         auto h=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([resumeUrl](HRESULT hr,ICoreWebView2Controller* c){
+             if(FAILED(hr)||!c){log("controller creation failed");DestroyWindow(windowHandle);return S_OK;}
+-            controller=c;controller->AddRef();controller->get_CoreWebView2(&webview);fit();applyZoom();
++            controller=c;controller->AddRef();setSurface(config.value("theme",std::string("dark"))!="light");controller->get_CoreWebView2(&webview);fit();applyZoom();
+             EventRegistrationToken acceleratorToken;
+             auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller*,auto args){
+                 UINT key{};COREWEBVIEW2_KEY_EVENT_KIND kind{};args->get_VirtualKey(&key);args->get_KeyEventKind(&kind);
+@@ -447,12 +451,12 @@
+                 bool local=(!startupTarget.empty()&&(uri.rfind(L"about:blank",0)==0||uri.rfind(L"data:text/html",0)==0))||(testing&&uri.rfind(L"https://bili-space.local/",0)==0);
+                 bool site=false;for(auto host:{L"www.bilibili.com",L"search.bilibili.com",L"space.bilibili.com",L"passport.bilibili.com",L"account.bilibili.com",L"live.bilibili.com",L"t.bilibili.com",L"message.bilibili.com",L"manga.bilibili.com"})if(uri.rfind(std::wstring(L"https://")+host+L"/",0)==0)site=true;
+                 if(!local&&!site){args->put_Cancel(TRUE);if(uri.rfind(L"https://",0)==0)ShellExecuteW(nullptr,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);}
+-                else execute("window.BiliSpace?.setLoading(true)");
++                else{if(uri.find(L"/video/")!=std::wstring::npos)execute("window.BiliSpace?.beginVideoLoading()");execute("window.BiliSpace?.setLoading(true)");}
+                 return S_OK;
+             });webview->add_NavigationStarting(nh,&token);nh->Release();
+             auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([](ICoreWebView2*,auto args){LPWSTR uri{};args->get_Uri(&uri);args->put_Handled(TRUE);if(uri){webview->Navigate(uri);CoTaskMemFree(uri);}return S_OK;});webview->add_NewWindowRequested(ph,&token);ph->Release();
+             auto fh=callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2*,IUnknown*){BOOL on{};webview->get_ContainsFullScreenElement(&on);toggleFull(on);return S_OK;});webview->add_ContainsFullScreenElementChanged(fh,&token);fh->Release();
+-            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL success{};args->get_IsSuccess(&success);if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});webview->add_NavigationCompleted(ready,&token);ready->Release();
++            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});webview->add_NavigationCompleted(ready,&token);ready->Release();
+             auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));if(testing&&!lifecyclePreview)webview->Navigate(target.c_str());else{startupTarget=target;auto splash=read(root/L"assets/startup.html");if(config.value("theme",std::string("dark"))!="system")splash+=config.value("theme",std::string("dark"))=="light"?"<style>body{background:#fafafa}p{color:#202024}</style>":"<style>body{background:#161618}p{color:#eeeef0}</style>";webview->NavigateToString(wide(splash).c_str());SetTimer(windowHandle,73,2500,nullptr);}if(!testing)AddClipboardFormatListener(windowHandle);}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
+             webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();return S_OK;
+         });env->CreateCoreWebView2Controller(windowHandle,h);h->Release();return S_OK;

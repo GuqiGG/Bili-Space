@@ -1,0 +1,10 @@
+normal PASS
+bad-hash PASS
+force PASS
+minimum PASS
+current PASS
+invalid PASS
+missing PASS
+redirect PASS
+
+STDERR:

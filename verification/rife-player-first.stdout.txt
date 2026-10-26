@@ -1,0 +1,90 @@
+{
+  "minimum": [
+    480,
+    320
+  ],
+  "settingsResize": "both",
+  "dialogDrag": {
+    "before": [
+      800,
+      500
+    ],
+    "after": [
+      700,
+      440
+    ]
+  },
+  "compactDialog": {
+    "compact": "true",
+    "columns": "498.4px",
+    "width": 500,
+    "main": 498
+  },
+  "small": {
+    "viewport": [
+      640,
+      440
+    ],
+    "dialog": [
+      12,
+      12,
+      628,
+      428
+    ],
+    "scrollWidth": 640
+  },
+  "integration": {
+    "order": true,
+    "color": [
+      "rgba(250, 250, 250, 0.9)",
+      "rgba(250, 250, 250, 0.9)"
+    ],
+    "opacity": [
+      "0.82",
+      "0.82"
+    ],
+    "font": [
+      "14px",
+      "14px"
+    ],
+    "icon": [
+      [
+        "3",
+        null
+      ],
+      [
+        "6",
+        ".5"
+      ],
+      [
+        "9",
+        ".2"
+      ]
+    ]
+  },
+  "aiFlowProof": {
+    "aiMse": 26.652262369791668,
+    "blendMse": 1036.0208333333333,
+    "oldEdge": 32,
+    "newEdge": 255,
+    "inferences": 1,
+    "estimate": [
+      128,
+      64
+    ],
+    "ms": 360.6999999997206
+  },
+  "fiOnly": {
+    "inferences": 13,
+    "inferenceMs": 16.299999999813735,
+    "estimate": [
+      320,
+      192
+    ],
+    "dropped": 1,
+    "frames": 18,
+    "generated": 15,
+    "stopped": false,
+    "status": "RIFE AI \u5149\u6d41 \u00b7 320\u00d7192 \u4f30\u8ba1 \u00b7 16ms \u00b7 \u4e2d\u95f4\u5e27 15 \u00b7 \u76ee\u6807 60fps"
+  }
+}

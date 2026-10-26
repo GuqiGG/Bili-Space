@@ -1,0 +1,161 @@
+--- a/enhance.js
++++ b/enhance.js
+@@ -1,6 +1,6 @@
+ /* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */
+ const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
+-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,srMode:'off',srScale:2,fiMode:'off',fiFps:60,fiFlowScale:50,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
++const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',fiMode:'off',fiFps:60,fiFlowScale:50,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
+ const PREFS = { ...DEFAULTS, ...INITIAL };
+ const $ = (q, root=document) => root.querySelector(q);
+ const $$ = (q, root=document) => [...root.querySelectorAll(q)];
+@@ -218,9 +218,9 @@
+   scheduleScan();
+ }
+ function update(patch) {
+-  const before=PREFS.srMode+PREFS.srScale;
++  const before=PREFS.srMode+PREFS.srScale+PREFS.srFps;
+   Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision});
+-  if(before!==PREFS.srMode+PREFS.srScale)startGpu();
++  if(before!==PREFS.srMode+PREFS.srScale+PREFS.srFps)startGpu();
+   if('fiMode' in patch||'fiFps' in patch||'fiFlowScale' in patch)startInterpolation();
+ }
+ function toast(text){
+@@ -372,9 +372,9 @@
+ html[data-bs-pip=true] .bs-gpu-canvas{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important}
+ html[data-bs-full=true] body{padding-top:0!important}
+ .bs-gpu-canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:2;background:#000}
+-.bs-player-tool{position:relative;display:inline-flex;align-items:center;align-self:stretch;height:100%;margin:0;flex:0 0 auto;color:var(--bs-player-color,#fff);font:inherit;opacity:var(--bs-player-opacity,1)}
+-.bs-player-tool button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:0 8px;font-size:var(--bs-player-font,14px);height:100%;white-space:nowrap;opacity:1;transition:opacity 150ms}.bs-player-tool button:hover,.bs-player-tool button:focus-visible{opacity:1}.bs-player-tool button[aria-expanded=true]{opacity:1}
+-.bs-player-tool svg{width:20px;height:20px;display:block;flex-shrink:0}.bs-fi-canvas{z-index:3}
++.bs-player-tool{position:relative;display:inline-flex;align-items:center;align-self:center;height:var(--bs-player-height,32px);vertical-align:middle;margin:0;flex:0 0 auto;color:var(--bs-player-color,#fff);font:inherit;opacity:var(--bs-player-opacity,1)}
++.bs-player-tool button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:3px;padding:0 5px;line-height:1;font-size:var(--bs-player-font,12px);height:100%;white-space:nowrap;opacity:1;transition:opacity 150ms}.bs-player-tool button:hover,.bs-player-tool button:focus-visible{opacity:1}.bs-player-tool button[aria-expanded=true]{opacity:1}
++.bs-player-tool svg{width:16px;height:16px;display:block;flex-shrink:0}.bs-fi-canvas{z-index:3}
+ @media(max-width:620px){.bs-player-tool>button span{display:none}.bs-player-tool>button{padding:0 4px}}
+ .bs-sr-menu{position:absolute;bottom:calc(100% + 12px);right:0;width:248px;max-width:calc(100vw - 24px);max-height:min(380px,60vh);overflow:auto;background:var(--bs-player-menu-bg,rgba(21,21,21,.9));color:var(--bs-player-menu-color,#fff);padding:14px 16px;border:0;border-radius:var(--bs-player-menu-radius,4px);box-shadow:none;font-family:inherit;font-size:var(--bs-player-menu-font,12px);font-weight:400;line-height:1.6;z-index:50}
+ .bs-sr-menu[hidden]{display:none}
+@@ -488,10 +488,10 @@
+     return `<h2>番剧与访问，一个开关。</h2><p class="subtitle">内置 Mihomo（Clash 兼容内核）。只代理这个客户端，不改系统代理，不开 TUN，不接管全局网络。</p><div class="row"><label for="proxy-switch">代理开关<span class="hint">${on?'当前已开启。关闭后立即改为直连。':'当前关闭。开启后客户端会自动重启一次以接管网络。'}</span></label><input id="proxy-switch" type="checkbox" data-action="proxy-toggle" ${on?'checked':''}></div><div class="note" id="proxy-status">${proxyLine()}</div><div class="row"><label for="proxy-node">当前节点<span class="hint">切换节点即时生效，不需要重启。</span></label><select id="proxy-node" aria-label="代理节点"></select></div>${toggle('proxyAll','全局代理','默认只代理 B站相关域名，其余流量直连。开启后所有流量走节点。')}<div class="actions"><button class="link" id="proxy-free">用内置免费节点</button><button class="link" id="proxy-import">导入 Clash 配置…</button><button class="link" id="proxy-check">检测出口地区</button></div><div class="note" id="proxy-region">点“检测出口地区”查看当前 IP 落在哪个国家或地区。</div><div class="note"><strong>为什么开了代理还看不了番剧？</strong><br>B站番剧按 IP 地区授权。“仅限中国大陆”的番剧必须用中国大陆出口；公开免费节点基本都在日本、香港、新加坡、美国，能加速访问和部分港澳台版权内容，但不能解锁只在大陆授权的番剧。要解决这一点，导入你自己的回国订阅，或换用带大陆出口的服务。免费节点由公开订阅整理并实测可用，运营者不可审计，不要用它登录敏感账号。</div>`;
+   }
+   if(currentTab==='header')return `<h2>顶部，只放你需要的。</h2><p class="subtitle">选择客户端顶部显示的内容，立即生效并自动保存。标题始终按窗口居中。</p>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,key==='headerBrand'?'在窗口正中显示 Bili Space。':'控制顶部的'+label+'是否显示。')).join('')}<div class="note">红黄绿窗口控制始终保留，避免隐藏后无法操作窗口。视频网页中的“首页”按钮独立保留，不受顶部导航开关影响。</div><div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>`;
+-  if(currentTab==='appearance')return `<h2>让空间，像你。</h2><p class="subtitle">少一点干扰，多一点喜欢。每次调整，都会自动保存。</p><div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色<span class="hint">属于你的那一点颜色。</span></label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','使用你已安装的 DouyinSans；未安装时回退到系统字体。')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','让界面跟着屏幕变大，而不是缩在左上角。')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">按这个内容宽度排版；数值越小，界面越大。</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div><div class="note">${icon('appearance')} 内容保持清晰，装饰适可而止。支持键盘操作与系统减少动态效果设置。</div>`;
++  if(currentTab==='appearance')return `<h2>让空间，像你。</h2><p class="subtitle">少一点干扰，多一点喜欢。每次调整，都会自动保存。</p><div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W<span class="hint">自动保存，不再反复询问；托盘右键始终可退出。</span></label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色<span class="hint">属于你的那一点颜色。</span></label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','使用你已安装的 DouyinSans；未安装时回退到系统字体。')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','让界面跟着屏幕变大，而不是缩在左上角。')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">按这个内容宽度排版；数值越小，界面越大。</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div><div class="note">${icon('appearance')} 内容保持清晰，装饰适可而止。支持键盘操作与系统减少动态效果设置。</div>`;
+   if(currentTab==='progress')return `<h2>掌握每一秒。</h2><p class="subtitle">进度条的颜色、粗细与形状，由你决定。</p><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','保持原生拖动与预览行为。')}${toggle('progressAlways','始终显示播放控制条','关闭时跟随 B站播放器自动隐藏。')}`;
+   if(currentTab==='clean')return `<h2>只留下想看的。</h2><p class="subtitle">识别明确的广告容器，不根据标题猜测，不删除评论和正常推荐。</p>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('showChannels','显示首页频道分区','图二中的动态、热门、番剧、动画等频道导航。')}<div class="note"><strong>非破坏式净化</strong><br>隐藏广告节点而非删除，关闭开关即可恢复。不会隐藏普通直播卡片，也不改写评论。网站更新后规则可能需要维护。</div><div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
+-  if(currentTab==='play')return `<h2>细节，多看一点。</h2><p class="subtitle">超分入口也在播放器分辨率左侧。画中画没有标题栏。</p><div class="row"><label for="pref-srMode">超分辨率<span class="hint">本地 ESPCN 神经网络 / WebGPU；帧不上传，不出本机。</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能 · 目标 24fps</option><option value="quality">质量 · 目标 30fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率<span class="hint">模型固定 ×3 推理，再按目标倍率缩放；只处理真正需要放大的画面。</span></label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'} · RIFE 光流重投影，单帧队列 + 推理延迟</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div><div class="note"><strong>真实处理，可随时关闭</strong><br>使用随客户端打包的 ESPCN ×3 权重在本机推理，按画面实际显示尺寸决定输出大小：源已经比显示更清晰时不浪费算力，并会写明原因。跨域帧不可读取、GPU 不可用或受保护的视频会停止增强并保留原生播放，不假报成功。画中画复用当前播放窗口，Esc 或右下角按钮返回。</div>`;
++  if(currentTab==='play')return `<h2>细节，多看一点。</h2><p class="subtitle">超分入口也在播放器分辨率左侧。画中画没有标题栏。</p><div class="row"><label for="pref-srMode">超分辨率<span class="hint">本地 ESPCN 神经网络 / WebGPU；帧不上传，不出本机。</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">60/120fps 为调度上限，不保证实际性能；不会增加源视频帧数。</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率<span class="hint">模型固定 ×3 推理，再按目标倍率缩放；只处理真正需要放大的画面。</span></label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'} · RIFE 光流重投影，单帧队列 + 推理延迟</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div><div class="note"><strong>真实处理，可随时关闭</strong><br>使用随客户端打包的 ESPCN ×3 权重在本机推理，按画面实际显示尺寸决定输出大小：源已经比显示更清晰时不浪费算力，并会写明原因。跨域帧不可读取、GPU 不可用或受保护的视频会停止增强并保留原生播放，不假报成功。画中画复用当前播放窗口，Esc 或右下角按钮返回。</div>`;
+   return `<h2>熟悉的能力，内置。</h2><p class="subtitle">本地固定版本，不下载远程更新，不绕过会员、地区或版权限制。</p>${toggle('btr','Bilibili 线程撕裂者','多 CDN / Range 并发缓冲。开关变更后需刷新页面。')}<div class="actions"><button id="btr-settings" class="link">打开线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页推荐按钮。视频页、搜索页、隐藏直播与插件广告过滤均关闭。拉黑会同步至 B站账号。</span></div><span class="status">首页限定</span></div><div class="note">线程撕裂者：2026.10.24.1 · MIT<br>一键拉黑：1.6.4 · 本地首页限定适配 · MIT<br>登录后点击拉黑才会执行账号操作。本客户端未自动替你拉黑任何人。</div>`;
+ }
+ function renderSettings(){
+@@ -558,7 +558,7 @@
+     }
+     if(el.dataset.category!==undefined){const selected=new Set(PREFS.categorySelection);if(el.checked)selected.add(Number(el.dataset.category));else selected.delete(Number(el.dataset.category));update({categorySelection:[...selected].sort((a,b)=>a-b),categoryPreset:1});return;}
+     const key=el.dataset.pref;if(!key)return;
+-    let v=el.type==='checkbox'?el.checked:['range','number'].includes(el.type)||['srScale','fiFps','fiFlowScale','autoZoomTarget'].includes(key)?Number(el.value):el.value;
++    let v=el.type==='checkbox'?el.checked:['range','number'].includes(el.type)||['srScale','srFps','fiFps','fiFlowScale','autoZoomTarget'].includes(key)?Number(el.value):el.value;
+     update({[key]:v});
+     if(key==='btr')toast('已保存；刷新页面后切换线程撕裂者');
+     if(key==='proxyAll')toast('已切换分流方式；重启客户端后完整生效');
+@@ -592,10 +592,11 @@
+   native('window',{action:'pip'});
+ }
+ function syncPlayerAppearance(quality){
+-  const css=getComputedStyle(quality),sample=$('.bpx-player-ctrl-quality-menu,.bpx-player-ctrl-playbackrate-menu,.bilibili-player-video-quality-menu');
++  const reference=$('.bpx-player-ctrl-quality-result,.bilibili-player-video-quality-menu',quality)||quality;
++  const css=getComputedStyle(reference),sample=$('.bpx-player-ctrl-quality-menu,.bpx-player-ctrl-playbackrate-menu,.bilibili-player-video-quality-menu');
+   const menu=sample&&getComputedStyle(sample),background=menu?.backgroundColor;
+   $$('.bs-player-tool',quality.parentElement).forEach(el=>{
+-    el.style.fontFamily=css.fontFamily;el.style.fontWeight=css.fontWeight;el.style.setProperty('--bs-player-color',css.color);el.style.setProperty('--bs-player-font',css.fontSize);el.style.setProperty('--bs-player-opacity',css.opacity);
++    el.style.setProperty('--bs-player-height',Math.min(36,Math.max(24,quality.getBoundingClientRect().height||32))+'px');el.style.fontFamily=css.fontFamily;el.style.fontWeight=css.fontWeight;el.style.setProperty('--bs-player-color',css.color);el.style.setProperty('--bs-player-font',Math.min(14,parseFloat(css.fontSize)||12)+'px');el.style.setProperty('--bs-player-opacity',css.opacity);
+     el.style.setProperty('--bs-player-menu-bg',background&&background!=='rgba(0, 0, 0, 0)'?background:'rgba(21,21,21,.9)');
+     el.style.setProperty('--bs-player-menu-radius',menu?.borderRadius||'4px');el.style.setProperty('--bs-player-menu-font',menu?.fontSize||'12px');el.style.setProperty('--bs-player-menu-color',menu?.color||css.color);
+   });
+@@ -604,12 +605,12 @@
+   const quality=$('.bpx-player-ctrl-quality,.bilibili-player-video-btn-quality');if(!quality)return;
+   if($('.bs-player-tool',quality.parentElement)){syncPlayerAppearance(quality);return;}
+   const sr=document.createElement('div');sr.className='bs-player-tool';sr.dataset.kind='sr';
+-  sr.innerHTML=`<button class="bs-sr-toggle" aria-label="超分辨率设置" aria-expanded="false">${ICON_SPARKLES}<span>超分</span></button><div class="bs-sr-menu" hidden><strong>本地 AI 超分</strong><label>模式<select aria-label="超分模式"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></label><label>倍率<select aria-label="超分倍率"><option value="1">1× 原生</option><option value="2">2×</option><option value="3">3×</option></select></label><p>本地 ESPCN ×3；2× 为 AI 输出重采样。无需放大时保持原生。</p><output></output><button class="bs-pip" aria-label="进入无标题栏画中画">↗ 画中画</button></div>`;
++  sr.innerHTML=`<button class="bs-sr-toggle" aria-label="超分辨率设置" aria-expanded="false">${ICON_SPARKLES}<span>超分</span></button><div class="bs-sr-menu" hidden><strong>本地 AI 超分</strong><label>模式<select aria-label="超分模式"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></label><label>倍率<select aria-label="超分倍率"><option value="1">1× 原生</option><option value="2">2×</option><option value="3">3×</option></select></label><label>目标帧率<select aria-label="超分帧率" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></label><p>本地 ESPCN ×3；目标 60/120fps，实际受源帧率与 GPU 推理耗时限制；超分不凭空生成新帧。</p><output></output><button class="bs-pip" aria-label="进入无标题栏画中画">↗ 画中画</button></div>`;
+   const fi=document.createElement('div');fi.className='bs-player-tool';fi.dataset.kind='fi';
+   const framesIcon=typeof ICON_FRAMES==='undefined'?'<svg viewBox="0 0 30 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="18" rx="2"/><rect x="6" y="7" width="18" height="18" rx="2" opacity=".5"/><rect x="9" y="7" width="18" height="18" rx="2" opacity=".2"/></svg>':ICON_FRAMES;
+   fi.innerHTML=`<button class="bs-fi-toggle" aria-label="补帧设置" aria-expanded="false">${framesIcon}<span>补帧</span></button><div class="bs-fi-menu bs-sr-menu" hidden><strong>本地 AI 光流补帧</strong><label>模式<select aria-label="补帧模式"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></label><label>目标<select aria-label="补帧帧率"><option value="60">60 fps</option><option value="120">120 fps</option></select></label><p>RIFE 预测双向中间光流和遮挡掩码，在原始分辨率重投影。光流估计上限 640×384，原始画面保持全分辨率。约一帧队列加推理延迟；遮挡处可能有伪影，实际帧率受屏幕 / 显卡限制。</p><label>光流规模<select aria-label="光流规模"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></label><output class="bs-fi-status"></output></div>`;
+   quality.before(sr,fi);
+-  const sync=()=>{const ss=$$('select',sr),fs=$$('select',fi);ss[0].value=PREFS.srMode;ss[1].value=PREFS.srScale;fs[0].value=PREFS.fiMode;fs[1].value=String(PREFS.fiFps);fs[2].value=String(PREFS.fiFlowScale);$('output',sr).textContent=status;$('output',fi).textContent=interpolator?.status||'未开启';};
++  const sync=()=>{const ss=$$('select',sr),fs=$$('select',fi);ss[0].value=PREFS.srMode;ss[1].value=PREFS.srScale;ss[2].value=String(PREFS.srFps);fs[0].value=PREFS.fiMode;fs[1].value=String(PREFS.fiFps);fs[2].value=String(PREFS.fiFlowScale);$('output',sr).textContent=status;$('output',fi).textContent=interpolator?.status||'未开启';};
+   const positionMenu=menu=>{menu.style.transform='';const r=menu.getBoundingClientRect();const dx=r.left<12?12-r.left:r.right>innerWidth-12?innerWidth-12-r.right:0;if(dx)menu.style.transform=`translateX(${dx}px)`;};
+   for(const control of [sr,fi]){
+     const button=$('button',control),menu=$('.bs-sr-menu',control);
+@@ -619,7 +620,7 @@
+     control.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.hidden=true;button.setAttribute('aria-expanded','false');button.focus();}});
+     document.addEventListener('pointerdown',e=>{if(!control.contains(e.target)){menu.hidden=true;button.setAttribute('aria-expanded','false');}},{passive:true});
+   }
+-  const ss=$$('select',sr),fs=$$('select',fi);ss[0].onchange=()=>{update({srMode:ss[0].value});sync();};ss[1].onchange=()=>{update({srScale:Number(ss[1].value)});sync();};fs[0].onchange=()=>{update({fiMode:fs[0].value});sync();};fs[1].onchange=()=>{update({fiFps:Number(fs[1].value)});sync();};fs[2].onchange=()=>{update({fiFlowScale:Number(fs[2].value)});sync();};
++  const ss=$$('select',sr),fs=$$('select',fi);ss[0].onchange=()=>{update({srMode:ss[0].value});sync();};ss[1].onchange=()=>{update({srScale:Number(ss[1].value)});sync();};ss[2].onchange=()=>{update({srFps:Number(ss[2].value)});sync();};fs[0].onchange=()=>{update({fiMode:fs[0].value});sync();};fs[1].onchange=()=>{update({fiFps:Number(fs[1].value)});sync();};fs[2].onchange=()=>{update({fiFlowScale:Number(fs[2].value)});sync();};
+   $('.bs-pip',sr).onclick=()=>{$('.bs-sr-menu',sr).hidden=true;requestPip();};syncPlayerAppearance(quality);sync();
+ }
+ 
+@@ -741,7 +742,7 @@
+   constructor(video,mode,scale){
+     if(!navigator.gpu||typeof ort==='undefined')throw Error('WebGPU 本地 AI 不可用；已保留原生播放');
+     this.video=video;this.mode=mode;this.scale=scale;this.frames=0;this.last=-Infinity;this.stopped=false;
+-    this.interval=1000/(mode==='quality'?30:24);this.stamps=[];this.epoch=0;
++    this.interval=1000/(PREFS.srFps===120?120:60);this.stamps=[];this.epoch=0;
+     this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas';this.canvas.style.visibility='hidden';
+     this.ctx=this.canvas.getContext('2d',{alpha:false,desynchronized:true});
+     this.input=document.createElement('canvas');this.inputCtx=this.input.getContext('2d',{willReadFrequently:true,alpha:false});
+@@ -877,6 +878,7 @@
+   const controls=document.createElement('div');controls.className='bs-pip-controls';controls.innerHTML='<button type="button" aria-label="返回客户端">↙ 返回</button><button type="button" aria-label="播放或暂停">Ⅱ / ▶</button>';
+   document.body.append(controls);$('button',controls).onclick=()=>native('window',{action:'pip'});$$('button',controls)[1].onclick=()=>{const v=$('video');if(v){if(v.paused)v.play().catch(()=>{});else v.pause();}};
+   document.addEventListener('keydown',e=>{
++    if(e.ctrlKey&&e.key.toLowerCase()==='w'){e.preventDefault();e.stopImmediatePropagation();native('window',{action:'close'});return;}
+     if(e.ctrlKey&&e.key===','){e.preventDefault();openSettings();}
+     if(e.key==='Escape'){closeSettings();if(pipActive)native('window',{action:'pip'});}
+     if(e.key==='F5'){e.preventDefault();native('window',{action:'reload'});}
+--- a/main.cpp
++++ b/main.cpp
+@@ -202,7 +202,7 @@
+ };
+ template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
+ 
+-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"srMode","off"},{"srScale",2},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
++json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+ void save(){
+     auto tmp=dataPath/L"settings.tmp";
+     {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm}}).dump(2);if(!f){log("settings write failed");return;}}
+@@ -215,6 +215,7 @@
+         if(!config.contains(key))continue;
+         if(key=="theme"&&value.is_string()&&(value=="dark"||value=="light"||value=="system"))config[key]=value;
+         else if((key=="accent"||key=="progressColor")&&color(value))config[key]=value;
++        else if(key=="closeAction"&&value.is_string()&&(value=="tray"||value=="exit"))config[key]=value;
+         else if(key=="srMode"&&value.is_string()&&(value=="off"||value=="performance"||value=="quality"))config[key]=value;
+         else if(key=="fiMode"&&value.is_string()&&(value=="off"||value=="rife"||value=="blend"))config[key]=value=="blend"?json("rife"):value;
+         else if(key=="proxyNode"&&value.is_string()&&value.get<std::string>().size()<=96)config[key]=value;
+@@ -222,7 +223,7 @@
+         else if(value.is_boolean()&&defaults()[key].is_boolean())config[key]=value;
+         else if(value.is_number_integer()){
+             int n=value.get<int>();
+-            if((key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||(key=="fiFps"&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
++            if((key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||((key=="fiFps"||key=="srFps")&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
+         }
+     }
+ }
+@@ -342,7 +343,7 @@
+     case WM_SIZE:fit();return 0;
+     case WM_DPICHANGED:{auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
+     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
+-    case WM_CLOSE:if(pip){togglePip(false);return 0;}if(trayReady&&!testing){ShowWindow(hwnd,SW_HIDE);return 0;}DestroyWindow(hwnd);return 0;
++    case WM_CLOSE:if(pip){togglePip(false);return 0;}if(trayReady&&!testing&&config.value("closeAction",std::string("tray"))=="tray"){ShowWindow(hwnd,SW_HIDE);return 0;}DestroyWindow(hwnd);return 0;
+     case WM_DESTROY:if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
+     }
+     return DefWindowProcW(hwnd,msg,wp,lp);
+@@ -385,6 +386,11 @@
+         auto h=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([resumeUrl](HRESULT hr,ICoreWebView2Controller* c){
+             if(FAILED(hr)||!c){log("controller creation failed");DestroyWindow(windowHandle);return S_OK;}
+             controller=c;controller->AddRef();controller->get_CoreWebView2(&webview);fit();applyZoom();
++            EventRegistrationToken acceleratorToken;
++            auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller*,auto args){
++                UINT key{};COREWEBVIEW2_KEY_EVENT_KIND kind{};args->get_VirtualKey(&key);args->get_KeyEventKind(&kind);
++                if(key=='W'&&(GetKeyState(VK_CONTROL)&0x8000)&&!(GetKeyState(VK_MENU)&0x8000)&&(kind==COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN||kind==COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN)){args->put_Handled(TRUE);PostMessageW(windowHandle,WM_CLOSE,0,0);}return S_OK;
++            });controller->add_AcceleratorKeyPressed(accelerator,&acceleratorToken);accelerator->Release();
+             ICoreWebView2Settings* settings{};webview->get_Settings(&settings);settings->put_AreDefaultContextMenusEnabled(TRUE);settings->put_IsStatusBarEnabled(FALSE);settings->put_AreDevToolsEnabled(testing);settings->Release();
+             ICoreWebView2_3* v3{};
+             if(SUCCEEDED(webview->QueryInterface(__uuidof(ICoreWebView2_3),reinterpret_cast<void**>(&v3)))){v3->SetVirtualHostNameToFolderMapping(L"bili-space.local",(root/L"assets").c_str(),COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);v3->Release();}

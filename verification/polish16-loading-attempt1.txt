@@ -1,0 +1,18 @@
+{"click": {"overlay": true, "tv": true, "curve": "cubic-bezier(0.23, 1, 0.32, 1)"}, "loaded": {"href": "https://www.bilibili.com/zh-Hans", "events": [], "remaining": false, "homeX": 0, "lightsX": 24, "homeVisible": false}}
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_polish16_loading.py", line 33, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_polish16_loading.py", line 27, in main
+    report['loaded']=await c.js("(()=>{const s=document.querySelector('#bili-space-root').shadowRoot,home=s.querySelector('.video-home-top').getBoundingClientRect(),lights=s.querySelector('.lights').getBoundingClientRect();return {href:location.href,ready:document.querySelector('video')?.readyState,events:BiliSpace.state.videoLoadingEvents,remaining:!!document.querySelector('#bs-video-loading'),homeX:home.left,lightsX:lights.left,homeVisible:!s.querySelector('.video-home-top').hidden};})()");assert report['loaded']['homeVisible'] and report['loaded']['homeX']<report['loaded']['lightsX'],report['loaded'];assert report['loaded']['ready']>=2,report['loaded'];assert not report['loaded']['remaining'];assert all(x in [e['event'] for e in report['loaded']['events']] for x in ['enter','exit','removed']),report['loaded'];report['result']='PASS'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'href': 'https://www.bilibili.com/zh-Hans', 'events': [], 'remaining': False, 'homeX': 0, 'lightsX': 24, 'homeVisible': False}

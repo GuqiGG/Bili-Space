@@ -1,0 +1,213 @@
+--- a/enhance.js
++++ b/enhance.js
+@@ -1,6 +1,7 @@
+ /* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */
++const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>';
+ const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
+-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',clipboardAutoOpen:true,fiMode:'off',fiFps:60,fiFlowScale:50,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
++const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
+ const PREFS = { ...DEFAULTS, ...INITIAL };
+ const $ = (q, root=document) => root.querySelector(q);
+ const $$ = (q, root=document) => [...root.querySelectorAll(q)];
+@@ -44,7 +45,7 @@
+   if(!host)return;
+   button=document.createElement('a');button.id='bili-space-video-home';button.className='bs-video-home';
+   button.href='https://www.bilibili.com/';button.setAttribute('aria-label','返回 B站首页');
+-  button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/></svg><span>首页</span>';
++  button.innerHTML=ICON_TV+'<span>首页</span>';
+   host.prepend(button);
+ }
+ 
+@@ -218,10 +219,12 @@
+   scheduleScan();
+ }
+ function update(patch) {
++
+   const before=PREFS.srMode+PREFS.srScale+PREFS.srFps;
+   Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision});
+   if(before!==PREFS.srMode+PREFS.srScale+PREFS.srFps)startGpu();
+   if('fiMode' in patch||'fiFps' in patch||'fiFlowScale' in patch)startInterpolation();
++  if((patch.srMode&&patch.srMode!=='off')||(patch.fiMode&&patch.fiMode!=='off'))toast('警告：超分与补帧是测试功能，可能卡顿、闪烁或抖动；不保证画质提升，异常时请关闭。');
+ }
+ function toast(text){
+   if(!shadow)return;
+@@ -333,6 +336,7 @@
+ 
+ const pageCss = `
+ @font-face{font-family:BiliDouyin;src:local("DouyinSans Bold"),local("DOUYINSANSBOLD-GB"),local("抖音美好体 Bold");font-display:swap}
++#bs-close-animation{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:var(--bg1,#161618);color:var(--bs-accent,#fb7299);text-align:center;animation:bs-close-in 180ms cubic-bezier(.23,1,.32,1) both}#bs-close-animation svg{width:64px;height:64px;animation:bs-tv-exit 240ms cubic-bezier(.77,0,.175,1) both}#bs-close-animation p{color:var(--text1,#eeeef0)}@keyframes bs-close-in{from{opacity:0}to{opacity:1}}@keyframes bs-tv-exit{to{transform:rotate(360deg) scale(.96)}}@media(prefers-reduced-motion:reduce){#bs-close-animation,#bs-close-animation svg{animation:none!important}}
+ :root{--bs-accent:#fb7299;--bs-progress:#fb7299;--bs-progress-height:4px;--bs-progress-radius:6px;--bs-feed-columns:4;--bs-header-height:58px;scroll-padding-top:70px}
+ html[data-bs-font=true] body,html[data-bs-font=true] button,html[data-bs-font=true] input,html[data-bs-font=true] textarea{font-family:BiliDouyin,"Microsoft YaHei UI",sans-serif!important}
+ html[data-bs-theme=dark]{color-scheme:dark;--bg1:#161618;--bg2:#202023;--bg3:#29292e;--bg1_rgb:22,22,24;--bg2_rgb:32,32,35;--bg3_rgb:41,41,46;--bg1_float_rgb:32,32,35;--bg2_float_rgb:41,41,46;--bg3_float_rgb:51,51,56;--text1_rgb:238,238,240;--text2_rgb:176,176,184;--line_regular_rgb:48,48,52;--bg1_float:#202023;--bg2_float:#29292e;--bg3_float:#333338;--graph_bg_thin:#202023;--graph_bg_regular:#29292e;--graph_bg_thick:#333338;--text1:#eeeef0;--text2:#b0b0b8;--text3:#8a8a94;--text4:#73737e;--line_light:#27272c;--line_regular:#303034;--line_bold:#45454c}
+@@ -548,7 +552,7 @@
+   if(currentTab==='appearance')return `<h2>让空间，像你。</h2><p class="subtitle">少一点干扰，多一点喜欢。每次调整，都会自动保存。</p><div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W<span class="hint">自动保存，不再反复询问；托盘右键始终可退出。</span></label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div>${toggle('clipboardAutoOpen','剪贴板 BV 自动跳转','仅在客户端运行时读取新复制的文本；识别完整 BV 号或 B站视频链接，不记录剪贴板内容，不弹出或抢焦点。')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色<span class="hint">属于你的那一点颜色。</span></label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','使用你已安装的 DouyinSans；未安装时回退到系统字体。')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','让界面跟着屏幕变大，而不是缩在左上角。')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">按这个内容宽度排版；数值越小，界面越大。</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div><div class="note">${icon('appearance')} 内容保持清晰，装饰适可而止。支持键盘操作与系统减少动态效果设置。</div>`;
+   if(currentTab==='progress')return `<h2>掌握每一秒。</h2><p class="subtitle">进度条的颜色、粗细与形状，由你决定。</p><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','保持原生拖动与预览行为。')}${toggle('progressAlways','始终显示播放控制条','关闭时跟随 B站播放器自动隐藏。')}`;
+   if(currentTab==='clean')return `<h2>只留下想看的。</h2><p class="subtitle">识别明确的广告容器，不根据标题猜测，不删除评论和正常推荐。</p>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('showChannels','显示首页频道分区','图二中的动态、热门、番剧、动画等频道导航。')}<div class="note"><strong>非破坏式净化</strong><br>隐藏广告节点而非删除，关闭开关即可恢复。不会隐藏普通直播卡片，也不改写评论。网站更新后规则可能需要维护。</div><div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
+-  if(currentTab==='play')return `<h2>细节，多看一点。</h2><p class="subtitle">超分入口也在播放器分辨率左侧。画中画没有标题栏。</p><div class="row"><label for="pref-srMode">超分辨率<span class="hint">本地 Anime4K CNN / WebGPU；帧不上传，不出本机。</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">60/120fps 为调度上限，不保证实际性能；不会增加源视频帧数。</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率<span class="hint">Anime4K 固定 ×2 推理，再按目标倍率缩放；只处理真正需要放大的画面。</span></label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'} · RIFE 光流重投影，按源帧率固定的短呈现缓冲 + 推理延迟</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div><div class="note"><strong>真实处理，可随时关闭</strong><br>使用随客户端打包的 Anime4K CNN 着色器在本机 GPU 推理，按画面实际显示尺寸决定输出大小：源已经比显示更清晰时不浪费算力，并会写明原因。跨域帧不可读取、GPU 不可用或受保护的视频会停止增强并保留原生播放，不假报成功。画中画复用当前播放窗口，Esc 或右下角按钮返回。</div>`;
++  if(currentTab==='play')return `<h2>细节，多看一点。</h2><p class="subtitle">实验功能仅在客户端设置中提供；画中画没有标题栏。</p><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分和补帧可能卡顿、闪烁、抖动或产生伪影，不保证改善画质。开启即表示你了解测试风险，异常请关闭。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">本地 Anime4K CNN / WebGPU；帧不上传，不出本机。</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">60/120fps 为调度上限，不保证实际性能；不会增加源视频帧数。</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率<span class="hint">Anime4K 固定 ×2 推理，再按目标倍率缩放；只处理真正需要放大的画面。</span></label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-fiFlowScale">光流规模</label><select id="pref-fiFlowScale" data-pref="fiFlowScale"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'} · RIFE 光流重投影，按源帧率固定的短呈现缓冲 + 推理延迟</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div><div class="note"><strong>真实处理，可随时关闭</strong><br>使用随客户端打包的 Anime4K CNN 着色器在本机 GPU 推理，按画面实际显示尺寸决定输出大小：源已经比显示更清晰时不浪费算力，并会写明原因。跨域帧不可读取、GPU 不可用或受保护的视频会停止增强并保留原生播放，不假报成功。画中画复用当前播放窗口，Esc 或右下角按钮返回。</div>`;
+   return `<h2>熟悉的能力，内置。</h2><p class="subtitle">本地固定版本，不下载远程更新，不绕过会员、地区或版权限制。</p>${toggle('btr','Bilibili 线程撕裂者','多 CDN / Range 并发缓冲。开关变更后需刷新页面。')}<div class="actions"><button id="btr-settings" class="link">打开线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页推荐按钮。视频页、搜索页、隐藏直播与插件广告过滤均关闭。拉黑会同步至 B站账号。</span></div><span class="status">首页限定</span></div><div class="note">线程撕裂者：2026.10.24.1 · MIT<br>一键拉黑：1.6.4 · 本地首页限定适配 · MIT<br>登录后点击拉黑才会执行账号操作。本客户端未自动替你拉黑任何人。</div>`;
+ }
+ function renderSettings(){
+@@ -575,7 +579,7 @@
+ }
+ function mountShell(){
+   root=document.createElement('bili-space-shell');root.id='bili-space-root';shadow=root.attachShadow({mode:'open'});
+-  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left"><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="account" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.12 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
++  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left"><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="account" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.13 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
+   document.documentElement.append(root);
+   const dialog=$('.dialog',shadow);if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(([entry])=>{if(entry.contentRect.width>0)dialog.dataset.compact=String(entry.contentRect.width<620);});observer.observe(dialog);}
+   shadow.addEventListener('click',e=>{
+@@ -659,27 +663,7 @@
+   });
+ }
+ function mountPlayerTools(){
+-  const quality=$('.bpx-player-ctrl-quality,.bilibili-player-video-btn-quality');if(!quality)return;
+-  if($('.bs-player-tool',quality.parentElement)){syncPlayerAppearance(quality);return;}
+-  const sr=document.createElement('div');sr.className='bs-player-tool';sr.dataset.kind='sr';
+-  sr.innerHTML=`<button class="bs-sr-toggle" aria-label="超分辨率设置" aria-expanded="false">${ICON_SPARKLES}<span>超分</span></button><div class="bs-sr-menu" hidden><strong>本地 AI 超分</strong><label>模式<select aria-label="超分模式"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></label><label>倍率<select aria-label="超分倍率"><option value="1">1× 原生</option><option value="2">2×</option><option value="3">3×</option></select></label><label>目标帧率<select aria-label="超分帧率" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></label><p>Anime4K CNN ×2；目标 60/120fps，实际受源帧率与 GPU 推理耗时限制；超分不凭空生成新帧。</p><output></output><button class="bs-pip" aria-label="进入无标题栏画中画">↗ 画中画</button></div>`;
+-  const fi=document.createElement('div');fi.className='bs-player-tool';fi.dataset.kind='fi';
+-  const framesIcon=typeof ICON_FRAMES==='undefined'?'<svg viewBox="0 0 30 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="18" rx="2"/><rect x="6" y="7" width="18" height="18" rx="2" opacity=".5"/><rect x="9" y="7" width="18" height="18" rx="2" opacity=".2"/></svg>':ICON_FRAMES;
+-  fi.innerHTML=`<button class="bs-fi-toggle" aria-label="补帧设置" aria-expanded="false">${framesIcon}<span>补帧</span></button><div class="bs-fi-menu bs-sr-menu" hidden><strong>本地 AI 光流补帧</strong><label>模式<select aria-label="补帧模式"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></label><label>目标<select aria-label="补帧帧率"><option value="60">60 fps</option><option value="120">120 fps</option></select></label><p>RIFE 只生成真实中点：按顺序显示原帧 / AI 中间帧。120Hz 为显示目标，30fps 源不会假报为 120 个不同画面。光流估计上限 640×384，原始画面保持全分辨率。按源帧率固定的短呈现缓冲加推理延迟；遮挡处可能有伪影，实际帧率受屏幕 / 显卡限制。</p><label>光流规模<select aria-label="光流规模"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></label><output class="bs-fi-status"></output></div>`;
+-  quality.before(sr,fi);
+-  if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(()=>{if(!quality.isConnected){observer.disconnect();return;}syncPlayerAppearance(quality);});observer.observe(quality);}
+-  const sync=()=>{const ss=$$('select',sr),fs=$$('select',fi);ss[0].value=PREFS.srMode;ss[1].value=PREFS.srScale;ss[2].value=String(PREFS.srFps);fs[0].value=PREFS.fiMode;fs[1].value=String(PREFS.fiFps);fs[2].value=String(PREFS.fiFlowScale);$('output',sr).textContent=status;$('output',fi).textContent=interpolator?.status||'未开启';};
+-  const positionMenu=menu=>{menu.style.transform='';const r=menu.getBoundingClientRect();const dx=r.left<12?12-r.left:r.right>innerWidth-12?innerWidth-12-r.right:0;if(dx)menu.style.transform=`translateX(${dx}px)`;};
+-  for(const control of [sr,fi]){
+-    const button=$('button',control),menu=$('.bs-sr-menu',control);
+-    button.addEventListener('click',e=>{e.stopPropagation();const open=menu.hidden;for(const tool of [sr,fi]){$('.bs-sr-menu',tool).hidden=true;$('button',tool).setAttribute('aria-expanded','false');}menu.hidden=!open;button.setAttribute('aria-expanded',String(open));sync();if(open)positionMenu(menu);});
+-    let hoverTimer;control.addEventListener('pointerenter',e=>{if(e.pointerType!=='mouse'||!matchMedia('(hover: hover) and (pointer: fine)').matches)return;clearTimeout(hoverTimer);hoverTimer=setTimeout(()=>{for(const tool of [sr,fi]){$('.bs-sr-menu',tool).hidden=true;$('button',tool).setAttribute('aria-expanded','false');}menu.hidden=false;button.setAttribute('aria-expanded','true');sync();positionMenu(menu);},150);});
+-    control.addEventListener('pointerleave',()=>{clearTimeout(hoverTimer);hoverTimer=setTimeout(()=>{if(!control.contains(document.activeElement)){menu.hidden=true;button.setAttribute('aria-expanded','false');}},150);});
+-    control.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.hidden=true;button.setAttribute('aria-expanded','false');button.focus();}});
+-    document.addEventListener('pointerdown',e=>{if(!control.contains(e.target)){menu.hidden=true;button.setAttribute('aria-expanded','false');}},{passive:true});
+-  }
+-  const ss=$$('select',sr),fs=$$('select',fi);ss[0].onchange=()=>{update({srMode:ss[0].value});sync();};ss[1].onchange=()=>{update({srScale:Number(ss[1].value)});sync();};ss[2].onchange=()=>{update({srFps:Number(ss[2].value)});sync();};fs[0].onchange=()=>{update({fiMode:fs[0].value});sync();};fs[1].onchange=()=>{update({fiFps:Number(fs[1].value)});sync();};fs[2].onchange=()=>{update({fiFlowScale:Number(fs[2].value)});sync();};
+-  $('.bs-pip',sr).onclick=()=>{$('.bs-sr-menu',sr).hidden=true;requestPip();};syncPlayerAppearance(quality);sync();
++  $$('.bs-player-tool').forEach(el=>el.remove());
+ }
+ 
+ const originalVideoOpacity=new WeakMap(),originalHostPosition=new WeakMap();
+@@ -991,12 +975,20 @@
+   catch(e){status=e.message;updateStatus();toast('增强不可用，原生播放不受影响：'+e.message);diagnostic(status);}
+ }
+ 
++function beginClose(){
++  if(document.querySelector('#bs-close-animation'))return;
++  const layer=document.createElement('div');layer.id='bs-close-animation';layer.setAttribute('role','status');layer.setAttribute('aria-label','正在关闭 Bili Space');layer.innerHTML='<div>'+ICON_TV+'<p>Bili Space</p></div>';
++  document.documentElement.append(layer);const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
++  setTimeout(()=>native('window',{action:'close-ready'}),reduced?0:240);
++}
++
+ function boot(){
+   style=document.createElement('style');style.id='bili-space-style';style.textContent=pageCss;document.documentElement.append(style);
+   mountShell();installWheelInertia();
+   // One-time migration: profiles that never touched the category list still carry all 18.
+   if(!Number(INITIAL.categoryPreset)&&Array.isArray(PREFS.categorySelection)&&PREFS.categorySelection.length===CATEGORIES.length)update({categorySelection:DEFAULT_CATEGORIES.slice(),categoryPreset:1});
+-  applyPreferences();markAds();linkifyDescriptions();mountHomeBanner();compactHomeFeed();mountPlayerTools();startGpu();startInterpolation();refreshAccount();
++  if(!PREFS.experimentalControlsV1)update({srMode:'off',fiMode:'off',experimentalControlsV1:true});
++  applyPreferences();markAds();linkifyDescriptions();mountHomeBanner();compactHomeFeed();mountPlayerTools();startGpu();startInterpolation();if(PREFS.srMode!=='off'||PREFS.fiMode!=='off')toast('警告：测试版超分/补帧已开启，可能卡顿或闪烁，可在设置 → 播放中关闭。');refreshAccount();
+   if(pageKind()==='search'&&document.readyState!=='complete')setLoading(true);
+   window.addEventListener('load',()=>setLoading(false),{once:true});
+   window.addEventListener('focus',()=>refreshAccount());
+@@ -1019,7 +1011,7 @@
+     if(e.key==='F5'){e.preventDefault();native('window',{action:'reload'});}
+   });
+   document.addEventListener('mousedown',e=>{if(pipActive&&e.button===0&&!e.target.closest('button'))native('window',{action:'drag'});});
+-  window.BiliSpace={proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
++  window.BiliSpace={beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
+     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
+     acceptConfig(next,ack){if(ack<revision)return;Object.assign(PREFS,next);applyPreferences();},
+     setPip(on){
+--- a/main.cpp
++++ b/main.cpp
+@@ -31,13 +31,14 @@
+ ICoreWebView2Controller* controller{};
+ ICoreWebView2* webview{};
+ fs::path root, dataPath;
+-bool testing=false, pip=false, full=false;
+-std::wstring lastClipboardVideo;
++bool testing=false, pip=false, full=false,lifecyclePreview=false;
++std::wstring lastClipboardVideo,startupTarget;bool closePending=false;
+ RECT savedRect{};
+ constexpr UINT trayMessage=WM_APP+71;
+ NOTIFYICONDATAW trayIcon{};bool trayReady=false;
+ UINT taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
+-void restoreFromTray(){ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
++void execute(const std::string&);
++void restoreFromTray(){closePending=false;KillTimer(windowHandle,72);execute("document.querySelector('#bs-close-animation')?.remove()");ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
+ void installTray(){
+     trayIcon={};trayIcon.cbSize=sizeof(trayIcon);trayIcon.hWnd=windowHandle;trayIcon.uID=1;
+     trayIcon.uFlags=NIF_MESSAGE|NIF_ICON|NIF_TIP;trayIcon.uCallbackMessage=trayMessage;
+@@ -205,7 +206,7 @@
+ };
+ template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
+ 
+-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"clipboardAutoOpen",true},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
++json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+ void save(){
+     auto tmp=dataPath/L"settings.tmp";
+     {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm}}).dump(2);if(!f){log("settings write failed");return;}}
+@@ -300,6 +301,7 @@
+         if(type=="window"){
+             auto action=m.value("action",std::string{});
+             if(action=="close")PostMessageW(windowHandle,WM_CLOSE,0,0);
++            else if(action=="close-ready"&&closePending)PostMessageW(windowHandle,WM_APP+72,0,0);
+             else if(action=="minimize")ShowWindow(windowHandle,SW_MINIMIZE);
+             else if(action=="maximize"){if(pip)togglePip(false);else ShowWindow(windowHandle,IsZoomed(windowHandle)?SW_RESTORE:SW_MAXIMIZE);}
+             else if(action=="drag"){ReleaseCapture();SendMessageW(windowHandle,WM_NCLBUTTONDOWN,HTCAPTION,0);}
+@@ -358,7 +360,7 @@
+             AppendMenuW(menu,MF_STRING,2,L"隐藏窗口");AppendMenuW(menu,MF_SEPARATOR,0,nullptr);
+             AppendMenuW(menu,MF_STRING,3,L"退出");POINT pt{};GetCursorPos(&pt);SetForegroundWindow(hwnd);
+             auto selected=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_RIGHTBUTTON,pt.x,pt.y,0,hwnd,nullptr);DestroyMenu(menu);
+-            if(selected==1)restoreFromTray();else if(selected==2)ShowWindow(hwnd,SW_HIDE);else if(selected==3)DestroyWindow(hwnd);
++            if(selected==1)restoreFromTray();else if(selected==2)ShowWindow(hwnd,SW_HIDE);else if(selected==3){config["closeAction"]="exit";PostMessageW(hwnd,WM_CLOSE,0,0);}
+             PostMessageW(hwnd,WM_NULL,0,0);return 0;
+         }
+     }
+@@ -383,7 +385,9 @@
+     case WM_SIZE:fit();return 0;
+     case WM_DPICHANGED:{auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
+     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
+-    case WM_CLOSE:if(pip){togglePip(false);return 0;}if(trayReady&&!testing&&config.value("closeAction",std::string("tray"))=="tray"){ShowWindow(hwnd,SW_HIDE);return 0;}DestroyWindow(hwnd);return 0;
++    case WM_CLOSE:if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview){DestroyWindow(hwnd);return 0;}if(!closePending){closePending=true;execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,72,280,nullptr);}return 0;
++    case WM_TIMER:if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
++    case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){ShowWindow(hwnd,SW_HIDE);execute("document.querySelector('#bs-close-animation')?.remove()");return 0;}DestroyWindow(hwnd);return 0;
+     case WM_DESTROY:RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
+     }
+     return DefWindowProcW(hwnd,msg,wp,lp);
+@@ -396,7 +400,7 @@
+     std::wstring resumeUrl;{auto start=args.find(L"--resume=\"");if(start!=std::wstring::npos){start+=10;auto end=args.find(L'"',start);if(end!=std::wstring::npos)resumeUrl=args.substr(start,end-start);}}
+     WSADATA sockets{};WSAStartup(MAKEWORD(2,2),&sockets);
+     wchar_t exe[MAX_PATH];GetModuleFileNameW(nullptr,exe,MAX_PATH);root=fs::path(exe).parent_path();
+-    testing=std::wstring(command).find(L"--test")!=std::wstring::npos;
++    testing=std::wstring(command).find(L"--test")!=std::wstring::npos;lifecyclePreview=args.find(L"--lifecycle-preview")!=std::wstring::npos;
+     if(!testing){auto existing=FindWindowW(L"BetterBiliSpace",L"Better Bili Space");if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);return 0;}}
+     PWSTR local{};SHGetKnownFolderPath(FOLDERID_LocalAppData,0,nullptr,&local);dataPath=testing?root/L".appdata":fs::path(local?local:L".")/L"BetterBiliSpace";CoTaskMemFree(local);
+     fs::create_directories(dataPath);config=defaults();gm=json::object();
+@@ -439,7 +443,8 @@
+             auto mh=callback<ICoreWebView2WebMessageReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebMessageReceivedEventArgs*>([](ICoreWebView2*,auto args){receive(args);return S_OK;});webview->add_WebMessageReceived(mh,&token);mh->Release();
+             auto nh=callback<ICoreWebView2NavigationStartingEventHandler,ICoreWebView2*,ICoreWebView2NavigationStartingEventArgs*>([](ICoreWebView2*,auto args){
+                 LPWSTR u{};args->get_Uri(&u);std::wstring uri=u?u:L"";CoTaskMemFree(u);
+-                bool local=testing&&uri.rfind(L"https://bili-space.local/",0)==0;
++                if(testing)log("test navigation starting: "+utf8(uri.substr(0,60)));
++                bool local=(!startupTarget.empty()&&(uri.rfind(L"about:blank",0)==0||uri.rfind(L"data:text/html",0)==0))||(testing&&uri.rfind(L"https://bili-space.local/",0)==0);
+                 bool site=false;for(auto host:{L"www.bilibili.com",L"search.bilibili.com",L"space.bilibili.com",L"passport.bilibili.com",L"account.bilibili.com",L"live.bilibili.com",L"t.bilibili.com",L"message.bilibili.com",L"manga.bilibili.com"})if(uri.rfind(std::wstring(L"https://")+host+L"/",0)==0)site=true;
+                 if(!local&&!site){args->put_Cancel(TRUE);if(uri.rfind(L"https://",0)==0)ShellExecuteW(nullptr,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);}
+                 else execute("window.BiliSpace?.setLoading(true)");
+@@ -447,8 +452,8 @@
+             });webview->add_NavigationStarting(nh,&token);nh->Release();
+             auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([](ICoreWebView2*,auto args){LPWSTR uri{};args->get_Uri(&uri);args->put_Handled(TRUE);if(uri){webview->Navigate(uri);CoTaskMemFree(uri);}return S_OK;});webview->add_NewWindowRequested(ph,&token);ph->Release();
+             auto fh=callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2*,IUnknown*){BOOL on{};webview->get_ContainsFullScreenElement(&on);toggleFull(on);return S_OK;});webview->add_ContainsFullScreenElementChanged(fh,&token);fh->Release();
+-            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL success{};args->get_IsSuccess(&success);execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});webview->add_NavigationCompleted(ready,&token);ready->Release();
+-            auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));webview->Navigate(target.c_str());if(!testing)AddClipboardFormatListener(windowHandle);}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
++            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL success{};args->get_IsSuccess(&success);if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});webview->add_NavigationCompleted(ready,&token);ready->Release();
++            auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));if(testing&&!lifecyclePreview)webview->Navigate(target.c_str());else{startupTarget=target;auto splash=read(root/L"assets/startup.html");if(config.value("theme",std::string("dark"))!="system")splash+=config.value("theme",std::string("dark"))=="light"?"<style>body{background:#fafafa}p{color:#202024}</style>":"<style>body{background:#161618}p{color:#eeeef0}</style>";webview->NavigateToString(wide(splash).c_str());SetTimer(windowHandle,73,2500,nullptr);}if(!testing)AddClipboardFormatListener(windowHandle);}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
+             webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();return S_OK;
+         });env->CreateCoreWebView2Controller(windowHandle,h);h->Release();return S_OK;
+     });
+--- /dev/null
++++ b/assets/tv.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>--- /dev/null
++++ b/assets/startup.html
+@@ -0,0 +1 @@
++<!doctype html><meta charset="utf-8"><style>:root{color-scheme:dark}body{margin:0;display:grid;place-items:center;min-height:100vh;background:#161618;color:#fb7299;font:16px system-ui}.center{text-align:center;animation:appear 180ms cubic-bezier(.23,1,.32,1) both}svg{display:block;width:64px;height:64px;margin:0 auto 20px;animation:spin 700ms cubic-bezier(.77,0,.175,1) infinite}p{color:#eeeef0;letter-spacing:.04em}@keyframes spin{to{transform:rotate(360deg)}}@keyframes appear{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}@media(prefers-color-scheme:light){body{background:#fafafa}p{color:#202024}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}</style><div class="center"><svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg><p>Bili Space</p></div>

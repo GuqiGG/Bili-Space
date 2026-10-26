@@ -1,0 +1,11 @@
+src/main.cpp:67:15: error: use of undeclared identifier 'wide'
+   67 |     auto text=wide(value);static const std::wregex allowed(LR"(^https://www\.bilibili\.com/(video/BV[A-Za-z0-9]{10}|bangumi/play/(ep|ss)[0-9]+|list/[A-Za-z0-9]+)(\?[pt]=[0-9]+(\.[0-9]+)?(&[pt]=[0-9]+(\.[0-9]+)?)?)?$)");
+      |               ^
+1 error generated.
+C++ build failed: 1
+At C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\build.ps1:10 char:22
++ if ($LASTEXITCODE) { throw "C++ build failed: $LASTEXITCODE" }
++                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (C++ build failed: 1:String) [], RuntimeException
+    + FullyQualifiedErrorId : C++ build failed: 1
+ 

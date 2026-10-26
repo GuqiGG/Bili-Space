@@ -1,0 +1,8 @@
+ C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\focus18-native-check.cpp:19:62: error: use of undeclared identifier 'hwnd'
+   19 |         if(LOWORD(wp)!=WA_INACTIVE&&!HIWORD(wp))PostMessageW(hwnd,restoreWebFocusMessage,0,0);
+      |                                                              ^
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\focus18-native-check.cpp:21:35: error: use of undeclared identifier 'hwnd'
+   21 |     case WM_SETFOCUS:PostMessageW(hwnd,restoreWebFocusMessage,0,0);return 0;
+      |                                   ^
+2 errors generated.
+

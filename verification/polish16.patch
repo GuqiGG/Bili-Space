@@ -1,0 +1,256 @@
+--- C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\polish16-baseline\enhance.js
++++ C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\enhance.js
+@@ -58,6 +58,9 @@
+   if(location.hostname==='message.bilibili.com')return 'messages';
+   return /^\/(?:index\.html)?$/.test(path)?'home':'other';
+ }
++let headerSurfaceReady=false,headerVideoTarget=false,headerRouteFrame;
++function animateHeaderRoute(){if(!shadow)return;const left=$('.header-left',shadow);cancelAnimationFrame(headerRouteFrame);headerRouteFrame=requestAnimationFrame(()=>{headerRouteFrame=requestAnimationFrame(()=>{left.dataset.video=String(headerVideoTarget);});});}
++function surfaceRevealed(){headerSurfaceReady=true;animateHeaderRoute();}
+ function syncRoute(){
+   const key=location.href,kind=pageKind();
+   document.documentElement.dataset.bsPage=kind;
+@@ -65,7 +68,7 @@
+   mountHomeBanner();
+   compactHomeFeed();
+   if(!shadow)return;
+-  const topHome=$('.video-home-top',shadow);if(topHome)topHome.hidden=kind!=='video';$('.header-left',shadow).dataset.video=String(kind==='video');
++  const topHome=$('.video-home-top',shadow);if(topHome)topHome.hidden=kind!=='video';headerVideoTarget=kind==='video';if(headerSurfaceReady)animateHeaderRoute();
+   $$('nav a[data-route]',shadow).forEach(a=>{
+     if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+   });
+@@ -162,18 +165,29 @@
+   nav.style.transform='none';
+   if(keyboard)lane.classList.add('instant');else lane.classList.remove('instant');
+ }
+-let videoLoadTimer,videoWaitTimer;const videoLoadingEvents=[];function recordVideoLoading(event){videoLoadingEvents.push({event,time:performance.now(),videoReady:$('video')?.readyState});if(videoLoadingEvents.length>24)videoLoadingEvents.shift();}
++let videoLoadTimer,videoWaitTimer,loadFrameOwner,loadFrameHandle;const watchedLoadingVideos=new WeakSet(),videoLoadingEvents=[];
++function cancelLoadingFrame(){if(loadFrameOwner?.cancelVideoFrameCallback&&loadFrameHandle!=null)loadFrameOwner.cancelVideoFrameCallback(loadFrameHandle);loadFrameOwner=null;loadFrameHandle=null;}
++function watchVideoLoading(){const video=$('video');if(!video||watchedLoadingVideos.has(video))return;watchedLoadingVideos.add(video);const start=()=>{if(video.isConnected&&pageKind()==='video'){beginVideoLoading();settleVideoLoading();}};video.addEventListener('emptied',start);video.addEventListener('loadstart',start);}function recordVideoLoading(event){videoLoadingEvents.push({event,time:performance.now(),videoReady:$('video')?.readyState});if(videoLoadingEvents.length>24)videoLoadingEvents.shift();}
+ function beginVideoLoading(){
+-  let layer=$('#bs-video-loading');if(layer){clearTimeout(videoLoadTimer);clearTimeout(videoWaitTimer);delete layer.dataset.waiting;layer.classList.remove('leaving');return;}
+-  recordVideoLoading('enter');layer=document.createElement('div');layer.id='bs-video-loading';layer.setAttribute('role','status');layer.setAttribute('aria-live','polite');layer.innerHTML='<div>'+ICON_TV+'<p>正在打开视频…</p><button type="button">显示页面</button></div>';document.documentElement.append(layer);$('button',layer).onclick=()=>finishVideoLoading();
++  let layer=$('#bs-video-loading');if(layer){clearTimeout(videoLoadTimer);clearTimeout(videoWaitTimer);cancelLoadingFrame();delete layer.dataset.waiting;delete layer.dataset.frameWaiting;delete layer.dataset.awaitPlay;layer.classList.remove('leaving');return;}
++  recordVideoLoading('enter');layer=document.createElement('div');layer.id='bs-video-loading';layer.setAttribute('role','status');layer.setAttribute('aria-live','polite');layer.innerHTML='<div>'+ICON_TV+'<p>正在打开视频…</p><button type="button" class="bs-load-play" hidden>点击播放</button><button type="button" class="bs-load-dismiss">显示页面</button></div>';document.documentElement.append(layer);$('.bs-load-dismiss',layer).onclick=()=>finishVideoLoading();$('.bs-load-play',layer).onclick=()=>{const video=$('video');delete layer.dataset.awaitPlay;delete layer.dataset.waiting;$('p',layer).textContent='正在准备画面…';settleVideoLoading();video?.play().catch(()=>toast('自动播放受限，可点“显示页面”使用原生播放器。'));};
+ }
+ function finishVideoLoading(){
+-  const layer=$('#bs-video-loading');if(!layer)return;clearTimeout(videoWaitTimer);clearTimeout(videoLoadTimer);if(!layer.classList.contains('leaving'))recordVideoLoading('exit');layer.classList.add('leaving');const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;videoLoadTimer=setTimeout(()=>{layer.remove();recordVideoLoading('removed');},reduced?0:180);
++  const layer=$('#bs-video-loading');if(!layer||layer.classList.contains('leaving'))return;clearTimeout(videoWaitTimer);cancelLoadingFrame();clearTimeout(videoLoadTimer);if(!layer.classList.contains('leaving'))recordVideoLoading('exit');layer.classList.add('leaving');const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;videoLoadTimer=setTimeout(()=>{layer.remove();recordVideoLoading('removed');},reduced?0:180);
+ }
+ function settleVideoLoading(failed=false){
+-  const layer=$('#bs-video-loading');if(!layer)return;if(failed){finishVideoLoading();return;}
++  const layer=$('#bs-video-loading');if(!layer)return;if(failed){$('p',layer).textContent='页面加载失败，可显示页面重试';layer.dataset.awaitPlay='true';return;}
+   if(layer.dataset.waiting)return;layer.dataset.waiting='true';const start=performance.now();
+-  const wait=()=>{if($('#bs-video-loading')!==layer)return;const video=$('video');if(video&&(video.readyState>=2||(video.paused&&video.readyState>=1))){finishVideoLoading();return;}if(performance.now()-start>8000){finishVideoLoading();toast('视频仍在准备中，已显示原生播放器，可继续等待或重试。');return;}videoWaitTimer=setTimeout(wait,100);};wait();
++  const wait=()=>{
++    if($('#bs-video-loading')!==layer)return;const video=$('video');
++    if(video?.readyState>=2){
++      layer.dataset.frameWaiting='true';const shown=()=>{if($('#bs-video-loading')===layer&&video.readyState>=2)finishVideoLoading();else{delete layer.dataset.frameWaiting;videoWaitTimer=setTimeout(wait,100);}};
++      if(video.requestVideoFrameCallback){loadFrameOwner=video;loadFrameHandle=video.requestVideoFrameCallback(shown);videoWaitTimer=setTimeout(shown,300);}else requestAnimationFrame(shown);return;
++    }
++    const play=$('.bs-load-play',layer);if(video?.readyState>=1&&video.paused){play.hidden=false;layer.dataset.awaitPlay='true';$('p',layer).textContent='页面已就绪，点击播放以显示视频';}
++    if(performance.now()-start>8000){$('p',layer).textContent='视频尚未就绪，可点击播放或显示原生页面';play.hidden=!video;layer.dataset.awaitPlay='true';return;}
++    videoWaitTimer=setTimeout(wait,100);
++  };wait();
+ }
+ 
+ function setLoading(on,failed=false){
+@@ -190,6 +204,21 @@
+   const url='https://search.bilibili.com/all?keyword='+encodeURIComponent(query);
+   setLoading(true);native('navigate',{url});
+ }
++let accountProfile=null,accountStatsAt=0,accountStatsRequest=null,accountHideTimer,accountShowTimer;
++function renderAccountCard(){
++  if(!shadow)return;const card=$('#account-card',shadow);if(!card)return;
++  $('.account-name',card).textContent=accountProfile?.uname||'尚未登录';$('.account-name',card).title=accountProfile?.uname||'';
++  $('.account-level',card).textContent=Number.isInteger(accountProfile?.level)?'Lv.'+accountProfile.level:'等级 —';
++  for(const key of ['follower','following','likes'])$('[data-stat='+key+']',card).textContent=Number.isFinite(accountProfile?.[key])?new Intl.NumberFormat('zh-CN').format(accountProfile[key]):'—';
++  $('.account-status',card).textContent=accountProfile?'数据来自 B站；未获取的项目显示 —':'登录后可查看昵称、等级和账号统计';
++}
++async function refreshAccountStats(){
++  if(!accountProfile||accountStatsRequest||Date.now()-accountStatsAt<60000)return;accountStatsAt=Date.now();const current=accountProfile;
++  const get=async path=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),6000);try{const r=await fetch('https://api.bilibili.com'+path,{credentials:'include',signal:controller.signal});if(!r.ok)return null;const j=await r.json();return j.code===0?j.data:null;}catch{return null;}finally{clearTimeout(timer);}};
++  accountStatsRequest=Promise.all([get('/x/web-interface/nav/stat'),get('/x/space/upstat?mid='+encodeURIComponent(current.mid))]).then(([stats,up])=>{if(accountProfile!==current)return;for(const key of ['follower','following'])if(Number.isFinite(stats?.[key])&&stats[key]>=0)current[key]=stats[key];if(Number.isFinite(up?.likes)&&up.likes>=0)current.likes=up.likes;renderAccountCard();}).finally(()=>accountStatsRequest=null);await accountStatsRequest;
++}
++function showAccountCard(){clearTimeout(accountHideTimer);const card=$('#account-card',shadow);card.hidden=false;renderAccountCard();$('.account',shadow).setAttribute('aria-expanded','true');requestAnimationFrame(()=>card.dataset.open='true');refreshAccountStats();}
++function hideAccountCard(){clearTimeout(accountShowTimer);const card=$('#account-card',shadow);if(!card)return;card.dataset.open='false';$('.account',shadow).setAttribute('aria-expanded','false');accountHideTimer=setTimeout(()=>card.hidden=true,180);}
+ async function refreshAccount(force=false){
+   if(accountRequest||(!force&&Date.now()-accountChecked<60000))return;
+   accountChecked=Date.now();accountRequest=new AbortController();
+@@ -198,7 +227,7 @@
+     const response=await fetch('https://api.bilibili.com/x/web-interface/nav',{credentials:'include',signal:accountRequest.signal});
+     if(!response.ok)throw Error('account status unavailable');
+     const result=await response.json(),data=result.data;
+-    if(result.code!==0||!data?.isLogin)return;
++    if(result.code!==0||!data?.isLogin){accountProfile=null;renderAccountCard();return;}if(!accountProfile||String(accountProfile.mid)!==String(data.mid)){accountProfile={mid:data.mid};accountStatsAt=0;}Object.assign(accountProfile,{uname:String(data.uname||'我的主页'),level:Number.isInteger(data.level_info?.current_level)?data.level_info.current_level:null});renderAccountCard();
+     const face=new URL(data.face,location.href);
+     if(!['https:','http:'].includes(face.protocol)||!/(^|\.)(hdslb|bilibili)\.com$/i.test(face.hostname))return;
+     face.protocol='https:';
+@@ -217,7 +246,7 @@
+   syncRoute();
+   const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);
+   html.dataset.bsTheme=dark?'dark':'light';
+-  html.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const early=$('#bs-navigation-surface');if(early)early.textContent=`html,body,#app{background-color:${dark?'#161618':'#fafafa'}!important}`;native('surface',{dark});applyAudioBoost();
++  html.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const early=$('#bs-navigation-surface');if(early)early.textContent=`html,body,#app{background-color:${dark?'#161618':'#fafafa'}!important}`;native('surface',{dark});applyAudioBoost();watchVideoLoading();
+   html.classList.toggle('night-mode',dark);
+   html.classList.toggle('bili_dark',dark);
+   html.dataset.bsFont=String(PREFS.font);
+@@ -305,7 +334,7 @@
+ 
+ function scheduleScan(){
+   if(scanTimer)return;
+-  scanTimer=setTimeout(()=>{scanTimer=0;syncRoute();markAds();linkifyDescriptions();applyAudioBoost();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==$('video')))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==$('video')))startGpu();},180);
++  scanTimer=setTimeout(()=>{scanTimer=0;syncRoute();markAds();linkifyDescriptions();applyAudioBoost();watchVideoLoading();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==$('video')))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==$('video')))startGpu();},180);
+ }
+ 
+ // Short wheel easing only: precision gestures retain the OS's own momentum.
+@@ -353,7 +382,7 @@
+ 
+ const pageCss = `
+ @font-face{font-family:BiliDouyin;src:local("DouyinSans Bold"),local("DOUYINSANSBOLD-GB"),local("抖音美好体 Bold");font-display:swap}
+-#bs-video-loading{position:fixed;inset:var(--bs-header-height,58px) 0 0;z-index:2147483000;display:grid;place-items:center;text-align:center;background:var(--bg1,#161618);color:var(--text1,#eeeef0);animation:bs-loading-in 180ms cubic-bezier(.23,1,.32,1) both}#bs-video-loading svg{width:56px;height:56px;color:var(--bs-accent,#fb7299);animation:bs-loading-spin 700ms cubic-bezier(.77,0,.175,1) infinite}#bs-video-loading button{color:inherit;background:transparent;border:1px solid #8886;border-radius:8px;padding:6px 12px;cursor:pointer}#bs-video-loading.leaving{animation:bs-loading-out 180ms cubic-bezier(.23,1,.32,1) forwards;pointer-events:none}@keyframes bs-loading-in{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}@keyframes bs-loading-out{to{opacity:0;transform:scale(1.02)}}@keyframes bs-loading-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#bs-video-loading,#bs-video-loading svg{animation:none!important}#bs-video-loading.leaving{opacity:0}}
++#bs-video-loading{position:fixed;inset:var(--bs-header-height,58px) 0 0;z-index:2147483000;display:grid;place-items:center;text-align:center;background:var(--bg1,#161618);color:var(--text1,#eeeef0);animation:bs-loading-in 180ms cubic-bezier(.23,1,.32,1) both}#bs-video-loading svg{width:56px;height:56px;color:var(--bs-accent,#fb7299);animation:bs-loading-spin 700ms cubic-bezier(.77,0,.175,1) infinite}#bs-video-loading button{color:inherit;background:transparent;border:1px solid #8886;border-radius:8px;padding:6px 12px;cursor:pointer}#bs-video-loading[data-await-play=true] svg{animation-play-state:paused}#bs-video-loading button[hidden]{display:none}#bs-video-loading.leaving{animation:bs-loading-out 180ms cubic-bezier(.23,1,.32,1) forwards;pointer-events:none}@keyframes bs-loading-in{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}@keyframes bs-loading-out{to{opacity:0;transform:scale(1.02)}}@keyframes bs-loading-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#bs-video-loading,#bs-video-loading svg{animation:none!important}#bs-video-loading.leaving{opacity:0}}
+ #bs-close-animation{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:var(--bg1,#161618);color:var(--bs-accent,#fb7299);text-align:center;animation:bs-close-in 180ms cubic-bezier(.23,1,.32,1) both}#bs-close-animation svg{width:64px;height:64px;animation:bs-tv-exit 240ms cubic-bezier(.77,0,.175,1) both}#bs-close-animation p{color:var(--text1,#eeeef0)}@keyframes bs-close-in{from{opacity:0}to{opacity:1}}@keyframes bs-tv-exit{to{transform:rotate(360deg) scale(.96)}}@media(prefers-reduced-motion:reduce){#bs-close-animation,#bs-close-animation svg{animation:none!important}}
+ :root{--bs-accent:#fb7299;--bs-progress:#fb7299;--bs-progress-height:4px;--bs-progress-radius:6px;--bs-feed-columns:4;--bs-header-height:58px;scroll-padding-top:70px}
+ html[data-bs-font=true] body,html[data-bs-font=true] button,html[data-bs-font=true] input,html[data-bs-font=true] textarea{font-family:BiliDouyin,"Microsoft YaHei UI",sans-serif!important}
+@@ -483,16 +512,18 @@
+ *{box-sizing:border-box}button,input,select{font:inherit}button,a,input,select{pointer-events:auto}button{cursor:pointer;color:inherit}button:active{transform:scale(.97)}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}[hidden]{display:none!important}
+ svg{width:20px;height:20px;vertical-align:middle}a{color:inherit;text-decoration:none}
+ header{height:var(--bs-header-height,58px);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:16px;padding:0 24px;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);pointer-events:auto;user-select:none}
+-.video-home-top{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;font-size:14px;font-weight:600;white-space:nowrap}.video-home-top[hidden]{display:none}.video-home-top svg{width:22px;height:22px;color:var(--accent)}.header-left[data-video=true] nav [data-route=home]{display:none}
+-.header-left{grid-column:1;grid-row:1;display:flex;align-items:center;gap:16px;min-width:0;max-width:100%;height:100%}.header-right{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:14px;min-width:0;height:100%}
++.video-home-top{position:absolute;left:0;top:50%;height:32px;width:64px;display:inline-flex;align-items:center;justify-content:flex-start;gap:6px;font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;opacity:0;transform:translate(-8px,-50%);pointer-events:none;transition:opacity 180ms cubic-bezier(.23,1,.32,1),transform 240ms cubic-bezier(.23,1,.32,1)}.video-home-top[hidden]{display:none}.video-home-top svg{display:block;width:20px;height:20px;flex:0 0 20px;color:var(--accent)}.header-left[data-video=true] .video-home-top{opacity:1;transform:translate(0,-50%);pointer-events:auto}.header-left>.lights,.header-left>.back,.header-left>.nav-lane{transition:transform 240ms cubic-bezier(.23,1,.32,1);transform:translateX(0)}.header-left[data-video=true]>.lights,.header-left[data-video=true]>.back,.header-left[data-video=true]>.nav-lane{transform:translateX(80px)}.header-left[data-video=true]{padding-right:80px;--header-home-shift:80px}.header-left[data-video=true] nav [data-route=home]{display:none}@media(max-width:800px){.header-left[data-video=true]>.back,.header-left[data-video=true]>.nav-lane{display:none}}@media(prefers-reduced-motion:reduce){.video-home-top,.header-left>.lights,.header-left>.back,.header-left>.nav-lane{transition:none!important}}
++
++.header-left{position:relative;grid-column:1;grid-row:1;display:flex;align-items:center;gap:16px;min-width:0;max-width:100%;height:100%}.header-right{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:14px;min-width:0;height:100%}
+ .back{flex-shrink:0}.nav-lane{position:relative;flex:1;min-width:0;height:100%;display:flex;align-items:center;overflow:hidden}.nav-lane .primary-nav{transition:transform 240ms cubic-bezier(0.23,1,0.32,1);will-change:transform}
+ .category-links{position:absolute;left:0;top:0;height:100%;width:var(--category-space,0px);display:flex;align-items:center;gap:18px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 16px),transparent);opacity:0;transform:translateX(-12px);transition:opacity 180ms ease,transform 240ms cubic-bezier(0.23,1,0.32,1);pointer-events:none}.category-links::-webkit-scrollbar{display:none}
+-.category-links a{flex-shrink:0;font-size:15px;white-space:nowrap;color:var(--muted);padding:8px 0}.category-links a:hover,.category-links a:focus-visible{color:var(--accent)}.header-left[data-categories=true] .category-links{opacity:1;transform:translateX(0);pointer-events:auto}.back{transition:transform 180ms ease}.header-left[data-categories=true] .back{color:var(--accent);transform:rotate(180deg)}.nav-lane.instant .primary-nav,.nav-lane.instant .category-links{transition:none}
++.category-links a{flex-shrink:0;font-size:15px;white-space:nowrap;color:var(--muted);padding:8px 0}.category-links a:hover,.category-links a:focus-visible{color:var(--accent)}.header-left[data-categories=true] .category-links{opacity:1;transform:translateX(0);pointer-events:auto}.back{transition:transform 180ms ease}.header-left[data-categories=true] .back{color:var(--accent);transform:translateX(var(--header-home-shift,0px)) rotate(180deg)}.nav-lane.instant .primary-nav,.nav-lane.instant .category-links{transition:none}
+ .lights{display:flex;align-items:center;flex:0 0 auto;gap:9px;margin-right:0}.lights .light{display:block;flex:0 0 14px;width:14px;height:14px;min-width:14px;border:0;border-radius:50%;padding:0;position:relative;line-height:0;appearance:none}.light.close{background:#ff5f57}.light.min{background:#febc2e}.light.max{background:#28c840}.lights .light svg{display:block;position:absolute;inset:3px;width:8px;height:8px;fill:none;stroke:#111a;stroke-width:1.4;stroke-linecap:round;opacity:0;pointer-events:none;transition:opacity 150ms ease}.lights:hover svg,.lights .light:focus-visible svg{opacity:1}
+ .lights .light:before{content:'';position:absolute;inset:-5px;border-radius:50%}
+ .brand{grid-column:2;grid-row:1;justify-self:center;font-family:BiliDouyin,sans-serif;font-size:16px;white-space:nowrap;letter-spacing:-.5px}.brand b{font-weight:400;color:var(--accent)}
+ nav{display:flex;flex-shrink:0;gap:22px;height:100%;align-items:center}nav a{font-size:14px;color:var(--muted);position:relative}nav a[aria-current=page]{color:var(--ink)}nav a[aria-current=page]:after{content:'';position:absolute;left:25%;right:25%;bottom:-10px;height:2px;border-radius:2px;background:var(--accent)}nav a:hover{color:var(--accent)}
+ .search{flex:1;margin-left:0;width:0;min-width:60px;max-width:380px;position:relative}.search input{width:100%;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;padding:9px 36px 9px 13px;outline-offset:1px;font-size:12px}.search button{position:absolute;right:7px;top:5px;border:0;background:none;color:var(--muted);padding:4px}
++.account-wrap{position:relative;flex:0 0 auto}.account-card{position:absolute;right:0;top:calc(100% + 10px);width:290px;max-width:calc(100vw - 32px);padding:18px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 36px #0003;opacity:0;transform:translateY(-4px) scale(.98);transform-origin:top right;transition:opacity 180ms cubic-bezier(.23,1,.32,1),transform 180ms cubic-bezier(.23,1,.32,1);pointer-events:none}.account-card[data-open=true]{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}.account-card[hidden]{display:none}.account-card-head{display:flex;align-items:center;gap:10px}.account-name{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.account-level{color:var(--accent);font-size:12px;flex-shrink:0}.account-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px;text-align:center}.account-stats b{display:block;font-size:15px;overflow-wrap:anywhere}.account-stats span{font-size:12px;color:var(--muted)}.account-status{font-size:11px;color:var(--muted);line-height:1.5;margin:14px 0 0}@media(prefers-reduced-motion:reduce){.account-card{transition:none!important}}
+ .account{font-size:12px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-width:30px;height:32px}.account img{width:30px;height:30px;display:block;border-radius:50%;object-fit:cover;border:1px solid var(--line)}.messages{display:flex;align-items:center;justify-content:center;width:32px;height:34px;flex-shrink:0;color:var(--muted);border-radius:8px}.messages:hover{background:var(--field);color:var(--ink)}.back{background:none;border:0;color:var(--muted);display:grid;place-items:center;width:26px;height:32px;line-height:0;padding:0}.back svg{display:block;width:20px;height:20px}
+ .search[aria-busy=true] button svg{opacity:0}.search[aria-busy=true] button:after{content:'';position:absolute;inset:6px;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:bs-search-spin .7s linear infinite}.search[aria-busy=true]:after{content:'';position:fixed;left:0;right:0;top:calc(var(--bs-header-height,58px) - 1px);height:2px;background:var(--accent);transform-origin:left;animation:bs-search-progress 1.2s ease-in-out infinite}
+ .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@@ -605,7 +636,7 @@
+ }
+ function mountShell(){
+   root=document.createElement('bili-space-shell');root.id='bili-space-root';shadow=root.attachShadow({mode:'open'});
+-  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="account" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.15 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
++  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left" data-video="false"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand">Bili <b>Space</b></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><div class="account-wrap"><a class="account" aria-controls="account-card" aria-expanded="false" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a><section id="account-card" class="account-card" role="region" aria-label="我的账户信息" hidden><div class="account-card-head"><strong class="account-name"></strong><span class="account-level"></span></div><div class="account-stats"><div><b data-stat="follower">—</b><span>粉丝</span></div><div><b data-stat="following">—</b><span>关注</span></div><div><b data-stat="likes">—</b><span>获赞</span></div></div><p class="account-status"></p></section></div></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Better Bili Space</b>0.1.16 · 为专注而设计<br>修改即时生效 · 自动保存</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
+   document.documentElement.append(root);
+   const dialog=$('.dialog',shadow);if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(([entry])=>{if(entry.contentRect.width>0)dialog.dataset.compact=String(entry.contentRect.width<620);});observer.observe(dialog);}
+   shadow.addEventListener('click',e=>{
+@@ -664,6 +695,7 @@
+       if(!e.shiftKey&&shadow.activeElement===items.at(-1)){e.preventDefault();items[0].focus();}
+     }
+   });
++  const accountWrap=$('.account-wrap',shadow);accountWrap.addEventListener('pointerenter',e=>{if(e.pointerType&&e.pointerType!=='mouse')return;clearTimeout(accountHideTimer);accountShowTimer=setTimeout(showAccountCard,150);});accountWrap.addEventListener('pointerleave',()=>{clearTimeout(accountShowTimer);accountHideTimer=setTimeout(hideAccountCard,160);});accountWrap.addEventListener('focusin',showAccountCard);accountWrap.addEventListener('focusout',e=>{if(!accountWrap.contains(e.relatedTarget))hideAccountCard();});
+   const trigger=$('.back',shadow),left=$('.header-left',shadow),lane=$('.nav-lane',shadow);
+   $('#header-categories',shadow).addEventListener('wheel',e=>{const links=e.currentTarget;if(innerWidth>1050&&links.scrollWidth>links.clientWidth&&!e.ctrlKey){links.scrollLeft+=e.deltaY||e.deltaX;e.preventDefault();}},{passive:false});
+   left.addEventListener('focusout',()=>setTimeout(()=>{if(!left.contains(shadow.activeElement))setCategories(false);},0));
+@@ -1063,7 +1095,7 @@
+     if(e.key==='F5'){e.preventDefault();native('window',{action:'reload'});}
+   });
+   document.addEventListener('mousedown',e=>{if(pipActive&&e.button===0&&!e.target.closest('button'))native('window',{action:'drag'});});
+-  window.BiliSpace={beginVideoLoading,finishVideoLoading,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
++  window.BiliSpace={showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
+     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
+     acceptConfig(next,ack){if(ack<revision)return;Object.assign(PREFS,next);applyPreferences();},
+     setPip(on){
+@@ -1076,7 +1108,7 @@
+       }
+     },
+     setFullscreen(on){fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
+-    get state(){return {prefs:{...PREFS},status,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,audioState:$('video')?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
++    get state(){return {prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,audioState:$('video')?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
+   };
+   if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.testInterpolation=async()=>{
+     const stage=new FrameInterpolator($('video'),60,false),w=192,h=128;
+@@ -1092,6 +1124,7 @@
+     const paint=(c,offset)=>{const x=c.getContext('2d');x.fillStyle='#202020';x.fillRect(0,0,w,h);x.fillStyle='white';x.fillRect(w/4+offset,h/4,w/4,h/2);return x.getImageData(0,0,w,h).data;};
+     const r=await inferRife(paint(a,0),paint(b,16),w,h);return {flow:[r.width,r.height],maxMotion:r.flow.reduce((v,n)=>Math.max(v,Math.abs(n)),0),maskRange:[r.mask.reduce((v,n)=>Math.min(v,n),1),r.mask.reduce((v,n)=>Math.max(v,n),0)],ms:r.ms};
+   };
++  if(document.readyState==='complete')window.__bsPaintReady?.();
+   diagnostic('Better Bili Space ready');
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+--- C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\polish16-baseline\main.cpp
++++ C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\src\main.cpp
+@@ -21,6 +21,7 @@
+ #include <fstream>
+ #include <functional>
+ #include <regex>
++#include <cmath>
+ #include <string>
+ #include <sstream>
+ #include "json.hpp"
+@@ -33,6 +34,7 @@
+ fs::path root, dataPath;
+ bool testing=false, pip=false, full=false,lifecyclePreview=false;
+ std::wstring lastClipboardVideo,startupTarget;bool closePending=false;
++bool surfaceWaiting=false,surfaceCommitted=false,surfaceDark=true;ULONGLONG surfaceStart{};
+ RECT savedRect{},closeRect{};ULONGLONG closeStarted{};
+ constexpr UINT trayMessage=WM_APP+71;
+ NOTIFYICONDATAW trayIcon{};bool trayReady=false;
+@@ -240,7 +242,7 @@
+     if(testing)s+="||host==='bili-space.local'";
+     s+="))return;\nconst INITIAL="+config.dump()+";const GM_INITIAL="+gm.dump()+";const RUNTIME="+proxyState().dump()+";\n";
+     s+="RUNTIME.testing="+std::string(testing?"true":"false")+";\n";
+-    s+=R"JS((()=>{const dark=INITIAL.theme==='dark'||(INITIAL.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);const paint=()=>{if(!document.documentElement)return false;document.documentElement.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const style=document.createElement('style');style.id='bs-navigation-surface';style.textContent='html,body,#app{background-color:'+(dark?'#161618':'#fafafa')+'!important}';document.documentElement.append(style);return true;};if(!paint()){const observer=new MutationObserver(()=>{if(paint())observer.disconnect();});observer.observe(document,{childList:true,subtree:true});}if(RUNTIME.testing){window.__bsSurfaceSamples=[];const sample=()=>{if(document.documentElement)window.__bsSurfaceSamples.push(getComputedStyle(document.documentElement).backgroundColor);if(window.__bsSurfaceSamples.length<12)requestAnimationFrame(sample);};requestAnimationFrame(sample);}})();)JS";
++    s+=R"JS((()=>{const dark=INITIAL.theme==='dark'||(INITIAL.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);const paint=()=>{if(!document.documentElement)return false;document.documentElement.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const style=document.createElement('style');style.id='bs-navigation-surface';style.textContent='html,body,#app{background-color:'+(dark?'#161618':'#fafafa')+'!important}';document.documentElement.append(style);return true;};if(!paint()){const observer=new MutationObserver(()=>{if(paint())observer.disconnect();});observer.observe(document,{childList:true,subtree:true});}window.__bsPaintReady=()=>setTimeout(()=>{if(document.documentElement&&chrome?.webview){getComputedStyle(document.documentElement).backgroundColor;chrome.webview.postMessage({type:'surface-ready'});}},32);if(RUNTIME.testing){window.__bsSurfaceSamples=[];const sample=()=>{if(document.documentElement)window.__bsSurfaceSamples.push(getComputedStyle(document.documentElement).backgroundColor);if(window.__bsSurfaceSamples.length<12)requestAnimationFrame(sample);};requestAnimationFrame(sample);}})();)JS";
+     auto settings=read(root/L"assets/settings.svg"), sparkles=read(root/L"assets/sparkles.svg");
+     s+="const ICON_SETTINGS="+json(settings).dump()+", ICON_SPARKLES="+json(sparkles).dump()+", ICON_MESSAGE="+json(read(root/L"assets/message-square-more.svg")).dump()+";\n";
+     s+="const ICON_FRAMES="+json(read(root/L"assets/frame-interpolation.svg")).dump()+";\n";
+@@ -261,7 +263,7 @@
+     auto h=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([](HRESULT hr,LPCWSTR id){injectionPending=false;if(SUCCEEDED(hr)&&id)injectionId=id;else log("injection failed");if(injectionDirty)refreshInjection();return S_OK;});
+     webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),h);h->Release();
+ }
+-void setSurface(bool dark){if(!controller)return;ICoreWebView2Controller2* c{};if(SUCCEEDED(controller->QueryInterface(__uuidof(ICoreWebView2Controller2),reinterpret_cast<void**>(&c)))){COREWEBVIEW2_COLOR color{255,BYTE(dark?22:250),BYTE(dark?22:250),BYTE(dark?24:250)};c->put_DefaultBackgroundColor(color);c->Release();}}
++void setSurface(bool dark){surfaceDark=dark;if(surfaceWaiting)InvalidateRect(windowHandle,nullptr,FALSE);if(!controller)return;ICoreWebView2Controller2* c{};if(SUCCEEDED(controller->QueryInterface(__uuidof(ICoreWebView2Controller2),reinterpret_cast<void**>(&c)))){COREWEBVIEW2_COLOR color{255,BYTE(dark?22:250),BYTE(dark?22:250),BYTE(dark?24:250)};c->put_DefaultBackgroundColor(color);c->Release();}}
+ 
+ void applyZoom(){
+     if(!controller)return;
+@@ -315,6 +317,7 @@
+         }else if(type=="navigate"){
+             auto uri=wide(m.value("url",std::string{}));
+             if(uri.size()<=4096&&uri.rfind(L"https://search.bilibili.com/all?keyword=",0)==0)webview->Navigate(uri.c_str());
++        }else if(type=="surface-ready"){if(surfaceCommitted){surfaceWaiting=false;if(testing)log("surface visible: document style ready");KillTimer(windowHandle,75);KillTimer(windowHandle,76);if(controller)controller->put_IsVisible(TRUE);InvalidateRect(windowHandle,nullptr,FALSE);execute("window.BiliSpace?.surfaceRevealed?.()");}
+         }else if(type=="surface"){if(m.contains("dark")&&m["dark"].is_boolean())setSurface(m["dark"].get<bool>());
+         }else if(type=="open-external"){auto uri=wide(m.value("url",std::string{}));if(externalWebUrl(uri))ShellExecuteW(windowHandle,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);
+         }else if(type=="proxy"){proxyAction(m.value("action",std::string{}),m.value("node",std::string{}),m.value("url",std::string{}));
+@@ -369,6 +372,7 @@
+         }
+     }
+     switch(msg){
++    case WM_PAINT:if(surfaceWaiting){PAINTSTRUCT ps{};HDC dc=BeginPaint(hwnd,&ps);RECT r{};GetClientRect(hwnd,&r);auto bg=CreateSolidBrush(surfaceDark?RGB(22,22,24):RGB(250,250,250));FillRect(dc,&r,bg);DeleteObject(bg);SetGraphicsMode(dc,GM_ADVANCED);double a=(GetTickCount64()-surfaceStart)*6.283185307/700.;XFORM transform{FLOAT(cos(a)),FLOAT(sin(a)),FLOAT(-sin(a)),FLOAT(cos(a)),FLOAT((r.right-r.left)/2),FLOAT((r.bottom-r.top)/2)};SetWorldTransform(dc,&transform);auto brush=CreateSolidBrush(RGB(251,114,153));auto pen=CreatePen(PS_SOLID,3,RGB(251,114,153));auto oldBrush=SelectObject(dc,brush),oldPen=SelectObject(dc,pen);RoundRect(dc,-23,-16,23,18,8,8);MoveToEx(dc,-12,-28,nullptr);LineTo(dc,0,-18);LineTo(dc,12,-28);auto white=CreateSolidBrush(RGB(255,255,255));RECT eye1{-12,-4,-8,6},eye2{8,-4,12,6};FillRect(dc,&eye1,white);FillRect(dc,&eye2,white);DeleteObject(white);SelectObject(dc,oldBrush);SelectObject(dc,oldPen);DeleteObject(brush);DeleteObject(pen);ModifyWorldTransform(dc,nullptr,MWT_IDENTITY);EndPaint(hwnd,&ps);return 0;}break;
+     case WM_CLIPBOARDUPDATE:if(!testing)checkClipboardVideo();return 0;
+     case WM_NCCALCSIZE:
+         if(full&&wp)return 0;
+@@ -390,7 +394,7 @@
+     case WM_DPICHANGED:{auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
+     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
+     case WM_CLOSE:if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview){DestroyWindow(hwnd);return 0;}if(!closePending){closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
+-    case WM_TIMER:if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
++    case WM_TIMER:if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
+     case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");return 0;}DestroyWindow(hwnd);return 0;
+     case WM_DESTROY:RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
+     }
+@@ -451,12 +455,12 @@
+                 bool local=(!startupTarget.empty()&&(uri.rfind(L"about:blank",0)==0||uri.rfind(L"data:text/html",0)==0))||(testing&&uri.rfind(L"https://bili-space.local/",0)==0);
+                 bool site=false;for(auto host:{L"www.bilibili.com",L"search.bilibili.com",L"space.bilibili.com",L"passport.bilibili.com",L"account.bilibili.com",L"live.bilibili.com",L"t.bilibili.com",L"message.bilibili.com",L"manga.bilibili.com"})if(uri.rfind(std::wstring(L"https://")+host+L"/",0)==0)site=true;
+                 if(!local&&!site){args->put_Cancel(TRUE);if(uri.rfind(L"https://",0)==0)ShellExecuteW(nullptr,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);}
+-                else{if(uri.find(L"/video/")!=std::wstring::npos)execute("window.BiliSpace?.beginVideoLoading()");execute("window.BiliSpace?.setLoading(true)");}
++                else{if(site||(testing&&uri.rfind(L"https://bili-space.local/",0)==0)){surfaceCommitted=false;surfaceWaiting=true;surfaceStart=GetTickCount64();controller->put_IsVisible(FALSE);SetTimer(windowHandle,75,16,nullptr);SetTimer(windowHandle,76,testing?30000:10000,nullptr);InvalidateRect(windowHandle,nullptr,FALSE);}if(uri.find(L"/video/")!=std::wstring::npos)execute("window.BiliSpace?.beginVideoLoading()");execute("window.BiliSpace?.setLoading(true)");}
+                 return S_OK;
+             });webview->add_NavigationStarting(nh,&token);nh->Release();
+             auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([](ICoreWebView2*,auto args){LPWSTR uri{};args->get_Uri(&uri);args->put_Handled(TRUE);if(uri){webview->Navigate(uri);CoTaskMemFree(uri);}return S_OK;});webview->add_NewWindowRequested(ph,&token);ph->Release();
+             auto fh=callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2*,IUnknown*){BOOL on{};webview->get_ContainsFullScreenElement(&on);toggleFull(on);return S_OK;});webview->add_ContainsFullScreenElementChanged(fh,&token);fh->Release();
+-            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});webview->add_NavigationCompleted(ready,&token);ready->Release();
++            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(success){surfaceCommitted=true;execute("window.__bsPaintReady?.()");}else{surfaceWaiting=false;KillTimer(windowHandle,75);KillTimer(windowHandle,76);controller->put_IsVisible(TRUE);}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});webview->add_NavigationCompleted(ready,&token);ready->Release();
+             auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));if(testing&&!lifecyclePreview)webview->Navigate(target.c_str());else{startupTarget=target;auto splash=read(root/L"assets/startup.html");if(config.value("theme",std::string("dark"))!="system")splash+=config.value("theme",std::string("dark"))=="light"?"<style>body{background:#fafafa}p{color:#202024}</style>":"<style>body{background:#161618}p{color:#eeeef0}</style>";webview->NavigateToString(wide(splash).c_str());SetTimer(windowHandle,73,2500,nullptr);}if(!testing)AddClipboardFormatListener(windowHandle);}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
+             webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();return S_OK;
+         });env->CreateCoreWebView2Controller(windowHandle,h);h->Release();return S_OK;

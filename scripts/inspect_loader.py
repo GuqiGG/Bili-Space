@@ -2,7 +2,7 @@ import asyncio,json,subprocess,urllib.request,re
 from websockets.asyncio.client import connect
 from smoke import ROOT,OUT,CDP
 async def main():
- s=subprocess.STARTUPINFO();s.dwFlags|=subprocess.STARTF_USESHOWWINDOW;s.wShowWindow=0;p=subprocess.Popen([str(ROOT/'dist/BetterBiliSpace.exe'),'--test'],startupinfo=s)
+ s=subprocess.STARTUPINFO();s.dwFlags|=subprocess.STARTF_USESHOWWINDOW;s.wShowWindow=0;p=subprocess.Popen([str(ROOT/'dist/Bili-Space.exe'),'--test'],startupinfo=s)
  try:
   for _ in range(80):
    try:

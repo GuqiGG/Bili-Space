@@ -1,0 +1,34 @@
+{
+  "normal": {
+    "elapsedMs": 750,
+    "result": {
+      "message": "�ѱ��� �� C:\\Users\\guqig\\Documents\\ChatGPT\\Better-Bili-Space\\verification\\polish32-normal.mp4",
+      "ok": true
+    },
+    "partial_cleaned": true
+  },
+  "cancel-transfer": {
+    "elapsedMs": 266,
+    "result": {
+      "message": "��ȡ������",
+      "ok": false
+    },
+    "partial_cleaned": true
+  },
+  "cancel-headers": {
+    "elapsedMs": 266,
+    "result": {
+      "message": "��ȡ������",
+      "ok": false
+    },
+    "partial_cleaned": true
+  },
+  "cancel-before-start": {
+    "elapsedMs": 0,
+    "result": {
+      "message": "��ȡ������",
+      "ok": false
+    },
+    "partial_cleaned": true
+  }
+}

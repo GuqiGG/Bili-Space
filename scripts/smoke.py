@@ -5,7 +5,7 @@ from websockets.asyncio.client import connect
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 OUT=ROOT/'verification'
 observed={}
-observed['artifact_sha256']={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [ROOT/'dist/BetterBiliSpace.exe',*sorted((ROOT/'dist/assets').glob('*'))] if p.is_file()}
+observed['artifact_sha256']={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [ROOT/'dist/Bili-Space.exe',*sorted((ROOT/'dist/assets').glob('*'))] if p.is_file()}
 
 class CDP:
     def __init__(self, ws): self.ws=ws; self.seq=0; self.events=[]; self.intercept=None
@@ -34,7 +34,7 @@ class CDP:
 
 async def main():
     startup=subprocess.STARTUPINFO();startup.dwFlags|=subprocess.STARTF_USESHOWWINDOW;startup.wShowWindow=0
-    process=subprocess.Popen([str(ROOT/'dist/BetterBiliSpace.exe'),'--test'],cwd=ROOT/'dist',startupinfo=startup)
+    process=subprocess.Popen([str(ROOT/'dist/Bili-Space.exe'),'--test'],cwd=ROOT/'dist',startupinfo=startup)
     observed['process_pid']=process.pid
     try:
         targets=None
@@ -65,14 +65,16 @@ async def main():
             stored=json.loads((ROOT/'dist/.appdata/settings.json').read_text())
             assert stored['config']['accent']=='#5aaf9a' and stored['config']['showChannels'] is False
             observed['native_persistence']=stored['config']
-            await c.js('BiliSpace.closeSettings(); BiliSpace.update({srMode:"quality",srScale:2})')
-            await asyncio.sleep(2)
+            await c.js('BiliSpace.closeSettings();BiliSpace.update({srMode:"off"});document.querySelector("video").style.cssText="width:1280px;height:720px;max-width:none";BiliSpace.update({srMode:"quality",srScale:2})')
+            for _ in range(120):
+                if (await c.js('BiliSpace.state.frames'))>2:break
+                await asyncio.sleep(.2)
             observed['gpu']=await c.js('({...BiliSpace.state,canvas:{width:document.querySelector(".bs-gpu-canvas")?.width,height:document.querySelector(".bs-gpu-canvas")?.height},opacity:document.querySelector("video").style.opacity})')
             assert observed['gpu']['frames']>0 and observed['gpu']['canvas']=={'width':1280,'height':720}, observed['gpu']
             await c.js('document.querySelector(".bs-sr-toggle").click()');await c.shot('player.png')
             # Actual C++ event switches the existing HWND; no simulated-only PiP state.
             await c.js('BiliSpace.requestPip()');await asyncio.sleep(.8)
-            user32=ctypes.windll.user32;hwnd=user32.FindWindowW('BetterBiliSpace','Better Bili Space [test]')
+            user32=ctypes.windll.user32;hwnd=user32.FindWindowW('BetterBiliSpace','Bili-Space [test]')
             observed['pip']=await c.js('({state:BiliSpace.state,width:innerWidth,height:innerHeight,bodyScroll:document.body.scrollHeight,video:document.querySelector("video").getBoundingClientRect().toJSON()})')
             observed['pip']['style']=user32.GetWindowLongW(hwnd,-16)&0xffffffff
             observed['pip']['topmost']=bool(user32.GetWindowLongW(hwnd,-20)&8)
@@ -90,13 +92,13 @@ async def main():
                 await asyncio.sleep(.2)
             observed['after_reload']=await c.js('BiliSpace.state')
             assert observed['after_reload']['prefs']['srMode']=='off'
-            # Renderer failure path: force context loss after rendering, original video returns.
-            await c.js('BiliSpace.update({srMode:"performance",srScale:3})');await asyncio.sleep(1)
+            # Actual AI render then unavailable-WebGPU path: original video returns.
+            await c.js('document.querySelector("video").style.cssText="width:1280px;height:720px;max-width:none";BiliSpace.update({srMode:"performance",srScale:3})');await asyncio.sleep(2)
             observed['performance']=await c.js('BiliSpace.state')
             assert observed['performance']['frames']>0
             assert observed['performance']['prefs']['srMode']=='performance'
-            assert '性能' in observed['performance']['status']
-            await c.js('document.querySelector(".bs-gpu-canvas").getContext("webgl").getExtension("WEBGL_lose_context").loseContext()');await asyncio.sleep(.4)
+            assert '本地 AI ESPCN' in observed['performance']['status']
+            await c.js('BiliSpace.update({srMode:"off"});Object.defineProperty(navigator,"gpu",{configurable:true,value:undefined});BiliSpace.update({srMode:"quality"})');await asyncio.sleep(.4)
             observed['context_loss']=await c.js('({state:BiliSpace.state,opacity:document.querySelector("video").style.opacity,canvas:!!document.querySelector(".bs-gpu-canvas")})')
             assert observed['context_loss']['canvas'] is False and observed['context_loss']['opacity']!='0'
             await c.js('BiliSpace.update({srMode:"off"})');await asyncio.sleep(.3)
@@ -109,10 +111,19 @@ async def main():
             assert observed['live_home']['ready'] and observed['live_home']['btr']
             assert observed['live_home']['blockButtons']>0, 'Home blocker buttons missing'
             await c.shot('live-home.png')
+            # Test a synthetic local frame on the real anonymous site's origin (CSP/CORS), not a live-playback claim.
+            await c.js('delete navigator.gpu;document.querySelectorAll("video").forEach(v=>v.remove());(()=>{const c=document.createElement("canvas");c.width=320;c.height=180;const x=c.getContext("2d");x.fillStyle="#568a65";x.fillRect(0,0,320,180);const v=document.createElement("video");v.muted=true;v.style.cssText="width:640px;height:360px;max-width:none";const p=document.createElement("div");p.style.cssText="position:fixed;inset:100px auto auto 20px;width:640px;height:360px";p.append(v);document.body.append(p);v.srcObject=c.captureStream(15);v.play();window.syntheticAiFrame=setInterval(()=>{x.fillStyle="#568a65";x.fillRect(0,0,320,180);x.fillStyle="white";x.fillRect(Math.random()*280,40,20,50)},100)})();BiliSpace.update({srMode:"quality",srScale:2})')
+            for _ in range(160):
+                state=await c.js('BiliSpace.state')
+                if state['frames']>2 or state['stopped']:break
+                await asyncio.sleep(.2)
+            observed['real_origin_synthetic_ai']=await c.js('BiliSpace.state')
+            assert observed['real_origin_synthetic_ai']['frames']>2,observed['real_origin_synthetic_ai']
+            await c.js('BiliSpace.update({srMode:"off"});clearInterval(window.syntheticAiFrame)')
             observed['result']='PASS'
     finally:
         if process.poll() is None:
-            ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Better Bili Space [test]'),0x10,0,0)
+            ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Bili-Space [test]'),0x10,0,0)
             try:process.wait(timeout=5)
             except subprocess.TimeoutExpired:process.terminate();process.wait()
         observed['process_exit']=process.returncode

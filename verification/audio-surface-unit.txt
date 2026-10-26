@@ -1,0 +1,64 @@
+
+> better-bili-space@0.1.14 test
+> node --test tests/*.test.cjs
+
+✔ Anime4K GPU path follows raw-frame interpolation and avoids CPU SR feedback (2.6422ms)
+✔ volume boost accepts 200 percent and reuses the media graph (341.7551ms)
+✔ an unresumed AudioContext does not hijack original audio (123.0022ms)
+✔ early dark surface and mini-player override exist (67.7924ms)
+✔ explicit home, banner and right-side ad markers; no title-based false positive (260.0696ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (165.4258ms)
+✔ enhancement choices live only in client settings (95.5562ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (75.0368ms)
+✔ WebGPU unavailable fails visibly without hiding original video (51.0287ms)
+✔ incremental ad card insertion is detected (257.2338ms)
+✔ modified blocker hard-locks optional features and non-home routes (57.6646ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (324.5383ms)
+✔ header settings individually hide all eight optional items without hiding window controls (163.7698ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (70.3166ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (445.9622ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (390.5075ms)
+✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (65.5409ms)
+✔ centered vector chevron and persisted category whitelist leave no hidden-link placeholders (331.0103ms)
+✔ proxy UI is explicit opt-in, never enables a public node on mount (128.764ms)
+✔ BTR persisted settings cannot re-enable the launcher but keep engine fields (67.0631ms)
+✔ short wheel inertia progresses, clamps and cancels; precision / reduced-motion remain native (152.2819ms)
+✔ video homepage uses filled television glyph (244.7779ms)
+✔ close overlay requests native completion and does not duplicate (188.5626ms)
+✔ startup motion has easing and reduced motion fallback (1.0636ms)
+✔ description link repair changes only known URL hostname; other emoji preserved (252.1748ms)
+✔ only sticker embedded in recognized Lanzou host is removed (109.4781ms)
+✔ late description text is linkified (431.1956ms)
+✔ general mixed domains cleaned, genuine IDNs and Unicode paths retained (34.4703ms)
+✔ general embedded image repaired, image after complete URL retained (37.7046ms)
+✔ player bar contains no experimental enhancement controls (302.1624ms)
+✔ settings retain typed FI/SR choices and explicit experimental warning (158.8631ms)
+✔ settings panel remains resizable (68.0183ms)
+✔ old enabled experiments are reset once and enabling warns of flashing (78.6868ms)
+✔ promotion containing video markup stays hidden and is never converted to display contents (392.2113ms)
+✔ message dark theme covers the background, translucent sidebar RGB tokens and header reserve (155.2344ms)
+✔ category disclosure is click-only, replaces primary navigation and restores its saved visibility (953.1435ms)
+✔ native banner layers and handlers are preserved; center text does not intercept the pointer (48.8933ms)
+✔ homepage prefetch uses the existing loader and respects Save-Data instead of issuing duplicate API requests (30.2605ms)
+✔ layout-only changes wake a scroll-based site loader without scrolling the viewport; Save-Data disables the wake (1123.6176ms)
+✔ video home enters left column, not a new implicit grid slot (248.3387ms)
+✔ responsive video page uses minmax tracks, single column breakpoint and contains video (1.3241ms)
+✔ Ctrl+W sends native close without browser default (280.5418ms)
+✔ close preference and SR rate persist as typed config (137.5634ms)
+✔ jittered inference arrival never rewinds source presentation or invents quarter phases (3.6698ms)
+✔ future pair waits for presentation clock; queue bounded and reset starts clean (0.4221ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (495.8232ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (73.9038ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (66.6033ms)
+✔ signed out retains a working login link (60.0682ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (58.9691ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (37.856ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (51.5294ms)
+ℹ tests 52
+ℹ suites 0
+ℹ pass 52
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3582.8297

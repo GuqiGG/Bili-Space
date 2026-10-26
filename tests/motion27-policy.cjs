@@ -1,0 +1,1 @@
+const fs=require('fs');const s=fs.readFileSync(process.argv[2],'utf8');console.log(JSON.stringify({decodedReveal:s.includes('Decoded pixels are sufficient'),homeWipe:s.includes('function revealHomeTransition('),nonBlockingWipe:s.includes('pointer-events:none;animation:bs-home-wipe')}));

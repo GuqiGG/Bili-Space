@@ -1,0 +1,423 @@
+
+> better-bili-space@0.1.28 test
+> node --test tests/*.test.cjs
+
+✔ Anime4K GPU path follows raw-frame interpolation and avoids CPU SR feedback (2.925ms)
+✔ volume boost accepts 200 percent and reuses the media graph (393.3119ms)
+✔ an unresumed AudioContext does not hijack original audio (164.6798ms)
+✔ early dark surface and mini-player override exist (119.3752ms)
+✖ loading has no buttons and starts playback automatically (3596.0575ms)
+✖ rejected autoplay has no unhandled promise or manual overlay controls and times out safely (286.0721ms)
+✔ runtime permits autoplay without disabling security features (1.1434ms)
+✔ background bytes persist across renderer contexts; concurrent requests deduplicate (39.3576ms)
+✔ background disk cache is bounded to twelve media resources (8.4064ms)
+✔ upload is pink with white text between messages and avatar and opens only official upload link (496.3861ms)
+✔ tray close pauses all playback and does not resume automatically (385.1395ms)
+✔ ArrowUp and ArrowDown use 0-200 path but never hijack typing (716.825ms)
+✔ window control setting switches between traffic lights and spaced right-hand SVG controls (125ms)
+✖ first video frame finishes loader before entire document load; hidden previews are ignored (1119.7873ms)
+✔ avatar hover uses light sampled spring and keyboard/reduced motion stays immediate (98.1293ms)
+✔ windows window controls keep the television Home and drop the duplicate nav item on video pages (83.6159ms)
+✖ video page pairs the television Home with a Bili23 download button (70.274ms)
+✔ player toolbar is pulled up to the danmaku bar instead of overlapping it (175.6266ms)
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:172:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1356:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:172:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1356:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:172:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1356:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:172:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1356:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:172:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1356:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+✔ explicit home, banner and right-side ad markers; no title-based false positive (361.3684ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (289.2933ms)
+✔ enhancement choices live only in client settings (159.1701ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (117.5223ms)
+✔ WebGPU unavailable fails visibly without hiding original video (117.2067ms)
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:172:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1356:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+✔ incremental ad card insertion is detected (207.4833ms)
+✔ modified blocker hard-locks optional features and non-home routes (76.7127ms)
+✔ native reactivation defers programmatic focus restoration and ignores background windows (1.6035ms)
+✔ returning to app preserves the current search input and its caret (489.3346ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (420.2028ms)
+✔ header settings individually hide all eight optional items without hiding window controls (213.3569ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (154.3685ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (515.0053ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (587.8609ms)
+✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (136.7396ms)
+✔ homepage blacklist control is a real card child; account operation remains click-only (567.2429ms)
+✔ search typing is isolated from player window capture on keydown/keypress/keyup, without cancelling text editing (451.0915ms)
+✔ spaces, punctuation and emoji reach current official API unmodified with nested response parsing (1159.4785ms)
+✔ valid empty official response leaves suggestion section visible instead of an error (325.42ms)
+✔ space page keeps original negative-z header and theme layers above transparent isolated app surface (165.9425ms)
+✔ native comment and danmaku editors keep local handlers but block outer playback hotkeys (90.3065ms)
+✔ centered vector chevron and persisted category whitelist leave no hidden-link placeholders (591.408ms)
+✔ proxy UI is explicit opt-in, never enables a public node on mount (182.0884ms)
+✔ BTR persisted settings cannot re-enable the launcher but keep engine fields (118.2742ms)
+✔ short wheel inertia progresses, clamps and cancels; precision / reduced-motion remain native (262.7343ms)
+✔ video homepage uses filled television glyph (439.3073ms)
+✔ close overlay requests native completion and does not duplicate (247.8748ms)
+✔ startup motion has easing and reduced motion fallback (0.8303ms)
+✔ description link repair changes only known URL hostname; other emoji preserved (373.9042ms)
+✔ only sticker embedded in recognized Lanzou host is removed (209.8229ms)
+✔ late description text is linkified (472.0803ms)
+✔ general mixed domains cleaned, genuine IDNs and Unicode paths retained (93.6765ms)
+✔ general embedded image repaired, image after complete URL retained (74.7476ms)
+✔ search from video removes video overlay and uses search-only busy text (475.0789ms)
+✔ completed video ignores duplicate media starts (229.2225ms)
+✔ duplicate start during exit does not restart transition (358.4543ms)
+✔ different episode starts one transaction; timestamps do not (135.4988ms)
+✔ chrome prepared early and content overlay starts below header (1.9813ms)
+✔ decoded paused frame reveals without waiting for autoplay or video frame callback (562.8869ms)
+✖ return home marker is consumed once, swipe leaves homepage on its right, reduced motion skips (190.6343ms)
+✔ video header puts television Home before traffic lights (531.5565ms)
+✔ loading television enters and exits without cancelling native video clicks (288.9879ms)
+✔ built-in playback shortcut keys remain uncancelled (118.6909ms)
+✔ hidden nested cards do not retain a homepage grid slot (224.0555ms)
+✔ current Bili feed wrapper is a card, not an untracked layout box (129.5467ms)
+✔ official browser history is rendered as chips and deletions update only official history key (622.7037ms)
+✔ WBI public-key digest matches MD5 reference vectors and signed query (10.7832ms)
+✔ own banner comes from current official signed space profile if legacy endpoints omit it (270.1668ms)
+✔ banner is displayed before slow auxiliary profile requests finish (218.1828ms)
+✔ player bar contains no experimental enhancement controls (338.5445ms)
+✔ settings retain typed FI/SR choices and explicit experimental warning (198.0582ms)
+✔ settings panel remains resizable (130.0717ms)
+✔ old enabled experiments are reset once and enabling warns of flashing (188.9507ms)
+✔ promotion containing video markup stays hidden and is never converted to display contents (753.0008ms)
+✔ message dark theme covers the background, translucent sidebar RGB tokens and header reserve (217.5894ms)
+✔ category disclosure is click-only, replaces primary navigation and restores its saved visibility (1020.28ms)
+✔ native banner layers and handlers are preserved; center text does not intercept the pointer (129.7547ms)
+✔ homepage prefetch uses the existing loader and respects Save-Data instead of issuing duplicate API requests (75.8116ms)
+✔ layout-only changes wake a scroll-based site loader without scrolling the viewport; Save-Data disables the wake (1177.7332ms)
+✔ account card renders own real response fields and caches hover requests (273.8007ms)
+✔ unavailable account counts remain unknown rather than fake zero (93.6055ms)
+✔ header uses composite transitions and fixed aligned home anchor (1.3443ms)
+✖ video loader waits for renderable frames and autoplays without overlay buttons (1.6777ms)
+✔ own account uses original animated banner, pendant and actual VIP badge (280.0199ms)
+✔ expired membership does not claim a VIP badge (133.8107ms)
+✔ signing out removes private decoration and restores login link (110.8996ms)
+✔ web player PiP click invokes native window and suppresses unsupported browser action (42.5297ms)
+✔ native volume UI reaches 200 with gain 2 while media volume remains legal (61.4021ms)
+✔ video-format profile banner stays muted and loops only while card is shown (345.0046ms)
+✔ video home enters left column, not a new implicit grid slot (200.7543ms)
+✔ responsive video page uses minmax tracks, single column breakpoint and contains video (1.8322ms)
+✔ history deduplicates recent searches and supports single delete and clear (418.3602ms)
+✔ official suggestions use response values as safe text and can be searched (356.4897ms)
+✔ stale suggestion responses never replace newer input (530.0488ms)
+✔ history remains usable if official service fails; no fabricated suggestions (294.7045ms)
+✔ keyboard selection searches and Escape dismisses without losing typed text (96.7963ms)
+✔ IME composition does not submit or record unfinished keywords (38.3083ms)
+✔ Ctrl+W sends native close without browser default (218.794ms)
+✔ close preference and SR rate persist as typed config (84.6654ms)
+✔ jittered inference arrival never rewinds source presentation or invents quarter phases (3.1286ms)
+✔ future pair waits for presentation clock; queue bounded and reset starts clean (0.4507ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (317.0145ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (62.5185ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (63.1893ms)
+✔ signed out retains a working login link (62.9331ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (120.9898ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (46.4426ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (57.4539ms)
+✔ volume arrows display the updated percentage, reuse hint and ignore editors (1663.4354ms)
+ℹ tests 107
+ℹ suites 0
+ℹ pass 101
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5288.5289
+
+✖ failing tests:
+
+test at tests\autoplay19.test.cjs:3:1
+✖ loading has no buttons and starts playback automatically (3596.0575ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\autoplay19.test.cjs:3:512)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\autoplay19.test.cjs:4:1
+✖ rejected autoplay has no unhandled promise or manual overlay controls and times out safely (286.0721ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(calls>=1&&calls<=3)
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\autoplay19.test.cjs:4:700)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\chrome23.test.cjs:5:1
+✖ first video frame finishes loader before entire document load; hidden previews are ignored (1119.7873ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + HTMLDivElement {
+  +   Symbol(SameObject caches): [Object: null prototype] {
+  +     classList: DOMTokenList {},
+  +     dataset: DOMStringMap {}
+  +   }
+  + }
+  - null
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\chrome23.test.cjs:5:601)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: {},
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\chrome23.test.cjs:8:1
+✖ video page pairs the television Home with a Bili23 download button (70.274ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(sent)
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\chrome23.test.cjs:8:573)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\motion27.test.cjs:3:1
+✖ return home marker is consumed once, swipe leaves homepage on its right, reduced motion skips (190.6343ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(a.w.sessionStorage.getItem('bs-home-transition'))
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\motion27.test.cjs:3:257)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\polish16.test.cjs:6:1
+✖ video loader waits for renderable frames and autoplays without overlay buttons (1.6777ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /video\?\.readyState>=2/. Input:
+  
+  '/* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */\r\n' +
+    `const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>';\r\n` +
+    `const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';\r\n` +
+    'const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];\r\n' +
+    "const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:true,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};\r\n" +
+    'const PREFS = { ...DEFAULTS, ...INITIAL };\r\n' +
+    'const $ = (q, root=document) => root.querySelector(q);\r\n' +
+    'const $$ = (q, root=document) => [...root.querySelectorAll(q)];\r\n' +
+    "function playbackVideo(){const main=[...new Set($$('.bpx-player-video-wrap video,#bilibili-player video,.bilibili-player-video video'))],all=main.length?main:$$('video');return all.sort((a,b)=>{const score=v=>{const r=v.getBoundingClientRect();return (!v.hidden&&getComputedStyle(v).display!=='none'&&r.width>1&&r.height>1?100:0)+v.readyState;};return score(b)-score(a);})[0]||null;}\r\n" +
+    'const AD_SELECTORS = [\r\n' +
+    "  '.recommended-swipe','.bili-feed4-layout .recommended-swipe',\r\n" +
+    "  '.ad-report','.ad-floor-exp','.ad-floor-cover','.video-page-card-small.ad',\r\n" +
+    "  '.video-page-special-card-small','.video-page-game-card-small',\r\n" +
+    "  '#slide_ad','.ad-slide','.vcd','.video-page-ad-small','.video-page-ad',\r\n" +
+    "  '.video-page-special-card','.activity-m-v1',\r\n" +
+    "  '.couplet-locs','.palette-button-adcard','.desktop-download-tip',\r\n" +
+    `  'a[href*="/cm.bilibili.com/"]','a[href*="/game.bilibili.com/"]',\r\n` +
+    `  'a[href*="specialRecommendByOp"]','[data-target-url*="specialRecommendByOp"]',\r\n` +
+    `  '.left-entry a[href*="/blackboard/activity-"]','.left-entry .download-entry',\r\n` +
+    `  '.left-entry a[href*="app.bilibili.com"]','.left-entry a[href*="bilibili.com/s16"]'\r\n` +
+    '];\r\n' +
+    "const AD_CONTAINER = '.feed-card,.bili-video-card,.video-card,.video-page-card-small,.video-page-special-card-small,.ad-report,.ad-floor-exp,.video-page-special-card';\r\n" +
+    "let root, shadow, style, currentTab='appearance', lastFocus, scanTimer, gpu, interpolator;\r\n" +
+    "let status='未开启', pipActive=false, fullActive=false;\r\n" +
+    "let downloaderInfo={installed:false,mcp:false,running:false,message:'正在检测下载器…'};\r\n" +
+    'const pipHiddenHosts=new Map();\r\n' +
+    'let revision=0;\r\n' +
+    "let routeKey='', loadingTimer, accountRequest, accountChecked=0;\r\n" +
+    "let homeLoadWakeKey='',homeLoadWakeTimer,homeLoadRetryTimer;\r\n" +
+    "const mediaTheme=matchMedia('(prefers-color-scheme: dark)');\r\n" +
+    'const HEADER_ITEMS=[\r\n' +
+    `  ['headerHome','首页','[data-route="home"]'],['headerDynamic','动态','[data-route="dynamic"]'],['headerHistory','历史','[data-route="history"]'],\r\n` +
+    "  ['headerBrand','居中标题','.brand'],['headerSearch','搜索栏','.search'],['headerMessages','消息按钮','.messages'],['headerUpload','投稿按钮','.upload'],['headerAccount','头像 / 登录入口','.account'],['headerBack','分区展开入口','.back']\r\n" +
+    '];\r\n' +
+    'function applyHeaderPreferences(){\r\n' +
+    '  if(!shadow)return;\r\n' +
+    "  const left=$('.header-left',shadow);left.dataset.controls=PREFS.trafficLights?'traffic':'windows';$('.lights',shadow).hidden=!PREFS.trafficLights;$('.window-actions',shadow).hidden=Boolean(PREFS.trafficLights);\r\n" +
+    '  for(const [key,,selector] of HEADER_ITEMS)$(selector,shadow).hidden=!PREFS[key];\r\n' +
+    "  const categoriesOpen=$('.back',shadow).getAttribute('aria-expanded')==='true';\r\n" +
+    "  $('.primary-nav',shadow).hidden=categoriesOpen||!$$('.primary-nav a',shadow).some(a=>!a.hidden);\r\n" +
+    '  if(!PREFS.headerBack)setCategories(false);\r\n' +
+    "  $$('#header-categories a',shadow).forEach((a,i)=>a.hidden=!PREFS.categorySelection.includes(i));\r\n" +
+    '}\r\n' +
+    'function mountVideoHome(){\r\n' +
+    "  const bar=$('#bili-space-video-bar');\r\n" +
+    "  if(pageKind()!=='video'){if(bar)bar.hidden=true;return;}\r\n" +
+    "  if(bar){bar.hidden=false;const download=$('#bili-space-video-download',bar);if(download)download.hidden=!PREFS.downloader;return;}\r\n" +
+    "  const host=$('.left-container')||$('.video-info-container')||$('#viewbox_report')||$('.video-container-v1,.video-container-v2');\r\n" +
+    '  if(!host)return;\r\n' +
+    "  const row=document.createElement('div');row.id='bili-space-video-bar';row.className='bs-video-bar';\r\n" +
+    '  row.innerHTML=`<a id="bili-space-video-home" class="bs-video-home" href="https://www.bilibili.com/" aria-label="返回 B站首页">${ICON_TV}<span>首页</span></a><button type="button" id="bili-space-video-download" class="bs-video-download" aria-label="用下载器保存这个视频" title="使用内置下载器保存视频"${PREFS.downloader?\'\':\' hidden\'}>${ICON_DOWNLOAD}<span>下载</span></button>`;\r\n' +
+    '  host.prepend(row);\r\n' +
+    '}\r\n' +
+    '// Resolve an official combined audio/video stream; native code saves it without another app.\r\n' +
+    'let downloadTimer;\r\n' +
+    'async function requestDownload(){\r\n' +
+    "  const button=$('#bili-space-video-download');if(!button||button.dataset.state==='busy')return;\r\n" +
+    "  button.dataset.state='busy';$('span',button).textContent='解析中';\r\n" +
+    '  try{\r\n' +
+    "    const bvid=location.pathname.match(/BV[a-zA-Z0-9]{10}/)?.[0];if(!bvid)throw Error('当前内置下载仅支持 BV 视频页');\r\n" +
+    "    const view=await fetch('https://api.bilibili.com/x/web-interface/view?bvid='+bvid,{credentials:'include'}).then(r=>r.json());\r\n" +
+    "    if(view.code!==0)throw Error(view.message||'视频信息获取失败');\r\n" +
+    "    const page=Math.max(1,Number(new URLSearchParams(location.search).get('p'))||1),cid=view.data.pages?.[page-1]?.cid;if(!cid)throw Error('未找到当前分P');\r\n" +
+    "    const info=await fetch('https://api.bilibili.com/x/player/playurl?'+new URLSearchParams({bvid,cid,qn:64,fnval:1,platform:'html5',high_quality:1}),{credentials:'include'}).then(r=>r.json());\r\n" +
+    "    if(info.code!==0)throw Error(info.message||'下载地址获取失败');\r\n" +
+    "    if(info.data?.durl?.length!==1)throw Error('该视频没有单文件下载流；暂不支持 DASH 合并或多段视频');\r\n" +
+    "    const media=info.data.durl[0];if(!/^https:\\/\\//.test(media.url))throw Error('下载地址不是安全 HTTPS 地址');\r\n" +
+    "    $('span',button).textContent='选择保存位置';native('downloader',{action:'save',url:media.url,title:view.data.title||document.title});\r\n" +
+    "  }catch(e){settleDownload(false,e.message||'解析失败');}\r\n" +
+    '}\r\n' +
+    'function settleDownload(ok,message,silent){\r\n' +
+    '  clearTimeout(downloadTimer);\r\n' +
+    "  const button=$('#bili-space-video-download');\r\n" +
+    '  if(button){\r\n' +
+    "    button.dataset.state=ok?'done':'blocked';\r\n" +
+    "    const label=$('span',button);if(label)label.textContent=ok?'已保存':'下载';\r\n" +
+    "    setTimeout(()=>{if(button.dataset.state==='busy')return;button.dataset.state='';const text=$('span',button);if(text)text.textContent='下载';},ok?4000:6000);\r\n" +
+    '  }\r\n' +
+    '  if(!silent||message)toast(message);\r\n' +
+    '}\r\n' +
+    '\r\n' +
+    "// The player's bottom bars keep pixel heights computed for B站's own column width. At other\r\n" +
+    '// widths the danmaku bar lands on top of the like/coin/favorite/share toolbar (or leaves a hole),\r\n' +
+    "// so measure the real gap and offset the toolbar instead of fighting the player's internals.\r\n" +
+    'let videoAlignTimer;\r\n' +
+    'function alignVideoToolbar(){\r\n' +
+    "  if(pageKind()!=='video'||fullActive||pipActive)return;\r\n" +
+    "  const bar=$('.bpx-player-sending-area')||$('.bpx-player-sending-bar');\r\n" +
+    "  const toolbar=$('.video-toolbar-container');\r\n" +
+    '  if(!bar||!toolbar||bar.getBoundingClientRect().height<10)return;\r\n' +
+    "  toolbar.style.removeProperty('margin-top');\r\n" +
+    '  const base=parseFloat(getComputedStyle(toolbar).marginTop)||0;\r\n' +
+    '  const delta=Math.round(bar.getBoundingClientRect().bottom-toolbar.getBoundingClientRect().top);\r\n' +
+    '  if(!delta)return;\r\n' +
+    "  toolbar.style.setProperty('margin-top',Math.max(-480,Math.min(480,Math.round(base+delta)))+'px','important');\r\n" +
+    '}\r\n' +
+    'function scheduleVideoAlign(){\r\n' +
+    '  const video=playbackVideo();\r\n' +
+    '  if(video&&!video.dataset.bsAlign){\r\n' +
+    "    video.dataset.bsAlign='1';\r\n" +
+    "    video.addEventListener('loadedmetadata',scheduleVideoAlign);\r\n" +
+    "    video.addEventListener('resize',scheduleVideoAlign);\r\n" +
+    '  }\r\n' +
+    '  clearTimeout(videoAlignTimer);\r\n' +
+    '  requestAnimationFrame(()=>{\r\n' +
+    '    alignVideoToolbar();\r\n' +
+    '    videoAlignTimer=setTimeout(()=>{alignVideoToolbar();setTimeout(()=>{alignVideoToolbar();setTimeout(alignVideoToolbar,900);},420);},120);\r\n' +
+    '  });\r\n' +
+    '}\r\n' +
+    'function pageKind(){\r\n' +
+    "  const path=location.pathname.replace(/^\\/(?:zh-Hans|zh-Hant|en)(?=\\/|$)/,'')||'/';\r\n" +
+    "  if(location.hostname==='space.bilibili.com')return 'space';\r\n" +
+    "  if(location.hostname==='search.bilibili.com')return 'search';\r\n" +
+    "  if(location.hostname==='t.bilibili.com'||/^\\/opus(?:\\/|$)/.test(path))return 'dynamic';\r\n" +
+    "  if(/\\/(?:account\\/)?history(?:\\/|$)/.test(path))return 'history';\r\n" +
+    "  if(/^\\/(?:video|bangumi|list)(?:\\/|$)/.test(path))return 'video';\r\n" +
+    "  if(location.hostname==='message.bilibili.com')return 'messages';\r\n" +
+    "  return /^\\/(?:index\\.html)?$/.test(path)?'home':'other';\r\n" +
+    '}\r\n' +
+    'let headerSurfaceReady=false,headerVideoTarget=false,headerRouteFrame;\r\n' +
+    "function animateHeaderRoute(){if(!shadow)return;const left=$('.header-left',shadow);cancelAnimationFrame(headerRouteFrame);headerRouteFrame=requestAnimationFrame(()=>{headerRouteFrame=requestAnimationFrame(()=>{left.dataset.video=String(headerVideoTarget);});});}\r\n" +
+    'function surfaceRevealed(){headerSurfaceReady=true;animateHeaderRoute();}\r\n' +
+    'function syncRoute(){\r\n' +
+    '  const key=location.href,kind=pageKind();\r\n' +
+    '  document.documentElement.dataset.bsPage=kind;\r\n' +
+    '  mountVideoHome();\r\n' +
+    "  if(kind==='video')scheduleVideoAlign();\r\n" +
+    "  else{const toolbar=$('.video-toolbar-container');if(toolbar)toolbar.style.removeProperty('marg"... 165486 more characters
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\polish16.test.cjs:6:151)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */\r\nconst ICON_TV=\'<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>\';\r\nconst ICON_DOWNLOAD=\'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>\';\r\nconst DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];\r\nconst DEFAULTS = {theme:\'dark\',accent:\'#fb7299\',progressColor:\'#fb7299\',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,srMode:\'off\',srScale:2,srFps:60,closeAction:\'tray\',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:\'off\',fiFps:60,fiFlowScale:50,trafficLights:true,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:\'\',proxy:false,proxyAll:false,proxyNode:\'\',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};\r\nconst PREFS = { ...DEFAULTS, ...INITIAL };\r\nconst $ = (q, root=document) => root.querySelector(q);\r\nconst $$ = (q, root=document) => [...root.querySelectorAll(q)];\r\nfunction playbackVideo(){const main=[...new Set($$(\'.bpx-player-video-wrap video,#bilibili-player video,.bilibili-player-video video\'))],all=main.length?main:$$(\'video\');return all.sort((a,b)=>{const score=v=>{const r=v.getBoundingClientRect();return (!v.hidden&&getComputedStyle(v).display!==\'none\'&&r.width>1&&r.height>1?100:0)+v.readyState;};return score(b)-score(a);})[0]||null;}\r\nconst AD_SELECTORS = [\r\n  \'.recommended-swipe\',\'.bili-feed4-layout .recommended-swipe\',\r\n  \'.ad-report\',\'.ad-floor-exp\',\'.ad-floor-cover\',\'.video-page-card-small.ad\',\r\n  \'.video-page-special-card-small\',\'.video-page-game-card-small\',\r\n  \'#slide_ad\',\'.ad-slide\',\'.vcd\',\'.video-page-ad-small\',\'.video-page-ad\',\r\n  \'.video-page-special-card\',\'.activity-m-v1\',\r\n  \'.couplet-locs\',\'.palette-button-adcard\',\'.desktop-download-tip\',\r\n  \'a[href*="/cm.bilibili.com/"]\',\'a[href*="/game.bilibili.com/"]\',\r\n  \'a[href*="specialRecommendByOp"]\',\'[data-target-url*="specialRecommendByOp"]\',\r\n  \'.left-entry a[href*="/blackboard/activity-"]\',\'.left-entry .download-entry\',\r\n  \'.left-entry a[href*="app.bilibili.com"]\',\'.left-entry a[href*="bilibili.com/s16"]\'\r\n];\r\nconst AD_CONTAINER = \'.feed-card,.bili-video-card,.video-card,.video-page-card-small,.video-page-special-card-small,.ad-report,.ad-floor-exp,.video-page-special-card\';\r\nlet root, shadow, style, currentTab=\'appearance\', lastFocus, scanTimer, gpu, interpolator;\r\nlet status=\'未开启\', pipActive=false, fullActive=false;\r\nlet downloaderInfo={installed:false,mcp:false,running:false,message:\'正在检测下载器…\'};\r\nconst pipHiddenHosts=new Map();\r\nlet revision=0;\r\nlet routeKey=\'\', loadingTimer, accountRequest, accountChecked=0;\r\nlet homeLoadWakeKey=\'\',homeLoadWakeTimer,homeLoadRetryTimer;\r\nconst mediaTheme=matchMedia(\'(prefers-color-scheme: dark)\');\r\nconst HEADER_ITEMS=[\r\n  [\'headerHome\',\'首页\',\'[data-route="home"]\'],[\'headerDynamic\',\'动态\',\'[data-route="dynamic"]\'],[\'headerHistory\',\'历史\',\'[data-route="history"]\'],\r\n  [\'headerBrand\',\'居中标题\',\'.brand\'],[\'headerSearch\',\'搜索栏\',\'.search\'],[\'headerMessages\',\'消息按钮\',\'.messages\'],[\'headerUpload\',\'投稿按钮\',\'.upload\'],[\'headerAccount\',\'头像 / 登录入口\',\'.account\'],[\'headerBack\',\'分区展开入口\',\'.back\']\r\n];\r\nfunction applyHeaderPreferences(){\r\n  if(!shadow)return;\r\n  const left=$(\'.header-left\',shadow);left.dataset.controls=PREFS.trafficLights?\'traffic\':\'windows\';$(\'.lights\',shadow).hidden=!PREFS.trafficLights;$(\'.window-actions\',shadow).hidden=Boolean(PREFS.trafficLights);\r\n  for(const [key,,selector] of HEADER_ITEMS)$(selector,shadow).hidden=!PREFS[key];\r\n  const categoriesOpen=$(\'.back\',shadow).getAttribute(\'aria-expanded\')===\'true\';\r\n  $(\'.primary-nav\',shadow).hidden=categoriesOpen||!$$(\'.primary-nav a\',shadow).some(a=>!a.hidden);\r\n  if(!PREFS.headerBack)setCategories(false);\r\n  $$(\'#header-categories a\',shadow).forEach((a,i)=>a.hidden=!PREFS.categorySelection.includes(i));\r\n}\r\nfunction mountVideoHome(){\r\n  const bar=$(\'#bili-space-video-bar\');\r\n  if(pageKind()!==\'video\'){if(bar)bar.hidden=true;return;}\r\n  if(bar){bar.hidden=false;const download=$(\'#bili-space-video-download\',bar);if(download)download.hidden=!PREFS.downloader;return;}\r\n  const host=$(\'.left-container\')||$(\'.video-info-container\')||$(\'#viewbox_report\')||$(\'.video-container-v1,.video-container-v2\');\r\n  if(!host)return;\r\n  const row=document.createElement(\'div\');row.id=\'bili-space-video-bar\';row.className=\'bs-video-bar\';\r\n  row.innerHTML=`<a id="bili-space-video-home" class="bs-video-home" href="https://www.bilibili.com/" aria-label="返回 B站首页">${ICON_TV}<span>首页</span></a><button type="button" id="bili-space-video-download" class="bs-video-download" aria-label="用下载器保存这个视频" title="使用内置下载器保存视频"${PREFS.downloader?\'\':\' hidden\'}>${ICON_DOWNLOAD}<span>下载</span></button>`;\r\n  host.prepend(row);\r\n}\r\n// Resolve an official combined audio/video stream; native code saves it without another app.\r\nlet downloadTimer;\r\nasync function requestDownload(){\r\n  const button=$(\'#bili-space-video-download\');if(!button||button.dataset.state===\'busy\')return;\r\n  button.dataset.state=\'busy\';$(\'span\',button).textContent=\'解析中\';\r\n  try{\r\n    const bvid=location.pathname.match(/BV[a-zA-Z0-9]{10}/)?.[0];if(!bvid)throw Error(\'当前内置下载仅支持 BV 视频页\');\r\n    const view=await fetch(\'https://api.bilibili.com/x/web-interface/view?bvid=\'+bvid,{credentials:\'include\'}).then(r=>r.json());\r\n    if(view.code!==0)throw Error(view.message||\'视频信息获取失败\');\r\n    const page=Math.max(1,Number(new URLSearchParams(location.search).get(\'p\'))||1),cid=view.data.pages?.[page-1]?.cid;if(!cid)throw Error(\'未找到当前分P\');\r\n    const info=await fetch(\'https://api.bilibili.com/x/player/playurl?\'+new URLSearchParams({bvid,cid,qn:64,fnval:1,platform:\'html5\',high_quality:1}),{credentials:\'include\'}).then(r=>r.json());\r\n    if(info.code!==0)throw Error(info.message||\'下载地址获取失败\');\r\n    if(info.data?.durl?.length!==1)throw Error(\'该视频没有单文件下载流；暂不支持 DASH 合并或多段视频\');\r\n    const media=info.data.durl[0];if(!/^https:\\/\\//.test(media.url))throw Error(\'下载地址不是安全 HTTPS 地址\');\r\n    $(\'span\',button).textContent=\'选择保存位置\';native(\'downloader\',{action:\'save\',url:media.url,title:view.data.title||document.title});\r\n  }catch(e){settleDownload(false,e.message||\'解析失败\');}\r\n}\r\nfunction settleDownload(ok,message,silent){\r\n  clearTimeout(downloadTimer);\r\n  const button=$(\'#bili-space-video-download\');\r\n  if(button){\r\n    button.dataset.state=ok?\'done\':\'blocked\';\r\n    const label=$(\'span\',button);if(label)label.textContent=ok?\'已保存\':\'下载\';\r\n    setTimeout(()=>{if(button.dataset.state===\'busy\')return;button.dataset.state=\'\';const text=$(\'span\',button);if(text)text.textContent=\'下载\';},ok?4000:6000);\r\n  }\r\n  if(!silent||message)toast(message);\r\n}\r\n\r\n// The player\'s bottom bars keep pixel heights computed for B站\'s own column width. At other\r\n// widths the danmaku bar lands on top of the like/coin/favorite/share toolbar (or leaves a hole),\r\n// so measure the real gap and offset the toolbar instead of fighting the player\'s internals.\r\nlet videoAlignTimer;\r\nfunction alignVideoToolbar(){\r\n  if(pageKind()!==\'video\'||fullActive||pipActive)return;\r\n  const bar=$(\'.bpx-player-sending-area\')||$(\'.bpx-player-sending-bar\');\r\n  const toolbar=$(\'.video-toolbar-container\');\r\n  if(!bar||!toolbar||bar.getBoundingClientRect().height<10)return;\r\n  toolbar.style.removeProperty(\'margin-top\');\r\n  const base=parseFloat(getComputedStyle(toolbar).marginTop)||0;\r\n  const delta=Math.round(bar.getBoundingClientRect().bottom-toolbar.getBoundingClientRect().top);\r\n  if(!delta)return;\r\n  toolbar.style.setProperty(\'margin-top\',Math.max(-480,Math.min(480,Math.round(base+delta)))+\'px\',\'important\');\r\n}\r\nfunction scheduleVideoAlign(){\r\n  const video=playbackVideo();\r\n  if(video&&!video.dataset.bsAlign){\r\n    video.dataset.bsAlign=\'1\';\r\n    video.addEventListener(\'loadedmetadata\',scheduleVideoAlign);\r\n    video.addEventListener(\'resize\',scheduleVideoAlign);\r\n  }\r\n  clearTimeout(videoAlignTimer);\r\n  requestAnimationFrame(()=>{\r\n    alignVideoToolbar();\r\n    videoAlignTimer=setTimeout(()=>{alignVideoToolbar();setTimeout(()=>{alignVideoToolbar();setTimeout(alignVideoToolbar,900);},420);},120);\r\n  });\r\n}\r\nfunction pageKind(){\r\n  const path=location.pathname.replace(/^\\/(?:zh-Hans|zh-Hant|en)(?=\\/|$)/,\'\')||\'/\';\r\n  if(location.hostname===\'space.bilibili.com\')return \'space\';\r\n  if(location.hostname===\'search.bilibili.com\')return \'search\';\r\n  if(location.hostname===\'t.bilibili.com\'||/^\\/opus(?:\\/|$)/.test(path))return \'dynamic\';\r\n  if(/\\/(?:account\\/)?history(?:\\/|$)/.test(path))return \'history\';\r\n  if(/^\\/(?:video|bangumi|list)(?:\\/|$)/.test(path))return \'video\';\r\n  if(location.hostname===\'message.bilibili.com\')return \'messages\';\r\n  return /^\\/(?:index\\.html)?$/.test(path)?\'home\':\'other\';\r\n}\r\nlet headerSurfaceReady=false,headerVideoTarget=false,headerRouteFrame;\r\nfunction animateHeaderRoute(){if(!shadow)return;const left=$(\'.header-left\',shadow);cancelAnimationFrame(headerRouteFrame);headerRouteFrame=requestAnimationFrame(()=>{headerRouteFrame=requestAnimationFrame(()=>{left.dataset.video=String(headerVideoTarget);});});}\r\nfunction surfaceRevealed(){headerSurfaceReady=true;animateHeaderRoute();}\r\nfunction syncRoute(){\r\n  const key=location.href,kind=pageKind();\r\n  document.documentElement.dataset.bsPage=kind;\r\n  mountVideoHome();\r\n  if(kind===\'video\')scheduleVideoAlign();\r\n  else{const toolbar=$(\'.video-toolbar-container\');if(toolbar)toolbar.style.removeProperty(\'marg'... 165486 more characters,
+    expected: /video\?\.readyState>=2/,
+    operator: 'match',
+    diff: 'simple'
+  }

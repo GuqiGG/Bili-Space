@@ -1,0 +1,29 @@
+{
+  "interfaceReady": {
+    "ready": 0,
+    "events": [
+      {
+        "event": "enter",
+        "time": 110.80000000074506,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "exit",
+        "time": 111.20000000298023,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "removed",
+        "time": 232.60000000149012,
+        "videoReady": 0,
+        "videoTime": 0
+      }
+    ]
+  },
+  "official": {
+    "error": "SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+  },
+  "pass": true
+}

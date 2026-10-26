@@ -4,7 +4,7 @@ from smoke import ROOT,OUT,CDP
 
 async def main():
  startup=subprocess.STARTUPINFO();startup.dwFlags|=subprocess.STARTF_USESHOWWINDOW;startup.wShowWindow=0
- p=subprocess.Popen([str(ROOT/'dist/BetterBiliSpace.exe'),'--test'],startupinfo=startup)
+ p=subprocess.Popen([str(ROOT/'dist/Bili-Space.exe'),'--test'],startupinfo=startup)
  report={'mode':'mock account + representative page DOM; no real login or account writes','events':{},'sha256':hashlib.sha256((ROOT/'dist/assets/enhance.js').read_bytes()).hexdigest()}
  try:
   targets=[]
@@ -116,7 +116,7 @@ async def main():
    report['result']='PASS'
  finally:
   if p.poll() is None:
-   ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Better Bili Space [test]'),0x10,0,0)
+   ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Bili-Space [test]'),0x10,0,0)
    try:p.wait(timeout=5)
    except subprocess.TimeoutExpired:p.terminate();p.wait()
   (OUT/'ui-regression.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8')

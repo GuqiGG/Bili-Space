@@ -109,7 +109,7 @@
           border: 1px solid #c9ccd0 !important;
           border-radius: 4px !important;
           font-size: 11px !important;
-          transition: all 0.2s ease !important;
+          transition: color 150ms ease,background-color 150ms ease,border-color 150ms ease !important;
           background-color: transparent !important;
           box-shadow: none !important;
           width: auto !important;
@@ -164,7 +164,9 @@
           border-color: rgba(255, 255, 255, 0.08) !important;
         }
 
-        /* 隔离浮层按钮 */
+        .bs-inline-owner-row{display:flex!important;align-items:center!important;min-width:0!important;}
+        .bs-inline-owner-link{min-width:0!important;width:auto!important;flex:0 1 auto!important;}
+        /* 视频页兼容样式；首页按钮随卡片排版 */
         .video-upinfo-blacklist-overlay {
           position: fixed !important;
           z-index: 1000 !important;
@@ -176,9 +178,13 @@
           pointer-events: none !important;
         }
         .home-card-blacklist-overlay {
-          position: fixed !important;
-          z-index: 1000 !important;
-          pointer-events: none !important;
+          position: static !important;
+          display: inline-flex !important;
+          flex: 0 0 auto !important;
+          margin-left: 6px !important;
+          align-self: center !important;
+          vertical-align: middle !important;
+          pointer-events: auto !important;
         }
         .video-upinfo-blacklist-overlay > .bilibili-blacklist-btn,
         .video-card-blacklist-overlay > .bilibili-blacklist-btn,
@@ -602,34 +608,9 @@
     }
 
     function positionHomeCardOverlays() {
-        for (const [anchor, entry] of homeCardOverlays) {
-            const { overlay, card } = entry;
-            if (!anchor.isConnected || !card.isConnected) {
-                overlay.remove();
-                homeCardOverlays.delete(anchor);
-                homeCardRegistry.delete(card);
-                continue;
-            }
-
-            const rect = getTextRect(anchor);
-            if (!rect) continue;
-            const outsideViewport = rect.bottom <= 0
-                || rect.top >= window.innerHeight
-                || rect.right <= 0
-                || rect.left >= window.innerWidth;
-            if (rect.width === 0 || rect.height === 0 || outsideViewport || isAnchorOccluded(rect, card)) {
-                overlay.style.display = 'none';
-                continue;
-            }
-
-            overlay.style.display = 'block';
-            const overlayWidth = overlay.offsetWidth;
-            const overlayHeight = overlay.offsetHeight;
-            const cardRect = card.getBoundingClientRect();
-            const preferredLeft = rect.right + 6;
-            const maxLeft = Math.min(cardRect.right - overlayWidth, window.innerWidth - overlayWidth);
-            overlay.style.left = `${Math.max(cardRect.left, Math.min(preferredLeft, maxLeft))}px`;
-            overlay.style.top = `${Math.max(0, rect.top + (rect.height - overlayHeight) / 2)}px`;
+        // Inline card children scroll on the compositor with their card; no viewport coordinate tracking.
+        for (const [anchor,{overlay,card}] of homeCardOverlays) {
+            if (!anchor.isConnected || !card.isConnected) { overlay.remove();homeCardOverlays.delete(anchor);homeCardRegistry.delete(card); }
         }
     }
 
@@ -638,10 +619,12 @@
 
         const overlay = document.createElement('div');
         overlay.className = 'home-card-blacklist-overlay';
+        overlay.dataset.biliSpaceInline = 'true';
         overlay.appendChild(createBlacklistButton(uid, upName));
         homeCardOverlays.set(anchor, { overlay, card });
         homeCardRegistry.set(card, { uid });
-        getOverlayRoot().appendChild(overlay);
+        if(anchor.parentElement!==card){anchor.parentElement.classList.add('bs-inline-owner-row');anchor.classList.add('bs-inline-owner-link');}
+        anchor.insertAdjacentElement('afterend',overlay);
         positionHomeCardOverlays();
         return true;
     }

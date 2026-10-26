@@ -5,7 +5,7 @@ from smoke import ROOT,OUT,CDP
 async def main():
  label=sys.argv[1] if len(sys.argv)>1 else 'baseline'
  startup=subprocess.STARTUPINFO();startup.dwFlags|=subprocess.STARTF_USESHOWWINDOW;startup.wShowWindow=0
- p=subprocess.Popen([str(ROOT/'dist/BetterBiliSpace.exe'),'--test'],startupinfo=startup)
+ p=subprocess.Popen([str(ROOT/'dist/Bili-Space.exe'),'--test'],startupinfo=startup)
  records={}
  try:
   targets=[]

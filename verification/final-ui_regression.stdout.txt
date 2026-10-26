@@ -414,43 +414,43 @@ video PASS
       "buttonBg": "rgb(38, 38, 43)"
     }
   },
-  "sha256": "09b3788ecf910aa68fd82eda9510f4bef0b3157ada674119db357ca14f21050d",
+  "sha256": "adeaa3b1bd848b745a3a3f07f9406113bd5b76af252e3c4db3ba28947ba7d073",
   "responsive": [
     {
       "width": 580,
-      "scroll": 565,
+      "scroll": 580,
       "columns": "repeat(4, 1fr)",
-      "headerRight": 552.7999877929688,
-      "brandCenter": 282.40000343322754,
-      "headerCenter": 282.3999938964844,
-      "brandWidth": 62.32500076293945
+      "headerRight": 568,
+      "brandCenter": 290,
+      "headerCenter": 290,
+      "brandWidth": 63.375
     },
     {
       "width": 880,
       "scroll": 880,
       "columns": "repeat(4, 1fr)",
       "headerRight": 856,
-      "brandCenter": 439.9999942779541,
+      "brandCenter": 440,
       "headerCenter": 440,
-      "brandWidth": 62.32500076293945
+      "brandWidth": 63.375
     },
     {
       "width": 1100,
-      "scroll": 1085,
+      "scroll": 1100,
       "columns": "repeat(4, 1fr)",
-      "headerRight": 1060.800048828125,
-      "brandCenter": 542.4000186920166,
-      "headerCenter": 542.4000244140625,
-      "brandWidth": 62.32500076293945
+      "headerRight": 1076,
+      "brandCenter": 550,
+      "headerCenter": 550,
+      "brandWidth": 63.375
     },
     {
       "width": 1440,
       "scroll": 1440,
       "columns": "repeat(4, 1fr)",
       "headerRight": 1416,
-      "brandCenter": 720.0000247955322,
+      "brandCenter": 720,
       "headerCenter": 720,
-      "brandWidth": 62.32500076293945
+      "brandWidth": 63.375
     }
   ],
   "header": {
@@ -459,9 +459,9 @@ video PASS
     "videoHome": "https://www.bilibili.com/",
     "fade": {
       "start": 0,
-      "during": 0.622513,
+      "during": 0.416347,
       "end": 1,
-      "out": 0.371609,
+      "out": 0.582878,
       "hidden": 0
     },
     "after_reload": {
@@ -479,7 +479,10 @@ video PASS
         "font": true,
         "zoom": 100,
         "srMode": "off",
-        "srScale": 3,
+        "srScale": 2,
+        "fiMode": "off",
+        "fiFps": 60,
+        "fiFlowScale": 50,
         "headerHome": false,
         "headerDynamic": false,
         "headerHistory": false,
@@ -487,7 +490,18 @@ video PASS
         "headerSearch": false,
         "headerMessages": false,
         "headerAccount": false,
-        "headerBack": false
+        "headerBack": false,
+        "autoZoom": true,
+        "autoZoomTarget": 1280,
+        "proxy": false,
+        "proxyAll": false,
+        "proxyNode": "",
+        "categoryPreset": 0,
+        "categorySelection": [
+          0,
+          2,
+          5
+        ]
       },
       "visibleWindows": true,
       "videoHome": true

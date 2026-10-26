@@ -1,0 +1,46 @@
+
+> better-bili-space@0.1.7 test
+> node --test tests/*.test.cjs
+
+✔ explicit home, banner and right-side ad markers; no title-based false positive (253.135ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (120.8449ms)
+✔ sparkles control precedes resolution; performance/quality and multipliers exist (69.6626ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (61.0711ms)
+✔ WebGPU unavailable fails visibly without hiding original video (55.611ms)
+✔ incremental ad card insertion is detected (254.4924ms)
+✔ modified blocker hard-locks optional features and non-home routes (46.9141ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (233.0876ms)
+✔ header settings individually hide all eight optional items without hiding window controls (147.8072ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (52.3396ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (232.0536ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (356.1389ms)
+✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (49.3231ms)
+✔ centered vector chevron and persisted category whitelist leave no hidden-link placeholders (268.0491ms)
+✔ proxy UI is explicit opt-in, never enables a public node on mount (103.9967ms)
+✔ BTR persisted settings cannot re-enable the launcher but keep engine fields (62.2599ms)
+✔ short wheel inertia progresses, clamps and cancels; precision / reduced-motion remain native (105.9259ms)
+✔ SR and interpolation are adjacent before native quality; supplied three-frame SVG is used (244.9882ms)
+✔ player menus are exclusive, Escape closes them, FI settings send typed persisted config (141.9978ms)
+✔ settings panel can resize in both directions and renderer waits hidden for actual frames (63.7053ms)
+✔ AI optical flow replaces blend; flow scale is selectable and unavailable AI preserves original (65.9028ms)
+✔ promotion containing video markup stays hidden and is never converted to display contents (226.2464ms)
+✔ message dark theme covers the background, translucent sidebar RGB tokens and header reserve (112.5993ms)
+✔ category disclosure is click-only, replaces primary navigation and restores its saved visibility (956.2263ms)
+✔ native banner layers and handlers are preserved; center text does not intercept the pointer (37.1487ms)
+✔ homepage prefetch uses the existing loader and respects Save-Data instead of issuing duplicate API requests (23.6836ms)
+✔ layout-only changes wake a scroll-based site loader without scrolling the viewport; Save-Data disables the wake (1119.0055ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (398.5626ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (71.1526ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (65.5512ms)
+✔ signed out retains a working login link (54.6442ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (40.0119ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (35.3678ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (27.575ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3017.8182

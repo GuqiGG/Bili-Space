@@ -1,0 +1,15 @@
+{
+  "home": {
+    "url": "https://www.bilibili.com/zh-Hans",
+    "title": "bilibili",
+    "cards": 37,
+    "login": "登录 B站",
+    "hasPersonalAvatar": false
+  },
+  "settingsCopy": "个性化使用红绿灯窗口按钮关闭窗口 / Ctrl+W隐藏到托盘直接退出加载动画结束时机页面就绪视频画面就绪剪贴板 BV 自动跳转读取新复制的 BV 号或视频链接主题 / APPEARANCE浅色深色跟随系统强调色抖音美好体需安装 DouyinSans窗口缩放100%最大化 / 全屏时自动放大全屏放大档位数值越小，界面越大超大 · 1100舒适 · 1280标准 · 1440紧凑 · 1600",
+  "player": {
+    "url": "https://www.bilibili.com/zh-Hans/video/BV17an46ZEEc/",
+    "title": "来跟大肥鱼玩，大肥鱼帮你写作业_哔哩哔哩_bilibili",
+    "ready": 4
+  }
+}

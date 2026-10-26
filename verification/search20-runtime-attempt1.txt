@@ -1,0 +1,20 @@
+{"official": {"origin": "https://www.bilibili.com", "heading": "\u641c\u7d22\u5386\u53f2\u6682\u65e0\u641c\u7d22\u5386\u53f2\u731c\u4f60\u60f3\u641c \u00b7 B\u7ad9\u5b98\u65b9python\u5165\u95e8\u96f6\u57fa\u7840pythonpython\u4e0b\u8f7d\u5b89\u88c5 \u6559\u7a0bpython\u7f16\u7a0b\u4ece\u5165\u95e8\u5230\u5b9e\u8df5python\u8bfe\u7a0bPython\u5230\u5e95\u662f\u4ec0\u4e48python\u5165\u95e8\u96f6\u57fa\u7840\u5927\u5b66\u751f\u5927\u4e00python\u81ea\u52a8\u5316\u811a\u672c", "terms": ["python\u5165\u95e8\u96f6\u57fa\u7840", "python", "python\u4e0b\u8f7d\u5b89\u88c5 \u6559\u7a0b", "python\u7f16\u7a0b\u4ece\u5165\u95e8\u5230\u5b9e\u8df5", "python\u8bfe\u7a0b", "Python\u5230\u5e95\u662f\u4ec0\u4e48", "python\u5165\u95e8\u96f6\u57fa\u7840\u5927\u5b66\u751f\u5927\u4e00", "python\u81ea\u52a8\u5316\u811a\u672c"], "requests": ["https://s.search.bilibili.com/main/suggest?term=python&main_ver=v1&func=suggest&suggest_type=accurate&sub_type=tag&tag_num=8"]}, "bounds": [{"width": 480, "left": 12, "right": 382, "top": 99.80000305175781, "bottom": 496.1999969482422}, {"width": 1280, "left": 769.3125, "right": 1149.3125, "top": 48.400001525878906, "bottom": 444.7999954223633}], "crossOriginHistory": ["Search20 test"]}
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_search20_runtime.py", line 60, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_search20_runtime.py", line 47, in main
+    await wait(c,"!!document.querySelector('#bili-space-root').shadowRoot.querySelector('[data-remove=\"Search20 test\"]')");report['survivesRestart']=True
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_search20_runtime.py", line 15, in wait
+    raise AssertionError(expr)
+AssertionError: !!document.querySelector('#bili-space-root').shadowRoot.querySelector('[data-remove="Search20 test"]')

@@ -1,0 +1,15 @@
+{
+  "btr": {
+    "repository": "https://github.com/MrTangLuyao/Bilibili-thread-ripper",
+    "commit": "3d3aa5e2f07cd199d4eeb0b7faf4eb24552fffdb",
+    "sha256": "995a2edaaa96732a9a4fd2482652aeb951f2f359c1a4f6f749838643582879c1",
+    "modified_sha256": "0d7fc8f52c3dbc7c2836084af896a29fa800592bf4908d100cb0f6452860fcb0",
+    "local_patch": "0.1.32: initial zero must not override official resume"
+  },
+  "blocker": {
+    "repository": "https://github.com/codertesla/bilibili-1-click-blocker",
+    "commit": "3bfec9c4de3ac40ced4a11f52fd11f95d53fb3ab",
+    "original_sha256": "40e40bd8fcfa52e1d2e3b7dd9b25f563a53a504b94bd00b9cace4539a6d95ccf",
+    "modified_sha256": "4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f"
+  }
+}

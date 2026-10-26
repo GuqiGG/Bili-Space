@@ -25,10 +25,10 @@ test('signed out retains a working login link',async()=>{
  const a=app(),s=a.w.document.querySelector('#bili-space-root').shadowRoot;
  await new Promise(r=>setTimeout(r,10));assert.equal(s.querySelector('.account img'),null);assert.match(s.querySelector('.account').href,/passport.bilibili.com/);a.close();
 });
-test('search keeps decoded keyword, hides only native duplicate input and shows cancellable loader',()=>{
+test('search keeps decoded keyword, hides only native duplicate input and shows cancellable loader',async()=>{
  const a=app({url:'https://search.bilibili.com/zh-Hans/all?keyword=%E8%8B%8F%E4%B8%B9',html:'<div class="search-header"><div class="search-input"><input></div><div class="search-tabs">综合 视频</div></div>'}),s=a.w.document.querySelector('#bili-space-root').shadowRoot;
  assert.equal(s.querySelector('.search input').value,'苏丹');assert.equal(a.w.getComputedStyle(a.w.document.querySelector('.search-input')).display,'none');assert.notEqual(a.w.getComputedStyle(a.w.document.querySelector('.search-tabs')).display,'none');
- s.querySelector('form').dispatchEvent(new a.w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(s.querySelector('form').getAttribute('aria-busy'),'true');assert(a.messages.some(m=>m.type==='navigate'&&m.url==='https://search.bilibili.com/all?keyword=%E8%8B%8F%E4%B8%B9'));
+ s.querySelector('form').dispatchEvent(new a.w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(s.querySelector('form').getAttribute('aria-busy'),'true');await new Promise(r=>setTimeout(r,30));assert(a.messages.some(m=>m.type==='navigate'&&m.url==='https://search.bilibili.com/all?keyword=%E8%8B%8F%E4%B8%B9'));
  a.w.BiliSpace.setLoading(false);assert.equal(s.querySelector('form').getAttribute('aria-busy'),'false');a.close();
 });
 test('traffic lights use centered vector glyphs rather than baseline-aligned text characters',()=>{

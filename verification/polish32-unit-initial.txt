@@ -1,0 +1,422 @@
+
+> better-bili-space@0.1.32 test
+> node --test tests/*.test.cjs
+
+✔ Anime4K GPU path follows raw-frame interpolation and avoids CPU SR feedback (2.6707ms)
+✔ volume boost accepts 200 percent and reuses the media graph (478.7686ms)
+✔ an unresumed AudioContext does not hijack original audio (229.9943ms)
+✔ early dark surface and mini-player override exist (126.5076ms)
+✖ loading has no buttons and starts playback automatically (337.4485ms)
+✖ rejected autoplay has no unhandled promise or manual overlay controls and times out safely (381.8614ms)
+✔ runtime permits autoplay without disabling security features (1.2232ms)
+✔ background bytes persist across renderer contexts; concurrent requests deduplicate (31.3762ms)
+✔ background disk cache is bounded to twelve media resources (10.4586ms)
+✔ upload is pink with white text between messages and avatar and opens only official upload link (419.1173ms)
+✔ tray close pauses all playback and does not resume automatically (396.0684ms)
+✔ ArrowUp and ArrowDown use 0-200 path but never hijack typing (742.3816ms)
+✔ window control setting switches between traffic lights and spaced right-hand SVG controls (130.2763ms)
+✔ video interface finishes loader before document load or media readiness (115.2072ms)
+✔ avatar hover uses light sampled spring and keyboard/reduced motion stays immediate (68.9455ms)
+✔ windows window controls keep the television Home and drop the duplicate nav item on video pages (80.6979ms)
+✔ video page pairs television Home with a built-in download button (80.0779ms)
+✔ interface appears with no decoded video: loader immediately exits (514.6817ms)
+✔ built-in WBI downloader resolves current part and sends combined MP4 without cookie export (206.8174ms)
+✔ DASH selects highest accessible AVC and AAC rather than saving silent video (200.4976ms)
+✔ unsupported audio does not save a silent DASH video (138.2629ms)
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:211:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1407:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:211:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1407:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:211:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1407:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:211:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1407:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:211:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1407:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+✔ explicit home, banner and right-side ad markers; no title-based false positive (497.8309ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (326.723ms)
+✔ enhancement choices live only in client settings (153.0985ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (129.0162ms)
+✔ WebGPU unavailable fails visibly without hiding original video (123.0977ms)
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:211:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1407:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+✔ incremental ad card insertion is detected (193.4191ms)
+✔ modified blocker hard-locks optional features and non-home routes (81.9374ms)
+✔ native reactivation defers programmatic focus restoration and ignores background windows (1.5756ms)
+✔ returning to app preserves the current search input and its caret (439.1722ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (407.0991ms)
+✔ header settings individually hide all eight optional items without hiding window controls (250.6292ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (148.1163ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (517.7009ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (505.9601ms)
+✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (139.6431ms)
+✔ homepage blacklist control is a real card child; account operation remains click-only (572.1631ms)
+✔ search typing is isolated from player window capture on keydown/keypress/keyup, without cancelling text editing (477.7849ms)
+✔ spaces, punctuation and emoji reach current official API unmodified with nested response parsing (1278.0193ms)
+✔ valid empty official response leaves suggestion section visible instead of an error (358.1758ms)
+✔ space page keeps original negative-z header and theme layers above transparent isolated app surface (121.3705ms)
+✔ native comment and danmaku editors keep local handlers but block outer playback hotkeys (74.4592ms)
+✔ centered vector chevron and persisted category whitelist leave no hidden-link placeholders (499.3341ms)
+✔ proxy UI is explicit opt-in, never enables a public node on mount (176.7347ms)
+✔ BTR persisted settings cannot re-enable the launcher but keep engine fields (132.4698ms)
+✔ short wheel inertia progresses, clamps and cancels; precision / reduced-motion remain native (329.4317ms)
+✔ video homepage uses filled television glyph (366.3425ms)
+✔ close overlay requests native completion and does not duplicate (276.9999ms)
+✔ startup motion has easing and reduced motion fallback (1.1297ms)
+✔ outlined header link copies canonical complete URL, acknowledges success and updates on route (427.5362ms)
+✔ keyboard activation on the copy control never reaches global playback hotkeys (201.2714ms)
+✔ download progress is adjacent to button with speed and ETA; merge and success are separate (191.932ms)
+✔ description link repair changes only known URL hostname; other emoji preserved (402.03ms)
+✔ only sticker embedded in recognized Lanzou host is removed (178.1458ms)
+✔ late description text is linkified (475.2059ms)
+✔ general mixed domains cleaned, genuine IDNs and Unicode paths retained (93.4836ms)
+✔ general embedded image repaired, image after complete URL retained (96.4814ms)
+✔ search from video removes video overlay and uses search-only busy text (486.4203ms)
+✔ completed video ignores duplicate media starts (274.9504ms)
+✔ duplicate start during exit does not restart transition (361.3286ms)
+✔ different episode starts one transaction; timestamps do not (128.8641ms)
+✔ chrome prepared early and content overlay starts below header (1.7481ms)
+✔ recommendation play/danmaku metrics wrap as whole units, not inside counts (2.6782ms)
+✔ decoded paused frame reveals without waiting for autoplay or video frame callback (536.1827ms)
+✔ return home has no giant television transition or new session marker (179.6124ms)
+✔ video header puts television Home before traffic lights (384.0106ms)
+✔ loading television enters and exits without cancelling native video clicks (251.873ms)
+✔ built-in playback shortcut keys remain uncancelled (173.0457ms)
+✔ hidden nested cards do not retain a homepage grid slot (242.1087ms)
+✔ current Bili feed wrapper is a card, not an untracked layout box (164.4351ms)
+✔ official browser history is rendered as chips and deletions update only official history key (501.7411ms)
+✔ WBI public-key digest matches MD5 reference vectors and signed query (10.9446ms)
+✔ own banner comes from current official signed space profile if legacy endpoints omit it (284.0416ms)
+✔ banner is displayed before slow auxiliary profile requests finish (220.6724ms)
+✔ player bar contains no experimental enhancement controls (264.2183ms)
+✔ settings retain typed FI/SR choices and explicit experimental warning (175.7414ms)
+✔ settings panel remains resizable (90.4986ms)
+✔ old enabled experiments are reset once and enabling warns of flashing (116.2435ms)
+✔ promotion containing video markup stays hidden and is never converted to display contents (345.1383ms)
+✔ message dark theme covers the background, translucent sidebar RGB tokens and header reserve (185.9494ms)
+✔ category disclosure is click-only, replaces primary navigation and restores its saved visibility (983.9259ms)
+✔ native banner layers and handlers are preserved; center text does not intercept the pointer (51.3044ms)
+✔ homepage prefetch uses the existing loader and respects Save-Data instead of issuing duplicate API requests (41.6255ms)
+✔ layout-only changes wake a scroll-based site loader without scrolling the viewport; Save-Data disables the wake (1115.97ms)
+✔ account card renders own real response fields and caches hover requests (366.1534ms)
+✔ unavailable account counts remain unknown rather than fake zero (116.32ms)
+✔ header uses composite transitions and fixed aligned home anchor (2.7023ms)
+✖ video loader waits for renderable frames and autoplays without overlay buttons (2.7879ms)
+✔ own account uses original animated banner, pendant and actual VIP badge (353.5554ms)
+✔ expired membership does not claim a VIP badge (180.9911ms)
+✔ signing out removes private decoration and restores login link (110.8004ms)
+✔ web player PiP click invokes native window and suppresses unsupported browser action (44.8387ms)
+✔ native volume UI reaches 200 with gain 2 while media volume remains legal (56.1963ms)
+✔ video-format profile banner stays muted and loops only while card is shown (347.3258ms)
+✔ video home enters left column, not a new implicit grid slot (245.1761ms)
+✔ responsive video page uses minmax tracks, single column breakpoint and contains video (2.4986ms)
+✔ history deduplicates recent searches and supports single delete and clear (511.2385ms)
+✔ official suggestions use response values as safe text and can be searched (355.8447ms)
+✔ stale suggestion responses never replace newer input (541.7467ms)
+✔ history remains usable if official service fails; no fabricated suggestions (296.06ms)
+✔ keyboard selection searches and Escape dismisses without losing typed text (112.0842ms)
+✔ IME composition does not submit or record unfinished keywords (38.1803ms)
+✔ loading setting chooses page interface or decoded video and is saved (568.9632ms)
+✔ CDN selection uses official backups when primary is a peer host and keeps alternate HTTPS ports (108.6035ms)
+✔ category arrow SVG has its own rotation independent of window-mode translation (1.0908ms)
+✔ Ctrl+W sends native close without browser default (272.8403ms)
+✔ close preference and SR rate persist as typed config (134.0967ms)
+✔ jittered inference arrival never rewinds source presentation or invents quarter phases (3.9537ms)
+✔ future pair waits for presentation clock; queue bounded and reset starts clean (0.4789ms)
+✖ video action toolbar uses an opaque theme surface without overriding liked colors (27.3194ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (400.5585ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (60.0739ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (67.0126ms)
+✔ signed out retains a working login link (66.1913ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (101.3325ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (43.6736ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (57.3251ms)
+✔ volume arrows display the updated percentage, reuse hint and ignore editors (1754.0132ms)
+ℹ tests 118
+ℹ suites 0
+ℹ pass 114
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5477.0004
+
+✖ failing tests:
+
+test at tests\autoplay19.test.cjs:3:1
+✖ loading has no buttons and starts playback automatically (337.4485ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\autoplay19.test.cjs:3:601)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\autoplay19.test.cjs:4:1
+✖ rejected autoplay has no unhandled promise or manual overlay controls and times out safely (381.8614ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(calls>=1&&calls<=3)
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\autoplay19.test.cjs:4:772)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\polish16.test.cjs:6:1
+✖ video loader waits for renderable frames and autoplays without overlay buttons (2.7879ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /autoplayLoadingVideo/. Input:
+  
+  '/* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */\r\n' +
+    `const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>';\r\n` +
+    `const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';\r\n` +
+    'const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];\r\n' +
+    "const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:true,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};\r\n" +
+    'const PREFS = { ...DEFAULTS, ...INITIAL };\r\n' +
+    'const $ = (q, root=document) => root.querySelector(q);\r\n' +
+    'const $$ = (q, root=document) => [...root.querySelectorAll(q)];\r\n' +
+    "function playbackVideo(){const main=[...new Set($$('.bpx-player-video-wrap video,#bilibili-player video,.bilibili-player-video video'))],all=main.length?main:$$('video');return all.sort((a,b)=>{const score=v=>{const r=v.getBoundingClientRect();return (!v.hidden&&getComputedStyle(v).display!=='none'&&r.width>1&&r.height>1?100:0)+v.readyState;};return score(b)-score(a);})[0]||null;}\r\n" +
+    'const AD_SELECTORS = [\r\n' +
+    "  '.recommended-swipe','.bili-feed4-layout .recommended-swipe',\r\n" +
+    "  '.ad-report','.ad-floor-exp','.ad-floor-cover','.video-page-card-small.ad',\r\n" +
+    "  '.video-page-special-card-small','.video-page-game-card-small',\r\n" +
+    "  '#slide_ad','.ad-slide','.vcd','.video-page-ad-small','.video-page-ad',\r\n" +
+    "  '.video-page-special-card','.activity-m-v1',\r\n" +
+    "  '.couplet-locs','.palette-button-adcard','.desktop-download-tip',\r\n" +
+    `  'a[href*="/cm.bilibili.com/"]','a[href*="/game.bilibili.com/"]',\r\n` +
+    `  'a[href*="specialRecommendByOp"]','[data-target-url*="specialRecommendByOp"]',\r\n` +
+    `  '.left-entry a[href*="/blackboard/activity-"]','.left-entry .download-entry',\r\n` +
+    `  '.left-entry a[href*="app.bilibili.com"]','.left-entry a[href*="bilibili.com/s16"]'\r\n` +
+    '];\r\n' +
+    "const AD_CONTAINER = '.feed-card,.bili-video-card,.video-card,.video-page-card-small,.video-page-special-card-small,.ad-report,.ad-floor-exp,.video-page-special-card';\r\n" +
+    "let root, shadow, style, currentTab='appearance', lastFocus, scanTimer, gpu, interpolator;\r\n" +
+    "let status='未开启', pipActive=false, fullActive=false;\r\n" +
+    "let downloaderInfo={installed:false,mcp:false,running:false,message:'正在检测下载器…'};\r\n" +
+    'const pipHiddenHosts=new Map();\r\n' +
+    'let revision=0;\r\n' +
+    "let routeKey='', loadingTimer, accountRequest, accountChecked=0;\r\n" +
+    "let homeLoadWakeKey='',homeLoadWakeTimer,homeLoadRetryTimer;\r\n" +
+    "const mediaTheme=matchMedia('(prefers-color-scheme: dark)');\r\n" +
+    'const HEADER_ITEMS=[\r\n' +
+    `  ['headerHome','首页','[data-route="home"]'],['headerDynamic','动态','[data-route="dynamic"]'],['headerHistory','历史','[data-route="history"]'],\r\n` +
+    "  ['headerBrand','居中标题','.brand'],['headerSearch','搜索栏','.search'],['headerMessages','消息按钮','.messages'],['headerUpload','投稿按钮','.upload'],['headerAccount','头像 / 登录入口','.account'],['headerBack','分区展开入口','.back']\r\n" +
+    '];\r\n' +
+    'function applyHeaderPreferences(){\r\n' +
+    '  if(!shadow)return;\r\n' +
+    "  const left=$('.header-left',shadow);left.dataset.controls=PREFS.trafficLights?'traffic':'windows';$('.lights',shadow).hidden=!PREFS.trafficLights;$('.window-actions',shadow).hidden=Boolean(PREFS.trafficLights);\r\n" +
+    '  for(const [key,,selector] of HEADER_ITEMS)$(selector,shadow).hidden=!PREFS[key];\r\n' +
+    "  const categoriesOpen=$('.back',shadow).getAttribute('aria-expanded')==='true';\r\n" +
+    "  $('.primary-nav',shadow).hidden=categoriesOpen||!$$('.primary-nav a',shadow).some(a=>!a.hidden);\r\n" +
+    '  if(!PREFS.headerBack)setCategories(false);\r\n' +
+    "  $$('#header-categories a',shadow).forEach((a,i)=>a.hidden=!PREFS.categorySelection.includes(i));\r\n" +
+    "  let empty=$('.category-empty',shadow);if(!empty){empty=document.createElement('button');empty.type='button';empty.className='category-empty';empty.textContent='未选择分区 · 前往设置';empty.onclick=()=>{openSettings();currentTab='categories';renderSettings();};$('#header-categories',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;\r\n" +
+    '}\r\n' +
+    'let copiedVideoLinkTimer;\r\n' +
+    'function currentVideoLink(){\r\n' +
+    "  if(pageKind()!=='video')return '';const path=location.pathname.replace(/^\\/(?:zh-Hans|zh-Hant|en)(?=\\/|$)/,'').replace(/\\/$/,'');\r\n" +
+    "  const url=new URL('https://www.bilibili.com'+path);for(const key of ['p','t']){const value=new URLSearchParams(location.search).get(key);if(value&&/^\\d+(?:\\.\\d+)?$/.test(value))url.searchParams.set(key,value);}return url.href;\r\n" +
+    '}\r\n' +
+    'function syncVideoLink(){\r\n' +
+    "  if(!shadow)return;const button=$('.video-link',shadow);if(!button)return;const url=currentVideoLink();button.hidden=!url;\r\n" +
+    "  if(button.dataset.url!==url){clearTimeout(copiedVideoLinkTimer);delete button.dataset.copied;button.dataset.url=url;$('.video-link-text',button).textContent=url.replace('https://www.','');}\r\n" +
+    "  button.title=url?'点击复制：'+url:'';button.setAttribute('aria-label',url?'复制视频链接：'+url:'复制视频链接');\r\n" +
+    '}\r\n' +
+    'function videoLinkCopied(ok,url){\r\n' +
+    "  const button=$('.video-link',shadow);if(!button||button.dataset.url!==url)return;\r\n" +
+    "  if(!ok){toast('复制失败，请重试');return;}clearTimeout(copiedVideoLinkTimer);button.dataset.copied='true';$('.video-link-text',button).textContent='已复制';toast('视频链接已复制');\r\n" +
+    "  copiedVideoLinkTimer=setTimeout(()=>{delete button.dataset.copied;$('.video-link-text',button).textContent=button.dataset.url.replace('https://www.','');},1400);\r\n" +
+    '}\r\n' +
+    'function mountVideoHome(){\r\n' +
+    "  const bar=$('#bili-space-video-bar');\r\n" +
+    "  if(pageKind()!=='video'){if(bar)bar.hidden=true;return;}\r\n" +
+    "  if(bar){bar.hidden=false;const download=$('#bili-space-video-download',bar),progress=$('#bili-space-download-progress',bar);if(download)download.hidden=!PREFS.downloader;if(progress)progress.hidden=!PREFS.downloader||!progress.textContent;return;}\r\n" +
+    "  const host=$('.left-container')||$('.video-info-container')||$('#viewbox_report')||$('.video-container-v1,.video-container-v2');\r\n" +
+    '  if(!host)return;\r\n' +
+    "  const row=document.createElement('div');row.id='bili-space-video-bar';row.className='bs-video-bar';\r\n" +
+    '  row.innerHTML=`<a id="bili-space-video-home" class="bs-video-home" href="https://www.bilibili.com/" aria-label="返回 B站首页">${ICON_TV}<span>首页</span></a><button type="button" id="bili-space-video-download" class="bs-video-download" aria-label="用下载器保存这个视频" title="使用内置下载器保存视频"${PREFS.downloader?\'\':\' hidden\'}>${ICON_DOWNLOAD}<span>下载</span></button><span id="bili-space-download-progress" class="bs-download-progress" role="status" aria-live="off" hidden></span><button type="button" id="bili-space-download-cancel" class="bs-video-download" hidden>取消</button>`;\r\n' +
+    '  host.prepend(row);\r\n' +
+    '}\r\n' +
+    '// Resolve an official combined audio/video stream; native code saves it without another app.\r\n' +
+    'let downloadTimer,downloadDisplayPage,downloadCancelling=false;\r\n' +
+    "function downloadDisplay(text){const button=$('#bili-space-video-download'),label=$('#bili-space-download-progress');if(downloadCancelling||!PREFS.downloader||!button||!label||button.dataset.state!=='busy'||downloadDisplayPage!==currentVideoLink())return;label.hidden=false;label.textContent=text;}\r\n" +
+    "function downloadProgress(info){const speed=Math.max(0,Number(info?.bytesPerSecond)||0),unit=speed>=1048576?(speed/1048576).toFixed(1)+' MB/s':speed>=1024?(speed/1024).toFixed(1)+' KB/s':Math.round(speed)+' B/s';const seconds=info?.etaSeconds,eta=seconds===null||!Number.isFinite(Number(seconds))?'计算中':Math.max(0,Math.ceil(seconds)),remaining=typeof eta==='number'?(eta>=3600?Math.floor(eta/3600)+'小时':'')+String(Math.floor(eta%3600/60)).padStart(2,'0')+':'+String(eta%60).padStart(2,'0'):eta;downloadDisplay((info?.percent===null?'下载中':Math.floor(Math.max(0,Math.min(100,Number(info.percent)||0)))+'%')+' · '+unit+' · 预计剩余 '+remaining);}\r\n" +
+    "async function downloadJson(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);try{const response=await fetch(url,{credentials:'include',signal:controller.signal});if(!response.ok)throw Error('下载接口返回 HTTP '+response.status);return await response.json();}finally{clearTimeout(timer);}}\r\n" +
+    'function downloadWbiQuery(params,keys){\r\n' +
+    "  const raw=[keys?.img_url,keys?.sub_url].map(x=>new URL(x).pathname.split('/').pop().split('.')[0]).join('');if(raw.length!==64)throw Error('未能获取官方签名参数');\r\n" +
+    "  const order=[46,47,18,2,53,8,23,32,15,50,10,31,58,3,45,35,27,43,5,49,33,9,42,19,29,28,14,39,12,38,41,13,37,48,7,16,24,55,40,61,26,17,0,1,60,51,30,4,22,25,54,21,56,59,6,63,57,62,11,36,20,34,44,52],key=order.map(i=>raw[i]).join('').slice(0,32),values={...params,wts:Math.floor(Date.now()/1000)};\r\n" +
+    "  const query=Object.keys(values).sort().map(k=>encodeURIComponent(k)+'='+encodeURIComponent(String(values[k]).replace(/[!'()*]/g,''))).join('&');return query+'&w_rid='+profileMd5(query+key);\r\n" +
+    '}\r\n' +
+    'function downloadStreamUrl(stream){\r\n' +
+    '  const candidates=[stream?.baseUrl,stream?.base_url,stream?.url,...(Array.isArray(stream?.backupUrl)?stream.backupUrl:[]),...(Array.isArray(stream?.backup_url)?stream.backup_url:[])],urls=[];\r\n' +
+    "  for(const raw of candidates){if(typeof raw!=='string')continue;try{const u=new URL(raw,location.href);if(u.protocol==='http:')u.protocol='https:';if(u.protocol!=='https:'||u.username||u.password||u.hash)continue;const host=u.hostname.to"... 177696 more characters
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\polish16.test.cjs:6:312)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */\r\nconst ICON_TV=\'<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>\';\r\nconst ICON_DOWNLOAD=\'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>\';\r\nconst DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];\r\nconst DEFAULTS = {theme:\'dark\',accent:\'#fb7299\',progressColor:\'#fb7299\',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,srMode:\'off\',srScale:2,srFps:60,closeAction:\'tray\',videoLoadingMode:\'page\',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:\'off\',fiFps:60,fiFlowScale:50,trafficLights:true,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:\'\',proxy:false,proxyAll:false,proxyNode:\'\',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};\r\nconst PREFS = { ...DEFAULTS, ...INITIAL };\r\nconst $ = (q, root=document) => root.querySelector(q);\r\nconst $$ = (q, root=document) => [...root.querySelectorAll(q)];\r\nfunction playbackVideo(){const main=[...new Set($$(\'.bpx-player-video-wrap video,#bilibili-player video,.bilibili-player-video video\'))],all=main.length?main:$$(\'video\');return all.sort((a,b)=>{const score=v=>{const r=v.getBoundingClientRect();return (!v.hidden&&getComputedStyle(v).display!==\'none\'&&r.width>1&&r.height>1?100:0)+v.readyState;};return score(b)-score(a);})[0]||null;}\r\nconst AD_SELECTORS = [\r\n  \'.recommended-swipe\',\'.bili-feed4-layout .recommended-swipe\',\r\n  \'.ad-report\',\'.ad-floor-exp\',\'.ad-floor-cover\',\'.video-page-card-small.ad\',\r\n  \'.video-page-special-card-small\',\'.video-page-game-card-small\',\r\n  \'#slide_ad\',\'.ad-slide\',\'.vcd\',\'.video-page-ad-small\',\'.video-page-ad\',\r\n  \'.video-page-special-card\',\'.activity-m-v1\',\r\n  \'.couplet-locs\',\'.palette-button-adcard\',\'.desktop-download-tip\',\r\n  \'a[href*="/cm.bilibili.com/"]\',\'a[href*="/game.bilibili.com/"]\',\r\n  \'a[href*="specialRecommendByOp"]\',\'[data-target-url*="specialRecommendByOp"]\',\r\n  \'.left-entry a[href*="/blackboard/activity-"]\',\'.left-entry .download-entry\',\r\n  \'.left-entry a[href*="app.bilibili.com"]\',\'.left-entry a[href*="bilibili.com/s16"]\'\r\n];\r\nconst AD_CONTAINER = \'.feed-card,.bili-video-card,.video-card,.video-page-card-small,.video-page-special-card-small,.ad-report,.ad-floor-exp,.video-page-special-card\';\r\nlet root, shadow, style, currentTab=\'appearance\', lastFocus, scanTimer, gpu, interpolator;\r\nlet status=\'未开启\', pipActive=false, fullActive=false;\r\nlet downloaderInfo={installed:false,mcp:false,running:false,message:\'正在检测下载器…\'};\r\nconst pipHiddenHosts=new Map();\r\nlet revision=0;\r\nlet routeKey=\'\', loadingTimer, accountRequest, accountChecked=0;\r\nlet homeLoadWakeKey=\'\',homeLoadWakeTimer,homeLoadRetryTimer;\r\nconst mediaTheme=matchMedia(\'(prefers-color-scheme: dark)\');\r\nconst HEADER_ITEMS=[\r\n  [\'headerHome\',\'首页\',\'[data-route="home"]\'],[\'headerDynamic\',\'动态\',\'[data-route="dynamic"]\'],[\'headerHistory\',\'历史\',\'[data-route="history"]\'],\r\n  [\'headerBrand\',\'居中标题\',\'.brand\'],[\'headerSearch\',\'搜索栏\',\'.search\'],[\'headerMessages\',\'消息按钮\',\'.messages\'],[\'headerUpload\',\'投稿按钮\',\'.upload\'],[\'headerAccount\',\'头像 / 登录入口\',\'.account\'],[\'headerBack\',\'分区展开入口\',\'.back\']\r\n];\r\nfunction applyHeaderPreferences(){\r\n  if(!shadow)return;\r\n  const left=$(\'.header-left\',shadow);left.dataset.controls=PREFS.trafficLights?\'traffic\':\'windows\';$(\'.lights\',shadow).hidden=!PREFS.trafficLights;$(\'.window-actions\',shadow).hidden=Boolean(PREFS.trafficLights);\r\n  for(const [key,,selector] of HEADER_ITEMS)$(selector,shadow).hidden=!PREFS[key];\r\n  const categoriesOpen=$(\'.back\',shadow).getAttribute(\'aria-expanded\')===\'true\';\r\n  $(\'.primary-nav\',shadow).hidden=categoriesOpen||!$$(\'.primary-nav a\',shadow).some(a=>!a.hidden);\r\n  if(!PREFS.headerBack)setCategories(false);\r\n  $$(\'#header-categories a\',shadow).forEach((a,i)=>a.hidden=!PREFS.categorySelection.includes(i));\r\n  let empty=$(\'.category-empty\',shadow);if(!empty){empty=document.createElement(\'button\');empty.type=\'button\';empty.className=\'category-empty\';empty.textContent=\'未选择分区 · 前往设置\';empty.onclick=()=>{openSettings();currentTab=\'categories\';renderSettings();};$(\'#header-categories\',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;\r\n}\r\nlet copiedVideoLinkTimer;\r\nfunction currentVideoLink(){\r\n  if(pageKind()!==\'video\')return \'\';const path=location.pathname.replace(/^\\/(?:zh-Hans|zh-Hant|en)(?=\\/|$)/,\'\').replace(/\\/$/,\'\');\r\n  const url=new URL(\'https://www.bilibili.com\'+path);for(const key of [\'p\',\'t\']){const value=new URLSearchParams(location.search).get(key);if(value&&/^\\d+(?:\\.\\d+)?$/.test(value))url.searchParams.set(key,value);}return url.href;\r\n}\r\nfunction syncVideoLink(){\r\n  if(!shadow)return;const button=$(\'.video-link\',shadow);if(!button)return;const url=currentVideoLink();button.hidden=!url;\r\n  if(button.dataset.url!==url){clearTimeout(copiedVideoLinkTimer);delete button.dataset.copied;button.dataset.url=url;$(\'.video-link-text\',button).textContent=url.replace(\'https://www.\',\'\');}\r\n  button.title=url?\'点击复制：\'+url:\'\';button.setAttribute(\'aria-label\',url?\'复制视频链接：\'+url:\'复制视频链接\');\r\n}\r\nfunction videoLinkCopied(ok,url){\r\n  const button=$(\'.video-link\',shadow);if(!button||button.dataset.url!==url)return;\r\n  if(!ok){toast(\'复制失败，请重试\');return;}clearTimeout(copiedVideoLinkTimer);button.dataset.copied=\'true\';$(\'.video-link-text\',button).textContent=\'已复制\';toast(\'视频链接已复制\');\r\n  copiedVideoLinkTimer=setTimeout(()=>{delete button.dataset.copied;$(\'.video-link-text\',button).textContent=button.dataset.url.replace(\'https://www.\',\'\');},1400);\r\n}\r\nfunction mountVideoHome(){\r\n  const bar=$(\'#bili-space-video-bar\');\r\n  if(pageKind()!==\'video\'){if(bar)bar.hidden=true;return;}\r\n  if(bar){bar.hidden=false;const download=$(\'#bili-space-video-download\',bar),progress=$(\'#bili-space-download-progress\',bar);if(download)download.hidden=!PREFS.downloader;if(progress)progress.hidden=!PREFS.downloader||!progress.textContent;return;}\r\n  const host=$(\'.left-container\')||$(\'.video-info-container\')||$(\'#viewbox_report\')||$(\'.video-container-v1,.video-container-v2\');\r\n  if(!host)return;\r\n  const row=document.createElement(\'div\');row.id=\'bili-space-video-bar\';row.className=\'bs-video-bar\';\r\n  row.innerHTML=`<a id="bili-space-video-home" class="bs-video-home" href="https://www.bilibili.com/" aria-label="返回 B站首页">${ICON_TV}<span>首页</span></a><button type="button" id="bili-space-video-download" class="bs-video-download" aria-label="用下载器保存这个视频" title="使用内置下载器保存视频"${PREFS.downloader?\'\':\' hidden\'}>${ICON_DOWNLOAD}<span>下载</span></button><span id="bili-space-download-progress" class="bs-download-progress" role="status" aria-live="off" hidden></span><button type="button" id="bili-space-download-cancel" class="bs-video-download" hidden>取消</button>`;\r\n  host.prepend(row);\r\n}\r\n// Resolve an official combined audio/video stream; native code saves it without another app.\r\nlet downloadTimer,downloadDisplayPage,downloadCancelling=false;\r\nfunction downloadDisplay(text){const button=$(\'#bili-space-video-download\'),label=$(\'#bili-space-download-progress\');if(downloadCancelling||!PREFS.downloader||!button||!label||button.dataset.state!==\'busy\'||downloadDisplayPage!==currentVideoLink())return;label.hidden=false;label.textContent=text;}\r\nfunction downloadProgress(info){const speed=Math.max(0,Number(info?.bytesPerSecond)||0),unit=speed>=1048576?(speed/1048576).toFixed(1)+\' MB/s\':speed>=1024?(speed/1024).toFixed(1)+\' KB/s\':Math.round(speed)+\' B/s\';const seconds=info?.etaSeconds,eta=seconds===null||!Number.isFinite(Number(seconds))?\'计算中\':Math.max(0,Math.ceil(seconds)),remaining=typeof eta===\'number\'?(eta>=3600?Math.floor(eta/3600)+\'小时\':\'\')+String(Math.floor(eta%3600/60)).padStart(2,\'0\')+\':\'+String(eta%60).padStart(2,\'0\'):eta;downloadDisplay((info?.percent===null?\'下载中\':Math.floor(Math.max(0,Math.min(100,Number(info.percent)||0)))+\'%\')+\' · \'+unit+\' · 预计剩余 \'+remaining);}\r\nasync function downloadJson(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);try{const response=await fetch(url,{credentials:\'include\',signal:controller.signal});if(!response.ok)throw Error(\'下载接口返回 HTTP \'+response.status);return await response.json();}finally{clearTimeout(timer);}}\r\nfunction downloadWbiQuery(params,keys){\r\n  const raw=[keys?.img_url,keys?.sub_url].map(x=>new URL(x).pathname.split(\'/\').pop().split(\'.\')[0]).join(\'\');if(raw.length!==64)throw Error(\'未能获取官方签名参数\');\r\n  const order=[46,47,18,2,53,8,23,32,15,50,10,31,58,3,45,35,27,43,5,49,33,9,42,19,29,28,14,39,12,38,41,13,37,48,7,16,24,55,40,61,26,17,0,1,60,51,30,4,22,25,54,21,56,59,6,63,57,62,11,36,20,34,44,52],key=order.map(i=>raw[i]).join(\'\').slice(0,32),values={...params,wts:Math.floor(Date.now()/1000)};\r\n  const query=Object.keys(values).sort().map(k=>encodeURIComponent(k)+\'=\'+encodeURIComponent(String(values[k]).replace(/[!\'()*]/g,\'\'))).join(\'&\');return query+\'&w_rid=\'+profileMd5(query+key);\r\n}\r\nfunction downloadStreamUrl(stream){\r\n  const candidates=[stream?.baseUrl,stream?.base_url,stream?.url,...(Array.isArray(stream?.backupUrl)?stream.backupUrl:[]),...(Array.isArray(stream?.backup_url)?stream.backup_url:[])],urls=[];\r\n  for(const raw of candidates){if(typeof raw!==\'string\')continue;try{const u=new URL(raw,location.href);if(u.protocol===\'http:\')u.protocol=\'https:\';if(u.protocol!==\'https:\'||u.username||u.password||u.hash)continue;const host=u.hostname.to'... 177696 more characters,
+    expected: /autoplayLoadingVideo/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\toolbar29.test.cjs:1:87
+✖ video action toolbar uses an opaque theme surface without overriding liked colors (27.3194ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /\.video-toolbar-container\{background-color:var\(--bg1,#fafafa\)!important;box-shadow:none!important\}/. Input:
+  
+  '/* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */\r\n' +
+    `const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>';\r\n` +
+    `const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';\r\n` +
+    'const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];\r\n' +
+    "const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:true,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};\r\n" +
+    'const PREFS = { ...DEFAULTS, ...INITIAL };\r\n' +
+    'const $ = (q, root=document) => root.querySelector(q);\r\n' +
+    'const $$ = (q, root=document) => [...root.querySelectorAll(q)];\r\n' +
+    "function playbackVideo(){const main=[...new Set($$('.bpx-player-video-wrap video,#bilibili-player video,.bilibili-player-video video'))],all=main.length?main:$$('video');return all.sort((a,b)=>{const score=v=>{const r=v.getBoundingClientRect();return (!v.hidden&&getComputedStyle(v).display!=='none'&&r.width>1&&r.height>1?100:0)+v.readyState;};return score(b)-score(a);})[0]||null;}\r\n" +
+    'const AD_SELECTORS = [\r\n' +
+    "  '.recommended-swipe','.bili-feed4-layout .recommended-swipe',\r\n" +
+    "  '.ad-report','.ad-floor-exp','.ad-floor-cover','.video-page-card-small.ad',\r\n" +
+    "  '.video-page-special-card-small','.video-page-game-card-small',\r\n" +
+    "  '#slide_ad','.ad-slide','.vcd','.video-page-ad-small','.video-page-ad',\r\n" +
+    "  '.video-page-special-card','.activity-m-v1',\r\n" +
+    "  '.couplet-locs','.palette-button-adcard','.desktop-download-tip',\r\n" +
+    `  'a[href*="/cm.bilibili.com/"]','a[href*="/game.bilibili.com/"]',\r\n` +
+    `  'a[href*="specialRecommendByOp"]','[data-target-url*="specialRecommendByOp"]',\r\n` +
+    `  '.left-entry a[href*="/blackboard/activity-"]','.left-entry .download-entry',\r\n` +
+    `  '.left-entry a[href*="app.bilibili.com"]','.left-entry a[href*="bilibili.com/s16"]'\r\n` +
+    '];\r\n' +
+    "const AD_CONTAINER = '.feed-card,.bili-video-card,.video-card,.video-page-card-small,.video-page-special-card-small,.ad-report,.ad-floor-exp,.video-page-special-card';\r\n" +
+    "let root, shadow, style, currentTab='appearance', lastFocus, scanTimer, gpu, interpolator;\r\n" +
+    "let status='未开启', pipActive=false, fullActive=false;\r\n" +
+    "let downloaderInfo={installed:false,mcp:false,running:false,message:'正在检测下载器…'};\r\n" +
+    'const pipHiddenHosts=new Map();\r\n' +
+    'let revision=0;\r\n' +
+    "let routeKey='', loadingTimer, accountRequest, accountChecked=0;\r\n" +
+    "let homeLoadWakeKey='',homeLoadWakeTimer,homeLoadRetryTimer;\r\n" +
+    "const mediaTheme=matchMedia('(prefers-color-scheme: dark)');\r\n" +
+    'const HEADER_ITEMS=[\r\n' +
+    `  ['headerHome','首页','[data-route="home"]'],['headerDynamic','动态','[data-route="dynamic"]'],['headerHistory','历史','[data-route="history"]'],\r\n` +
+    "  ['headerBrand','居中标题','.brand'],['headerSearch','搜索栏','.search'],['headerMessages','消息按钮','.messages'],['headerUpload','投稿按钮','.upload'],['headerAccount','头像 / 登录入口','.account'],['headerBack','分区展开入口','.back']\r\n" +
+    '];\r\n' +
+    'function applyHeaderPreferences(){\r\n' +
+    '  if(!shadow)return;\r\n' +
+    "  const left=$('.header-left',shadow);left.dataset.controls=PREFS.trafficLights?'traffic':'windows';$('.lights',shadow).hidden=!PREFS.trafficLights;$('.window-actions',shadow).hidden=Boolean(PREFS.trafficLights);\r\n" +
+    '  for(const [key,,selector] of HEADER_ITEMS)$(selector,shadow).hidden=!PREFS[key];\r\n' +
+    "  const categoriesOpen=$('.back',shadow).getAttribute('aria-expanded')==='true';\r\n" +
+    "  $('.primary-nav',shadow).hidden=categoriesOpen||!$$('.primary-nav a',shadow).some(a=>!a.hidden);\r\n" +
+    '  if(!PREFS.headerBack)setCategories(false);\r\n' +
+    "  $$('#header-categories a',shadow).forEach((a,i)=>a.hidden=!PREFS.categorySelection.includes(i));\r\n" +
+    "  let empty=$('.category-empty',shadow);if(!empty){empty=document.createElement('button');empty.type='button';empty.className='category-empty';empty.textContent='未选择分区 · 前往设置';empty.onclick=()=>{openSettings();currentTab='categories';renderSettings();};$('#header-categories',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;\r\n" +
+    '}\r\n' +
+    'let copiedVideoLinkTimer;\r\n' +
+    'function currentVideoLink(){\r\n' +
+    "  if(pageKind()!=='video')return '';const path=location.pathname.replace(/^\\/(?:zh-Hans|zh-Hant|en)(?=\\/|$)/,'').replace(/\\/$/,'');\r\n" +
+    "  const url=new URL('https://www.bilibili.com'+path);for(const key of ['p','t']){const value=new URLSearchParams(location.search).get(key);if(value&&/^\\d+(?:\\.\\d+)?$/.test(value))url.searchParams.set(key,value);}return url.href;\r\n" +
+    '}\r\n' +
+    'function syncVideoLink(){\r\n' +
+    "  if(!shadow)return;const button=$('.video-link',shadow);if(!button)return;const url=currentVideoLink();button.hidden=!url;\r\n" +
+    "  if(button.dataset.url!==url){clearTimeout(copiedVideoLinkTimer);delete button.dataset.copied;button.dataset.url=url;$('.video-link-text',button).textContent=url.replace('https://www.','');}\r\n" +
+    "  button.title=url?'点击复制：'+url:'';button.setAttribute('aria-label',url?'复制视频链接：'+url:'复制视频链接');\r\n" +
+    '}\r\n' +
+    'function videoLinkCopied(ok,url){\r\n' +
+    "  const button=$('.video-link',shadow);if(!button||button.dataset.url!==url)return;\r\n" +
+    "  if(!ok){toast('复制失败，请重试');return;}clearTimeout(copiedVideoLinkTimer);button.dataset.copied='true';$('.video-link-text',button).textContent='已复制';toast('视频链接已复制');\r\n" +
+    "  copiedVideoLinkTimer=setTimeout(()=>{delete button.dataset.copied;$('.video-link-text',button).textContent=button.dataset.url.replace('https://www.','');},1400);\r\n" +
+    '}\r\n' +
+    'function mountVideoHome(){\r\n' +
+    "  const bar=$('#bili-space-video-bar');\r\n" +
+    "  if(pageKind()!=='video'){if(bar)bar.hidden=true;return;}\r\n" +
+    "  if(bar){bar.hidden=false;const download=$('#bili-space-video-download',bar),progress=$('#bili-space-download-progress',bar);if(download)download.hidden=!PREFS.downloader;if(progress)progress.hidden=!PREFS.downloader||!progress.textContent;return;}\r\n" +
+    "  const host=$('.left-container')||$('.video-info-container')||$('#viewbox_report')||$('.video-container-v1,.video-container-v2');\r\n" +
+    '  if(!host)return;\r\n' +
+    "  const row=document.createElement('div');row.id='bili-space-video-bar';row.className='bs-video-bar';\r\n" +
+    '  row.innerHTML=`<a id="bili-space-video-home" class="bs-video-home" href="https://www.bilibili.com/" aria-label="返回 B站首页">${ICON_TV}<span>首页</span></a><button type="button" id="bili-space-video-download" class="bs-video-download" aria-label="用下载器保存这个视频" title="使用内置下载器保存视频"${PREFS.downloader?\'\':\' hidden\'}>${ICON_DOWNLOAD}<span>下载</span></button><span id="bili-space-download-progress" class="bs-download-progress" role="status" aria-live="off" hidden></span><button type="button" id="bili-space-download-cancel" class="bs-video-download" hidden>取消</button>`;\r\n' +
+    '  host.prepend(row);\r\n' +
+    '}\r\n' +
+    '// Resolve an official combined audio/video stream; native code saves it without another app.\r\n' +
+    'let downloadTimer,downloadDisplayPage,downloadCancelling=false;\r\n' +
+    "function downloadDisplay(text){const button=$('#bili-space-video-download'),label=$('#bili-space-download-progress');if(downloadCancelling||!PREFS.downloader||!button||!label||button.dataset.state!=='busy'||downloadDisplayPage!==currentVideoLink())return;label.hidden=false;label.textContent=text;}\r\n" +
+    "function downloadProgress(info){const speed=Math.max(0,Number(info?.bytesPerSecond)||0),unit=speed>=1048576?(speed/1048576).toFixed(1)+' MB/s':speed>=1024?(speed/1024).toFixed(1)+' KB/s':Math.round(speed)+' B/s';const seconds=info?.etaSeconds,eta=seconds===null||!Number.isFinite(Number(seconds))?'计算中':Math.max(0,Math.ceil(seconds)),remaining=typeof eta==='number'?(eta>=3600?Math.floor(eta/3600)+'小时':'')+String(Math.floor(eta%3600/60)).padStart(2,'0')+':'+String(eta%60).padStart(2,'0'):eta;downloadDisplay((info?.percent===null?'下载中':Math.floor(Math.max(0,Math.min(100,Number(info.percent)||0)))+'%')+' · '+unit+' · 预计剩余 '+remaining);}\r\n" +
+    "async function downloadJson(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);try{const response=await fetch(url,{credentials:'include',signal:controller.signal});if(!response.ok)throw Error('下载接口返回 HTTP '+response.status);return await response.json();}finally{clearTimeout(timer);}}\r\n" +
+    'function downloadWbiQuery(params,keys){\r\n' +
+    "  const raw=[keys?.img_url,keys?.sub_url].map(x=>new URL(x).pathname.split('/').pop().split('.')[0]).join('');if(raw.length!==64)throw Error('未能获取官方签名参数');\r\n" +
+    "  const order=[46,47,18,2,53,8,23,32,15,50,10,31,58,3,45,35,27,43,5,49,33,9,42,19,29,28,14,39,12,38,41,13,37,48,7,16,24,55,40,61,26,17,0,1,60,51,30,4,22,25,54,21,56,59,6,63,57,62,11,36,20,34,44,52],key=order.map(i=>raw[i]).join('').slice(0,32),values={...params,wts:Math.floor(Date.now()/1000)};\r\n" +
+    "  const query=Object.keys(values).sort().map(k=>encodeURIComponent(k)+'='+encodeURIComponent(String(values[k]).replace(/[!'()*]/g,''))).join('&');return query+'&w_rid='+profileMd5(query+key);\r\n" +
+    '}\r\n' +
+    'function downloadStreamUrl(stream){\r\n' +
+    '  const candidates=[stream?.baseUrl,stream?.base_url,stream?.url,...(Array.isArray(stream?.backupUrl)?stream.backupUrl:[]),...(Array.isArray(stream?.backup_url)?stream.backup_url:[])],urls=[];\r\n' +
+    "  for(const raw of candidates){if(typeof raw!=='string')continue;try{const u=new URL(raw,location.href);if(u.protocol==='http:')u.protocol='https:';if(u.protocol!=='https:'||u.username||u.password||u.hash)continue;const host=u.hostname.to"... 177696 more characters
+  
+      at TestContext.<anonymous> (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\toolbar29.test.cjs:1:240)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/* Better Bili Space — explicit ad markers, native chrome, local AI super resolution. */\r\nconst ICON_TV=\'<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>\';\r\nconst ICON_DOWNLOAD=\'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>\';\r\nconst DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];\r\nconst DEFAULTS = {theme:\'dark\',accent:\'#fb7299\',progressColor:\'#fb7299\',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,srMode:\'off\',srScale:2,srFps:60,closeAction:\'tray\',videoLoadingMode:\'page\',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:\'off\',fiFps:60,fiFlowScale:50,trafficLights:true,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:\'\',proxy:false,proxyAll:false,proxyNode:\'\',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};\r\nconst PREFS = { ...DEFAULTS, ...INITIAL };\r\nconst $ = (q, root=document) => root.querySelector(q);\r\nconst $$ = (q, root=document) => [...root.querySelectorAll(q)];\r\nfunction playbackVideo(){const main=[...new Set($$(\'.bpx-player-video-wrap video,#bilibili-player video,.bilibili-player-video video\'))],all=main.length?main:$$(\'video\');return all.sort((a,b)=>{const score=v=>{const r=v.getBoundingClientRect();return (!v.hidden&&getComputedStyle(v).display!==\'none\'&&r.width>1&&r.height>1?100:0)+v.readyState;};return score(b)-score(a);})[0]||null;}\r\nconst AD_SELECTORS = [\r\n  \'.recommended-swipe\',\'.bili-feed4-layout .recommended-swipe\',\r\n  \'.ad-report\',\'.ad-floor-exp\',\'.ad-floor-cover\',\'.video-page-card-small.ad\',\r\n  \'.video-page-special-card-small\',\'.video-page-game-card-small\',\r\n  \'#slide_ad\',\'.ad-slide\',\'.vcd\',\'.video-page-ad-small\',\'.video-page-ad\',\r\n  \'.video-page-special-card\',\'.activity-m-v1\',\r\n  \'.couplet-locs\',\'.palette-button-adcard\',\'.desktop-download-tip\',\r\n  \'a[href*="/cm.bilibili.com/"]\',\'a[href*="/game.bilibili.com/"]\',\r\n  \'a[href*="specialRecommendByOp"]\',\'[data-target-url*="specialRecommendByOp"]\',\r\n  \'.left-entry a[href*="/blackboard/activity-"]\',\'.left-entry .download-entry\',\r\n  \'.left-entry a[href*="app.bilibili.com"]\',\'.left-entry a[href*="bilibili.com/s16"]\'\r\n];\r\nconst AD_CONTAINER = \'.feed-card,.bili-video-card,.video-card,.video-page-card-small,.video-page-special-card-small,.ad-report,.ad-floor-exp,.video-page-special-card\';\r\nlet root, shadow, style, currentTab=\'appearance\', lastFocus, scanTimer, gpu, interpolator;\r\nlet status=\'未开启\', pipActive=false, fullActive=false;\r\nlet downloaderInfo={installed:false,mcp:false,running:false,message:\'正在检测下载器…\'};\r\nconst pipHiddenHosts=new Map();\r\nlet revision=0;\r\nlet routeKey=\'\', loadingTimer, accountRequest, accountChecked=0;\r\nlet homeLoadWakeKey=\'\',homeLoadWakeTimer,homeLoadRetryTimer;\r\nconst mediaTheme=matchMedia(\'(prefers-color-scheme: dark)\');\r\nconst HEADER_ITEMS=[\r\n  [\'headerHome\',\'首页\',\'[data-route="home"]\'],[\'headerDynamic\',\'动态\',\'[data-route="dynamic"]\'],[\'headerHistory\',\'历史\',\'[data-route="history"]\'],\r\n  [\'headerBrand\',\'居中标题\',\'.brand\'],[\'headerSearch\',\'搜索栏\',\'.search\'],[\'headerMessages\',\'消息按钮\',\'.messages\'],[\'headerUpload\',\'投稿按钮\',\'.upload\'],[\'headerAccount\',\'头像 / 登录入口\',\'.account\'],[\'headerBack\',\'分区展开入口\',\'.back\']\r\n];\r\nfunction applyHeaderPreferences(){\r\n  if(!shadow)return;\r\n  const left=$(\'.header-left\',shadow);left.dataset.controls=PREFS.trafficLights?\'traffic\':\'windows\';$(\'.lights\',shadow).hidden=!PREFS.trafficLights;$(\'.window-actions\',shadow).hidden=Boolean(PREFS.trafficLights);\r\n  for(const [key,,selector] of HEADER_ITEMS)$(selector,shadow).hidden=!PREFS[key];\r\n  const categoriesOpen=$(\'.back\',shadow).getAttribute(\'aria-expanded\')===\'true\';\r\n  $(\'.primary-nav\',shadow).hidden=categoriesOpen||!$$(\'.primary-nav a\',shadow).some(a=>!a.hidden);\r\n  if(!PREFS.headerBack)setCategories(false);\r\n  $$(\'#header-categories a\',shadow).forEach((a,i)=>a.hidden=!PREFS.categorySelection.includes(i));\r\n  let empty=$(\'.category-empty\',shadow);if(!empty){empty=document.createElement(\'button\');empty.type=\'button\';empty.className=\'category-empty\';empty.textContent=\'未选择分区 · 前往设置\';empty.onclick=()=>{openSettings();currentTab=\'categories\';renderSettings();};$(\'#header-categories\',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;\r\n}\r\nlet copiedVideoLinkTimer;\r\nfunction currentVideoLink(){\r\n  if(pageKind()!==\'video\')return \'\';const path=location.pathname.replace(/^\\/(?:zh-Hans|zh-Hant|en)(?=\\/|$)/,\'\').replace(/\\/$/,\'\');\r\n  const url=new URL(\'https://www.bilibili.com\'+path);for(const key of [\'p\',\'t\']){const value=new URLSearchParams(location.search).get(key);if(value&&/^\\d+(?:\\.\\d+)?$/.test(value))url.searchParams.set(key,value);}return url.href;\r\n}\r\nfunction syncVideoLink(){\r\n  if(!shadow)return;const button=$(\'.video-link\',shadow);if(!button)return;const url=currentVideoLink();button.hidden=!url;\r\n  if(button.dataset.url!==url){clearTimeout(copiedVideoLinkTimer);delete button.dataset.copied;button.dataset.url=url;$(\'.video-link-text\',button).textContent=url.replace(\'https://www.\',\'\');}\r\n  button.title=url?\'点击复制：\'+url:\'\';button.setAttribute(\'aria-label\',url?\'复制视频链接：\'+url:\'复制视频链接\');\r\n}\r\nfunction videoLinkCopied(ok,url){\r\n  const button=$(\'.video-link\',shadow);if(!button||button.dataset.url!==url)return;\r\n  if(!ok){toast(\'复制失败，请重试\');return;}clearTimeout(copiedVideoLinkTimer);button.dataset.copied=\'true\';$(\'.video-link-text\',button).textContent=\'已复制\';toast(\'视频链接已复制\');\r\n  copiedVideoLinkTimer=setTimeout(()=>{delete button.dataset.copied;$(\'.video-link-text\',button).textContent=button.dataset.url.replace(\'https://www.\',\'\');},1400);\r\n}\r\nfunction mountVideoHome(){\r\n  const bar=$(\'#bili-space-video-bar\');\r\n  if(pageKind()!==\'video\'){if(bar)bar.hidden=true;return;}\r\n  if(bar){bar.hidden=false;const download=$(\'#bili-space-video-download\',bar),progress=$(\'#bili-space-download-progress\',bar);if(download)download.hidden=!PREFS.downloader;if(progress)progress.hidden=!PREFS.downloader||!progress.textContent;return;}\r\n  const host=$(\'.left-container\')||$(\'.video-info-container\')||$(\'#viewbox_report\')||$(\'.video-container-v1,.video-container-v2\');\r\n  if(!host)return;\r\n  const row=document.createElement(\'div\');row.id=\'bili-space-video-bar\';row.className=\'bs-video-bar\';\r\n  row.innerHTML=`<a id="bili-space-video-home" class="bs-video-home" href="https://www.bilibili.com/" aria-label="返回 B站首页">${ICON_TV}<span>首页</span></a><button type="button" id="bili-space-video-download" class="bs-video-download" aria-label="用下载器保存这个视频" title="使用内置下载器保存视频"${PREFS.downloader?\'\':\' hidden\'}>${ICON_DOWNLOAD}<span>下载</span></button><span id="bili-space-download-progress" class="bs-download-progress" role="status" aria-live="off" hidden></span><button type="button" id="bili-space-download-cancel" class="bs-video-download" hidden>取消</button>`;\r\n  host.prepend(row);\r\n}\r\n// Resolve an official combined audio/video stream; native code saves it without another app.\r\nlet downloadTimer,downloadDisplayPage,downloadCancelling=false;\r\nfunction downloadDisplay(text){const button=$(\'#bili-space-video-download\'),label=$(\'#bili-space-download-progress\');if(downloadCancelling||!PREFS.downloader||!button||!label||button.dataset.state!==\'busy\'||downloadDisplayPage!==currentVideoLink())return;label.hidden=false;label.textContent=text;}\r\nfunction downloadProgress(info){const speed=Math.max(0,Number(info?.bytesPerSecond)||0),unit=speed>=1048576?(speed/1048576).toFixed(1)+\' MB/s\':speed>=1024?(speed/1024).toFixed(1)+\' KB/s\':Math.round(speed)+\' B/s\';const seconds=info?.etaSeconds,eta=seconds===null||!Number.isFinite(Number(seconds))?\'计算中\':Math.max(0,Math.ceil(seconds)),remaining=typeof eta===\'number\'?(eta>=3600?Math.floor(eta/3600)+\'小时\':\'\')+String(Math.floor(eta%3600/60)).padStart(2,\'0\')+\':\'+String(eta%60).padStart(2,\'0\'):eta;downloadDisplay((info?.percent===null?\'下载中\':Math.floor(Math.max(0,Math.min(100,Number(info.percent)||0)))+\'%\')+\' · \'+unit+\' · 预计剩余 \'+remaining);}\r\nasync function downloadJson(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);try{const response=await fetch(url,{credentials:\'include\',signal:controller.signal});if(!response.ok)throw Error(\'下载接口返回 HTTP \'+response.status);return await response.json();}finally{clearTimeout(timer);}}\r\nfunction downloadWbiQuery(params,keys){\r\n  const raw=[keys?.img_url,keys?.sub_url].map(x=>new URL(x).pathname.split(\'/\').pop().split(\'.\')[0]).join(\'\');if(raw.length!==64)throw Error(\'未能获取官方签名参数\');\r\n  const order=[46,47,18,2,53,8,23,32,15,50,10,31,58,3,45,35,27,43,5,49,33,9,42,19,29,28,14,39,12,38,41,13,37,48,7,16,24,55,40,61,26,17,0,1,60,51,30,4,22,25,54,21,56,59,6,63,57,62,11,36,20,34,44,52],key=order.map(i=>raw[i]).join(\'\').slice(0,32),values={...params,wts:Math.floor(Date.now()/1000)};\r\n  const query=Object.keys(values).sort().map(k=>encodeURIComponent(k)+\'=\'+encodeURIComponent(String(values[k]).replace(/[!\'()*]/g,\'\'))).join(\'&\');return query+\'&w_rid=\'+profileMd5(query+key);\r\n}\r\nfunction downloadStreamUrl(stream){\r\n  const candidates=[stream?.baseUrl,stream?.base_url,stream?.url,...(Array.isArray(stream?.backupUrl)?stream.backupUrl:[]),...(Array.isArray(stream?.backup_url)?stream.backup_url:[])],urls=[];\r\n  for(const raw of candidates){if(typeof raw!==\'string\')continue;try{const u=new URL(raw,location.href);if(u.protocol===\'http:\')u.protocol=\'https:\';if(u.protocol!==\'https:\'||u.username||u.password||u.hash)continue;const host=u.hostname.to'... 177696 more characters,
+    expected: /\.video-toolbar-container\{background-color:var\(--bg1,#fafafa\)!important;box-shadow:none!important\}/,
+    operator: 'match',
+    diff: 'simple'
+  }

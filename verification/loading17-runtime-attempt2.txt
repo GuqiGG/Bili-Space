@@ -1,0 +1,18 @@
+{"earlyHeader": {"state": "loading", "header": true, "hit": "bili-space-root", "height": 58}, "click": {"overlay": true, "tv": true, "curve": "cubic-bezier(0.23, 1, 0.32, 1)"}, "loaded": {"href": "https://www.bilibili.com/zh-Hans/video/BV1cjHK6GEJE/", "ready": 1, "events": [{"event": "enter", "time": 678.9000000000233, "videoReady": 0}, {"event": "exit", "time": 2377.9000000000233, "videoReady": 4}, {"event": "removed", "time": 2572.5, "videoReady": 0}], "remaining": false, "homeX": 24, "lightsX": 104, "homeVisible": true}}
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_loading17_runtime.py", line 54, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\verify_loading17_runtime.py", line 47, in main
+    report['loaded']=await c.js("(()=>{const s=document.querySelector('#bili-space-root').shadowRoot,home=s.querySelector('.video-home-top').getBoundingClientRect(),lights=s.querySelector('.lights').getBoundingClientRect();return {href:location.href,ready:document.querySelector('video')?.readyState,events:BiliSpace.state.videoLoadingEvents,remaining:!!document.querySelector('#bs-video-loading'),homeX:home.left,lightsX:lights.left,homeVisible:!s.querySelector('.video-home-top').hidden};})()");assert report['loaded']['homeVisible'] and report['loaded']['homeX']<report['loaded']['lightsX'],report['loaded'];assert report['loaded']['ready']>=2,report['loaded'];assert not report['loaded']['remaining'];assert all(x in [e['event'] for e in report['loaded']['events']] for x in ['enter','exit','removed']),report['loaded'];report['duplicateEvents']=await c.js("(()=>{const b=BiliSpace,v=document.querySelector('video');for(let i=0;i<4;i++){v.dispatchEvent(new Event('loadstart'));v.dispatchEvent(new Event('emptied'));b.setLoading(true);b.setLoading(false);b.beginVideoLoading();}return {overlay:!!document.querySelector('#bs-video-loading'),events:b.state.videoLoadingEvents};})()");assert not report['duplicateEvents']['overlay'];assert len([e for e in report['duplicateEvents']['events'] if e['event']=='enter'])==1,report['duplicateEvents']
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'href': 'https://www.bilibili.com/zh-Hans/video/BV1cjHK6GEJE/', 'ready': 1, 'events': [{'event': 'enter', 'time': 678.9000000000233, 'videoReady': 0}, {'event': 'exit', 'time': 2377.9000000000233, 'videoReady': 4}, {'event': 'removed', 'time': 2572.5, 'videoReady': 0}], 'remaining': False, 'homeX': 24, 'lightsX': 104, 'homeVisible': True}

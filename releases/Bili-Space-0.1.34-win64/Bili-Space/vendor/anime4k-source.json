@@ -1,0 +1,8 @@
+{
+  "package": "anime4k-webgpu",
+  "version": "1.0.0",
+  "source": "https://github.com/Anime4KWebBoost/Anime4K-WebGPU",
+  "sha256": "f8bece19047394e06969e1795470d1c3a6a0523194536393f53e26c620948bb6",
+  "license": "MIT",
+  "note": "Anime4K family used by Kazumi; WebGPU port, not Kazumi mpv implementation or a performance equivalence claim."
+}

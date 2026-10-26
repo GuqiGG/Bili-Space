@@ -5,7 +5,7 @@ test('homepage keeps the original seasonal banner and adds a second, independent
  const a=app({html,config:{showChannels:false}}),d=a.w.document,s=d.querySelector('#bili-space-root').shadowRoot;
  assert.equal(a.w.getComputedStyle(d.querySelector('.bili-header__banner')).display,'block');
  assert.equal(a.w.getComputedStyle(d.querySelector('.bili-header__bar')).display,'none');
- assert.equal(d.querySelector('.bs-banner-brand').textContent,'bili space');
+ assert.equal(d.querySelector('.bs-banner-brand').textContent,'Bili Space');
  a.w.BiliSpace.update({headerBrand:false});assert.equal(s.querySelector('.brand').hidden,true);assert(d.querySelector('.bs-banner-brand'));
  a.w.BiliSpace.syncRoute();assert.equal(d.querySelectorAll('.bs-banner-brand').length,1);a.close();
 });

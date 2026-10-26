@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_player.py", line 51, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\Apps\Python\Lib\asyncio\base_events.py", line 726, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_player.py", line 37, in main
+    await c.js('BiliSpace.update({srMode:"quality",srScale:2})');await wait(c,'BiliSpace.state.frames>5&&document.querySelector(".bs-fi-canvas")?.width===1280');report['combined']=await c.js('({ai:BiliSpace.state.frames,fi:BiliSpace.state.interpolation,aiSize:[document.querySelector(".bs-gpu-canvas:not(.bs-fi-canvas)").width,document.querySelector(".bs-gpu-canvas:not(.bs-fi-canvas)").height],fiSize:[document.querySelector(".bs-fi-canvas").width,document.querySelector(".bs-fi-canvas").height]})');assert report['combined']['aiSize']==report['combined']['fiSize']==[1280,720]
+                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\regression_player.py", line 12, in wait
+    raise AssertionError(exp+' STATE '+json.dumps(await c.js('BiliSpace.state'),ensure_ascii=True))
+AssertionError: BiliSpace.state.frames>5&&document.querySelector(".bs-fi-canvas")?.width===1280 STATE {"prefs": {"theme": "dark", "accent": "#fb7299", "progressColor": "#fb7299", "progressHeight": 4, "progressRadius": 12, "progressAlways": false, "progressThumb": true, "showChannels": false, "hideAds": true, "btr": true, "font": true, "zoom": 100, "srMode": "quality", "srScale": 2, "fiMode": "rife", "fiFps": 60, "fiFlowScale": 50, "headerHome": true, "headerDynamic": true, "headerHistory": true, "headerBrand": true, "headerSearch": true, "headerMessages": true, "headerAccount": true, "headerBack": true, "autoZoom": false, "autoZoomTarget": 1280, "proxy": false, "proxyAll": false, "proxyNode": "", "categoryPreset": 0, "categorySelection": [0, 2, 5]}, "status": "AI \u672a\u542f\u7528\uff1aFailed to execute 'setPipeline' on 'GPUComputePassEncoder': parameter 1 is not of type 'GPUComputePipeline'.\uff1b\u5df2\u6062\u590d\u539f\u751f\u64ad\u653e", "frames": 0, "stopped": true, "pip": false, "full": false, "route": "other", "loading": false, "ads": 4, "proxy": {"enabled": false, "message": "\u4ee3\u7406\u5df2\u5173\u95ed", "node": null, "nodes": [], "port": 0, "running": false, "testing": true}, "interpolation": {"inferences": 11, "inferenceMs": 21.5, "estimate": [320, 192], "dropped": 620, "frames": 1105, "generated": 15, "stopped": false, "status": "RIFE AI \u5149\u6d41 \u00b7 320\u00d7192 \u4f30\u8ba1 \u00b7 22ms \u00b7 \u4e2d\u95f4\u5e27 15 \u00b7 \u76ee\u6807 60fps"}}

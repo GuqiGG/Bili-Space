@@ -1,0 +1,7 @@
+BASELINE {"screenshotAsia":false,"lessCommon":false,"idnTld":false,"ianaValidation":false,"flatMetricGrid":false,"narrowPairs":false}
+MODIFIED {"screenshotAsia":true,"lessCommon":true,"idnTld":true,"ianaValidation":true,"flatMetricGrid":true,"narrowPairs":true}
+ROLLBACK {"screenshotAsia":false,"lessCommon":false,"idnTld":false,"ianaValidation":false,"flatMetricGrid":false,"narrowPairs":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 144476 d30dc8ca4793d6fac7513ac59c118b46434846097962a23bdf7e97ca886e9d09
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 707891 dd023d3c5eeaf22ca7a78d03d2f808a8adb9cf2b1caa48b7b0e7747612cf27fa
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 8229538 1320b48e7d41409c01675cffd818bcc64004dd1179e69241c6e587135bd6e4a4

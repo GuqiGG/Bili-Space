@@ -4,7 +4,7 @@ from smoke import CDP,ROOT,OUT
 
 async def main():
  s=subprocess.STARTUPINFO();s.dwFlags|=subprocess.STARTF_USESHOWWINDOW;s.wShowWindow=0
- p=subprocess.Popen([str(ROOT/'dist/BetterBiliSpace.exe'),'--test'],startupinfo=s)
+ p=subprocess.Popen([str(ROOT/'dist/Bili-Space.exe'),'--test'],startupinfo=s)
  try:
   for _ in range(80):
    try:
@@ -24,7 +24,7 @@ async def main():
      await c.js('BiliSpace.update({srMode:"performance",srScale:2})');await asyncio.sleep(3)
      state=await c.js('BiliSpace.state');print('SR',json.dumps(state,ensure_ascii=True));(OUT/'live-video-sr.json').write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding='utf8');await c.shot('live-sr.png');await c.js('BiliSpace.update({srMode:"off"})')
  finally:
-  ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Better Bili Space [test]'),0x10,0,0)
+  ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Bili-Space [test]'),0x10,0,0)
   try:p.wait(timeout=5)
   except subprocess.TimeoutExpired:p.terminate();p.wait()
 

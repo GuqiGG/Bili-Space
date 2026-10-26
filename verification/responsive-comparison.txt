@@ -1,0 +1,3 @@
+BASELINE exit 1 result None
+MODIFIED exit 0 result PASS
+ROLLBACK exit 1 result None

@@ -1,0 +1,7 @@
+BASELINE {"searchIsolated":false,"nativeEditorsIsolated":false,"unicodeQueryPreserved":false,"currentOfficialAPI":false,"nestedResponse":false,"spaceIsolated":false,"earlySpaceSurface":false}
+MODIFIED {"searchIsolated":true,"nativeEditorsIsolated":true,"unicodeQueryPreserved":true,"currentOfficialAPI":true,"nestedResponse":true,"spaceIsolated":true,"earlySpaceSurface":true}
+ROLLBACK {"searchIsolated":false,"nativeEditorsIsolated":false,"unicodeQueryPreserved":false,"currentOfficialAPI":false,"nestedResponse":false,"spaceIsolated":false,"earlySpaceSurface":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 114705 0c4ba475971b855e267e93a830bdd1daa60e159c58111c6454353176505a98bd
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 497061 599baa03fc47430265ce09b9b8b80ebf7dce76c35b01484fd972cf4540a2d4ce
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 4985229 e38e17c02fadee04bb20c8bce913ba1f0b203535bbddc183bd94d6e748b0ceea

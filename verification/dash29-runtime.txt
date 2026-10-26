@@ -1,0 +1,51 @@
+{
+  "interfaceReady": {
+    "ready": 0,
+    "events": [
+      {
+        "event": "enter",
+        "time": 93.89999999850988,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "exit",
+        "time": 94.19999999925494,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "removed",
+        "time": 217.89999999850988,
+        "videoReady": 0,
+        "videoTime": 0
+      }
+    ]
+  },
+  "toolbar": [
+    {
+      "theme": "light",
+      "background": "rgb(250, 250, 250)",
+      "liked": "rgb(251, 114, 153)"
+    },
+    {
+      "theme": "dark",
+      "background": "rgb(22, 22, 24)",
+      "liked": "rgb(251, 114, 153)"
+    },
+    {
+      "theme": "light",
+      "background": "rgb(250, 250, 250)",
+      "liked": "rgb(251, 114, 153)"
+    }
+  ],
+  "recorder": {
+    "types": [
+      "video/mp4;codecs=avc1.42001E,mp4a.40.2",
+      "video/mp4;codecs=avc1,mp4a.40.2",
+      "video/mp4"
+    ]
+  },
+  "fixtureBytes": 29446,
+  "pass": true
+}

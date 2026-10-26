@@ -1,7 +1,7 @@
 MODIFIED_FILE: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js [49099 bytes; SHA256 4e5081a4057f0c4f2e6ee31363827a0128a9f08cf819ff415d7a58e01efa504f]
-DIFF_FILE: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch [31309 bytes; SHA256 e78ba19b7f1e9852c2fa4012addbd4e263a2494cc92c50d73aa121c3ec34efb5]
-VERIFICATION: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt [57933 bytes; SHA256 7a71feaf2f87ae092ff36c7a2c60fee734a2ca11b8deab20148a03a9f93171eb]
-ROLLBACK: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh [439841 bytes; SHA256 6e964dfb13d7aa46fbfad6bb2845370cc0765f79d8a4cfa2e09f48689d799ac7]
+DIFF_FILE: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch [89609 bytes; SHA256 5d42873e8af4593fd0b484581500f5acf84850046107554d186a738a12e57c98]
+VERIFICATION: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt [136463 bytes; SHA256 b57c7c80bd503999b2ab4df0f4ab1932b5ccfa0d5351e581bd7c162693b89d09]
+ROLLBACK: C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh [996146 bytes; SHA256 2083d6c7fe795b2057886214eb323258148ada095422447079a107ffa37f3254]
 BASELINE: {"settings":{"hideLiveCards":false,"blockAdCards":true,"videoProfileButton":true},"routes":["home","video","search","home","home"],"uids":["123","",""]}
 MODIFIED: {"settings":{"hideLiveCards":false,"blockAdCards":false,"videoProfileButton":false},"routes":["home","disabled","disabled","disabled","home"],"uids":["123","456",""]}
 ROLLBACK: {"settings":{"hideLiveCards":false,"blockAdCards":true,"videoProfileButton":true},"routes":["home","video","search","home","home"],"uids":["123","",""]}
@@ -13,8 +13,17 @@ HEADER BASELINE: {"brandCentered":false,"maximizeSquare":false,"glyphFade":false
 HEADER MODIFIED: {"brandCentered":true,"maximizeSquare":true,"glyphFade":true,"providedMessageIcon":true,"videoHome":"https://www.bilibili.com/","headerTab":true,"hideHome":true,"hideMessages":true,"independentVideoHome":true}
 HEADER ROLLBACK: {"brandCentered":false,"maximizeSquare":false,"glyphFade":false,"providedMessageIcon":false,"videoHome":null,"headerTab":false,"hideHome":false,"hideMessages":false,"independentVideoHome":false}
 HOME BASELINE: {"bannerDisplay":"none","bannerBrand":null,"headerBrand":"bili space","unifiedFeed":false,"categoryTrigger":null,"categoryLabels":[],"mangaNative":false,"expanded":null,"nativeBack":true}
-HOME MODIFIED: {"bannerDisplay":"block","bannerBrand":"bili space","headerBrand":"bili space","unifiedFeed":true,"categoryTrigger":"header-categories","categoryLabels":["番剧","国创","漫画","直播","动画","游戏","音乐","舞蹈","鬼畜","知识","科技","美食","生活","影视","电影","电视剧","纪录片","专栏"],"mangaNative":true,"expanded":"true","nativeBack":false}
+HOME MODIFIED: {"bannerDisplay":"block","bannerBrand":"Bili space","headerBrand":"Bili space","unifiedFeed":true,"categoryTrigger":"header-categories","categoryLabels":["番剧","国创","漫画","直播","动画","游戏","音乐","舞蹈","鬼畜","知识","科技","美食","生活","影视","电影","电视剧","纪录片","专栏"],"mangaNative":true,"expanded":"true","nativeBack":false}
 HOME ROLLBACK: {"bannerDisplay":"none","bannerBrand":null,"headerBrand":"bili space","unifiedFeed":false,"categoryTrigger":null,"categoryLabels":[],"mangaNative":false,"expanded":null,"nativeBack":true}
 POLISH BASELINE: {"promotionDisplay":"contents","promotionFlattened":true,"navHidden":false,"categoryFont":"12px","prefetchMargin":null,"bannerMotionLayers":1,"messageBackground":"rgb(214, 235, 234)","messageRgb":""}
 POLISH MODIFIED: {"promotionDisplay":"none","promotionFlattened":false,"navHidden":true,"categoryFont":"15px","prefetchMargin":"true","bannerMotionLayers":1,"messageBackground":"rgb(22, 22, 24)","messageRgb":"22,22,24"}
 POLISH ROLLBACK: {"promotionDisplay":"contents","promotionFlattened":true,"navHidden":false,"categoryFont":"12px","prefetchMargin":null,"bannerMotionLayers":1,"messageBackground":"rgb(214, 235, 234)","messageRgb":""}
+LATEST BASELINE: {"categoriesBefore":18,"categoriesAfter":["番剧","国创","漫画","直播","动画","游戏","音乐","舞蹈","鬼畜","知识","科技","美食","生活","影视","电影","电视剧","纪录片","专栏"],"centeredChevron":false,"categorySettings":false,"networkSettings":false,"localAI":false,"adaptiveZoom":false,"hiddenScrollbar":false,"wheelInertia":false}
+LATEST MODIFIED: {"categoriesBefore":8,"categoriesAfter":["番剧","漫画","游戏"],"centeredChevron":true,"categorySettings":true,"networkSettings":true,"localAI":true,"adaptiveZoom":true,"hiddenScrollbar":true,"wheelInertia":true}
+LATEST ROLLBACK: {"categoriesBefore":18,"categoriesAfter":["番剧","国创","漫画","直播","动画","游戏","音乐","舞蹈","鬼畜","知识","科技","美食","生活","影视","电影","电视剧","纪录片","专栏"],"centeredChevron":false,"categorySettings":false,"networkSettings":false,"localAI":false,"adaptiveZoom":false,"hiddenScrollbar":false,"wheelInertia":false}
+PLAYER BASELINE: {"settingsResizeDeclaration":false,"tools":["legacy SR"],"fiIcon":null,"fiMode":"missing","nativeMinimum":["880","560"],"nativeColorVariable":"not sampled"}
+PLAYER MODIFIED: {"settingsResizeDeclaration":true,"tools":["sr","fi"],"fiIcon":[["3",null],["6",".5"],["9",".2"]],"fiMode":"off","nativeMinimum":["480","320"],"nativeColorVariable":"rgb(221, 221, 221)"}
+PLAYER ROLLBACK: {"settingsResizeDeclaration":false,"tools":["legacy SR"],"fiIcon":null,"fiMode":"missing","nativeMinimum":["880","560"],"nativeColorVariable":"not sampled"}
+FLOW BASELINE: {"headerLogo":"bili space","bannerLogo":"bili space","fiModeOptions":["off","blend"],"flowScaleOptions":[],"learnedFlowCode":false,"serializedGpu":false}
+FLOW MODIFIED: {"headerLogo":"Bili space","bannerLogo":"Bili space","fiModeOptions":["off","rife"],"flowScaleOptions":["25","50","100"],"learnedFlowCode":true,"serializedGpu":true}
+FLOW ROLLBACK: {"headerLogo":"bili space","bannerLogo":"bili space","fiModeOptions":["off","blend"],"flowScaleOptions":[],"learnedFlowCode":false,"serializedGpu":false}

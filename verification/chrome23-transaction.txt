@@ -1,0 +1,7 @@
+BASELINE {"trayPause":false,"arrow200":false,"windowControlSwitch":false,"homeWordRetained":false,"springPopover":false,"loaderBeforeWindowLoad":false,"tallVolume":false,"inlineBlocker":false}
+MODIFIED {"trayPause":true,"arrow200":true,"windowControlSwitch":true,"homeWordRetained":true,"springPopover":true,"loaderBeforeWindowLoad":true,"tallVolume":true,"inlineBlocker":true}
+ROLLBACK {"trayPause":false,"arrow200":false,"windowControlSwitch":false,"homeWordRetained":false,"springPopover":false,"loaderBeforeWindowLoad":false,"tallVolume":false,"inlineBlocker":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 112866 0d7ed25c3a3e43602faf44da8fac90e08bcac9f97d7ddca9b4c3321d46c6a166
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 472583 433280de3ad62218c4e1bc797fe6fe7c99170886aabecf95a4c0e4c547b52c5a
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 4693040 8832c1f0f345008308aa3ab61ccf8ffec9c1a5ab063837675524dab09f21a194

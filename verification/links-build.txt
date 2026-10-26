@@ -1,0 +1,11 @@
+src/main.cpp:312:88: error: use of undeclared identifier 'externalWebUrl'
+  312 |         }else if(type=="open-external"){auto uri=wide(m.value("url",std::string{}));if(externalWebUrl(uri))ShellExecuteW(windowHandle,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);
+      |                                                                                        ^
+1 error generated.
+C++ build failed: 1
+At C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\build.ps1:10 char:22
++ if ($LASTEXITCODE) { throw "C++ build failed: $LASTEXITCODE" }
++                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (C++ build failed: 1:String) [], RuntimeException
+    + FullyQualifiedErrorId : C++ build failed: 1
+ 

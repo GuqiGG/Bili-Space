@@ -1,0 +1,164 @@
+{
+  "minimum": [
+    480,
+    320
+  ],
+  "settingsResize": "both",
+  "dialogDrag": {
+    "before": [
+      800,
+      500
+    ],
+    "after": [
+      700,
+      440
+    ]
+  },
+  "compactDialog": {
+    "compact": "true",
+    "columns": "498.4px",
+    "width": 500,
+    "main": 498
+  },
+  "small": {
+    "viewport": [
+      640,
+      440
+    ],
+    "dialog": [
+      12,
+      12,
+      628,
+      428
+    ],
+    "scrollWidth": 640
+  },
+  "integration": {
+    "order": true,
+    "color": [
+      "rgba(250, 250, 250, 0.9)",
+      "rgba(250, 250, 250, 0.9)"
+    ],
+    "opacity": [
+      "0.82",
+      "0.82"
+    ],
+    "font": [
+      "14px",
+      "14px"
+    ],
+    "icon": [
+      [
+        "3",
+        null
+      ],
+      [
+        "6",
+        ".5"
+      ],
+      [
+        "9",
+        ".2"
+      ]
+    ]
+  },
+  "aiFlowProof": {
+    "aiMse": 13.387532552083334,
+    "blendMse": 1036.0208333333333,
+    "oldEdge": 32,
+    "newEdge": 255,
+    "inferences": 1,
+    "estimate": [
+      128,
+      64
+    ],
+    "ms": 62.6999999997206
+  },
+  "fiOnly": {
+    "inferences": 13,
+    "inferenceMs": 19.200000000186265,
+    "estimate": [
+      320,
+      192
+    ],
+    "dropped": 0,
+    "frames": 21,
+    "generated": 19,
+    "stopped": false,
+    "status": "RIFE AI \u5149\u6d41 \u00b7 320\u00d7192 \u4f30\u8ba1 \u00b7 19ms \u00b7 \u4e2d\u95f4\u5e27 19 \u00b7 \u76ee\u6807 60fps"
+  },
+  "combined": {
+    "ai": 8,
+    "fi": {
+      "inferences": 24,
+      "inferenceMs": 27.699999999720603,
+      "estimate": [
+        640,
+        384
+      ],
+      "dropped": 0,
+      "frames": 48,
+      "generated": 36,
+      "stopped": false,
+      "status": "RIFE AI \u5149\u6d41 \u00b7 640\u00d7384 \u4f30\u8ba1 \u00b7 28ms \u00b7 \u4e2d\u95f4\u5e27 36 \u00b7 \u76ee\u6807 60fps"
+    },
+    "aiSize": [
+      1280,
+      720
+    ],
+    "fiSize": [
+      1280,
+      720
+    ]
+  },
+  "target120": {
+    "inferences": 4,
+    "inferenceMs": 12.100000000093132,
+    "estimate": [
+      320,
+      192
+    ],
+    "dropped": 0,
+    "frames": 10,
+    "generated": 8,
+    "stopped": false,
+    "status": "RIFE AI \u5149\u6d41 \u00b7 320\u00d7192 \u4f30\u8ba1 \u00b7 17ms \u00b7 \u4e2d\u95f4\u5e27 8 \u00b7 \u76ee\u6807 120fps"
+  },
+  "flowScale25": {
+    "inferences": 3,
+    "inferenceMs": 15.699999999720603,
+    "estimate": [
+      192,
+      128
+    ],
+    "dropped": 0,
+    "frames": 10,
+    "generated": 9,
+    "stopped": false,
+    "status": "RIFE AI \u5149\u6d41 \u00b7 192\u00d7128 \u4f30\u8ba1 \u00b7 16ms \u00b7 \u4e2d\u95f4\u5e27 9 \u00b7 \u76ee\u6807 120fps"
+  },
+  "fallback": {
+    "state": {
+      "inferences": 3,
+      "inferenceMs": 16,
+      "estimate": [
+        192,
+        128
+      ],
+      "dropped": 3,
+      "frames": 6,
+      "generated": 4,
+      "stopped": true,
+      "status": "AI \u5149\u6d41 GPU \u4e0a\u4e0b\u6587\u4e22\u5931\uff0c\u5df2\u6062\u590d\u539f\u59cb\u753b\u9762"
+    },
+    "opacity": "",
+    "canvas": false
+  },
+  "errors": [],
+  "sha256": {
+    "dist\\BetterBiliSpace.exe": "2bd2b170759cf40f201766527f4188d492915fe5e35f8fc1f3d4d5bfa2395b2f",
+    "assets\\enhance.js": "adeaa3b1bd848b745a3a3f07f9406113bd5b76af252e3c4db3ba28947ba7d073",
+    "assets\\frame-interpolation.svg": "6f2f9d55cf7132bfedee554ef69027df6046405b99fdc06047d32043a5c75900"
+  },
+  "result": "PASS"
+}

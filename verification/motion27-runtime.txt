@@ -1,0 +1,33 @@
+{
+  "loader": {
+    "time": 0.267111,
+    "events": [
+      {
+        "event": "enter",
+        "time": 95.19999999925494,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "exit",
+        "time": 300.80000000074506,
+        "videoReady": 4,
+        "videoTime": 0.099565
+      },
+      {
+        "event": "removed",
+        "time": 437.80000000074506,
+        "videoReady": 4,
+        "videoTime": 0.236606
+      }
+    ]
+  },
+  "wipe": {
+    "transform": "matrix(1, 0, 0, 1, -757.8, 0)",
+    "pointer": "none",
+    "svgWidth": 349.4375,
+    "header": 0,
+    "marker": null
+  },
+  "pass": true
+}

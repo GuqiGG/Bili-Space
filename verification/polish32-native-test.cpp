@@ -1,0 +1,6 @@
+#define BILI_DOWNLOAD_TEST
+#include "../src/main.cpp"
+#include <iostream>
+std::vector<json> events;
+LRESULT CALLBACK capture(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){if(msg==downloadReplyMessage){std::unique_ptr<DownloadReply> r((DownloadReply*)lp);if(wp==2)events.push_back({{"progress",json::parse(r->message)}});else if(wp==1)events.push_back({{"phase",r->message}});else events.push_back({{"ok",r->ok},{"message",r->message}});return 0;}return DefWindowProcW(hwnd,msg,wp,lp);}
+int wmain(int argc,wchar_t** argv){if(argc!=5)return 2;WNDCLASSW c{};c.lpfnWndProc=capture;c.hInstance=GetModuleHandleW(nullptr);c.lpszClassName=L"BiliCancelVerification";RegisterClassW(&c);windowHandle=CreateWindowExW(0,c.lpszClassName,L"",0,0,0,0,0,HWND_MESSAGE,nullptr,c.hInstance,nullptr);downloadBusy=true;downloadCancelRequested=false;downloadCommitted=false;int delay=_wtoi(argv[4]);std::thread canceller;if(delay>=0)canceller=std::thread([delay]{Sleep(delay);cancelDownload();});auto start=GetTickCount64();runDownloadPlan(argv[1],argv[2],argv[3]);if(canceller.joinable())canceller.join();auto elapsed=GetTickCount64()-start;MSG msg{};while(PeekMessageW(&msg,nullptr,0,0,PM_REMOVE))DispatchMessageW(&msg);std::cout<<json({{"events",events},{"elapsedMs",elapsed},{"busy",downloadBusy.load()}}).dump();return 0;}

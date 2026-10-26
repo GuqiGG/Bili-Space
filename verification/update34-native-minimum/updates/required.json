@@ -1,0 +1,17 @@
+{
+  "appId": "bili-space",
+  "available": true,
+  "changelog": [
+    "更新测试",
+    "<img src=x>"
+  ],
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.35-win64.zip",
+  "force": false,
+  "minimumSupportedVersion": "0.1.35",
+  "platform": "windows-x64",
+  "required": true,
+  "schema": 1,
+  "sha256": "f8f52aa83603bd6030cc5512d6b3beb19ed18b9eafbe1d33b83fe2d930e6c47b",
+  "size": 180004,
+  "version": "0.1.35"
+}

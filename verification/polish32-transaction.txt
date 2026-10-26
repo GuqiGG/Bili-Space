@@ -1,0 +1,7 @@
+BASELINE {"tightMetrics":false,"cancelUi":false,"cancelNative":false,"categoryLane":false,"bareDomains":false,"toolbarReset":false,"noEarlyPlay":false,"noZeroResume":false}
+MODIFIED {"tightMetrics":true,"cancelUi":true,"cancelNative":true,"categoryLane":true,"bareDomains":true,"toolbarReset":true,"noEarlyPlay":true,"noZeroResume":true}
+ROLLBACK {"tightMetrics":false,"cancelUi":false,"cancelNative":false,"categoryLane":false,"bareDomains":false,"toolbarReset":false,"noEarlyPlay":false,"noZeroResume":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 135113 fc3d64a3ba362c71dc6961467ed7d975de7df04296ea0bfe945fde93c81b6e1d
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 679810 e7eb547aef8f3e8a83815e88d534bd9075fd307d34f61e65ed07ef36356d50ff
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 7874055 0e86ddb14b813ca5b3dcc4c3ec7ed7a1faa8d0e45fade62579c1aa11706689a7

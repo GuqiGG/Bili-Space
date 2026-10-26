@@ -1,14 +1,14 @@
 {
   "label": "modified",
   "mode": "native WebView2 with representative promotion/message DOM and native IntersectionObserver; no real chat or account actions",
-  "sha256": "09b3788ecf910aa68fd82eda9510f4bef0b3157ada674119db357ca14f21050d",
+  "sha256": "adeaa3b1bd848b745a3a3f07f9406113bd5b76af252e3c4db3ba28947ba7d073",
   "home": {
     "adDisplay": "none",
     "creativeVisible": false,
     "requests": [
       {
         "scrollY": 0,
-        "time": 98.80000000074506
+        "time": 103
       }
     ],
     "scrollY": 0,
@@ -17,18 +17,18 @@
     "navHidden": false,
     "font": "15px",
     "trigger": {
-      "x": 107.3250002861023,
+      "x": 113,
       "y": 28.600000381469727
     },
     "title": {
-      "x": 641.2374877929688,
+      "x": 648.3125,
       "y": 18.200000762939453,
-      "width": 62.32500076293945,
+      "width": 63.375,
       "height": 20.80000114440918,
       "top": 18.200000762939453,
-      "right": 703.5624885559082,
+      "right": 711.6875,
       "bottom": 39.00000190734863,
-      "left": 641.2374877929688
+      "left": 648.3125
     }
   },
   "hover": {
@@ -37,7 +37,7 @@
     "requests": [
       {
         "scrollY": 0,
-        "time": 98.80000000074506
+        "time": 103
       }
     ],
     "scrollY": 0,
@@ -46,18 +46,18 @@
     "navHidden": false,
     "font": "15px",
     "trigger": {
-      "x": 107.3250002861023,
+      "x": 113,
       "y": 28.600000381469727
     },
     "title": {
-      "x": 641.2374877929688,
+      "x": 648.3125,
       "y": 18.200000762939453,
-      "width": 62.32500076293945,
+      "width": 63.375,
       "height": 20.80000114440918,
       "top": 18.200000762939453,
-      "right": 703.5624885559082,
+      "right": 711.6875,
       "bottom": 39.00000190734863,
-      "left": 641.2374877929688
+      "left": 648.3125
     }
   },
   "click": {
@@ -66,7 +66,7 @@
     "requests": [
       {
         "scrollY": 0,
-        "time": 98.80000000074506
+        "time": 103
       }
     ],
     "scrollY": 0,
@@ -75,18 +75,18 @@
     "navHidden": true,
     "font": "15px",
     "trigger": {
-      "x": 107.3250002861023,
+      "x": 113,
       "y": 28.600000381469727
     },
     "title": {
-      "x": 641.2374877929688,
+      "x": 648.3125,
       "y": 18.200000762939453,
-      "width": 62.32500076293945,
+      "width": 63.375,
       "height": 20.80000114440918,
       "top": 18.200000762939453,
-      "right": 703.5624885559082,
+      "right": 711.6875,
       "bottom": 39.00000190734863,
-      "left": 641.2374877929688
+      "left": 648.3125
     }
   },
   "leave": {
@@ -95,7 +95,7 @@
     "requests": [
       {
         "scrollY": 0,
-        "time": 98.80000000074506
+        "time": 103
       }
     ],
     "scrollY": 0,
@@ -104,30 +104,30 @@
     "navHidden": true,
     "font": "15px",
     "trigger": {
-      "x": 107.3250002861023,
+      "x": 113,
       "y": 28.600000381469727
     },
     "title": {
-      "x": 641.2374877929688,
+      "x": 648.3125,
       "y": 18.200000762939453,
-      "width": 62.32500076293945,
+      "width": 63.375,
       "height": 20.80000114440918,
       "top": 18.200000762939453,
-      "right": 703.5624885559082,
+      "right": 711.6875,
       "bottom": 39.00000190734863,
-      "left": 641.2374877929688
+      "left": 648.3125
     }
   },
   "motion": [
     {
       "events": 1,
-      "layer": "matrix(1, 0, 0, 1, -12.1032, 0)",
+      "layer": "matrix(1, 0, 0, 1, -12.24, 0)",
       "layers": 1,
       "mode": "native"
     },
     {
       "events": 2,
-      "layer": "matrix(1, 0, 0, 1, 12.1032, 0)",
+      "layer": "matrix(1, 0, 0, 1, 12.24, 0)",
       "layers": 1,
       "mode": "native"
     }

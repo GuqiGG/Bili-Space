@@ -4,7 +4,7 @@ from smoke import CDP
 from websockets.asyncio.client import connect
 ROOT=Path.cwd();out={}
 async def main():
- p=subprocess.Popen([str(ROOT/'dist/BetterBiliSpace.exe'),'--test'],cwd=ROOT/'dist')
+ p=subprocess.Popen([str(ROOT/'dist/Bili-Space.exe'),'--test'],cwd=ROOT/'dist')
  try:
   for i in range(100):
    try:
@@ -27,7 +27,7 @@ async def main():
    await c.shot('latest-ai.png')
  finally:
   (ROOT/'verification/latest-probe.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf8')
-  ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Better Bili Space [test]'),0x10,0,0)
+  ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Bili-Space [test]'),0x10,0,0)
   try:p.wait(timeout=5)
   except:p.terminate()
 asyncio.run(main())

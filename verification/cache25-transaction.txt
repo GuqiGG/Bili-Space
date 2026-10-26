@@ -1,0 +1,7 @@
+BASELINE {"backgroundCache":false,"upload":false,"volumeHint":false}
+MODIFIED {"backgroundCache":true,"upload":true,"volumeHint":true}
+ROLLBACK {"backgroundCache":false,"upload":false,"volumeHint":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 117442 f599447faa95a55053e71562b1b306bf4f2d11c2d0b7525f5cb479cf0c5ad608
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 520787 71c4b2903cc29d35ffbc42144edd0812572f29c9793b9c6ce36d969a14587c43
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 5282794 ef28f2998cd02ba1f3d6e36d14da9e35f2d6994c7954d5787919287c926f58b4

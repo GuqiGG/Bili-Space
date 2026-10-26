@@ -1,0 +1,7 @@
+name = "bili-space-updates"
+main = "worker.js"
+compatibility_date = "2026-10-26"
+routes = [{ pattern = "bili.gvqi.top", custom_domain = true }]
+[[r2_buckets]]
+binding = "RELEASES"
+bucket_name = "bili-space-releases"

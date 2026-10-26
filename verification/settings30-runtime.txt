@@ -1,0 +1,97 @@
+{
+  "interfaceReady": {
+    "ready": 0,
+    "events": [
+      {
+        "event": "enter",
+        "time": 80.89999999850988,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "exit",
+        "time": 81.19999999925494,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "removed",
+        "time": 201.69999999925494,
+        "videoReady": 0,
+        "videoTime": 0
+      }
+    ]
+  },
+  "waitingForVideo": {
+    "overlay": true,
+    "ready": 0,
+    "text": "���ڼ�����Ƶ���桭"
+  },
+  "decoded": {
+    "ready": 4,
+    "events": [
+      {
+        "event": "enter",
+        "time": 80.89999999850988,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "exit",
+        "time": 81.19999999925494,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "removed",
+        "time": 201.69999999925494,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "enter",
+        "time": 252.5,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "exit",
+        "time": 622,
+        "videoReady": 4,
+        "videoTime": 0.003314
+      },
+      {
+        "event": "removed",
+        "time": 745.5,
+        "videoReady": 4,
+        "videoTime": 0.126738
+      }
+    ]
+  },
+  "storedMode": "page",
+  "pageMode": {
+    "ready": 0,
+    "overlay": false
+  },
+  "arrow": [
+    {
+      "stage": "closed",
+      "transform": "matrix(1, 0, 0, 1, 0, 0)"
+    },
+    {
+      "stage": "moving",
+      "transform": "matrix(-0.936519, 0.350617, -0.350617, -0.936519, 0, 0)"
+    },
+    {
+      "stage": "open",
+      "transform": "matrix(-1, 0, 0, -1, 0, 0)",
+      "expanded": "true",
+      "parent": "matrix(1, 0, 0, 1, 0, 0)"
+    },
+    {
+      "stage": "closedAgain",
+      "transform": "matrix(1, 0, 0, 1, 0, 0)"
+    }
+  ],
+  "pass": true
+}

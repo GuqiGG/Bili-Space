@@ -7,7 +7,7 @@ test('requested message SVG and square maximize glyph appear in the centered-tit
  assert(s.querySelector('.light.max rect'));assert(s.querySelector('.messages .lucide-message-square-more'));
  const parser=new a.w.DOMParser(),expected=parser.parseFromString(fs.readFileSync('assets/message-square-more.svg','utf8'),'image/svg+xml');
  assert.deepEqual([...s.querySelectorAll('.messages svg path')].map(x=>x.getAttribute('d')),[...expected.querySelectorAll('path')].map(x=>x.getAttribute('d')));
- assert.equal(s.querySelector('.brand').textContent,'bili space');assert(s.querySelector('.header-left nav [data-route=home]'));a.close();
+ assert.equal(s.querySelector('.brand').textContent,'Bili-Space');assert(s.querySelector('.header-left nav [data-route=home]'));a.close();
 });
 test('header settings individually hide all eight optional items without hiding window controls',()=>{
  const a=app(),s=a.w.document.querySelector('#bili-space-root').shadowRoot;
@@ -22,6 +22,6 @@ test('header settings individually hide all eight optional items without hiding 
 test('video webpage has an independent homepage anchor, even with the top Home item disabled',()=>{
  const a=app({url:'https://www.bilibili.com/zh-Hans/video/BVfixture',html:'<div class="left-container"><h1>标题</h1><div id="bilibili-player"></div></div>'}),d=a.w.document;
  a.w.BiliSpace.update({headerHome:false});const link=d.querySelector('#bili-space-video-home');
- assert(link);assert.equal(link.href,'https://www.bilibili.com/');assert.equal(link.hidden,false);assert.equal(link.parentElement.className,'left-container');
+ assert(link);assert.equal(link.href,'https://www.bilibili.com/');assert.equal(link.hidden,false);assert.equal(link.parentElement.className,'bs-video-bar');assert.ok(link.closest('.left-container'));
  a.w.BiliSpace.syncRoute();assert.equal(d.querySelectorAll('#bili-space-video-home').length,1);a.close();
 });

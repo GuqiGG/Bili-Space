@@ -1,0 +1,101 @@
+{
+  "minimum": [
+    480,
+    320
+  ],
+  "settingsResize": "both",
+  "small": {
+    "viewport": [
+      640,
+      440
+    ],
+    "dialog": [
+      12,
+      12,
+      628,
+      428
+    ],
+    "scrollWidth": 640
+  },
+  "integration": {
+    "order": true,
+    "color": [
+      "rgba(250, 250, 250, 0.9)",
+      "rgba(250, 250, 250, 0.9)"
+    ],
+    "opacity": [
+      "0.82",
+      "0.82"
+    ],
+    "font": [
+      "14px",
+      "14px"
+    ],
+    "icon": [
+      [
+        "3",
+        null
+      ],
+      [
+        "6",
+        ".5"
+      ],
+      [
+        "9",
+        ".2"
+      ]
+    ]
+  },
+  "blendPixel": [
+    127,
+    127,
+    127,
+    255
+  ],
+  "fiOnly": {
+    "frames": 15,
+    "generated": 12,
+    "stopped": false,
+    "status": "GPU \u6df7\u5408 \u00b7 \u76ee\u6807 60fps \u00b7 \u5df2\u5448\u73b0 15 / \u4e2d\u95f4\u5e27 12"
+  },
+  "combined": {
+    "ai": 6,
+    "fi": {
+      "frames": 33,
+      "generated": 22,
+      "stopped": false,
+      "status": "GPU \u6df7\u5408 \u00b7 \u76ee\u6807 60fps \u00b7 \u5df2\u5448\u73b0 33 / \u4e2d\u95f4\u5e27 22"
+    },
+    "aiSize": [
+      1280,
+      720
+    ],
+    "fiSize": [
+      1280,
+      720
+    ]
+  },
+  "target120": {
+    "frames": 10,
+    "generated": 8,
+    "stopped": false,
+    "status": "GPU \u6df7\u5408 \u00b7 \u76ee\u6807 120fps \u00b7 \u5df2\u5448\u73b0 10 / \u4e2d\u95f4\u5e27 8"
+  },
+  "fallback": {
+    "state": {
+      "frames": 13,
+      "generated": 11,
+      "stopped": true,
+      "status": "\u8865\u5e27 GPU \u4e0a\u4e0b\u6587\u4e22\u5931\uff0c\u5df2\u6062\u590d\u539f\u59cb\u753b\u9762"
+    },
+    "opacity": "",
+    "canvas": false
+  },
+  "errors": [],
+  "sha256": {
+    "dist\\BetterBiliSpace.exe": "1ce9104b1a5312215696c02c7f14011ba9b6bb9f876c0bcc8e6e90fa8cdb7268",
+    "assets\\enhance.js": "0f26ed16ec347251d34437e46a23c1770690758f168a18a822947184aca937aa",
+    "assets\\frame-interpolation.svg": "6f2f9d55cf7132bfedee554ef69027df6046405b99fdc06047d32043a5c75900"
+  },
+  "result": "PASS"
+}

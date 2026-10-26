@@ -1,0 +1,11 @@
+src/main.cpp:341:99: error: use of undeclared identifier 'SM_CYPADDEDBORDER'
+  341 |             bounds->rgrc[0].top=top+(IsZoomed(hwnd)?GetSystemMetrics(SM_CYFRAME)+GetSystemMetrics(SM_CYPADDEDBORDER):1);
+      |                                                                                                   ^
+1 error generated.
+C++ build failed: 1
+At C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\scripts\build.ps1:10 char:22
++ if ($LASTEXITCODE) { throw "C++ build failed: $LASTEXITCODE" }
++                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (C++ build failed: 1:String) [], RuntimeException
+    + FullyQualifiedErrorId : C++ build failed: 1
+ 

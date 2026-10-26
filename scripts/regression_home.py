@@ -8,7 +8,7 @@ async def main():
  baseline=label=='baseline'
  report={'mode':'nested domestic-style DOM fixture in native WebView2, no account writes','label':label,'source_sha256':hashlib.sha256((ROOT/'dist/assets/enhance.js').read_bytes()).hexdigest()}
  startup=subprocess.STARTUPINFO();startup.dwFlags|=subprocess.STARTF_USESHOWWINDOW;startup.wShowWindow=0
- p=subprocess.Popen([str(ROOT/'dist/BetterBiliSpace.exe'),'--test'],startupinfo=startup)
+ p=subprocess.Popen([str(ROOT/'dist/Bili-Space.exe'),'--test'],startupinfo=startup)
  try:
   for _ in range(80):
    try:
@@ -44,8 +44,8 @@ async def main():
       row.sort(key=lambda card:card['x'])
       for a,b in zip(row,row[1:]):assert 18<=b['x']-a['right']<=22,(a,b)
     dense(report['before'],4)
-    assert report['before']['banner']['h']>=88 and report['before']['bannerText']=='bili space'
-    assert report['before']['headerTitle']=='bili space' and report['before']['duplicateBar']=='none'
+    assert report['before']['banner']['h']>=88 and report['before']['bannerText']=='Bili Space'
+    assert report['before']['headerTitle']=='Bili Space' and report['before']['duplicateBar']=='none'
     assert abs(report['before']['bannerBrand']['x']+report['before']['bannerBrand']['w']/2-(report['before']['banner']['x']+report['before']['banner']['w']/2))<1
     assert all(ad['outer']=='none' for ad in report['before']['ads']),report
     # Only a click opens categories; primary navigation disappears while categories are open.
@@ -93,7 +93,7 @@ async def main():
    report['result']='OBSERVED BASELINE' if baseline else 'PASS'
  finally:
   if p.poll() is None:
-   ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Better Bili Space [test]'),0x10,0,0)
+   ctypes.windll.user32.PostMessageW(ctypes.windll.user32.FindWindowW('BetterBiliSpace','Bili-Space [test]'),0x10,0,0)
    try:p.wait(timeout=5)
    except subprocess.TimeoutExpired:p.terminate();p.wait()
   (OUT/('home-'+label+'.json')).write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8')

@@ -1,0 +1,99 @@
+{
+  "sha256": {
+    "dist\\BetterBiliSpace.exe": "2bd2b170759cf40f201766527f4188d492915fe5e35f8fc1f3d4d5bfa2395b2f",
+    "assets\\enhance.js": "adeaa3b1bd848b745a3a3f07f9406113bd5b76af252e3c4db3ba28947ba7d073",
+    "assets\\bridge.js": "74569baeb810af6332e82ff2c7039e5f2e542f87e4a5c9be5b66e71c2854499c"
+  },
+  "arrow": {
+    "header": 29,
+    "button": 28.600000381469727,
+    "svg": 28.600000381469727,
+    "lights": 28.600000381469727,
+    "names": [
+      "\u756a\u5267",
+      "\u6f2b\u753b",
+      "\u6e38\u620f"
+    ]
+  },
+  "ball": {
+    "engine": true,
+    "launcher": false,
+    "stored": false
+  },
+  "scrollbar": {
+    "root": "none",
+    "body": "none",
+    "gutter": 0
+  },
+  "inertia": {
+    "start": 0,
+    "during": 45.599998474121094,
+    "end": 120
+  },
+  "reduced_motion_y": 0,
+  "precision_y": 0,
+  "maximized": {
+    "width": 1280,
+    "dpr": 2.012500047683716
+  },
+  "fullscreen": {
+    "width": 1280,
+    "dpr": 2,
+    "full": true
+  },
+  "ai": {
+    "status": "\u672c\u5730 AI ESPCN \u00d73 \u00b7 640\u00d7360 \u2192 1280\u00d7720\uff082.00\u00d7\uff09\u00b7 25ms/\u5e27 \u00b7 27fps",
+    "frames": 17,
+    "opacity": "0",
+    "output": [
+      1280,
+      720
+    ]
+  },
+  "errors": [],
+  "proxy_on": {
+    "enabled": true,
+    "message": "\u4ee3\u7406\u8fd0\u884c\u4e2d \u00b7 \u4ec5\u672c\u5ba2\u6237\u7aef \u00b7 \u51fa\u53e3\u7aef\u53e3 62935",
+    "node": "SG-\u65b0\u52a0\u5761-01",
+    "nodes": [
+      "JP-\u4e1c\u4eac-01",
+      "SG-\u65b0\u52a0\u5761-01",
+      "US-\u5723\u514b\u62c9\u62c9-01",
+      "HK-\u9999\u6e2f-01"
+    ],
+    "port": 62935,
+    "running": true,
+    "testing": true
+  },
+  "proxy_route": {
+    "local_only": "127.0.0.1",
+    "tun": false,
+    "port": 62935,
+    "anonymous_example_status": 200
+  },
+  "proxy_selected": {
+    "enabled": true,
+    "message": "\u5df2\u5207\u6362\u8282\u70b9",
+    "node": "SG-\u65b0\u52a0\u5761-01",
+    "nodes": [
+      "JP-\u4e1c\u4eac-01",
+      "SG-\u65b0\u52a0\u5761-01",
+      "US-\u5723\u514b\u62c9\u62c9-01",
+      "HK-\u9999\u6e2f-01"
+    ],
+    "port": 62935,
+    "running": true,
+    "testing": true
+  },
+  "proxy_off": {
+    "enabled": false,
+    "message": "\u4ee3\u7406\u5df2\u5173\u95ed",
+    "node": null,
+    "nodes": [],
+    "port": 0,
+    "running": false,
+    "testing": true
+  },
+  "old_core_closed": true,
+  "result": "PASS"
+}

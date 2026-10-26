@@ -1,0 +1,7 @@
+BASELINE {"renamed":false,"about":false,"updates":false,"forcedGate":false,"version":false}
+MODIFIED {"renamed":true,"about":true,"updates":true,"forcedGate":true,"version":true}
+ROLLBACK {"renamed":false,"about":false,"updates":false,"forcedGate":false,"version":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 153751 ebc17d527cb91dc1c03b836f8ff9bd7b4b5ad01cb63c072d96c6c34e933d8579
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 762944 d66ffc3bf36678addade0a4ba6644394889db5d05daea9ed0a0474fbba3f9f98
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 8601462 0ecc0b7f8ca7a91890144be4d2ceec31ee9370535841aa2dc20293e7d4b0ee77

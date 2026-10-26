@@ -1,0 +1,1 @@
+{"volume": {"mediaVolume": 1, "ui": "200", "state": "gain-200", "max": "200"}, "pip": {"pip": true, "hidden": "none", "screen": [372, 210]}, "pipFromFull": {"pip": true, "full": false}, "result": "PASS"}

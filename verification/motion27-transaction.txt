@@ -1,0 +1,7 @@
+BASELINE {"decodedReveal":false,"homeWipe":false,"nonBlockingWipe":false}
+MODIFIED {"decodedReveal":true,"homeWipe":true,"nonBlockingWipe":true}
+ROLLBACK {"decodedReveal":false,"homeWipe":false,"nonBlockingWipe":false}
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\assets\blocker.home.user.js 49955 a2fd306f824247fc9a90beceb1dcb156503e619cd90cc3b2435e35083afb4ae9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\blocker.home.patch 127522 959900dda8a3aa963ae3cc10391137cf0e487947243b9394afd478421275e007
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\VERIFICATION.txt 544830 5ab7c0037ec4f1d29b0075dcae91fc8c880cb88958158cd424d1a37e9ded73d9
+C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\verification\ROLLBACK.sh 5616942 7d319ec5fc663efae4f4b98851dd880ff10b1bc910c19ba36386949295b4d3ae

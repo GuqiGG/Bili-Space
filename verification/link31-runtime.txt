@@ -1,0 +1,936 @@
+{
+  "interfaceReady": {
+    "ready": 0,
+    "events": [
+      {
+        "event": "enter",
+        "time": 81.69999999925494,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "exit",
+        "time": 81.90000000223517,
+        "videoReady": 0,
+        "videoTime": 0
+      },
+      {
+        "event": "removed",
+        "time": 205.5,
+        "videoReady": 0,
+        "videoTime": 0
+      }
+    ]
+  },
+  "layouts": [
+    {
+      "button": {
+        "x": 432,
+        "right": 468,
+        "y": 13,
+        "bottom": 45,
+        "width": 36
+      },
+      "brand": {
+        "x": 207.41250610351562,
+        "right": 272.58750915527344,
+        "y": 18.600000381469727,
+        "bottom": 39.400001525878906,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 154,
+        "right": 246,
+        "y": 0,
+        "bottom": 58,
+        "width": 92
+      },
+      "search": {
+        "x": 12,
+        "right": 320,
+        "y": 55.20000076293945,
+        "bottom": 90.80000305175781,
+        "width": 308
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": true,
+      "width": 480
+    },
+    {
+      "button": {
+        "x": 684,
+        "right": 784,
+        "y": 13,
+        "bottom": 45,
+        "width": 100
+      },
+      "brand": {
+        "x": 367.4125061035156,
+        "right": 432.58750915527344,
+        "y": 18.600000381469727,
+        "bottom": 39.400001525878906,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 168,
+        "right": 280,
+        "y": 0,
+        "bottom": 58,
+        "width": 112
+      },
+      "search": {
+        "x": 16,
+        "right": 615.3125,
+        "y": 55.20000076293945,
+        "bottom": 90.80000305175781,
+        "width": 599.3125
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": true,
+      "width": 800
+    },
+    {
+      "button": {
+        "x": 326.0500183105469,
+        "right": 476.6125183105469,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 150.5625
+      },
+      "brand": {
+        "x": 492.6125183105469,
+        "right": 557.7875213623047,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 222,
+        "right": 350,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 128
+      },
+      "search": {
+        "x": 573.7875366210938,
+        "right": 851.7125549316406,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 277.9250183105469
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": true,
+      "width": 1050
+    },
+    {
+      "button": {
+        "x": 381.4125061035156,
+        "right": 591.4125061035156,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 607.4125366210938,
+        "right": 672.5875396728516,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 222,
+        "right": 350,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 128
+      },
+      "search": {
+        "x": 701.3125,
+        "right": 1081.3125,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 380
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": true,
+      "width": 1280
+    },
+    {
+      "button": {
+        "x": 701.4125366210938,
+        "right": 911.4125366210938,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 927.4125366210938,
+        "right": 992.5875396728516,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 222,
+        "right": 350,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 128
+      },
+      "search": {
+        "x": 1341.3125,
+        "right": 1721.3125,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 380
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": true,
+      "width": 1920
+    },
+    {
+      "button": {
+        "x": 432,
+        "right": 468,
+        "y": 13,
+        "bottom": 45,
+        "width": 36
+      },
+      "brand": {
+        "x": 207.41250610351562,
+        "right": 272.58750915527344,
+        "y": 18.600000381469727,
+        "bottom": 39.400001525878906,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 88.80000305175781,
+        "right": 146.8000030517578,
+        "y": 0,
+        "bottom": 58,
+        "width": 58
+      },
+      "search": {
+        "x": 12,
+        "right": 197.1999969482422,
+        "y": 55.20000076293945,
+        "bottom": 90.80000305175781,
+        "width": 185.1999969482422
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": false,
+      "width": 480
+    },
+    {
+      "button": {
+        "x": 684,
+        "right": 784,
+        "y": 13,
+        "bottom": 45,
+        "width": 100
+      },
+      "brand": {
+        "x": 367.4125061035156,
+        "right": 432.58750915527344,
+        "y": 18.600000381469727,
+        "bottom": 39.400001525878906,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 96.80000305175781,
+        "right": 166.8000030517578,
+        "y": 0,
+        "bottom": 58,
+        "width": 70
+      },
+      "search": {
+        "x": 16,
+        "right": 488.51251220703125,
+        "y": 55.20000076293945,
+        "bottom": 90.80000305175781,
+        "width": 472.51251220703125
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": false,
+      "width": 800
+    },
+    {
+      "button": {
+        "x": 266.6125183105469,
+        "right": 476.6125183105469,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 492.6125183105469,
+        "right": 557.7875213623047,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 150.8000030517578,
+        "right": 228.8000030517578,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 78
+      },
+      "search": {
+        "x": 573.7875366210938,
+        "right": 722.9125366210938,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 149.125
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": false,
+      "width": 1050
+    },
+    {
+      "button": {
+        "x": 381.4125061035156,
+        "right": 591.4125061035156,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 607.4125366210938,
+        "right": 672.5875396728516,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 150.8000030517578,
+        "right": 228.8000030517578,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 78
+      },
+      "search": {
+        "x": 688.5875244140625,
+        "right": 952.5125427246094,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 263.9250183105469
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": false,
+      "width": 1280
+    },
+    {
+      "button": {
+        "x": 701.4125366210938,
+        "right": 911.4125366210938,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 927.4125366210938,
+        "right": 992.5875396728516,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 150.8000030517578,
+        "right": 228.8000030517578,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 78
+      },
+      "search": {
+        "x": 1212.5125732421875,
+        "right": 1592.5125732421875,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 380
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.678431 0.678431 0.717647 / 0.45)",
+      "theme": "dark",
+      "traffic": false,
+      "width": 1920
+    },
+    {
+      "button": {
+        "x": 432,
+        "right": 468,
+        "y": 13,
+        "bottom": 45,
+        "width": 36
+      },
+      "brand": {
+        "x": 207.41250610351562,
+        "right": 272.58750915527344,
+        "y": 18.600000381469727,
+        "bottom": 39.400001525878906,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 154,
+        "right": 246,
+        "y": 0,
+        "bottom": 58,
+        "width": 92
+      },
+      "search": {
+        "x": 12,
+        "right": 320,
+        "y": 55.20000076293945,
+        "bottom": 90.80000305175781,
+        "width": 308
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": true,
+      "width": 480
+    },
+    {
+      "button": {
+        "x": 684,
+        "right": 784,
+        "y": 13,
+        "bottom": 45,
+        "width": 100
+      },
+      "brand": {
+        "x": 367.4125061035156,
+        "right": 432.58750915527344,
+        "y": 18.600000381469727,
+        "bottom": 39.400001525878906,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 168,
+        "right": 280,
+        "y": 0,
+        "bottom": 58,
+        "width": 112
+      },
+      "search": {
+        "x": 16,
+        "right": 615.3125,
+        "y": 55.20000076293945,
+        "bottom": 90.80000305175781,
+        "width": 599.3125
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": true,
+      "width": 800
+    },
+    {
+      "button": {
+        "x": 326.0500183105469,
+        "right": 476.6125183105469,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 150.5625
+      },
+      "brand": {
+        "x": 492.6125183105469,
+        "right": 557.7875213623047,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 222,
+        "right": 350,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 128
+      },
+      "search": {
+        "x": 573.7875366210938,
+        "right": 851.7125549316406,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 277.9250183105469
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": true,
+      "width": 1050
+    },
+    {
+      "button": {
+        "x": 381.4125061035156,
+        "right": 591.4125061035156,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 607.4125366210938,
+        "right": 672.5875396728516,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 222,
+        "right": 350,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 128
+      },
+      "search": {
+        "x": 701.3125,
+        "right": 1081.3125,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 380
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": true,
+      "width": 1280
+    },
+    {
+      "button": {
+        "x": 701.4125366210938,
+        "right": 911.4125366210938,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 927.4125366210938,
+        "right": 992.5875396728516,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 222,
+        "right": 350,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 128
+      },
+      "search": {
+        "x": 1341.3125,
+        "right": 1721.3125,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 380
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": true,
+      "width": 1920
+    },
+    {
+      "button": {
+        "x": 432,
+        "right": 468,
+        "y": 13,
+        "bottom": 45,
+        "width": 36
+      },
+      "brand": {
+        "x": 207.41250610351562,
+        "right": 272.58750915527344,
+        "y": 18.600000381469727,
+        "bottom": 39.400001525878906,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 88.80000305175781,
+        "right": 146.8000030517578,
+        "y": 0,
+        "bottom": 58,
+        "width": 58
+      },
+      "search": {
+        "x": 12,
+        "right": 197.1999969482422,
+        "y": 55.20000076293945,
+        "bottom": 90.80000305175781,
+        "width": 185.1999969482422
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": false,
+      "width": 480
+    },
+    {
+      "button": {
+        "x": 684,
+        "right": 784,
+        "y": 13,
+        "bottom": 45,
+        "width": 100
+      },
+      "brand": {
+        "x": 367.4125061035156,
+        "right": 432.58750915527344,
+        "y": 18.600000381469727,
+        "bottom": 39.400001525878906,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 96.80000305175781,
+        "right": 166.8000030517578,
+        "y": 0,
+        "bottom": 58,
+        "width": 70
+      },
+      "search": {
+        "x": 16,
+        "right": 488.51251220703125,
+        "y": 55.20000076293945,
+        "bottom": 90.80000305175781,
+        "width": 472.51251220703125
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": false,
+      "width": 800
+    },
+    {
+      "button": {
+        "x": 266.6125183105469,
+        "right": 476.6125183105469,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 492.6125183105469,
+        "right": 557.7875213623047,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 150.8000030517578,
+        "right": 228.8000030517578,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 78
+      },
+      "search": {
+        "x": 573.7875366210938,
+        "right": 722.9125366210938,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 149.125
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": false,
+      "width": 1050
+    },
+    {
+      "button": {
+        "x": 381.4125061035156,
+        "right": 591.4125061035156,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 607.4125366210938,
+        "right": 672.5875396728516,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 150.8000030517578,
+        "right": 228.8000030517578,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 78
+      },
+      "search": {
+        "x": 688.5875244140625,
+        "right": 952.5125427246094,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 263.9250183105469
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": false,
+      "width": 1280
+    },
+    {
+      "button": {
+        "x": 701.4125366210938,
+        "right": 911.4125366210938,
+        "y": 12.600000381469727,
+        "bottom": 44.60000038146973,
+        "width": 210
+      },
+      "brand": {
+        "x": 927.4125366210938,
+        "right": 992.5875396728516,
+        "y": 18.200000762939453,
+        "bottom": 39.00000190734863,
+        "width": 65.17500305175781
+      },
+      "nav": {
+        "x": 150.8000030517578,
+        "right": 228.8000030517578,
+        "y": 0,
+        "bottom": 57.20000076293945,
+        "width": 78
+      },
+      "search": {
+        "x": 1212.5125732421875,
+        "right": 1592.5125732421875,
+        "y": 3.799999952316284,
+        "bottom": 39.400002241134644,
+        "width": 380
+      },
+      "hidden": false,
+      "url": "https://www.bilibili.com/video/BV1234567890?p=2",
+      "border": "solid",
+      "color": "color(srgb 0.411765 0.411765 0.45098 / 0.45)",
+      "theme": "light",
+      "traffic": false,
+      "width": 1920
+    }
+  ],
+  "progressUi": {
+    "text": "42% �� 2.0 MB/s �� Ԥ��ʣ�� 00:18",
+    "left": 157.1999969482422,
+    "buttonRight": 149.1999969482422,
+    "hidden": false
+  },
+  "metrics": [
+    {
+      "theme": "light",
+      "width": 240,
+      "items": [
+        {
+          "text": "1994.4��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 80.6500015258789,
+          "parentWidth": 124.4000015258789
+        },
+        {
+          "text": "1.2��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 53.70000076293945,
+          "parentWidth": 124.4000015258789
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 280,
+      "items": [
+        {
+          "text": "1994.4��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 80.6500015258789,
+          "parentWidth": 146.8000030517578
+        },
+        {
+          "text": "1.2��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 53.70000076293945,
+          "parentWidth": 146.8000030517578
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "items": [
+        {
+          "text": "1994.4��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 80.6500015258789,
+          "parentWidth": 169.1999969482422
+        },
+        {
+          "text": "1.2��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 53.70000076293945,
+          "parentWidth": 169.1999969482422
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 400,
+      "items": [
+        {
+          "text": "1994.4��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 80.6500015258789,
+          "parentWidth": 214
+        },
+        {
+          "text": "1.2��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 53.70000076293945,
+          "parentWidth": 214
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 240,
+      "items": [
+        {
+          "text": "1994.4��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 80.6500015258789,
+          "parentWidth": 124.4000015258789
+        },
+        {
+          "text": "1.2��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 53.70000076293945,
+          "parentWidth": 124.4000015258789
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 280,
+      "items": [
+        {
+          "text": "1994.4��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 80.6500015258789,
+          "parentWidth": 146.8000030517578
+        },
+        {
+          "text": "1.2��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 53.70000076293945,
+          "parentWidth": 146.8000030517578
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "items": [
+        {
+          "text": "1994.4��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 80.6500015258789,
+          "parentWidth": 169.1999969482422
+        },
+        {
+          "text": "1.2��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 53.70000076293945,
+          "parentWidth": 169.1999969482422
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 400,
+      "items": [
+        {
+          "text": "1994.4��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 80.6500015258789,
+          "parentWidth": 214
+        },
+        {
+          "text": "1.2��",
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "itemWidth": 53.70000076293945,
+          "parentWidth": 214
+        }
+      ]
+    }
+  ],
+  "pass": true
+}

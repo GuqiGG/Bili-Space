@@ -1,0 +1,132 @@
+
+> better-bili-space@0.1.17 test
+> node --test tests/*.test.cjs
+
+✔ Anime4K GPU path follows raw-frame interpolation and avoids CPU SR feedback (1.739ms)
+✔ volume boost accepts 200 percent and reuses the media graph (317.545ms)
+✔ an unresumed AudioContext does not hijack original audio (163.3374ms)
+✔ early dark surface and mini-player override exist (119.1769ms)
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:91:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1127:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:91:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1127:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:91:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1127:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:91:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1127:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:91:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1127:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+✔ explicit home, banner and right-side ad markers; no title-based false positive (307.7606ms)
+✔ native settings in lower left; Douyin font, channels, theme and progress options apply (164.6345ms)
+✔ enhancement choices live only in client settings (128.8333ms)
+✔ native PiP keeps a video-only DOM state and restores normal chrome (53.2314ms)
+✔ WebGPU unavailable fails visibly without hiding original video (40.7965ms)
+Error: Uncaught [ReferenceError: location is not defined]
+    at reportException (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\runtime-script-errors.js:66:24)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:169:9)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5 ReferenceError: location is not defined
+    at pageKind (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:91:14)
+    at MutationObserver.eval (eval at app (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\tests\enhance.test.cjs:12:4), <anonymous>:1127:8)
+    at MutationObserver.invokeTheCallbackFunction (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\generated\MutationCallback.js:19:26)
+    at notifyMutationObservers (C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:160:22)
+    at C:\Users\guqig\Documents\ChatGPT\Better-Bili-Space\node_modules\jsdom\lib\jsdom\living\helpers\mutation-observers.js:133:5
+✔ incremental ad card insertion is detected (137.997ms)
+✔ modified blocker hard-locks optional features and non-home routes (52.4487ms)
+✔ requested message SVG and square maximize glyph appear in the centered-title header (339.6473ms)
+✔ header settings individually hide all eight optional items without hiding window controls (230.1772ms)
+✔ video webpage has an independent homepage anchor, even with the top Home item disabled (74.2082ms)
+✔ homepage keeps the original seasonal banner and adds a second, independent centered brand (351.5316ms)
+✔ nested recommendation, live rail and following feed are layout-flattened without moving site nodes (423.3907ms)
+✔ category trigger replaces native Back and supports click, keyboard, Escape and existing settings (47.4351ms)
+✔ centered vector chevron and persisted category whitelist leave no hidden-link placeholders (347.2117ms)
+✔ proxy UI is explicit opt-in, never enables a public node on mount (133.081ms)
+✔ BTR persisted settings cannot re-enable the launcher but keep engine fields (92.9915ms)
+✔ short wheel inertia progresses, clamps and cancels; precision / reduced-motion remain native (149.5927ms)
+✔ video homepage uses filled television glyph (261.4703ms)
+✔ close overlay requests native completion and does not duplicate (211.1494ms)
+✔ startup motion has easing and reduced motion fallback (1.6364ms)
+✔ description link repair changes only known URL hostname; other emoji preserved (340.3771ms)
+✔ only sticker embedded in recognized Lanzou host is removed (137.3807ms)
+✔ late description text is linkified (437.6834ms)
+✔ general mixed domains cleaned, genuine IDNs and Unicode paths retained (28.7014ms)
+✔ general embedded image repaired, image after complete URL retained (28.9218ms)
+✔ search from video removes video overlay and uses search-only busy text (308.9808ms)
+✔ completed video ignores duplicate media starts (193.6253ms)
+✔ duplicate start during exit does not restart transition (301.249ms)
+✔ different episode starts one transaction; timestamps do not (66.5732ms)
+✔ chrome prepared early and content overlay starts below header (0.8965ms)
+✔ video header puts television Home before traffic lights (351.4905ms)
+✔ loading television enters and exits without cancelling native video clicks (180.2574ms)
+✔ built-in playback shortcut keys remain uncancelled (81.7173ms)
+✔ hidden nested cards do not retain a homepage grid slot (99.0187ms)
+✔ current Bili feed wrapper is a card, not an untracked layout box (51.5329ms)
+✔ player bar contains no experimental enhancement controls (267.912ms)
+✔ settings retain typed FI/SR choices and explicit experimental warning (202.3934ms)
+✔ settings panel remains resizable (104.2242ms)
+✔ old enabled experiments are reset once and enabling warns of flashing (60.8392ms)
+✔ promotion containing video markup stays hidden and is never converted to display contents (464.1411ms)
+✔ message dark theme covers the background, translucent sidebar RGB tokens and header reserve (163.0654ms)
+✔ category disclosure is click-only, replaces primary navigation and restores its saved visibility (943.9086ms)
+✔ native banner layers and handlers are preserved; center text does not intercept the pointer (36.2219ms)
+✔ homepage prefetch uses the existing loader and respects Save-Data instead of issuing duplicate API requests (29.4928ms)
+✔ layout-only changes wake a scroll-based site loader without scrolling the viewport; Save-Data disables the wake (1137.5989ms)
+✔ account card renders own real response fields and caches hover requests (395.4725ms)
+✔ unavailable account counts remain unknown rather than fake zero (129.7858ms)
+✔ header uses composite transitions and fixed aligned home anchor (1.6566ms)
+✔ video loader waits for renderable frames and retains an explicit escape hatch (1.0396ms)
+✔ video home enters left column, not a new implicit grid slot (271.7816ms)
+✔ responsive video page uses minmax tracks, single column breakpoint and contains video (1.1794ms)
+✔ Ctrl+W sends native close without browser default (330.1398ms)
+✔ close preference and SR rate persist as typed config (136.7284ms)
+✔ jittered inference arrival never rewinds source presentation or invents quarter phases (3.021ms)
+✔ future pair waits for presentation clock; queue bounded and reset starts clean (0.4482ms)
+✔ history/locale history and dynamic highlight their own navigation, never home (497.6923ms)
+✔ SPA route changes update selected nav and search query without wiping pending edits (87.0487ms)
+✔ login status renders API avatar; messages link is present; no text impersonating a profile (71.1339ms)
+✔ signed out retains a working login link (46.6053ms)
+✔ search keeps decoded keyword, hides only native duplicate input and shows cancellable loader (59.3383ms)
+✔ traffic lights use centered vector glyphs rather than baseline-aligned text characters (39.96ms)
+✔ history wrapper reserve is removed, player glow is absent and danmaku uses a dark surface (42.7855ms)
+ℹ tests 66
+ℹ suites 0
+ℹ pass 66
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3691.4594
