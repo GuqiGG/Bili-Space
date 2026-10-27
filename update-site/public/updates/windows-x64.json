@@ -2,19 +2,21 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.38",
+  "version": "0.1.39",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.38-win64.zip",
-  "sha256": "f73e6c20b922b7bd1e556493d81f0dad760e522e9f7d7f8c1c6526333acdadf2",
-  "size": 59037253,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.38/Bili-Space-0.1.38-Setup.exe",
-  "setupSha256": "2f5b6b42becedc5973c06aa3d808d4363e9c991caf80fdd2d2188e8941f9f6e5",
-  "setupSize": 50359538,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.39-win64.zip",
+  "sha256": "31c18b8d200f4f4b362b4207cbfa4152f132688d7cd297940726d5d5b9a8a8b8",
+  "size": 59041959,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.39/Bili-Space-0.1.39-Setup.exe",
+  "setupSha256": "9e54c478d42ecf95e3f65db69280db862f697a86bbe25c217cacf047972d63c6",
+  "setupSize": 50352691,
   "changelog": [
-    "软件内下载更新并校验 SHA256",
-    "点击安装并重启，无需手动解压替换",
-    "保留登录、设置和下载内容",
-    "更新站不可用时自动从 GitHub 检查更新"
+    "音视频任一轨道下载失败后立即停止另一轨道，避免长时间假死；保留已有目标文件并清理临时文件。",
+    "修复重新检查或重启客户端后，已下载并校验的更新包被忘记、必须重复下载。",
+    "视频仍在下载时不再直接退出并安装更新，避免丢失正在下载的任务。",
+    "修复较新的备用更新源覆盖网站强制更新要求的问题。",
+    "修复强制更新页面使用 data 文档时按钮消息被错误拦截，同时继续拒绝普通网页的消息。",
+    "修复搜索框第一次按上方向键选中倒数第二项，而不是最后一项。"
   ]
 }
