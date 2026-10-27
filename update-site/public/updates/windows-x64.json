@@ -2,20 +2,18 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.41",
+  "version": "0.1.42",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.41-win64.zip",
-  "sha256": "69f6e2d1681cf5e6528ab8ef03eaf83707327f49ea15634d294e55c30c830ef5",
-  "size": 59047099,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.41/Bili-Space-0.1.41-Setup.exe",
-  "setupSha256": "75b387a168f9f6d122ac2e6f756977c390ac7aff1c8b8857924a427550b9dc08",
-  "setupSize": 50356941,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.42-win64.zip",
+  "sha256": "67182417ffbd23716dc1be7ec732c2631a2799e4de92b342ba76f84e073ea700",
+  "size": 59050495,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.42/Bili-Space-0.1.42-Setup.exe",
+  "setupSha256": "6f75ee8c65904fc36cd62649b50a9b11fdebfc163baaf45c7ef18019643d6b39",
+  "setupSize": 50358013,
   "changelog": [
-    "启动检测到新版本时弹出更新提示，显示更新日志，支持下载、稍后和忽略此版本。",
-    "同一版本每次启动只提示一次，已忽略版本不再弹出；强制更新继续使用强制更新界面。",
-    "默认开启「声音平衡器」，动态压低过响片段并缓慢补偿偏小声音，减小不同视频的响度差。",
-    "静音、暂停和无声片段不自动放大，仍保留原生音量滑条和 200% 手动增益；可在播放设置中关闭。",
-    "保留上一版消息小红点、互动与私信数字提醒。"
+    "修复更新时旧进程已退出却被误判为不匹配，导致安装和重启中止。",
+    "更新器确认接管后客户端才退出；接管失败时保留客户端并显示原因。",
+    "使用文件身份核验进程路径，避免路径大小写造成误判；仍拒绝不相关的运行进程。"
   ]
 }
