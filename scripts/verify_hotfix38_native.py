@@ -24,6 +24,6 @@ try:
    fixed=(v['check']['required'] if mode=='force-stale' else v['rechecked'].get('ready',False) if mode=='resume' else '下载' in v['install']['message'] if mode=='busy-install' else v['accepted'] if mode=='gate-data' else not v['accepted'] if mode=='gate-foreign' else v['preserved'] and not v['busy'])
    row={'command':cmd,'stdout':p.stdout,'stderr':p.stderr,'exit':p.returncode,'fixed':fixed,'seconds':time.monotonic()-start}
   except subprocess.TimeoutExpired as e:row={'command':cmd,'stdout':str(e.stdout or ''),'stderr':str(e.stderr or ''),'event':'timeout; fixture process terminated','fixed':False,'seconds':time.monotonic()-start}
-  report[mode]=row;assert row['fixed']==(phase!='BASELINE' or mode=='gate-foreign'),(phase,mode,row);print(mode,'PASS' if row['fixed'] else 'REPRODUCED',flush=True)
+  report[mode]=row;assert row['fixed']==(phase=='MODIFIED' or mode=='gate-foreign'),(phase,mode,row);print(mode,'PASS' if row['fixed'] else 'REPRODUCED',flush=True)
 finally:srv.shutdown()
 (R/f'verification/hotfix38-{phase}-native.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8')
