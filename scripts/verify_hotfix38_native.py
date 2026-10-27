@@ -10,7 +10,7 @@ class Server(BaseHTTPRequestHandler):
   if self.path.endswith('windows-x64.json'):
    m={**base}
    if mode=='force-stale' and self.path.startswith('/updates/'):
-    m.update(version='0.1.42',force=True,downloadUrl='https://bili.gvqi.top/releases/Bili-Space-0.1.42-win64.zip');[m.pop(k) for k in ['setupUrl','setupSha256','setupSize']]
+    m.update(version='0.1.43',force=True,downloadUrl='https://bili.gvqi.top/releases/Bili-Space-0.1.43-win64.zip');[m.pop(k) for k in ['setupUrl','setupSha256','setupSize']]
    body=json.dumps(m).encode()
   else:body=payload
   self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)

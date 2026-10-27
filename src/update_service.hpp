@@ -36,7 +36,7 @@ struct UpdateHttp{
     ~UpdateHttp(){if(request)WinHttpCloseHandle(request);if(connection)WinHttpCloseHandle(connection);if(session)WinHttpCloseHandle(session);}
     void open(const std::string& url){
         const std::string manifest="https://bili.gvqi.top/updates/windows-x64.json";if(url!=manifest&&url!="https://raw.githubusercontent.com/GuqiGG/Bili-Space/master/update-site/public/updates/windows-x64.json"&&!trustedUpdatePackage(url)&&!std::regex_match(url,std::regex(R"(https://github\.com/GuqiGG/Bili-Space/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/Bili-Space-[0-9]+\.[0-9]+\.[0-9]+-Setup\.exe)")))throw std::runtime_error("更新地址不可信");
-        session=WinHttpOpen(L"Bili-Space/0.1.41",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);if(!session)throw std::runtime_error("更新网络初始化失败");WinHttpSetTimeouts(session,5000,5000,15000,15000);
+        session=WinHttpOpen(L"Bili-Space/0.1.42",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);if(!session)throw std::runtime_error("更新网络初始化失败");WinHttpSetTimeouts(session,5000,5000,15000,15000);
         std::wstring next=wide(url);
         for(int hop=0;hop<6;hop++){
             URL_COMPONENTS u{};u.dwStructSize=sizeof(u);u.dwHostNameLength=DWORD(-1);u.dwUrlPathLength=DWORD(-1);u.dwExtraInfoLength=DWORD(-1);u.dwUserNameLength=DWORD(-1);u.dwPasswordLength=DWORD(-1);

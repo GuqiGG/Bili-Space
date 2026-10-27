@@ -34,8 +34,17 @@ int runUpdateWorker(PWSTR command){
         job=json::parse(read(jobPath));updateValidateJob(job,jobPath);install=wide(job.at("installDir").get<std::string>());
         HANDLE parent=OpenProcess(SYNCHRONIZE|PROCESS_QUERY_LIMITED_INFORMATION,FALSE,job.at("parentPid").get<DWORD>());
         if(!parent&&GetLastError()!=ERROR_INVALID_PARAMETER)throw std::runtime_error("无法确认客户端退出状态");
-        if(parent){wchar_t parentName[32768];DWORD size=32768;bool matches=QueryFullProcessImageNameW(parent,0,parentName,&size)&&fs::weakly_canonical(parentName)==fs::weakly_canonical(install/L"Bili-Space.exe");
+        if(parent){wchar_t parentName[32768];DWORD size=32768;std::error_code pathError;
+            // A terminated process can retain its PID/handle but no longer expose its image name.
+            bool matches=WaitForSingleObject(parent,0)==WAIT_OBJECT_0||
+                (QueryFullProcessImageNameW(parent,0,parentName,&size)&&fs::equivalent(parentName,install/L"Bili-Space.exe",pathError))||
+                WaitForSingleObject(parent,0)==WAIT_OBJECT_0;
             if(!matches){CloseHandle(parent);throw std::runtime_error("更新父进程不匹配");}
+            if(job.contains("readyEvent")){
+                auto ready=OpenEventW(EVENT_MODIFY_STATE,FALSE,wide(job.at("readyEvent").get<std::string>()).c_str());
+                if(!ready){CloseHandle(parent);throw std::runtime_error("无法确认更新器就绪");}
+                bool signaled=SetEvent(ready);CloseHandle(ready);if(!signaled){CloseHandle(parent);throw std::runtime_error("无法通知更新器就绪");}
+            }
             const auto wait=WaitForSingleObject(parent,60000);CloseHandle(parent);if(wait!=WAIT_OBJECT_0)throw std::runtime_error("客户端未退出，已取消安装");
         }
         // The running executable must be released before Inno Setup touches any application file.
@@ -61,10 +70,20 @@ void startUpdateInstall(){
         const auto state=validateUpdate(updateState,appVersion);
         auto jobPath=dataPath/L"updates/install-job.json";
         json job={{"parentPid",GetCurrentProcessId()},{"installDir",utf8(root.wstring())},{"package",utf8(readyUpdatePackage.wstring())},{"version",state.at("version")},{"sha256",state.at("setupSha256")},{"size",state.at("setupSize")}};
-        updateValidateJob(job,jobPath);saveUpdateJson(jobPath,job);
+        auto readyName=L"Local\\BiliSpaceUpdateReady-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64());
+        HANDLE ready=CreateEventW(nullptr,TRUE,FALSE,readyName.c_str());if(!ready)throw std::runtime_error("无法创建更新确认事件");
+        auto closeReady=[&](void* h){CloseHandle(static_cast<HANDLE>(h));};std::unique_ptr<void,decltype(closeReady)> readyGuard(ready,closeReady);
+        job["readyEvent"]=utf8(readyName);updateValidateJob(job,jobPath);saveUpdateJson(jobPath,job);
         auto worker=dataPath/L"updates/Bili-Space-update-worker.exe";
         fs::copy_file(root/L"Bili-Space.exe",worker,fs::copy_options::overwrite_existing);
-        auto child=updateLaunch(worker,L"--apply-update "+updateQuote(jobPath.wstring()));CloseHandle(child.hThread);CloseHandle(child.hProcess);
+        fs::remove(jobPath.parent_path()/L"install-result.json");
+        auto child=updateLaunch(worker,L"--apply-update "+updateQuote(jobPath.wstring()));CloseHandle(child.hThread);
+        HANDLE confirmation[]={ready,child.hProcess};auto confirmed=WaitForMultipleObjects(2,confirmation,FALSE,10000);CloseHandle(child.hProcess);
+        if(confirmed!=WAIT_OBJECT_0){
+            std::string error="更新器未就绪，客户端保持打开，请重试。";
+            if(confirmed==WAIT_OBJECT_0+1)try{error=json::parse(read(jobPath.parent_path()/L"install-result.json")).value("message",error);}catch(...){}
+            throw std::runtime_error(error);
+        }
         updateBusy=true;updateState["busy"]=true;updateState["message"]="正在安装更新…";pushUpdateState();
         execute("document.querySelectorAll('video,audio').forEach(v=>v.pause())");
         // Bypass the tray/close animation only for an explicitly requested update install.
