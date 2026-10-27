@@ -2,21 +2,20 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.39",
+  "version": "0.1.40",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.39-win64.zip",
-  "sha256": "31c18b8d200f4f4b362b4207cbfa4152f132688d7cd297940726d5d5b9a8a8b8",
-  "size": 59041959,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.39/Bili-Space-0.1.39-Setup.exe",
-  "setupSha256": "9e54c478d42ecf95e3f65db69280db862f697a86bbe25c217cacf047972d63c6",
-  "setupSize": 50352691,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.40-win64.zip",
+  "sha256": "7f56db5e3a59a595176361f031257f7c616f755666138865ff5f21b36a64dfe2",
+  "size": 59043778,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.40/Bili-Space-0.1.40-Setup.exe",
+  "setupSha256": "709ebddcbce6e4c4e68344002112646959f01c50a89c919fb92773dfd73c429a",
+  "setupSize": 50370101,
   "changelog": [
-    "音视频任一轨道下载失败后立即停止另一轨道，避免长时间假死；保留已有目标文件并清理临时文件。",
-    "修复重新检查或重启客户端后，已下载并校验的更新包被忘记、必须重复下载。",
-    "视频仍在下载时不再直接退出并安装更新，避免丢失正在下载的任务。",
-    "修复较新的备用更新源覆盖网站强制更新要求的问题。",
-    "修复强制更新页面使用 data 文档时按钮消息被错误拦截，同时继续拒绝普通网页的消息。",
-    "修复搜索框第一次按上方向键选中倒数第二项，而不是最后一项。"
+    "消息按钮新增未读提醒：仅系统消息显示小红点，互动与私信显示红色数字徽标。",
+    "数字超过 99 显示 99+，悬停及无障碍描述保留实际数量；系统与互动同时存在时优先显示数字。",
+    "使用 B 站官方只读未读接口，不在客户端自行标记消息已读；确认读完、退出登录后自动清除。",
+    "进入前台、返回托盘及消息页交互后刷新，前台每分钟同步；后台、托盘或关闭消息按钮时暂停轮询。",
+    "请求失败保留最后确认的状态，切换账号时取消旧请求并清除旧账号提醒。"
   ]
 }
