@@ -2,20 +2,20 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.40",
+  "version": "0.1.41",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.40-win64.zip",
-  "sha256": "7f56db5e3a59a595176361f031257f7c616f755666138865ff5f21b36a64dfe2",
-  "size": 59043778,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.40/Bili-Space-0.1.40-Setup.exe",
-  "setupSha256": "709ebddcbce6e4c4e68344002112646959f01c50a89c919fb92773dfd73c429a",
-  "setupSize": 50370101,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.41-win64.zip",
+  "sha256": "69f6e2d1681cf5e6528ab8ef03eaf83707327f49ea15634d294e55c30c830ef5",
+  "size": 59047099,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.41/Bili-Space-0.1.41-Setup.exe",
+  "setupSha256": "75b387a168f9f6d122ac2e6f756977c390ac7aff1c8b8857924a427550b9dc08",
+  "setupSize": 50356941,
   "changelog": [
-    "消息按钮新增未读提醒：仅系统消息显示小红点，互动与私信显示红色数字徽标。",
-    "数字超过 99 显示 99+，悬停及无障碍描述保留实际数量；系统与互动同时存在时优先显示数字。",
-    "使用 B 站官方只读未读接口，不在客户端自行标记消息已读；确认读完、退出登录后自动清除。",
-    "进入前台、返回托盘及消息页交互后刷新，前台每分钟同步；后台、托盘或关闭消息按钮时暂停轮询。",
-    "请求失败保留最后确认的状态，切换账号时取消旧请求并清除旧账号提醒。"
+    "启动检测到新版本时弹出更新提示，显示更新日志，支持下载、稍后和忽略此版本。",
+    "同一版本每次启动只提示一次，已忽略版本不再弹出；强制更新继续使用强制更新界面。",
+    "默认开启「声音平衡器」，动态压低过响片段并缓慢补偿偏小声音，减小不同视频的响度差。",
+    "静音、暂停和无声片段不自动放大，仍保留原生音量滑条和 200% 手动增益；可在播放设置中关闭。",
+    "保留上一版消息小红点、互动与私信数字提醒。"
   ]
 }
