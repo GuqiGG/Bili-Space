@@ -21,7 +21,7 @@ for(const key of ['BTR_Userscript.sync','BTR_Userscript.local']){
 }
 gmValues.sync=withoutFloatingLauncher(gmValues.sync);
 const unsafeWindow = window;
-const GM_info = {scriptHandler:'Bili-Space',version:'0.1.40',injectInto:'page'};
+const GM_info = {scriptHandler:'Bili-Space',version:'0.1.41',injectInto:'page'};
 const GM = {
   getValue: async (key, fallback) => gmValues[key] ?? fallback,
   setValue: async (key, value) => { if(key==='sync')value=withoutFloatingLauncher(value);gmValues[key]=value; native('gm-set',{key,value}); }
@@ -48,7 +48,7 @@ for(const type of ['keydown','keypress','keyup'])window.addEventListener(type,ev
 
 // Native editors retain their own key handlers. Only outer player/global hotkeys are gated.
 const keyboardAdd=EventTarget.prototype.addEventListener,keyboardRemove=EventTarget.prototype.removeEventListener,keyboardWrappers=new WeakMap();
-function typingInPage(event){return event.composedPath().some(el=>el?.matches?.('input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea,select,[contenteditable]:not([contenteditable=false]),[role=textbox],bili-comment-textarea,bili-comment-reply-renderer,[data-bs-volume-slider]'));}
+function typingInPage(event){return event.composedPath().some(el=>el?.matches?.('input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea,select,[contenteditable]:not([contenteditable=false]),[role=textbox],bili-comment-textarea,bili-comment-reply-renderer,[data-bs-volume-slider],[role=dialog],[role=alertdialog]'));}
 function shouldWrapKeyboard(target,type){return ['keydown','keypress','keyup'].includes(type)&&(target===window||target===document||target?.matches?.('#bilibili-player,.bpx-player-container,.bilibili-player,.bpx-player-video-wrap'));}
 EventTarget.prototype.addEventListener=function(type,listener,options){
   if(!listener||!['function','object'].includes(typeof listener)||!shouldWrapKeyboard(this,type))return keyboardAdd.call(this,type,listener,options);

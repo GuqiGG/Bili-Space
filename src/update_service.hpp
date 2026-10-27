@@ -4,6 +4,7 @@ constexpr UINT updateReplyMessage=WM_APP+82;
 bool updateRequired=false,updateChecked=false,updateBusy=false,updateGateShown=false,updateGateNavigationPending=false;
 json updateState={{"status","idle"},{"message","尚未检查更新"}};
 std::string ignoredUpdateVersion;
+std::string updateNoticeShownVersion;
 fs::path readyUpdatePackage;
 bool updateGateOrigin(const std::wstring& uri){return updateGateShown&&(uri==L"about:blank"||uri.rfind(L"data:text/html;charset=utf-8;base64,",0)==0);}
 std::string updateFileHash(const fs::path& file);
@@ -15,7 +16,8 @@ void updateLog(const std::string& message){
     try{fs::create_directories(dataPath/L"updates");SYSTEMTIME t{};GetSystemTime(&t);char stamp[32];snprintf(stamp,sizeof(stamp),"%04d-%02d-%02dT%02d:%02d:%02dZ",t.wYear,t.wMonth,t.wDay,t.wHour,t.wMinute,t.wSecond);std::ofstream(dataPath/L"updates/update.log",std::ios::app|std::ios::binary)<<stamp<<" "<<message<<'\n';}catch(...){}
 }
 void saveUpdateJson(const fs::path& file,const json& value){auto tmp=file;tmp+=L".tmp";{std::ofstream f(tmp,std::ios::binary);f<<value.dump(2);if(!f)throw std::runtime_error("无法保存更新状态");}if(!MoveFileExW(tmp.c_str(),file.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("无法写入更新状态");}
-void pushUpdateState(){execute("window.BiliSpace?.acceptUpdateStatus("+updateState.dump()+");window.renderUpdate?.("+updateState.dump()+")");}
+json updatePayload(){auto payload=updateState;payload["prompt"]=payload.value("available",false)&&!payload.value("required",false)&&!payload.value("ignored",false)&&payload.value("version",std::string{})!=updateNoticeShownVersion;return payload;}
+void pushUpdateState(){const auto payload=updatePayload();execute("window.BiliSpace?.acceptUpdateStatus("+payload.dump()+");window.renderUpdate?.("+payload.dump()+")");}
 void showRequiredUpdate(){
     if(!webview||updateGateShown)return;updateGateShown=true;startupTarget.clear();KillTimer(windowHandle,73);cancelDownload();execute("document.querySelectorAll('video,audio').forEach(v=>v.pause())");
     auto html=read(root/L"assets/update-required.html"),payload=updateState.dump();size_t pos=0;while((pos=payload.find('<',pos))!=std::string::npos){payload.replace(pos,1,"\\u003c");pos+=6;}
@@ -34,7 +36,7 @@ struct UpdateHttp{
     ~UpdateHttp(){if(request)WinHttpCloseHandle(request);if(connection)WinHttpCloseHandle(connection);if(session)WinHttpCloseHandle(session);}
     void open(const std::string& url){
         const std::string manifest="https://bili.gvqi.top/updates/windows-x64.json";if(url!=manifest&&url!="https://raw.githubusercontent.com/GuqiGG/Bili-Space/master/update-site/public/updates/windows-x64.json"&&!trustedUpdatePackage(url)&&!std::regex_match(url,std::regex(R"(https://github\.com/GuqiGG/Bili-Space/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/Bili-Space-[0-9]+\.[0-9]+\.[0-9]+-Setup\.exe)")))throw std::runtime_error("更新地址不可信");
-        session=WinHttpOpen(L"Bili-Space/0.1.40",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);if(!session)throw std::runtime_error("更新网络初始化失败");WinHttpSetTimeouts(session,5000,5000,15000,15000);
+        session=WinHttpOpen(L"Bili-Space/0.1.41",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);if(!session)throw std::runtime_error("更新网络初始化失败");WinHttpSetTimeouts(session,5000,5000,15000,15000);
         std::wstring next=wide(url);
         for(int hop=0;hop<6;hop++){
             URL_COMPONENTS u{};u.dwStructSize=sizeof(u);u.dwHostNameLength=DWORD(-1);u.dwUrlPathLength=DWORD(-1);u.dwExtraInfoLength=DWORD(-1);u.dwUserNameLength=DWORD(-1);u.dwPasswordLength=DWORD(-1);
@@ -111,12 +113,13 @@ void acceptUpdate(const json& reply){
     pushUpdateState();
 }
 #include "update_install.hpp"
-void updateAction(const std::string& action){
+void updateAction(const std::string& action,const std::string& version={}){
     if(action=="status"){
         if(!updateChecked)try{auto result=json::parse(read(dataPath/L"updates/install-result.json"));if(!result.value("success",false))updateState["message"]="上次更新未完成："+result.value("message",std::string{});}catch(...){}
         pushUpdateState();if(!updateChecked&&!testing)startUpdateCheck();
     }
     else if(action=="check")startUpdateCheck();
+    else if(action=="notice-shown"&&version==updateState.value("version",std::string{}))updateNoticeShownVersion=version;
     else if(action=="download")startUpdateDownload();
     else if(action=="ignore"&&!updateRequired&&!updateBusy&&updateState.value("available",false)){ignoredUpdateVersion=updateState.at("version").get<std::string>();try{saveUpdateJson(dataPath/L"updates/preferences.json",{{"ignoredVersion",ignoredUpdateVersion}});updateState["ignored"]=true;updateState["message"]="已忽略此版本，后续新版本仍会提醒";updateLog("ignored "+ignoredUpdateVersion);}catch(...){updateState["message"]="保存忽略设置失败";}pushUpdateState();}
     else if(action=="install")startUpdateInstall();

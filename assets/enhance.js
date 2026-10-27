@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:true,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:true,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* PiP-only renderer. Protocol fields are independently parsed; no third-party parser code. */
 function parsePipDanmaku(buffer){
@@ -866,6 +866,7 @@ input[type=range]{width:130px;accent-color:var(--accent)}.range{display:flex;ali
 @media(max-width:620px){.scrim{padding:12px}.dialog{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);height:calc(100vh - 24px);width:100%;min-height:0}.dialog aside{padding:10px;min-height:0}.dialog aside h1,.dialog aside .eyebrow,.dialog .aside-footer{display:none}.dialog .tabs{display:flex;overflow:auto;gap:4px}.dialog .tabs button{width:auto;white-space:nowrap;padding:10px;font-size:12px}.dialog main{padding:24px 18px}.dialog #dismiss{right:8px;top:4px;width:22px;height:22px}.chip-grid{grid-template-columns:repeat(2,minmax(0,1fr))}header{column-gap:8px;padding:0 12px}.header-left,.header-right{gap:8px}.lights{gap:6px}nav{gap:10px}nav a{font-size:12px}.search{min-width:70px}.account{max-width:38px;overflow:hidden;font-size:10px}}
 .dialog[data-compact=true]{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}.dialog[data-compact=true] aside{padding:10px;min-height:0}.dialog[data-compact=true] aside h1,.dialog[data-compact=true] aside .eyebrow,.dialog[data-compact=true] .aside-footer{display:none}.dialog[data-compact=true] .tabs{display:flex;overflow:auto;gap:4px}.dialog[data-compact=true] .tabs button{width:auto;white-space:nowrap;padding:10px;font-size:12px}.dialog[data-compact=true] main{padding:24px 18px}.dialog[data-compact=true] .chip-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-height:480px){.scrim{padding:12px}.dialog{height:calc(100vh - 24px);min-height:0}.dialog aside{padding:12px}.dialog .aside-footer,.dialog aside h1,.dialog aside .eyebrow{display:none}.dialog main{padding:24px 18px}}
+.update-notice-layer{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.24);pointer-events:auto}.update-notice{width:min(460px,100%);padding:28px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--ink);box-shadow:0 24px 70px #0003}.update-notice h2{font-size:21px;margin:0 0 16px}.update-notice ul{padding-left:20px;max-height:220px;overflow:auto;font-size:13px;line-height:1.8;color:var(--muted)}.update-notice .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap}.update-primary{border:0;border-radius:8px;background:var(--accent);color:white;padding:9px 16px;font-size:13px}.update-notice .link{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:transparent}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 `;
 
@@ -913,6 +914,21 @@ const tabs={categories:['分区选择','progress'],network:['客户端代理','p
 const toggle=(key,title,hint)=>`<div class="row"><label for="pref-${key}">${title}${hint?`<span class="hint">${hint}</span>`:''}</label><input id="pref-${key}" data-pref="${key}" type="checkbox" ${PREFS[key]?'checked':''}></div>`;
 const range=(key,title,min,max,unit)=>`<div class="row"><label for="pref-${key}">${title}</label><div class="range"><input id="pref-${key}" type="range" data-pref="${key}" min="${min}" max="${max}" value="${PREFS[key]}"><output>${PREFS[key]}${unit}</output></div></div>`;
 let clientUpdate={status:'idle',message:'尚未检查更新'};
+let updateNoticeVersion='';
+function showUpdateNotice(value){
+  if(!shadow||!value.prompt||!value.available||value.ignored||value.required||value.version===updateNoticeVersion||$('#update-notice',shadow))return;
+  updateNoticeVersion=value.version;const previous=shadow.activeElement,layer=document.createElement('div');layer.className='update-notice-layer';layer.id='update-notice';
+  const dialog=document.createElement('section');dialog.className='update-notice';dialog.setAttribute('role','alertdialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','update-notice-title');
+  const title=document.createElement('h2');title.id='update-notice-title';title.textContent='发现新版本 '+String(value.version||'');
+  const notes=document.createElement('ul');for(const line of value.changelog||[]){const li=document.createElement('li');li.textContent=String(line);notes.append(li);}
+  const actions=document.createElement('div');actions.className='actions';const close=()=>{layer.remove();previous?.focus?.();};
+  const action=(label,kind,run)=>{const b=document.createElement('button');b.type='button';b.className=kind;b.textContent=label;b.onclick=run;actions.append(b);return b;};
+  action('稍后','link',close);action('忽略此版本','link',()=>{native('updates',{action:'ignore'});close();});
+  const primary=action(value.ready?'安装并重启':'下载更新','update-primary',()=>{close();currentTab='about';openSettings();native('updates',{action:value.ready?'install':'download'});});
+  dialog.append(title,notes,actions);layer.append(dialog);shadow.append(layer);primary.focus();
+  layer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}else if(e.key==='Tab'){const buttons=$$('button',layer),i=buttons.indexOf(shadow.activeElement),next=(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length;e.preventDefault();buttons[next].focus();}});
+  native('updates',{action:'notice-shown',version:value.version});
+}
 function renderUpdatePanel(){
   if(!shadow)return;const line=$('#client-update-status',shadow);if(!line)return;
   $('#app-version',shadow).textContent=APP_META.version;$('#app-author',shadow).textContent=APP_META.author;
@@ -924,7 +940,7 @@ function renderUpdatePanel(){
   $('[data-update=install]',shadow).hidden=!clientUpdate.ready;
 }
 function acceptUpdateStatus(value){
-  clientUpdate={...value};renderUpdatePanel();
+  clientUpdate={...value};renderUpdatePanel();showUpdateNotice(value);
   const trigger=$('#settings-trigger',shadow);if(trigger){trigger.dataset.updateAvailable=String(!!value.available&&!value.ignored);trigger.title=value.available&&!value.ignored?'发现新版本 · 客户端设置':'客户端设置 · Ctrl+,';}
 }
 function tabContent(){
@@ -942,7 +958,7 @@ function tabContent(){
   if(currentTab==='appearance')return `<h2>个性化</h2>${toggle('trafficLights','使用红绿灯窗口按钮','')}${toggle('showClock','显示时间','Logo 左侧')}${toggle('pipDanmaku','画中画弹幕','')}${range('pipDanmakuMinWidth','弹幕显示最小宽度',320,1200,'px')}<div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W</label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="row"><label for="pref-videoLoadingMode">加载动画结束时机</label><select id="pref-videoLoadingMode" data-pref="videoLoadingMode"><option value="page">页面就绪</option><option value="video">视频画面就绪</option></select></div>${toggle('clipboardAutoOpen','剪贴板 BV 自动跳转','读取新复制的 BV 号或视频链接')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色</label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','需安装 DouyinSans')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">数值越小，界面越大</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div>`;
   if(currentTab==='progress')return `<h2>进度条</h2><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','')}${toggle('progressAlways','始终显示播放控制条','')}`;
   if(currentTab==='clean')return `<h2>页面净化</h2>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('showChannels','显示首页频道分区','')}<div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
-  if(currentTab==='play')return `<h2>播放</h2><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">Anime4K · WebGPU</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">调度上限，不增加源帧数</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-fiFlowScale">光流规模</label><select id="pref-fiFlowScale" data-pref="fiFlowScale"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`;
+  if(currentTab==='play')return `<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">Anime4K · WebGPU</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">调度上限，不增加源帧数</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-fiFlowScale">光流规模</label><select id="pref-fiFlowScale" data-pref="fiFlowScale"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`;
   return `<h2>扩展</h2>${toggle('btr','Bilibili 线程撕裂者','更改后刷新页面')}<div class="actions"><button id="btr-settings" class="link">打开线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器 / DOWNLOAD</div>${toggle('downloader','视频页显示下载按钮','')}<div class="note">支持 AVC / AAC 单视频下载；暂不支持批量、多段与番剧。</div>`;
 }
 function renderSettings(){
@@ -1406,27 +1422,59 @@ function installPlayerInteractions(){
   for(const type of ['mousedown','click','dblclick'])document.addEventListener(type,e=>{if(e.target.closest?.('.bpx-player-ctrl-volume-progress')){e.preventDefault();e.stopImmediatePropagation();}},true);
   document.addEventListener('wheel',e=>{if(!e.target.closest?.('.bpx-player-ctrl-volume-progress')||e.ctrlKey||!e.deltaY)return;e.preventDefault();e.stopImmediatePropagation();setPlayerVolume(playerVolumePercent()+(e.deltaY<0?5:-5),true);showPlayerVolumeHint();},{capture:true,passive:false});
 }
-let audioContext,audioVideo;const audioGraphs=new WeakMap(),audioStarting=new WeakSet();
+let audioContext,audioVideo,soundBalanceTimer,soundBalanceOwner;const audioGraphs=new WeakMap(),audioStarting=new WeakSet();
+function stopSoundBalance(){clearInterval(soundBalanceTimer);soundBalanceTimer=null;soundBalanceOwner=null;}
+function soundBalanceStep(rms,db,seconds){
+  if(!Number.isFinite(rms)||rms<.003)return db;
+  const target=Math.max(-15,Math.min(12,20*Math.log10(.08/rms))),dt=Math.max(0,Math.min(.25,seconds));
+  return db+(target-db)*(1-Math.exp(-dt/(target<db ? .18 : 1.8)));
+}
+function audioParamValue(param,value,time=.12){if(param.setTargetAtTime){param.cancelScheduledValues(audioContext.currentTime);param.setTargetAtTime(value,audioContext.currentTime,time);}else param.value=value;}
+function configureSoundBalance(video,graph){
+  const enabled=!!PREFS.soundBalance&&!!graph.level;
+  if(!graph.level){video.dataset.bsBalance=PREFS.soundBalance?'unavailable':'off';return;}
+  if(!enabled){stopSoundBalance();audioParamValue(graph.level.gain,1);audioParamValue(graph.compressor.ratio,1);audioParamValue(graph.compressor.threshold,0);graph.balanceEnabled=false;video.dataset.bsBalance='off';return;}
+  if(!graph.balanceEnabled){audioParamValue(graph.compressor.threshold,-16);audioParamValue(graph.compressor.knee,8);audioParamValue(graph.compressor.ratio,4);audioParamValue(graph.compressor.attack,.003);audioParamValue(graph.compressor.release,.25);graph.balanceEnabled=true;}
+  video.dataset.bsBalance='active';
+  if(video.paused||video.ended){if(soundBalanceOwner===graph)stopSoundBalance();return;}
+  if(soundBalanceTimer&&soundBalanceOwner===graph)return;
+  stopSoundBalance();soundBalanceOwner=graph;graph.balanceLast=performance.now();
+  soundBalanceTimer=setInterval(()=>{
+    const now=performance.now(),dt=(now-graph.balanceLast)/1000;graph.balanceLast=now;
+    if(!PREFS.soundBalance||video!==playbackVideo()||!video.isConnected||video.paused||video.muted||video.seeking||video.volume<.01||video.readyState<2||document.hidden)return;
+    graph.analyser.getFloatTimeDomainData(graph.samples);let sum=0;for(const sample of graph.samples)sum+=sample*sample;
+    // Measure before automatic/manual gain and compensate the media element volume, not the user's volume choice.
+    const rms=Math.sqrt(sum/graph.samples.length)/Math.max(.01,video.volume);graph.balanceDb=soundBalanceStep(rms,graph.balanceDb,dt);audioParamValue(graph.level.gain,10**(graph.balanceDb/20),.12);
+  },100);
+}
 function applyAudioBoost(){
-  const video=playbackVideo();if(!video)return;
+  const video=playbackVideo();if(!video){stopSoundBalance();return;}
   if(!volumeWatched.has(video)){volumeWatched.add(video);volumeObserved.set(video,video.volume);video.addEventListener('volumechange',()=>{const expected=volumeIntents.get(video),previous=volumeObserved.get(video),changed=Math.abs(video.volume-previous)>.001;volumeObserved.set(video,video.volume);if(changed&&(expected===undefined||Math.abs(video.volume-expected)>.001)&&Number(PREFS.volumeBoost)>100){volumeIntents.delete(video);PREFS.volumeBoost=100;const graph=audioGraphs.get(video);if(graph)graph.gain.gain.value=1;native('config',{value:{volumeBoost:100},revision:++revision});}syncNativeVolume();});}syncNativeVolume();
   const amount=Math.max(1,Math.min(2,Number(PREFS.volumeBoost||100)/100));
-  if(audioVideo&&audioVideo!==video){const old=audioGraphs.get(audioVideo);if(old)old.gain.gain.value=1;}audioVideo=video;
-  let graph=audioGraphs.get(video);if(!graph&&amount<=1)return;
+  if(audioVideo&&audioVideo!==video){const old=audioGraphs.get(audioVideo);if(old){old.gain.gain.value=1;if(old.level)audioParamValue(old.level.gain,1);}stopSoundBalance();}audioVideo=video;
+  let graph=audioGraphs.get(video);if(!graph&&amount<=1&&!PREFS.soundBalance)return;
+  if(!graph&&amount<=1&&!video.currentSrc&&!video.src&&!video.srcObject)return;
   if(!graph){
     try{
       const src=video.currentSrc||video.src;
-      if(src&&!src.startsWith('blob:')&&!video.crossOrigin&&new URL(src,location.href).origin!==location.origin){video.dataset.bsAudio='unsupported-cors';return;}
-      const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
+      if(src&&!src.startsWith('blob:')&&!video.crossOrigin&&new URL(src,location.href).origin!==location.origin){video.dataset.bsAudio='unsupported-cors';video.dataset.bsBalance='unsupported-cors';return;}
+      const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio){video.dataset.bsBalance='unavailable';return;}
       audioContext=audioContext||new Audio();
       if(audioContext.state!=='running'){
         video.dataset.bsAudio='pending-gesture';if(!audioStarting.has(video)){audioStarting.add(video);audioContext.resume().then(()=>{audioStarting.delete(video);if(audioContext.state==='running')applyAudioBoost();}).catch(()=>audioStarting.delete(video));}return;
       }
-      const source=audioContext.createMediaElementSource(video),gain=audioContext.createGain();source.connect(gain);gain.connect(audioContext.destination);graph={source,gain};audioGraphs.set(video,graph);
-      video.addEventListener('play',()=>audioContext?.resume().catch(()=>{}));
+      let level,analyser,compressor;
+      if(audioContext.createAnalyser&&audioContext.createDynamicsCompressor){analyser=audioContext.createAnalyser();analyser.fftSize=2048;level=audioContext.createGain();level.gain.value=10**(-4/20);compressor=audioContext.createDynamicsCompressor();}
+      const gain=audioContext.createGain(),source=audioContext.createMediaElementSource(video);
+      if(level){source.connect(analyser);analyser.connect(level);level.connect(gain);gain.connect(compressor);compressor.connect(audioContext.destination);}else{source.connect(gain);gain.connect(audioContext.destination);}
+      graph={source,gain,level,analyser,compressor,balanceDb:-4,samples:new Float32Array(2048)};audioGraphs.set(video,graph);
+      video.addEventListener('play',()=>{audioContext?.resume().catch(()=>{});applyAudioBoost();});
+      video.addEventListener('pause',()=>{if(audioVideo===video)stopSoundBalance();});
+      for(const type of ['emptied','loadstart'])video.addEventListener(type,()=>{graph.balanceDb=-4;if(graph.level)audioParamValue(graph.level.gain,PREFS.soundBalance?10**(-4/20):1,.03);});
     }catch(e){diagnostic('音量增益不可用，保留原声：'+e.message);return;}
   }
-  graph.gain.gain.value=amount;video.dataset.bsAudio='gain-'+Math.round(amount*100);audioContext.resume().catch(()=>{});
+  graph.gain.gain.value=amount;video.dataset.bsAudio='gain-'+Math.round(amount*100);configureSoundBalance(video,graph);audioContext.resume().catch(()=>{});
+  const line=shadow&&$('#sound-balance-status',shadow);if(line)line.textContent=PREFS.soundBalance&&video.dataset.bsBalance!=='active'?'此视频暂不支持声音平衡':'';
 }
 
 function pauseForTray(){playbackSuspended=true;$$('video,audio').forEach(media=>media.pause());if(shadow)$$('video',shadow).forEach(media=>media.pause());finishVideoLoading();recordVideoLoading('tray-paused');}
@@ -1467,7 +1515,7 @@ function boot(){
     if(records.some(r=>(r.type==='attributes'&&r.target.closest?.('.bili-feed4-layout')&&r.target.matches?.('.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card'))||((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.('#bili-space-root,.bs-player-tool,.bs-gpu-canvas')))){if(pageKind()==='home')compactHomeFeed();scheduleScan();}
   });observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','style']});
   mediaTheme.addEventListener('change',applyPreferences);
-  document.addEventListener('pointerdown',applyAudioBoost,{passive:true});document.addEventListener('keydown',applyAudioBoost);
+  document.addEventListener('pointerdown',applyAudioBoost,{passive:true});document.addEventListener('keydown',applyAudioBoost);document.addEventListener('loadedmetadata',applyAudioBoost,true);window.addEventListener('pagehide',stopSoundBalance);window.addEventListener('pageshow',applyAudioBoost);
   const controls=document.createElement('div');controls.className='bs-pip-controls';controls.innerHTML='<button type="button" aria-label="返回客户端" title="返回客户端"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M14 3h7v18H3v-7"/></svg></button><button class="bs-pip-play" type="button" data-paused="true" aria-label="播放" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pip-play-glyph" d="M8 5l11 7-11 7z"/><g class="pip-pause-glyph"><path d="M7 5v14M17 5v14"/></g></svg></button>';
   document.body.append(controls);$('button',controls).onclick=()=>native('window',{action:'pip'});$('.bs-pip-play',controls).onclick=()=>{const v=playbackVideo();if(v){if(v.paused)v.play().catch(()=>{});else v.pause();}syncPipPlayback();};
   for(const type of ['play','pause','ended','emptied'])document.addEventListener(type,()=>{syncPipPlayback();if(pipDanmaku.timer)pipDanmaku.tick();},true);document.addEventListener('loadedmetadata',()=>{if(pipActive)syncPipPresentation();},true);
@@ -1509,7 +1557,7 @@ function boot(){
       }
     },
     setFullscreen(on){fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
-    get state(){return {pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
+    get state(){return {pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
   };
   if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.testInterpolation=async()=>{
     const stage=new FrameInterpolator(playbackVideo(),60,false),w=192,h=128;
