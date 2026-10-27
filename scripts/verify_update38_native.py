@@ -2,7 +2,7 @@ from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 import hashlib,json,threading,subprocess
 R=Path(__file__).resolve().parents[1];payload=b'MZ'+b'isolated-package-data'*10000;mode='normal'
-base=dict(schema=1,appId='bili-space',platform='windows-x64',version='0.1.39',minimumSupportedVersion='0.1.0',force=False,downloadUrl='https://bili.gvqi.top/releases/Bili-Space-0.1.39-win64.zip',sha256='a'*64,size=100,changelog=['fixture'],setupUrl='https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.39/Bili-Space-0.1.39-Setup.exe',setupSha256=hashlib.sha256(payload).hexdigest(),setupSize=len(payload))
+base=dict(schema=1,appId='bili-space',platform='windows-x64',version='0.1.40',minimumSupportedVersion='0.1.0',force=False,downloadUrl='https://bili.gvqi.top/releases/Bili-Space-0.1.40-win64.zip',sha256='a'*64,size=100,changelog=['fixture'],setupUrl='https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.40/Bili-Space-0.1.40-Setup.exe',setupSha256=hashlib.sha256(payload).hexdigest(),setupSize=len(payload))
 class Server(BaseHTTPRequestHandler):
  def do_GET(self):
   if self.path.endswith('windows-x64.json'):
@@ -25,7 +25,7 @@ server=ThreadingHTTPServer(('127.0.0.1',0),Server);threading.Thread(target=serve
 try:
  for mode in ['normal','fallback','stale','force','bad-hash','invalid','redirect','untrusted-redirect']:
   d=R/f'verification/update38-native-{mode}';p=subprocess.run([str(R/'verification/update38-native.exe'),str(server.server_port),str(d),mode],capture_output=True,text=True,encoding='utf8',timeout=40);assert p.returncode==0,(mode,p.stdout,p.stderr);v=json.loads(p.stdout)
-  if mode in ['normal','fallback','stale','redirect']:assert v['download'].get('ready') and v['readyFile'] and v['check']['version']=='0.1.39',v
+  if mode in ['normal','fallback','stale','redirect']:assert v['download'].get('ready') and v['readyFile'] and v['check']['version']=='0.1.40',v
   elif mode=='force':assert v['check']['required'],v
   elif mode=='invalid':assert v['check']['status']=='error',v
   else:assert v['download']['status']=='error' and not v['readyFile'],v

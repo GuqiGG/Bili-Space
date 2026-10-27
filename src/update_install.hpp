@@ -56,6 +56,7 @@ int runUpdateWorker(PWSTR command){
 }
 void startUpdateInstall(){
     if(updateBusy||readyUpdatePackage.empty()||!updateState.value("ready",false))return;
+    if(downloadBusy.load()){updateState["message"]="视频正在下载，请等待完成或取消下载后再安装更新。";pushUpdateState();return;}
     try{
         const auto state=validateUpdate(updateState,appVersion);
         auto jobPath=dataPath/L"updates/install-job.json";

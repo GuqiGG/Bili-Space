@@ -211,9 +211,9 @@ void proxyAction(const std::string& action,const std::string& value,const std::s
 /* ---------- Built-in streaming downloader; no external process or user cookies ---------- */
 constexpr UINT downloadReplyMessage=WM_APP+80;
 struct DownloadReply{bool ok;std::string message;};
-std::atomic<bool> downloadBusy{false},downloadCancelRequested{false};
+std::atomic<bool> downloadBusy{false},downloadCancelRequested{false},downloadPeerFailed{false};
 std::mutex downloadCommitMutex;bool downloadCommitted=false;
-void checkDownloadCancelled(){if(downloadCancelRequested.load())throw std::runtime_error("已取消下载");}
+void checkDownloadCancelled(){if(downloadCancelRequested.load())throw std::runtime_error("已取消下载");if(downloadPeerFailed.load())throw std::runtime_error("另一条媒体轨下载失败");}
 void finishDownload(bool ok,const std::string& message){auto* reply=new DownloadReply{ok,message};if(!PostMessageW(windowHandle,downloadReplyMessage,0,reinterpret_cast<LPARAM>(reply)))delete reply;}
 bool downloadMediaUrl(const std::wstring& url){
 #ifdef BILI_DOWNLOAD_TEST
@@ -302,11 +302,13 @@ void muxDownloadTracks(const fs::path& video,const fs::path& audio,const fs::pat
 void downloadPhase(const std::string& text){auto* reply=new DownloadReply{true,text};if(!PostMessageW(windowHandle,downloadReplyMessage,1,reinterpret_cast<LPARAM>(reply)))delete reply;}
 void runDownloadPlan(std::wstring url,std::wstring audio,fs::path target){
     auto base=target;base+=L".bs-part-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64());auto video=base;video+=L".video.mp4";auto sound=base;sound+=L".audio.mp4";auto mux=base;mux+=L".mux.mp4";bool ok=false;std::string error;
-    {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCommitted=false;}
+    {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCommitted=false;downloadPeerFailed=false;}
     TransferProgress progress;progress.tracks=audio.empty()?1:2;
     try{
         if(audio.empty()){downloadPhase("下载中");fetchMediaFile(url,mux,&progress,0);}else{
-            downloadPhase("下载音视频");auto vf=std::async(std::launch::async,[&]{fetchMediaFile(url,video,&progress,0);});auto af=std::async(std::launch::async,[&]{fetchMediaFile(audio,sound,&progress,1);});vf.get();af.get();
+            downloadPhase("下载音视频");std::mutex failureMutex;std::exception_ptr failure;
+            auto fetchTrack=[&](const std::wstring& source,const fs::path& file,int track){try{fetchMediaFile(source,file,&progress,track);}catch(...){std::lock_guard<std::mutex> lock(failureMutex);if(!failure)failure=std::current_exception();downloadPeerFailed=true;}};
+            auto vf=std::async(std::launch::async,[&]{fetchTrack(url,video,0);});auto af=std::async(std::launch::async,[&]{fetchTrack(audio,sound,1);});vf.get();af.get();if(failure)std::rethrow_exception(failure);
             downloadPhase("合并中");muxDownloadTracks(video,sound,mux);
         }
         std::lock_guard<std::mutex> lock(downloadCommitMutex);checkDownloadCancelled();if(!MoveFileExW(mux.c_str(),target.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("无法保存最终文件");downloadCommitted=true;ok=true;error="已保存 · "+utf8(target.wstring());
@@ -438,7 +440,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
     LPWSTR origin{},body{};args->get_Source(&origin);args->get_WebMessageAsJson(&body);
     std::wstring uri=origin?origin:L"";std::string raw=body?utf8(body):"";CoTaskMemFree(origin);CoTaskMemFree(body);
     if(raw.size()>256*1024)return;
-    if(updateRequired){if(uri!=L"about:blank")return;try{auto m=json::parse(raw);if(m.value("type",std::string{})=="updates")updateAction(m.value("action",std::string{}));}catch(...){}return;}
+    if(updateRequired){if(!updateGateOrigin(uri))return;try{auto m=json::parse(raw);if(m.value("type",std::string{})=="updates")updateAction(m.value("action",std::string{}));}catch(...){}return;}
     if(!trusted(uri))return;
     try{
         auto m=json::parse(raw);auto type=m.value("type",std::string{});

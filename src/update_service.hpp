@@ -5,6 +5,8 @@ bool updateRequired=false,updateChecked=false,updateBusy=false,updateGateShown=f
 json updateState={{"status","idle"},{"message","尚未检查更新"}};
 std::string ignoredUpdateVersion;
 fs::path readyUpdatePackage;
+bool updateGateOrigin(const std::wstring& uri){return updateGateShown&&(uri==L"about:blank"||uri.rfind(L"data:text/html;charset=utf-8;base64,",0)==0);}
+std::string updateFileHash(const fs::path& file);
 #ifdef BILI_UPDATE_TEST
 INTERNET_PORT updateTestPort=0;
 #endif
@@ -32,7 +34,7 @@ struct UpdateHttp{
     ~UpdateHttp(){if(request)WinHttpCloseHandle(request);if(connection)WinHttpCloseHandle(connection);if(session)WinHttpCloseHandle(session);}
     void open(const std::string& url){
         const std::string manifest="https://bili.gvqi.top/updates/windows-x64.json";if(url!=manifest&&url!="https://raw.githubusercontent.com/GuqiGG/Bili-Space/master/update-site/public/updates/windows-x64.json"&&!trustedUpdatePackage(url)&&!std::regex_match(url,std::regex(R"(https://github\.com/GuqiGG/Bili-Space/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/Bili-Space-[0-9]+\.[0-9]+\.[0-9]+-Setup\.exe)")))throw std::runtime_error("更新地址不可信");
-        session=WinHttpOpen(L"Bili-Space/0.1.38",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);if(!session)throw std::runtime_error("更新网络初始化失败");WinHttpSetTimeouts(session,5000,5000,15000,15000);
+        session=WinHttpOpen(L"Bili-Space/0.1.39",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);if(!session)throw std::runtime_error("更新网络初始化失败");WinHttpSetTimeouts(session,5000,5000,15000,15000);
         std::wstring next=wide(url);
         for(int hop=0;hop<6;hop++){
             URL_COMPONENTS u{};u.dwStructSize=sizeof(u);u.dwHostNameLength=DWORD(-1);u.dwUrlPathLength=DWORD(-1);u.dwExtraInfoLength=DWORD(-1);u.dwUserNameLength=DWORD(-1);u.dwPasswordLength=DWORD(-1);
@@ -67,14 +69,20 @@ struct UpdateHash{
 void startUpdateCheck(){
     if(updateBusy)return;updateBusy=true;updateChecked=true;updateState["busy"]=true;updateState["message"]="正在检查更新…";pushUpdateState();updateLog("check started");
     std::thread([]{try{
-        json selected;std::string error;
+        json selected;std::string error;bool requiredByAnySource=false;
         for(auto url:{"https://bili.gvqi.top/updates/windows-x64.json","https://raw.githubusercontent.com/GuqiGG/Bili-Space/master/update-site/public/updates/windows-x64.json"}){
-            try{UpdateHttp http;http.open(url);std::string bytes;http.stream(256*1024,[&](const char* p,DWORD n){bytes.append(p,n);});auto candidate=validateUpdate(json::parse(bytes),appVersion);
+            try{UpdateHttp http;http.open(url);std::string bytes;http.stream(256*1024,[&](const char* p,DWORD n){bytes.append(p,n);});auto candidate=validateUpdate(json::parse(bytes),appVersion);requiredByAnySource=requiredByAnySource||candidate.value("required",false);
                 if(selected.is_null()||releaseVersion(candidate.at("version"))>releaseVersion(selected.at("version")))selected=candidate;
                 else if(candidate.at("version")==selected.at("version")&&!selected.contains("setupUrl")&&candidate.contains("setupUrl")){for(auto key:{"setupUrl","setupSize","setupSha256"})selected[key]=candidate[key];}
             }catch(const std::exception& e){error=e.what();}
         }
         if(selected.is_null())throw std::runtime_error(error.empty()?"更新服务器不可用":error);
+        if(requiredByAnySource&&selected.value("available",false)){selected["required"]=true;selected["force"]=true;}
+        selected["ready"]=false;
+        if(selected.value("available",false)&&selected.contains("setupUrl"))try{
+            auto package=dataPath/L"updates"/wide("Bili-Space-"+selected.at("version").get<std::string>()+"-Setup.exe");
+            if(fs::is_regular_file(package)&&fs::file_size(package)==selected.at("setupSize").get<unsigned long long>()&&updateFileHash(package)==selected.at("setupSha256").get<std::string>())selected["ready"]=true;
+        }catch(...){}
         updateReply({{"event","checked"},{"manifest",selected}});
     }catch(const std::exception& e){updateReply({{"event","error"},{"message",e.what()}});}}).detach();
 }
@@ -96,6 +104,7 @@ void acceptUpdate(const json& reply){
         const bool wasRequired=updateRequired;updateRequired=required;readyUpdatePackage.clear();updateState=value;updateState["busy"]=false;updateState["ignored"]=!required&&value["version"]==ignoredUpdateVersion;
         updateState["status"]=required?"required":value["available"]==true?"available":"current";
         updateState["message"]=required?"必须更新后才能继续使用":value["available"]==true?(updateState["ignored"]==true?"已忽略此版本，可手动下载":"发现新版本"):"当前已是最新版本";
+        if(value.value("ready",false)&&value.value("available",false)){readyUpdatePackage=dataPath/L"updates"/wide("Bili-Space-"+value.at("version").get<std::string>()+"-Setup.exe");updateState["message"]="更新已就绪，点击安装并重启。";}
         updateLog(std::string(required?"required ":"checked ")+value.at("version").get<std::string>());if(required)showRequiredUpdate();else if(wasRequired){updateGateShown=false;if(webview)webview->Navigate(L"https://www.bilibili.com/");}
     }else if(event=="ready"){readyUpdatePackage=wide(reply.at("path").get<std::string>());updateState["ready"]=true;updateState["message"]="更新已就绪，点击安装并重启。";updateLog("download verified "+utf8(readyUpdatePackage.filename().wstring()));}
     else{updateState["message"]=reply.value("message",std::string("更新失败"));updateState["status"]=updateRequired?"required":"error";updateLog("error "+updateState["message"].get<std::string>());}
