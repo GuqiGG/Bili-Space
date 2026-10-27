@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8f9fb">
+  <meta name="description" content="Bili-Space，你的最后一款 B 站客户端。保留原生播放与弹幕，带来清爽首页、内置下载、无边框画中画与自由个性化。Windows 10 / 11。">
+  <meta property="og:title" content="Bili-Space · 你的最后一款 B 站客户端">
+  <meta property="og:description" content="熟悉的 B 站，更自在的空间。">
+  <title>Bili-Space · 你的最后一款 B 站客户端</title>
+  <link rel="icon" href="./assets/favicon.ico">
+  <link rel="preload" href="./assets/home-light.webp" as="image">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳至正文</a>
+  <header class="header">
+    <nav class="nav wrap" aria-label="主导航">
+      <a class="brand" href="#" aria-label="Bili-Space 首页"><img src="./assets/icon.webp" alt="" width="34" height="34"><span>Bili-Space</span></a>
+      <div class="nav-links"><a href="#features">体验</a><a href="#personalize">个性化</a><a href="https://github.com/GuqiGG/Bili-Space" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></div>
+      <a href="#download" class="nav-download">下载 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 19h16"/></svg></a>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-inner wrap">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="dot"></span> BILI-SPACE / WINDOWS</p>
+          <h1 id="hero-title">熟悉的 B 站，<br>更自在的<span class="accent">空间。</span></h1>
+          <p class="hero-sub">你的最后一款 B 站客户端。</p>
+          <p class="intro">保留你喜欢的播放与弹幕，<br>把多余的打扰，留在窗口之外。</p>
+          <div class="actions"><a data-download href="https://github.com/GuqiGG/Bili-Space/releases/latest" class="button primary"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 19h16"/></svg><span data-download-label>下载 Windows 版</span></a><a class="github-link" href="https://github.com/GuqiGG/Bili-Space" target="_blank" rel="noopener noreferrer">在 GitHub 查看 <span aria-hidden="true">↗</span></a></div>
+          <p class="compat"><span data-version>最新正式版</span><span>Windows 10 / 11 · x64</span></p>
+        </div>
+        <div class="hero-art" data-parallax="hero"><img class="screen" src="./assets/home-light.webp" alt="Bili-Space 浅色模式首页，保留推荐视频和顶部搜索，移除轮播推广位" width="1600" height="1000" fetchpriority="high"><div class="image-caption"><span class="caption-line"></span> 少一点打扰，多一点喜欢。</div></div>
+      </div>
+      <a class="scroll-note wrap" href="#features"><span>往下看看</span><span aria-hidden="true">↓</span></a>
+    </section>
+    <div class="essentials wrap" aria-label="产品概览"><span>原生播放与弹幕</span><span>内置视频下载</span><span>无边框画中画</span><span>随心个性化</span></div>
+
+    <section class="focus-section" id="features" aria-labelledby="focus-title">
+      <div class="focus-sticky wrap">
+        <div class="section-copy">
+          <p class="eyebrow">01 / 专注观看</p>
+          <h2 id="focus-title">画面之外，<br>少一点打扰。</h2>
+          <p>清理首页推广和播放页广告位。<br>熟悉的播放器、弹幕与快捷键，<br>一个也不用重新适应。</p>
+          <div class="pip-copy"><span class="small-rule"></span><h3>换个小窗，继续喜欢。</h3><p>置顶、无边框，拖到顺手的位置。<br>窗口变大，弹幕也跟着适配。</p></div>
+        </div>
+        <div class="focus-stage" aria-label="播放器与画中画展示">
+          <span class="focus-word" aria-hidden="true">SPACE.</span>
+          <img class="screen focus-player" src="./assets/player-light.webp" alt="Bili-Space 浅色视频播放页" width="1600" height="1000" loading="lazy">
+          <figure class="pip-window"><img src="./assets/pip.webp" alt="无边框画中画实际界面" width="800" height="450" loading="lazy"><figcaption>小窗，不打断你的大事。</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="download-feature wrap section" aria-labelledby="save-title">
+      <div class="download-visual reveal"><img class="detail-image" src="./assets/download.webp" alt="客户端内置下载入口与下载进度、速度和预计时间" width="1400" height="500" loading="lazy"><div class="download-foot"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><span>进度 · 速度 · 预计时间 · 随时取消</span></div></div>
+      <div class="section-copy reveal"><p class="eyebrow">02 / 内置下载</p><h2 id="save-title">喜欢的，<br>留一份在本地。</h2><p>不用再切换工具。<br>播放页内直接下载视频，<br>从开始到完成，都看得见。</p><a class="text-link" href="https://github.com/GuqiGG/Bili-Space#不止一个网页窗口" target="_blank" rel="noopener noreferrer">了解更多 <span aria-hidden="true">↗</span></a></div>
+    </section>
+
+    <section class="personal-section section" id="personalize" aria-labelledby="personal-title">
+      <div class="wrap"><div class="personal-head reveal"><div><p class="eyebrow">03 / 属于你的空间</p><h2 id="personal-title">习惯，不必将就。</h2></div><p>主题、进度条、顶部栏与分区，<br>按你的审美和使用习惯来。</p></div>
+      <div class="theme-toolbar"><span id="theme-caption">日间，清清爽爽。</span><div class="theme-switch" role="group" aria-label="预览客户端主题"><button type="button" data-theme="light" aria-pressed="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>浅色</button><button type="button" data-theme="dark" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11Z"/></svg>深色</button></div></div>
+      <div class="theme-stage reveal"><img class="screen theme-light" src="./assets/home-light.webp" alt="浅色主题首页预览" width="1600" height="1000" loading="lazy"><img class="screen theme-dark" src="./assets/home-dark.webp" alt="深色主题首页预览" width="1600" height="1000" loading="lazy" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="details-section wrap section" aria-labelledby="details-title"><div class="section-copy reveal"><p class="eyebrow">还有一些，顺手的小事</p><h2 id="details-title">用着用着，<br>就回不去了。</h2></div><dl class="details-list reveal"><div><dt>最高 200% 音量</dt><dd>播放器滑条和方向键统一调节，听得清，也调得顺手。</dd></div><div><dt>B站官方搜索</dt><dd>搜索历史与联想沿用官方数据，想看的更快找到。</dd></div><div><dt>托盘随叫随到</dt><dd>收起自动暂停，双击即刻回来。</dd></div><div><dt>首页一键拉黑</dt><dd>按钮就在视频卡片里，不想看到的，不必再见。</dd></div></dl></section>
+
+    <section class="get-section" id="download" aria-labelledby="get-title"><div class="wrap get-inner"><div><p class="eyebrow">给喜欢的内容，一个新空间。</p><h2 id="get-title">下一次打开 B 站，<br>从这里开始。</h2><div class="actions"><a data-download href="https://github.com/GuqiGG/Bili-Space/releases/latest" class="button primary"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 19h16"/></svg><span data-download-label>下载 Windows 版</span></a><a class="github-link" href="https://github.com/GuqiGG/Bili-Space" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></div><p class="compat"><span data-version>最新正式版</span><span data-package>安装版 · Windows x64</span></p><p class="release-status" id="release-status" role="status" aria-live="polite">安装需要 WebView2 Runtime。</p><a class="text-link" href="https://github.com/GuqiGG/Bili-Space/releases" target="_blank" rel="noopener noreferrer">更新日志与便携版 <span aria-hidden="true">↗</span></a></div><img class="get-icon" src="./assets/icon.webp" alt="Bili-Space 小电视应用图标" width="250" height="250" loading="lazy"></div></section>
+  </main>
+  <footer class="footer wrap"><a class="brand" href="#"><img src="./assets/icon.webp" alt="" width="28" height="28"><span>Bili-Space</span></a><p>非官方 B站客户端 · 仅限非商业使用</p><a href="https://github.com/GuqiGG/Bili-Space/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">使用许可 <span aria-hidden="true">↗</span></a></footer>
+</body>
+</html>
