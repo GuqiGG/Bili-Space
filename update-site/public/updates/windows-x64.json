@@ -2,15 +2,19 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.35",
+  "version": "0.1.38",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "releaseDate": "2026-10-26T08:22:59.449430+00:00",
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.35-win64.zip",
-  "sha256": "2d00033decf2ed39add85fb84413597deb21b6c7fcb785402f8483b3da7391a7",
-  "size": 56193498,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.38-win64.zip",
+  "sha256": "f73e6c20b922b7bd1e556493d81f0dad760e522e9f7d7f8c1c6526333acdadf2",
+  "size": 59037253,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.38/Bili-Space-0.1.38-Setup.exe",
+  "setupSha256": "2f5b6b42becedc5973c06aa3d808d4363e9c991caf80fdd2d2188e8941f9f6e5",
+  "setupSize": 50359538,
   "changelog": [
-    "重设计 README，新增实际截图与倾斜立体展示",
-    "移除展示图描边和右下角英文，精简客户端冗余文案"
+    "软件内下载更新并校验 SHA256",
+    "点击安装并重启，无需手动解压替换",
+    "保留登录、设置和下载内容",
+    "更新站不可用时自动从 GitHub 检查更新"
   ]
 }
