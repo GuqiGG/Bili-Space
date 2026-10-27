@@ -888,17 +888,17 @@ function renderUpdatePanel(){
   $('#app-version',shadow).textContent=APP_META.version;$('#app-author',shadow).textContent=APP_META.author;
   line.textContent=clientUpdate.message||'';$('#update-version',shadow).textContent=clientUpdate.available?'新版本 '+clientUpdate.version:'';
   const list=$('#update-notes',shadow);list.replaceChildren(...(clientUpdate.changelog||[]).map(text=>{const li=document.createElement('li');li.textContent=String(text);return li;}));
-  $$('[data-update=check],[data-update=download]',shadow).forEach(b=>b.disabled=!!clientUpdate.busy);
+  $$('[data-update=check],[data-update=download],[data-update=install]',shadow).forEach(b=>b.disabled=!!clientUpdate.busy);
   $('[data-update=download]',shadow).hidden=!clientUpdate.available||!!clientUpdate.ready;
   $('[data-update=ignore]',shadow).hidden=!clientUpdate.available||!!clientUpdate.required||!!clientUpdate.ignored;
-  $('[data-update=open-folder]',shadow).hidden=!clientUpdate.ready;
+  $('[data-update=install]',shadow).hidden=!clientUpdate.ready;
 }
 function acceptUpdateStatus(value){
   clientUpdate={...value};renderUpdatePanel();
   const trigger=$('#settings-trigger',shadow);if(trigger){trigger.dataset.updateAvailable=String(!!value.available&&!value.ignored);trigger.title=value.available&&!value.ignored?'发现新版本 · 客户端设置':'客户端设置 · Ctrl+,';}
 }
 function tabContent(){
-  if(currentTab==='about')return `<h2>Bili-Space</h2><div class="row"><span>版本号</span><strong id="app-version"></strong></div><div class="row"><span>作者</span><strong id="app-author"></strong></div><p class="subtitle">更新源 · bili.gvqi.top</p><div class="section-label">更新 / UPDATES</div><p id="client-update-status" role="status" aria-live="polite"></p><strong id="update-version"></strong><ul id="update-notes"></ul><div class="actions"><button class="link" data-update="check">检查更新</button><button class="link" data-update="download" hidden>下载更新包（校验）</button><button class="link" data-update="ignore" hidden>忽略此版本</button><button class="link" data-update="open-folder" hidden>打开更新包目录</button><button class="link" data-update="log">查看检查日志</button></div><div class="note">下载校验后，退出客户端并解压替换旧版。</div>`;
+  if(currentTab==='about')return `<h2>Bili-Space</h2><div class="row"><span>版本号</span><strong id="app-version"></strong></div><div class="row"><span>作者</span><strong id="app-author"></strong></div><p class="subtitle">更新源 · bili.gvqi.top</p><div class="section-label">更新 / UPDATES</div><p id="client-update-status" role="status" aria-live="polite"></p><strong id="update-version"></strong><ul id="update-notes"></ul><div class="actions"><button class="link" data-update="check">检查更新</button><button class="link" data-update="download" hidden>下载更新</button><button class="link" data-update="ignore" hidden>忽略此版本</button><button class="link" data-update="install" hidden>安装并重启</button><button class="link" data-update="log">查看检查日志</button></div><div class="note">下载完成后可在此安装并重启，保留登录和设置。</div>`;
 
   if(currentTab==='categories'){
     const total=CATEGORIES.length,chosen=PREFS.categorySelection.length;
@@ -946,7 +946,7 @@ function mountShell(){
   shadow.addEventListener('click',e=>{
     const upload=e.target.closest('a.upload');if(upload){e.preventDefault();native('open-external',{url:upload.href});return;}
     const b=e.target.closest('button');
-    if(['check','download','ignore','open-folder','log'].includes(b?.dataset.update)){native('updates',{action:b.dataset.update});return;}
+    if(['check','download','ignore','install','log'].includes(b?.dataset.update)){native('updates',{action:b.dataset.update});return;}
     if(b?.classList.contains('video-link')){const url=currentVideoLink();if(url)native('copy-video-link',{url});return;}
     if(b?.dataset.window){native('window',{action:b.dataset.window});return;}
     if(b?.classList.contains('back')){setCategories(b.getAttribute('aria-expanded')!=='true',e.detail===0);return;}

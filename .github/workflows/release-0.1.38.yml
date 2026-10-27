@@ -1,0 +1,93 @@
+name: Restore 0.1.37 and release Bili-Space 0.1.38
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/release-0.1.38.yml']
+permissions:
+  contents: write
+concurrency:
+  group: release-0.1.38
+  cancel-in-progress: false
+jobs:
+  restore37:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 675bf193cade0f5bb068a6dcbf34f69c0249c45e
+          filter: blob:none
+          sparse-checkout: |
+            src
+            assets
+            runtime
+            vendor
+            scripts
+            installer
+            tests
+            docs
+          sparse-checkout-cone-mode: true
+      - name: Restore original 0.1.37 packages
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GITHUB_SHA: 675bf193cade0f5bb068a6dcbf34f69c0249c45e
+        run: |
+          New-Item -ItemType Directory -Force .tools, verification | Out-Null
+          ./scripts/build.ps1
+          if ($LASTEXITCODE) { throw 'Build 37 failed' }
+          python scripts/package.py
+          if ($LASTEXITCODE) { throw 'Package 37 failed' }
+          python scripts/build_installer.py
+          if ($LASTEXITCODE) { throw 'Setup 37 failed' }
+          python scripts/publish_current_release.py
+          if ($LASTEXITCODE) { throw 'Publish 37 failed' }
+  release38:
+    needs: restore37
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            src
+            assets
+            runtime
+            vendor
+            scripts
+            installer
+            tests
+            docs
+            update-site
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Regression tests
+        shell: pwsh
+        run: |
+          npm ci
+          node --test --test-concurrency=1 tests/*.test.cjs
+          if ($LASTEXITCODE) { throw 'Tests failed' }
+      - name: Build native client and packages
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .tools, verification | Out-Null
+          ./scripts/build.ps1
+          if ($LASTEXITCODE) { throw 'Build failed' }
+          python scripts/package.py
+          if ($LASTEXITCODE) { throw 'ZIP failed' }
+          python scripts/build_installer.py
+          if ($LASTEXITCODE) { throw 'Setup failed' }
+      - name: Publish Setup, ZIP, checksums and in-app update manifest
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python scripts/publish_current_release.py
+          if ($LASTEXITCODE) { throw 'Publication failed' }

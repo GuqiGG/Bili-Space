@@ -578,6 +578,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     return DefWindowProcW(hwnd,msg,wp,lp);
 }
 int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
+    if(auto result=runUpdateWorker(command);result>=0)return result;
     using DpiAwareness=BOOL(WINAPI*)(HANDLE);
     auto dpi=reinterpret_cast<DpiAwareness>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetProcessDpiAwarenessContext"));
     if(dpi)dpi(reinterpret_cast<HANDLE>(-4));
