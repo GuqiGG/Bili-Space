@@ -83,6 +83,7 @@ std::string utf8(const std::wstring& s) {
 std::string read(const fs::path& path) {std::ifstream f(path,std::ios::binary); return {std::istreambuf_iterator<char>(f),{}};}
 void log(const std::string& line) { std::ofstream(dataPath/L"runtime.log",std::ios::app)<<line<<'\n'; }
 void execute(const std::string& s) {if(webview) webview->ExecuteScript(wide(s).c_str(),nullptr);}
+#include "windows_media.hpp"
 int freePort(){SOCKET s=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(s==INVALID_SOCKET)return 0;sockaddr_in a{};a.sin_family=AF_INET;a.sin_addr.s_addr=htonl(INADDR_LOOPBACK);if(bind(s,reinterpret_cast<sockaddr*>(&a),sizeof(a))){closesocket(s);return 0;}int size=sizeof(a);getsockname(s,reinterpret_cast<sockaddr*>(&a),&size);int p=ntohs(a.sin_port);closesocket(s);return p;}
 void stopProxy(){proxyRunning=false;if(proxyJob){CloseHandle(proxyJob);proxyJob=nullptr;}if(proxyProcess){WaitForSingleObject(proxyProcess,3000);CloseHandle(proxyProcess);proxyProcess=nullptr;}}
 
@@ -228,12 +229,12 @@ bool downloadMediaUrl(const std::wstring& url){
 }
 struct TransferProgress{
     std::mutex reportMutex;
-    std::atomic<unsigned long long> received[2]{},expected[2]{};std::atomic<ULONGLONG> last{};ULONGLONG started=GetTickCount64();int tracks=1;
+    std::atomic<unsigned long long> received[2]{},expected[2]{},resumed[2]{};std::atomic<ULONGLONG> last{};ULONGLONG started=GetTickCount64();int tracks=1;
     void report(bool force=false){
         std::lock_guard<std::mutex> lock(reportMutex);
         auto now=GetTickCount64(),previous=last.load();if(!force&&(now-previous<250||!last.compare_exchange_strong(previous,now)))return;if(force)last=now;
-        unsigned long long bytes=0,total=0;bool known=true;for(int i=0;i<tracks;i++){bytes+=received[i].load();auto size=expected[i].load();total+=size;known=known&&size>0;}
-        double speed=bytes*1000./std::max<ULONGLONG>(1,now-started);json data={{"bytes",bytes},{"total",known?json(total):json(nullptr)},{"bytesPerSecond",speed},{"percent",known?json(std::min(100.,bytes*100./total)):json(nullptr)},{"etaSeconds",known&&speed>0?json(std::max(0.,double(total)-double(bytes))/speed):json(nullptr)}};
+        unsigned long long bytes=0,total=0,reused=0;bool known=true;for(int i=0;i<tracks;i++){bytes+=received[i].load();reused+=resumed[i].load();auto size=expected[i].load();total+=size;known=known&&size>0;}
+        double speed=(bytes>=reused?bytes-reused:0)*1000./std::max<ULONGLONG>(1,now-started);json data={{"bytes",bytes},{"total",known?json(total):json(nullptr)},{"bytesPerSecond",speed},{"percent",known?json(std::min(100.,bytes*100./total)):json(nullptr)},{"etaSeconds",known&&speed>0?json(std::max(0.,double(total)-double(bytes))/speed):json(nullptr)}};
         auto* reply=new DownloadReply{true,data.dump()};if(!PostMessageW(windowHandle,downloadReplyMessage,2,reinterpret_cast<LPARAM>(reply)))delete reply;
     }
 };
@@ -250,32 +251,7 @@ void CALLBACK downloadIoCallback(HINTERNET,DWORD_PTR context,DWORD status,void* 
     else if(status!=WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE&&status!=WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE)return;
     io->status=status;SetEvent(io->done);
 }
-void fetchMediaFile(const std::wstring& url,const fs::path& target,TransferProgress* progress=nullptr,int track=0){
-    DownloadIo io;if(!io.done||!io.closed)throw std::runtime_error("无法创建下载事件");char buffer[65536];
-    HINTERNET session{},connection{},request{};bool callbackReady=false;
-    auto close=[&]{if(request){WinHttpCloseHandle(request);request=nullptr;if(callbackReady)WaitForSingleObject(io.closed,INFINITE);}if(connection)WinHttpCloseHandle(connection);if(session)WinHttpCloseHandle(session);};
-    auto operation=[&](auto begin,DWORD expected){checkDownloadCancelled();ResetEvent(io.done);io.status=0;io.error=0;io.bytes=0;if(!begin()&&GetLastError()!=ERROR_IO_PENDING)throw std::runtime_error("下载请求失败（错误 "+std::to_string(GetLastError())+"）");while(WaitForSingleObject(io.done,50)==WAIT_TIMEOUT)checkDownloadCancelled();checkDownloadCancelled();if(io.error||io.status!=expected)throw std::runtime_error("下载连接失败（错误 "+std::to_string(io.error.load())+"）");};
-    try{
-        checkDownloadCancelled();URL_COMPONENTS parts{sizeof(parts)};parts.dwHostNameLength=DWORD(-1);parts.dwUrlPathLength=DWORD(-1);parts.dwExtraInfoLength=DWORD(-1);
-        if(!downloadMediaUrl(url)||!WinHttpCrackUrl(url.c_str(),DWORD(url.size()),0,&parts))throw std::runtime_error("下载地址不被允许");
-        session=WinHttpOpen(L"Mozilla/5.0 BetterBiliSpace",WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,WINHTTP_FLAG_ASYNC);if(!session)throw std::runtime_error("下载连接失败");WinHttpSetTimeouts(session,10000,15000,30000,30000);
-        std::wstring host(parts.lpszHostName,parts.dwHostNameLength),path(parts.lpszUrlPath,parts.dwUrlPathLength);path.append(parts.lpszExtraInfo,parts.dwExtraInfoLength);
-        connection=WinHttpConnect(session,host.c_str(),parts.nPort,0);if(!connection)throw std::runtime_error("下载连接失败");
-        request=WinHttpOpenRequest(connection,L"GET",path.c_str(),nullptr,L"https://www.bilibili.com/",WINHTTP_DEFAULT_ACCEPT_TYPES,parts.nScheme==INTERNET_SCHEME_HTTPS?WINHTTP_FLAG_SECURE:0);if(!request)throw std::runtime_error("下载连接失败");
-        DWORD redirect=WINHTTP_OPTION_REDIRECT_POLICY_NEVER;WinHttpSetOption(request,WINHTTP_OPTION_REDIRECT_POLICY,&redirect,sizeof(redirect));DWORD_PTR context=reinterpret_cast<DWORD_PTR>(&io);
-        if(!WinHttpSetOption(request,WINHTTP_OPTION_CONTEXT_VALUE,&context,sizeof(context))||WinHttpSetStatusCallback(request,downloadIoCallback,WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS|WINHTTP_CALLBACK_FLAG_HANDLES,0)==WINHTTP_INVALID_STATUS_CALLBACK)throw std::runtime_error("无法初始化异步下载");callbackReady=true;
-        operation([&]{return WinHttpSendRequest(request,WINHTTP_NO_ADDITIONAL_HEADERS,0,WINHTTP_NO_REQUEST_DATA,0,0,context);},WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE);
-        operation([&]{return WinHttpReceiveResponse(request,nullptr);},WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE);
-        DWORD status{},size=sizeof(status);WinHttpQueryHeaders(request,WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,nullptr,&status,&size,nullptr);if(status!=200)throw std::runtime_error("下载服务器返回 HTTP "+std::to_string(status));
-        wchar_t length[64]{};size=sizeof(length);unsigned long long expected=0,total=0;if(WinHttpQueryHeaders(request,WINHTTP_QUERY_CONTENT_LENGTH,nullptr,length,&size,nullptr))expected=_wcstoui64(length,nullptr,10);
-        if(progress){progress->expected[track]=expected;progress->report(true);}std::ofstream output(target,std::ios::binary|std::ios::trunc);if(!output)throw std::runtime_error("无法写入保存位置");std::string magic;
-        while(true){operation([&]{return WinHttpQueryDataAvailable(request,nullptr);},WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE);DWORD available=io.bytes;if(!available)break;
-            operation([&]{return WinHttpReadData(request,buffer,std::min<DWORD>(sizeof(buffer),available),nullptr);},WINHTTP_CALLBACK_STATUS_READ_COMPLETE);DWORD got=io.bytes;if(!got)break;
-            if(magic.size()<8)magic.append(buffer,std::min<size_t>(8-magic.size(),got));if(magic.size()==8&&memcmp(magic.data()+4,"ftyp",4)!=0)throw std::runtime_error("服务器未返回 MP4 文件，保存已停止");output.write(buffer,got);if(!output)throw std::runtime_error("磁盘写入失败");total+=got;if(progress){progress->received[track]=total;progress->report();}
-        }
-        output.close();checkDownloadCancelled();if(!output||total<8||(expected&&expected!=total))throw std::runtime_error("文件未完整下载");if(progress)progress->report(true);
-    }catch(...){close();throw;}close();
-}
+#include "download_resume.hpp"
 
 template<class T>struct MediaCom{T* p{};~MediaCom(){if(p)p->Release();}T** out(){return &p;}T* operator->(){return p;}};
 void mediaCheck(HRESULT hr){if(FAILED(hr))throw std::runtime_error("本机 MP4 封装失败 (HRESULT "+std::to_string((unsigned long)hr)+")，未覆盖原文件");}
@@ -300,21 +276,29 @@ void muxDownloadTracks(const fs::path& video,const fs::path& audio,const fs::pat
     }catch(...){MFShutdown();CoUninitialize();throw;}MFShutdown();CoUninitialize();
 }
 void downloadPhase(const std::string& text){auto* reply=new DownloadReply{true,text};if(!PostMessageW(windowHandle,downloadReplyMessage,1,reinterpret_cast<LPARAM>(reply)))delete reply;}
-void runDownloadPlan(std::wstring url,std::wstring audio,fs::path target){
-    auto base=target;base+=L".bs-part-"+std::to_wstring(GetCurrentProcessId())+L"-"+std::to_wstring(GetTickCount64());auto video=base;video+=L".video.mp4";auto sound=base;sound+=L".audio.mp4";auto mux=base;mux+=L".mux.mp4";bool ok=false;std::string error;
+struct DownloadWorkerOwner{std::thread thread;~DownloadWorkerOwner(){downloadCancelRequested=true;if(thread.joinable())thread.join();}} downloadWorkerOwner;
+std::string downloadPlanIdentity(const std::wstring& url,const std::wstring& audio,const std::string& identity={}){return identity.empty()?downloadResourceIdentity(url)+":"+(audio.empty()?"single":downloadResourceIdentity(audio)):identity;}
+fs::path downloadPartBase(const fs::path& target,const std::string& identity){auto p=target;p+=L".bs-part-"+wide(downloadDigest(identity).substr(0,20));return p;}
+void clearDownloadPlanParts(const fs::path& target,const std::string& identity){auto base=downloadPartBase(target,identity);for(auto suffix:{L".video.mp4",L".audio.mp4",L".mux.mp4"}){auto p=base;p+=suffix;removeDownloadTrackArtifacts(p);}}
+void runDownloadPlan(std::wstring url,std::wstring audio,fs::path target,std::string identity={},int configured=4){
+    identity=downloadPlanIdentity(url,audio,identity);auto base=downloadPartBase(target,identity);auto video=base;video+=L".video.mp4";auto sound=base;sound+=L".audio.mp4";auto mux=base;mux+=L".mux.mp4";bool ok=false;std::string error;
     {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCommitted=false;downloadPeerFailed=false;}
-    TransferProgress progress;progress.tracks=audio.empty()?1:2;
+    TransferProgress progress;progress.tracks=audio.empty()?1:2;const int connections=audio.empty()?configured:std::max(1,configured/2);
     try{
-        if(audio.empty()){downloadPhase("下载中");fetchMediaFile(url,mux,&progress,0);}else{
+        if(fs::exists(target))throw std::runtime_error("目标文件已存在，未覆盖；请另选文件名");
+        if(audio.empty()){downloadPhase("下载中");fetchAcceleratedMediaFile(url,video,&progress,0,identity+":video",connections);}else{
             downloadPhase("下载音视频");std::mutex failureMutex;std::exception_ptr failure;
-            auto fetchTrack=[&](const std::wstring& source,const fs::path& file,int track){try{fetchMediaFile(source,file,&progress,track);}catch(...){std::lock_guard<std::mutex> lock(failureMutex);if(!failure)failure=std::current_exception();downloadPeerFailed=true;}};
+            auto fetchTrack=[&](const std::wstring& source,const fs::path& file,int track){try{fetchAcceleratedMediaFile(source,file,&progress,track,identity+(track?":audio":":video"),connections);}catch(...){std::lock_guard<std::mutex> lock(failureMutex);if(!failure)failure=std::current_exception();downloadPeerFailed=true;}};
             auto vf=std::async(std::launch::async,[&]{fetchTrack(url,video,0);});auto af=std::async(std::launch::async,[&]{fetchTrack(audio,sound,1);});vf.get();af.get();if(failure)std::rethrow_exception(failure);
-            downloadPhase("合并中");muxDownloadTracks(video,sound,mux);
+            downloadPhase("合并中");std::error_code ec;fs::remove(mux,ec);muxDownloadTracks(video,sound,mux);
         }
-        std::lock_guard<std::mutex> lock(downloadCommitMutex);checkDownloadCancelled();if(!MoveFileExW(mux.c_str(),target.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("无法保存最终文件");downloadCommitted=true;ok=true;error="已保存 · "+utf8(target.wstring());
-    }catch(const std::exception& e){error=downloadCancelRequested?"已取消下载":e.what();}
-    std::error_code ec;fs::remove(video,ec);fs::remove(sound,ec);fs::remove(mux,ec);downloadBusy=false;finishDownload(ok,error);
+        std::lock_guard<std::mutex> lock(downloadCommitMutex);checkDownloadCancelled();auto ready=audio.empty()?video:mux;
+        if(!MoveFileExW(ready.c_str(),target.c_str(),MOVEFILE_WRITE_THROUGH))throw std::runtime_error("无法保存最终文件，未覆盖原文件");downloadCommitted=true;ok=true;error="已保存 · "+utf8(target.wstring());
+    }catch(const std::exception& e){error=downloadCancelRequested?"已暂停，断点已保留":e.what();}
+    std::error_code ec;if(ok)clearDownloadPlanParts(target,identity);else fs::remove(mux,ec);downloadBusy=false;finishDownload(ok,error);
 }
+void launchDownloadWorker(const std::wstring& url,const std::wstring& audio,const fs::path& target,const std::string& identity={}){if(downloadWorkerOwner.thread.joinable())downloadWorkerOwner.thread.join();const int connections=std::clamp(config.value("downloadConnections",4),1,4);downloadWorkerOwner.thread=std::thread([=]{runDownloadPlan(url,audio,target,identity,connections);});}
+
 void runDownload(std::wstring url,fs::path target){runDownloadPlan(url,{},target);}
 void saveDownload(const std::string& url,const std::string& title,const std::string& audio){
     if(!downloadMediaUrl(wide(url))||(!audio.empty()&&!downloadMediaUrl(wide(audio)))){execute("window.BiliSpace?.downloadResult({ok:false,message:'下载地址不是受支持的 B站媒体地址'})");return;}
@@ -322,10 +306,12 @@ void saveDownload(const std::string& url,const std::string& title,const std::str
     auto name=wide(title);for(auto& ch:name)if(ch<32||std::wstring(L"<>:\"/\\|?*").find(ch)!=std::wstring::npos)ch=L'_';if(name.size()>100)name.resize(100);if(name.empty())name=L"Bili-video";name+=L".mp4";
     wchar_t file[32768]{};lstrcpynW(file,name.c_str(),32768);OPENFILENAMEW dialog{sizeof(dialog)};dialog.hwndOwner=windowHandle;dialog.lpstrFile=file;dialog.nMaxFile=32768;dialog.lpstrFilter=L"MP4 视频\0*.mp4\0\0";dialog.lpstrDefExt=L"mp4";dialog.lpstrTitle=L"保存视频 · 内置下载器";dialog.Flags=OFN_OVERWRITEPROMPT|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;
     if(!GetSaveFileNameW(&dialog)){downloadBusy=false;execute("window.BiliSpace?.downloadResult({ok:false,message:'已取消保存'})");return;}
-    {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCancelRequested=false;downloadCommitted=false;}execute("window.BiliSpace?.downloadStarted();window.BiliSpace?.downloaderNotice('下载已开始')");std::thread(runDownloadPlan,wide(url),wide(audio),fs::path(file)).detach();
+    {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCancelRequested=false;downloadCommitted=false;}execute("window.BiliSpace?.downloadStarted();window.BiliSpace?.downloaderNotice('下载已开始')");launchDownloadWorker(wide(url),wide(audio),fs::path(file));
 }
 void cancelDownload(){std::lock_guard<std::mutex> lock(downloadCommitMutex);if(downloadBusy&&!downloadCommitted)downloadCancelRequested=true;}
 void pushDownloaderState(){execute("window.BiliSpace?.downloaderStatus({installed:true,mcp:false,running:false,message:'下载器就绪'})");}
+
+#include "download_queue.hpp"
 
 template<class T, class... Args> class Handler final : public T {    std::atomic<ULONG> refs{1}; std::function<HRESULT(Args...)> fn;
 public:
@@ -340,7 +326,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",true},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",true},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",4},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -366,11 +352,12 @@ void mergeConfig(const json& next){
         else if(value.is_boolean()&&defaults()[key].is_boolean())config[key]=value;
         else if(value.is_number_integer()){
             int n=value.get<int>();
-            if((key=="pipDanmakuMinWidth"&&n>=320&&n<=1200)||(key=="volumeBoost"&&n>=100&&n<=200)||(key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||((key=="fiFps"||key=="srFps")&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
+            if((key=="downloadConnections"&&(n==1||n==2||n==4))||(key=="pipDanmakuMinWidth"&&n>=320&&n<=1200)||(key=="volumeBoost"&&n>=100&&n<=200)||(key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||((key=="fiFps"||key=="srFps")&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
         }
     }
 }
 #include "update_service.hpp"
+#include "community44.hpp"
 bool trusted(const std::wstring& uri){
     for(auto host:{L"https://www.bilibili.com/",L"https://search.bilibili.com/",L"https://space.bilibili.com/",L"https://live.bilibili.com/",L"https://t.bilibili.com/",L"https://passport.bilibili.com/",L"https://account.bilibili.com/",L"https://message.bilibili.com/",L"https://manga.bilibili.com/"})if(uri.rfind(host,0)==0)return true;
     return testing&&uri.rfind(L"https://bili-space.local/",0)==0;
@@ -390,6 +377,8 @@ std::string script(){
     s+="if(host==='www.bilibili.com'){(()=>{\n"+read(root/L"assets/blocker.home.user.js")+"\n})();}\n";
     s+=read(root/L"assets/ai/ort.webgpu.min.js");s+="\n";
     s+=read(root/L"assets/ai/anime4k-webgpu.js");s+="\n";
+    s+=read(root/L"assets/desktop44.js");s+="\n";
+    s+=read(root/L"assets/community44.js");s+="\n";
     s+=read(root/L"assets/enhance.js");return s+"\n})();";
 }
 void refreshInjection(){
@@ -445,7 +434,9 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
     if(!trusted(uri))return;
     try{
         auto m=json::parse(raw);auto type=m.value("type",std::string{});
-        if(type=="updates"){updateAction(m.value("action",std::string{}),m.value("version",std::string{}));
+        if(type=="community"){communityAction(m);
+        }else if(type=="media-state"){windowsMediaAccept(m);
+        }else if(type=="updates"){updateAction(m.value("action",std::string{}),m.value("version",std::string{}));
         }else if(type=="window"){
             auto action=m.value("action",std::string{});
             if(action=="test-restore"&&testing)restoreFromTray();
@@ -466,6 +457,8 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="surface"){if(m.contains("dark")&&m["dark"].is_boolean())setSurface(m["dark"].get<bool>());
         }else if(type=="copy-video-link"){copyVideoLink(m.value("url",std::string{}));
         }else if(type=="open-external"){auto uri=wide(m.value("url",std::string{}));if(externalWebUrl(uri))ShellExecuteW(windowHandle,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);
+        }else if(type=="download-queue"){downloadQueueAction(m.value("action",std::string{}),m);
+        }else if(type=="download-plan"){acceptQueuedDownloadPlan(m);
         }else if(type=="downloader"){
             auto action=m.value("action",std::string{});
             if(action=="status")pushDownloaderState();
@@ -526,8 +519,10 @@ void restoreWebFocus(){
 }
 
 LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
+    if(windowsMediaMessage(msg,wp,lp))return 0;
     if(msg==taskbarCreated&&!testing){installTray();return 0;}
     if(msg==trayMessage){
+        if(lp==NIN_BALLOONUSERCLICK){auto url=communityNotificationClick();if(!url.empty()&&webview)webview->Navigate(wide(url).c_str());return 0;}
         if(lp==WM_LBUTTONDBLCLK){restoreFromTray();return 0;}
         if(lp==WM_RBUTTONUP||lp==WM_CONTEXTMENU){
             HMENU menu=CreatePopupMenu();AppendMenuW(menu,MF_STRING,1,L"打开 Bili Space");
@@ -542,8 +537,9 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case updateReplyMessage:{std::unique_ptr<json> result(reinterpret_cast<json*>(lp));if(result)acceptUpdate(*result);return 0;}
     case downloadReplyMessage:{
         std::unique_ptr<DownloadReply> reply(reinterpret_cast<DownloadReply*>(lp));
-        if(reply&&wp==2){execute("window.BiliSpace?.downloadProgress("+reply->message+")");return 0;}
-        if(reply&&wp==1){execute("window.BiliSpace?.downloadPhase("+json(reply->message).dump()+")");return 0;}
+        if(reply&&wp==2){if(queueDownloadProgress(json::parse(reply->message)))return 0;execute("window.BiliSpace?.downloadProgress("+reply->message+")");return 0;}
+        if(reply&&wp==1){if(queueDownloadPhase(reply->message))return 0;execute("window.BiliSpace?.downloadPhase("+json(reply->message).dump()+")");return 0;}
+        if(reply&&finishQueuedDownload(reply->ok,reply->message))return 0;
         if(reply)execute("window.BiliSpace?.downloadResult("+json({{"ok",reply->ok},{"message",reply->message}}).dump()+")");
         return 0;
     }
@@ -576,7 +572,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
     case WM_TIMER:if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
     case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");return 0;}DestroyWindow(hwnd);return 0;
-    case WM_DESTROY:RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
+    case WM_DESTROY:windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
     }
     return DefWindowProcW(hwnd,msg,wp,lp);
 }
@@ -613,6 +609,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     DWORD borderColor=0xFFFFFFFE;DwmSetWindowAttribute(windowHandle,34,&borderColor,sizeof(borderColor));
     BOOL dark=TRUE;DwmSetWindowAttribute(windowHandle,20,&dark,sizeof(dark));int corner=2;DwmSetWindowAttribute(windowHandle,33,&corner,sizeof(corner));
     if(!testing||(testing&&args.find(L"--tray-preview")!=std::wstring::npos))installTray();
+    windowsMediaInit(windowHandle,[](const std::string& command){execute("window.BiliSpace?.mediaCommand("+json(command).dump()+")");});
     ShowWindow(windowHandle,SW_SHOW);UpdateWindow(windowHandle);
     auto dll=LoadLibraryW((root/L"WebView2Loader.dll").c_str());
     using Create=HRESULT(STDAPICALLTYPE*)(PCWSTR,PCWSTR,ICoreWebView2EnvironmentOptions*,ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler*);
@@ -653,6 +650,6 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     });
     auto hr=create(nullptr,(dataPath/L"WebView2").c_str(),nullptr,envHandler);envHandler->Release();
     if(FAILED(hr)){log("environment start failed: "+std::to_string(hr));DestroyWindow(windowHandle);return 2;}
-    MSG msg;while(GetMessageW(&msg,nullptr,0,0)>0){TranslateMessage(&msg);DispatchMessageW(&msg);}CoUninitialize();return 0;
+    MSG msg;while(GetMessageW(&msg,nullptr,0,0)>0){TranslateMessage(&msg);DispatchMessageW(&msg);}windowsMediaShutdown();CoUninitialize();return 0;
 }
 

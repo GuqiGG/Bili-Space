@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:true,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:4,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:true,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* PiP-only renderer. Protocol fields are independently parsed; no third-party parser code. */
 function parsePipDanmaku(buffer){
@@ -13,8 +13,8 @@ function parsePipDanmaku(buffer){
  const result=[];fields(0,bytes.length,(field,value,nested)=>{if(field!==1||!nested)return;if(result.length>=12000)throw Error('弹幕条目过多');const item={time:0,mode:1,size:25,color:0xffffff,text:''};fields(value[0],value[1],(f,v,isText)=>{if(isText){if(f===7)item.text=decoder.decode(bytes.subarray(v[0],v[1])).slice(0,300);}else if(f===2)item.time=v/1000;else if(f===3)item.mode=v;else if(f===4)item.size=v;else if(f===5)item.color=v&0xffffff;});if(item.text&&Number.isFinite(item.time)&&item.time>=0&&[1,2,3,4,5,6].includes(item.mode))result.push(item);});return result.sort((a,b)=>a.time-b.time);
 }
 class PipDanmaku {
- constructor(){this.cache=new Map();this.pending=new Map();this.active=[];this.lanes=[];this.last=-1;this.generation=0;this.status='关闭';}
- clear(){for(const item of this.active){item.animation?.cancel();item.node.remove();}this.active=[];this.lanes=[];this.last=-1;}
+ constructor(){this.cache=new Map();this.pending=new Map();this.active=[];this.lanes=[];this.merge=new Map();this.last=-1;this.generation=0;this.status='关闭';}
+ clear(){for(const item of this.active){item.animation?.cancel();item.node.remove();}this.active=[];this.lanes=[];this.merge.clear();this.last=-1;}
  stop(){clearInterval(this.timer);this.timer=null;this.abort?.abort();this.generation++;this.clear();if(this.stage)this.stage.hidden=true;this.status='关闭';}
  requestSignal(){return AbortSignal.any&&AbortSignal.timeout?AbortSignal.any([this.abort.signal,AbortSignal.timeout(15000)]):this.abort.signal;}
  async json(url,allowAnonymous=false){const r=await fetch(url,{credentials:'include',signal:this.requestSignal()});if(!r.ok)throw Error('弹幕接口不可用');const data=await r.json();if(data.code!==0&&!(allowAnonymous&&data.data?.wbi_img))throw Error('弹幕接口不可用');return data.data;}
@@ -32,10 +32,10 @@ class PipDanmaku {
   (async()=>{const cid=await this.identify(),nav=await this.json('https://api.bilibili.com/x/web-interface/nav',true);if(generation!==this.generation)return;this.cid=cid;this.keys=nav.wbi_img;await this.segment(Math.floor(video.currentTime/360)+1);this.last=Math.max(0,video.currentTime-.2);})().catch(e=>{if(generation===this.generation&&e.name!=='AbortError'){this.status='暂不可用';diagnostic('画中画弹幕：'+e.message);}});
  }
  resize(width,height){const ratio=this.video.videoWidth&&this.video.videoHeight?this.video.videoWidth/this.video.videoHeight:16/9,w=Math.min(width,height*ratio),h=w/ratio;if(this.width===w&&this.height===h)return;this.width=w;this.height=h;this.font=Math.max(13,Math.min(24,w/34));this.stage.style.cssText=`left:${(width-w)/2}px;top:${(height-h)/2}px;width:${w}px;height:${h}px;--bs-pip-dm-font:${this.font}px`;this.stage.dataset.font=String(this.font.toFixed(1));this.clear();}
- emit(item,time){const rowHeight=this.font*1.6,count=Math.max(1,Math.min(10,Math.floor(this.height*.65/rowHeight)));let lane=-1;for(let i=0;i<count;i++)if(!this.lanes[i]||this.lanes[i]<=time){lane=i;break;}if(lane<0)return;
-  const node=document.createElement('span');node.className='bs-pip-comment';node.textContent=item.text;node.style.color='#'+item.color.toString(16).padStart(6,'0');node.style.fontSize=Math.max(10,Math.min(32,this.font*(item.size||25)/25))+'px';node.style.top=(item.mode===4?Math.max(0,this.height-50-lane*rowHeight):8+lane*rowHeight)+'px';this.stage.append(node);const fixed=[4,5].includes(item.mode)||matchMedia('(prefers-reduced-motion: reduce)').matches,duration=fixed?4000:6500;this.lanes[lane]=time+duration/1000;
+ emit(item,time){const prefs=window.BiliCommunity44?.state?.settings,custom=prefs?.danmakuEnabled,helpers=window.BiliCommunity44?.helpers;if(custom&&prefs.density===0)return;if(custom&&helpers&&(helpers.blocked(item.text,prefs.keywords)||(prefs.filterNoise&&helpers.noise(item.text))||!helpers.areaAllowed(item.mode,prefs)))return;const mergeKey=custom&&prefs.mergeRepeats&&helpers?(Number(item.mode)||1)+':'+String(item.text??'').normalize('NFKC').trim().toLocaleLowerCase():'';if(mergeKey){const live=this.merge.get(mergeKey);if(live&&time-live.started<=prefs.mergeWindow&&live.node.isConnected){live.count++;live.node.textContent=live.text+' ×'+Math.min(9999,live.count);return;}}const rowHeight=this.font*1.6,count=Math.max(1,Math.min(10,Math.floor(this.height*.65/rowHeight*(custom?prefs.density/100:1))));let lane=-1;for(let i=0;i<count;i++)if(!this.lanes[i]||this.lanes[i]<=time){lane=i;break;}if(lane<0)return;
+  const node=document.createElement('span');node.className='bs-pip-comment';node.textContent=item.text;if(custom)node.style.opacity=String(prefs.opacity/100);node.style.color='#'+item.color.toString(16).padStart(6,'0');node.style.fontSize=Math.max(10,Math.min(32,this.font*(item.size||25)/25))+'px';node.style.top=(item.mode===4?Math.max(0,this.height-50-lane*rowHeight):8+lane*rowHeight)+'px';this.stage.append(node);const fixed=[4,5].includes(item.mode)||matchMedia('(prefers-reduced-motion: reduce)').matches,duration=(fixed?4000:6500)/(custom?prefs.speed:1);this.lanes[lane]=time+duration/1000;
   const textWidth=node.getBoundingClientRect().width||item.text.length*this.font;const frames=fixed?[{transform:`translateX(${Math.max(0,(this.width-textWidth)/2)}px)`},{transform:`translateX(${Math.max(0,(this.width-textWidth)/2)}px)`}]:item.mode===6?[{transform:`translateX(${-textWidth}px)`},{transform:`translateX(${this.width}px)`}]:[{transform:`translateX(${this.width}px)`},{transform:`translateX(${-textWidth}px)`}];
-  if(!node.animate){node.remove();return;}const animation=node.animate(frames,{duration,easing:'linear',fill:'forwards'});animation.playbackRate=this.video.playbackRate||1;const record={node,animation,end:time+duration/1000};this.active.push(record);animation.onfinish=()=>{node.remove();this.active=this.active.filter(r=>r!==record);};
+  if(!node.animate){node.remove();return;}const animation=node.animate(frames,{duration,easing:'linear',fill:'forwards'});animation.playbackRate=this.video.playbackRate||1;const record={node,animation,end:time+duration/1000,mergeKey};this.active.push(record);if(mergeKey)this.merge.set(mergeKey,{node,text:String(item.text??''),count:1,started:time});animation.onfinish=()=>{node.remove();this.active=this.active.filter(r=>r!==record);if(mergeKey&&this.merge.get(mergeKey)?.node===node)this.merge.delete(mergeKey);};
  }
  tick(){if(!pipActive||!PREFS.pipDanmaku||currentVideoLink()!==this.key||playbackVideo()!==this.video){syncPipPresentation();return;}const time=this.video.currentTime;if(!Number.isFinite(time))return;
   if(this.last>=0&&(time<this.last-.2||time-this.last>2))this.clear();
@@ -354,7 +354,7 @@ function setLoading(on,failed=false){
   clearTimeout(loadingTimer);
   if(on)loadingTimer=setTimeout(()=>setLoading(false,true),20000);
 }
-let searchHistory=[],searchSuggestions=[],searchSuggestTimer,searchSuggestRequest,searchSuggestRevision=0,searchActive=-1,searchComposing=false,searchSuggestStatus='';
+let searchHistory=[],searchSuggestions=[],searchSuggestTimer,searchSuggestRequest,searchSuggestRevision=0,searchActive=-1,searchComposing=false,searchSuggestStatus='',searchHistoryExpanded=false;
 function sanitizeSearchHistory(items){return Array.isArray(items)?[...new Set(items.filter(x=>typeof x==='string'&&x.trim()&&x.length<=100&&!/[\r\n\t\0]/.test(x)).map(x=>x.trim()))].slice(0,20):[];}
 function acceptSearchHistory(items){searchHistory=sanitizeSearchHistory(items);if(shadow&&root?.isConnected&&!$('#search-panel',shadow).hidden)renderSearchPanel();}
 const OFFICIAL_HISTORY_URL='https://s1.hdslb.com/bfs/seed/jinkela/short/cols/iframe.html',OFFICIAL_HISTORY_ORIGIN='https://s1.hdslb.com',OFFICIAL_HISTORY_KEY='search_history:search_history';
@@ -373,12 +373,12 @@ function closeSearchPanel(){if(!shadow)return;$('#search-panel',shadow).hidden=t
 function renderSearchPanel(){
   const panel=$('#search-panel',shadow),input=$('.search input',shadow);panel.replaceChildren();searchActive=-1;input.removeAttribute('aria-activedescendant');
   const heading=(label)=>{const h=document.createElement('h2');h.textContent=label;panel.append(h);return h;};
-  const choice=(term,history)=>{const row=document.createElement('div');row.className=history?'search-history-chip':'search-row';const button=document.createElement('button');button.type='button';button.className='search-choice';button.dataset.query=term;button.textContent=term;button.id='search-option-'+panel.querySelectorAll('[data-query]').length;button.setAttribute('role','option');button.tabIndex=-1;row.append(button);if(history){const remove=document.createElement('button');remove.type='button';remove.className='search-remove';remove.dataset.remove=term;remove.textContent='×';remove.setAttribute('aria-label','删除搜索历史：'+term);row.append(remove);}(history?$('.search-history-chips',panel):panel).append(row);};
-  if(searchHistory.length){const h=heading('搜索历史'),clear=document.createElement('button');clear.type='button';clear.className='search-clear';clear.dataset.clear='true';clear.textContent='清空';clear.setAttribute('aria-label','清空搜索历史');h.append(clear);const chips=document.createElement('div');chips.className='search-history-chips';panel.append(chips);searchHistory.forEach(term=>choice(term,true));}
+  const choice=(term,history)=>{const row=document.createElement('div');row.className=history?'search-history-chip':'search-row';const button=document.createElement('button');button.type='button';button.className='search-choice';button.dataset.query=term;button.dataset.searchKind=history?'history':'suggestion';button.textContent=term;button.id='search-option-'+panel.querySelectorAll('[data-query]').length;button.setAttribute('role','option');button.tabIndex=-1;row.append(button);if(history){const remove=document.createElement('button');remove.type='button';remove.className='search-remove';remove.dataset.remove=term;remove.textContent='×';remove.setAttribute('aria-label','删除搜索历史：'+term);row.append(remove);}(history?$('.search-history-chips',panel):panel).append(row);};
+  if(searchHistory.length){const h=heading('搜索历史'),clear=document.createElement('button');clear.type='button';clear.className='search-clear';clear.dataset.clear='true';clear.textContent='清空';clear.setAttribute('aria-label','清空搜索历史');h.append(clear);const chips=document.createElement('div');chips.className='search-history-chips';panel.append(chips);(searchHistoryExpanded?searchHistory:searchHistory.slice(0,6)).forEach(term=>choice(term,true));if(searchHistory.length>6){const more=document.createElement('button');more.type='button';more.className='search-clear';more.dataset.historyMore='true';more.setAttribute('aria-expanded',String(searchHistoryExpanded));more.textContent=searchHistoryExpanded?'收起历史':'更多历史';panel.append(more);}}
   else{heading('搜索历史');const empty=document.createElement('p');empty.textContent=officialHistoryStatus||'暂无搜索历史';panel.append(empty);}
   heading('猜你想搜');searchSuggestions.forEach(term=>choice(term,false));if(!searchSuggestions.length&&searchSuggestStatus){const status=document.createElement('p');status.setAttribute('role','status');status.textContent=searchSuggestStatus||'';panel.append(status);}
 }
-function openSearchPanel(){if(!shadow)return;$('#search-panel',shadow).hidden=false;$('.search input',shadow).setAttribute('aria-expanded','true');renderSearchPanel();loadOfficialSearchHistory();queueSearchSuggestions();}
+function openSearchPanel(){if(!shadow)return;if($('#search-panel',shadow).hidden)searchHistoryExpanded=false;$('#search-panel',shadow).hidden=false;$('.search input',shadow).setAttribute('aria-expanded','true');renderSearchPanel();loadOfficialSearchHistory();queueSearchSuggestions();}
 function queueSearchSuggestions(){
   clearTimeout(searchSuggestTimer);searchSuggestRequest?.abort();const revision=++searchSuggestRevision,query=$('.search input',shadow).value;searchSuggestions=[];searchSuggestStatus='';renderSearchPanel();if(!query.trim()){searchSuggestStatus='';renderSearchPanel();return;}
   searchSuggestTimer=setTimeout(async()=>{const controller=new AbortController();searchSuggestRequest=controller;const timeout=setTimeout(()=>controller.abort(),5000);try{
@@ -393,8 +393,8 @@ function installSearchPanel(){
   input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-controls','search-panel');input.setAttribute('aria-expanded','false');
   input.addEventListener('focus',openSearchPanel);input.addEventListener('click',()=>{if(panel.hidden)openSearchPanel();});input.addEventListener('input',e=>{if(e.isComposing||searchComposing)return;panel.hidden=false;input.setAttribute('aria-expanded','true');queueSearchSuggestions();});
   input.addEventListener('compositionstart',()=>searchComposing=true);input.addEventListener('compositionend',()=>{searchComposing=false;openSearchPanel();});
-  input.addEventListener('keydown',e=>{if(e.isComposing||searchComposing)return;const options=$$('[data-query]',panel);if(e.key==='Escape'&&!panel.hidden){e.preventDefault();e.stopPropagation();closeSearchPanel();return;}if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();e.stopPropagation();if(panel.hidden)openSearchPanel();const choices=$$('[data-query]',panel);if(!choices.length)return;searchActive=searchActive<0?(e.key==='ArrowUp'?choices.length-1:0):(searchActive+(e.key==='ArrowDown'?1:-1)+choices.length)%choices.length;choices.forEach((el,i)=>{el.classList.toggle('selected',i===searchActive);el.setAttribute('aria-selected',String(i===searchActive));});input.setAttribute('aria-activedescendant',choices[searchActive].id);choices[searchActive].scrollIntoView?.({block:'nearest'});}else if(e.key==='Enter'&&!panel.hidden&&options[searchActive]){e.preventDefault();e.stopPropagation();chooseSearch(options[searchActive].dataset.query);}});
-  panel.addEventListener('pointerdown',e=>e.preventDefault());panel.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.remove!==undefined){changeSearchHistory('delete',b.dataset.remove);renderSearchPanel();}else if(b.dataset.clear){changeSearchHistory('clear');renderSearchPanel();}else if(b.dataset.query!==undefined)chooseSearch(b.dataset.query);});
+  input.addEventListener('keydown',e=>{if(e.isComposing||searchComposing)return;const keyboardChoices=()=>$$('[data-search-kind='+ (input.value.length?'suggestion':'history')+']',panel);const options=keyboardChoices();if(e.key==='Escape'&&!panel.hidden){e.preventDefault();e.stopPropagation();closeSearchPanel();return;}if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();e.stopPropagation();if(panel.hidden)openSearchPanel();const choices=keyboardChoices();if(!choices.length)return;searchActive=searchActive<0?(e.key==='ArrowUp'?choices.length-1:0):(searchActive+(e.key==='ArrowDown'?1:-1)+choices.length)%choices.length;choices.forEach((el,i)=>{el.classList.toggle('selected',i===searchActive);el.setAttribute('aria-selected',String(i===searchActive));});input.setAttribute('aria-activedescendant',choices[searchActive].id);choices[searchActive].scrollIntoView?.({block:'nearest'});}else if(e.key==='Enter'&&!panel.hidden&&options[searchActive]){e.preventDefault();e.stopPropagation();chooseSearch(options[searchActive].dataset.query);}});
+  panel.addEventListener('pointerdown',e=>e.preventDefault());panel.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.historyMore){searchHistoryExpanded=!searchHistoryExpanded;renderSearchPanel();}else if(b.dataset.remove!==undefined){changeSearchHistory('delete',b.dataset.remove);renderSearchPanel();}else if(b.dataset.clear){changeSearchHistory('clear');renderSearchPanel();}else if(b.dataset.query!==undefined)chooseSearch(b.dataset.query);});
   form.addEventListener('focusout',e=>{if(!form.contains(e.relatedTarget))closeSearchPanel();});document.addEventListener('pointerdown',e=>{if(!e.composedPath().includes(form))closeSearchPanel();},{passive:true});
 }
 async function submitSearch(){
@@ -916,7 +916,7 @@ async function checkProxyRegion(){
     out.textContent=`当前出口：${data.country||'未知'}${data.city?' · '+data.city:''}${data.addr?' · '+data.addr:''} — ${mainland?'大陆出口；是否能播放仍受版权、账号权限等限制':'不能解锁“仅限中国大陆”的番剧'}`;
   }catch(e){out.textContent='检测失败：'+e.message+'（直连也可能被网站拒绝）';}
 }
-const tabs={categories:['分区选择','progress'],network:['客户端代理','plugins'],appearance:['个性化','appearance'],header:['顶部栏','progress'],progress:['进度条','progress'],clean:['页面净化','clean'],play:['播放与画质','sparkles'],plugins:['扩展插件','plugins'],about:['关于与更新','plugins']};
+const tabs={downloads:['下载任务','plugins'],blocklist:['拉黑管理','plugins'],community:['弹幕与观看','sparkles'],categories:['分区选择','progress'],network:['客户端代理','plugins'],appearance:['个性化','appearance'],header:['顶部栏','progress'],progress:['进度条','progress'],clean:['页面净化','clean'],play:['播放与画质','sparkles'],plugins:['扩展插件','plugins'],about:['关于与更新','plugins']};
 const toggle=(key,title,hint)=>`<div class="row"><label for="pref-${key}">${title}${hint?`<span class="hint">${hint}</span>`:''}</label><input id="pref-${key}" data-pref="${key}" type="checkbox" ${PREFS[key]?'checked':''}></div>`;
 const range=(key,title,min,max,unit)=>`<div class="row"><label for="pref-${key}">${title}</label><div class="range"><input id="pref-${key}" type="range" data-pref="${key}" min="${min}" max="${max}" value="${PREFS[key]}"><output>${PREFS[key]}${unit}</output></div></div>`;
 let clientUpdate={status:'idle',message:'尚未检查更新'};
@@ -927,7 +927,7 @@ function showResetConfirmation(){
   layer.innerHTML='<section class="update-notice" role="alertdialog" aria-modal="true" aria-labelledby="reset-confirm-title" aria-describedby="reset-confirm-description"><h2 id="reset-confirm-title">恢复默认设置？</h2><p id="reset-confirm-description">将重置主题、布局与播放偏好。</p><div class="actions"><button type="button" id="reset-confirm-cancel" class="link">取消</button><button type="button" id="reset-confirm-apply" class="update-primary">恢复默认</button></div></section>';
   const close=()=>{layer.remove();previous?.focus?.();};
   $('#reset-confirm-cancel',layer).onclick=close;
-  $('#reset-confirm-apply',layer).onclick=()=>{if(!layer.isConnected)return;close();update({...DEFAULTS,categorySelection:DEFAULTS.categorySelection.slice()});toast('已恢复默认设置');};
+  $('#reset-confirm-apply',layer).onclick=()=>{if(!layer.isConnected)return;close();update({...DEFAULTS,categorySelection:DEFAULTS.categorySelection.slice()});window.BiliCommunity44?.resetSettings();toast('已恢复默认设置');};
   layer.addEventListener('click',event=>{if(event.target===layer)close();});
   layer.addEventListener('keydown',event=>{
     if(event.isComposing)return;
@@ -965,6 +965,9 @@ function acceptUpdateStatus(value){
   const trigger=$('#settings-trigger',shadow);if(trigger){trigger.dataset.updateAvailable=String(!!value.available&&!value.ignored);trigger.title=value.available&&!value.ignored?'发现新版本 · 客户端设置':'客户端设置 · Ctrl+,';}
 }
 function tabContent(){
+  if(currentTab==='downloads')return '<h2>下载任务</h2><div class="row"><label for="pref-downloadConnections">下载连接数</label><select id="pref-downloadConnections" data-pref="downloadConnections"><option value="1">1 · 单连接</option><option value="2">2</option><option value="4">4</option></select></div><div id="downloads44-panel" tabindex="-1" data-setting-keywords="下载 任务队列 多P 合集 暂停 继续 断点续传"></div>';
+  if(currentTab==='blocklist')return '<h2>拉黑管理</h2><div id="blacklist44-panel" tabindex="-1" data-setting-keywords="拉黑 黑名单 取消拉黑 UP主"></div>';
+  if(currentTab==='community')return '<h2>弹幕与观看</h2><div id="community44-panel" tabindex="-1" data-setting-keywords="弹幕 密度 透明度 速度 关键词 屏蔽词 导入 导出 ASS 观看统计 周报 订阅提醒"></div>';
   if(currentTab==='about')return `<h2>Bili-Space</h2><div class="row"><span>版本号</span><strong id="app-version"></strong></div><div class="row"><span>作者</span><strong id="app-author"></strong></div><p class="subtitle">更新源 · bili.gvqi.top</p><div class="section-label">更新 / UPDATES</div><p id="client-update-status" role="status" aria-live="polite"></p><strong id="update-version"></strong><ul id="update-notes"></ul><div class="actions"><button class="link" data-update="check">检查更新</button><button class="link" data-update="download" hidden>下载更新</button><button class="link" data-update="ignore" hidden>忽略此版本</button><button class="link" data-update="install" hidden>安装并重启</button><button class="link" data-update="log">查看检查日志</button></div><div class="note">下载完成后可在此安装并重启，保留登录和设置。</div>`;
 
   if(currentTab==='categories'){
@@ -992,6 +995,9 @@ function renderSettings(){
     const preview=$('.preview',panel);if(preview){preview.style.setProperty('--height',PREFS.progressHeight+'px');preview.style.setProperty('--radius',PREFS.progressRadius+'px');preview.style.setProperty('--progress',PREFS.progressColor);}return;
   }
   panel.innerHTML=tabContent();renderUpdatePanel();
+  if(currentTab==='downloads')window.BiliDesktop44?.renderDownloads($('#downloads44-panel',panel));
+  if(currentTab==='blocklist')window.BiliDesktop44?.renderBlacklist($('#blacklist44-panel',panel));
+  if(currentTab==='community')window.BiliCommunity44?.render($('#community44-panel',panel));
   $$('.tabs button',shadow).forEach(b=>{b.setAttribute('aria-selected',String(b.dataset.tab===currentTab));b.tabIndex=b.dataset.tab===currentTab?0:-1;});
   $$('select[data-pref]',panel).forEach(s=>s.value=String(PREFS[s.dataset.pref]));
   const nodeSelect=$('#proxy-node',panel);if(nodeSelect)fillProxyNodes(nodeSelect);
@@ -1004,6 +1010,7 @@ function searchSettingEntries(){
   const selected=currentTab,entries=[];
   try{for(const [tab,[category]] of Object.entries(tabs)){
     currentTab=tab;const template=document.createElement('template');template.innerHTML=tabContent();
+    for(const marker of $$('[data-setting-keywords]',template.content))entries.push({tab,category,label:category,target:marker.id,text:(category+' '+marker.dataset.settingKeywords).normalize('NFKC').toLocaleLowerCase()});
     for(const item of $$('.row,.theme,.chip,.actions button,.chip-actions button',template.content)){
       const labelNode=($('label,.label,.theme span,.chip span',item)||item).cloneNode(true);$$('.hint',labelNode).forEach(node=>node.remove());
       const label=labelNode.textContent.trim().replace(/\s+/g,' ');
@@ -1085,7 +1092,7 @@ function mountShell(){
     }
     if(el.dataset.category!==undefined){const selected=new Set(PREFS.categorySelection);if(el.checked)selected.add(Number(el.dataset.category));else selected.delete(Number(el.dataset.category));update({categorySelection:[...selected].sort((a,b)=>a-b),categoryPreset:1});return;}
     const key=el.dataset.pref;if(!key)return;
-    let v=el.type==='checkbox'?el.checked:['range','number'].includes(el.type)||['srScale','srFps','fiFps','fiFlowScale','autoZoomTarget'].includes(key)?Number(el.value):el.value;
+    let v=el.type==='checkbox'?el.checked:['range','number'].includes(el.type)||['srScale','srFps','fiFps','fiFlowScale','autoZoomTarget','downloadConnections'].includes(key)?Number(el.value):el.value;
     update({[key]:v});
     if(key==='btr')toast('刷新页面后生效');
     if(key==='proxyAll')toast('重启后生效');
@@ -1597,6 +1604,10 @@ function boot(){
       const line=$('#downloader-status',shadow);if(line)line.textContent=downloaderInfo.message||'';
       const button=$('#bili-space-video-download');if(button)button.hidden=!PREFS.downloader;
     },
+    acceptDownloadQueue(value){window.BiliDesktop44?.acceptQueue(value);},
+    resolveQueuedDownload(item){return window.BiliDesktop44?.resolveQueuedDownload(item);},
+    mediaCommand(command){window.BiliDesktop44?.mediaCommand(command);},
+    acceptCommunityState(state){window.BiliCommunity44?.acceptState(state);},
     downloadProgress,
     downloadPhase(text){const button=$('#bili-space-video-download');if(!downloadCancelling&&button?.dataset.state==='busy'){$('span',button).textContent=String(text||'下载中');downloadDisplay(text==='合并中'?'下载完成 · 正在合并音视频…':String(text||'下载中'));}},
     downloadStarted(){const button=$('#bili-space-video-download');if(button?.dataset.state==='busy'){downloadCancelling=false;$('span',button).textContent='下载中';const cancel=$('#bili-space-download-cancel');if(cancel){cancel.dataset.started='true';cancel.hidden=false;cancel.disabled=false;}downloadDisplay('0% · 0 B/s · 预计剩余 计算中');}},
@@ -1613,8 +1624,14 @@ function boot(){
       }
     },
     setFullscreen(on){fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
+    emitPipDanmaku(items,time){for(const item of items)pipDanmaku.emit(item,time);},
     get state(){return {pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
   };
+  const route44=()=>({url:currentVideoLink(),title:$('.video-title,h1')?.textContent||document.title});
+  window.BiliDesktop44?.install({native,getVideo:playbackVideo,getRoute:route44,getAccountId:()=>String(accountProfile?.mid||''),wbiQuery:downloadWbiQuery,chooseStreams:chooseDownloadStreams});
+  window.BiliCommunity44?.install({native,getVideo:playbackVideo,getRoute:route44,getAccountId:()=>String(accountProfile?.mid||''),parseDanmaku:parsePipDanmaku,wbiQuery:downloadWbiQuery});
+  window.addEventListener('pagehide',()=>{window.BiliDesktop44?.stop();window.BiliCommunity44?.stop();});
+  window.addEventListener('pageshow',()=>{window.BiliDesktop44?.start();window.BiliCommunity44?.start();});
   if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.testInterpolation=async()=>{
     const stage=new FrameInterpolator(playbackVideo(),60,false),w=192,h=128;
     const frame=(x,y=32)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.fillStyle='rgb(32,32,32)';ctx.fillRect(0,0,w,h);ctx.fillStyle='white';ctx.fillRect(x,y,48,64);return c;};

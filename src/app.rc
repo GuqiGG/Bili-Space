@@ -11,8 +11,8 @@ BEGIN
   BEGIN
    VALUE "FileDescription", "Bili-Space\0"
    VALUE "ProductName", "Bili-Space\0"
-   VALUE "FileVersion", "0.1.43\0"
-   VALUE "ProductVersion", "0.1.43\0"
+   VALUE "FileVersion", "0.1.44\0"
+   VALUE "ProductVersion", "0.1.44\0"
    VALUE "OriginalFilename", "Bili-Space.exe\0"
   END
  END

@@ -1,0 +1,74 @@
+name: Release Bili-Space 0.1.44 concurrent downloads, danmaku merging and community settings
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/release-0.1.44.yml']
+permissions:
+  contents: write
+concurrency:
+  group: release-0.1.44
+  cancel-in-progress: false
+env:
+  PYTHONUTF8: '1'
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            src
+            assets
+            runtime
+            vendor
+            scripts
+            installer
+            tests
+            docs
+            update-site
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Regression tests
+        shell: pwsh
+        run: |
+          npm ci
+          node --test --test-concurrency=1 tests/*.test.cjs
+          if ($LASTEXITCODE) { throw 'Tests failed' }
+      - name: Build native client and packages
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .tools, verification | Out-Null
+          ./scripts/build.ps1
+          if ($LASTEXITCODE) { throw 'Build failed' }
+          ./scripts/test_update38_native.ps1
+          if ($LASTEXITCODE) { throw 'Native update regressions failed' }
+          ./scripts/test_hotfix38_native.ps1
+          if ($LASTEXITCODE) { throw 'Hotfix regressions failed' }
+          ./scripts/test_audio41_native.ps1
+          if ($LASTEXITCODE) { throw 'Native popup/default audio tests failed' }
+          ./scripts/test_update42_native.ps1
+          if ($LASTEXITCODE) { throw 'Updater handoff tests failed' }
+          ./scripts/test_taskbar43_native.ps1
+          if ($LASTEXITCODE) { throw 'Native taskbar/PiP regressions failed' }
+          ./scripts/test_community44_native.ps1
+          if ($LASTEXITCODE) { throw 'Community state tests failed' }
+          ./scripts/test_windows_media44_native.ps1
+          if ($LASTEXITCODE) { throw 'Windows media integration tests failed' }
+          python scripts/package.py
+          if ($LASTEXITCODE) { throw 'ZIP failed' }
+          python scripts/build_installer.py
+          if ($LASTEXITCODE) { throw 'Setup failed' }
+      - name: Publish Setup, ZIP, checksums and in-app update manifest
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python scripts/publish_current_release.py
+          if ($LASTEXITCODE) { throw 'Publication failed' }

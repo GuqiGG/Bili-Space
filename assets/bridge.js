@@ -21,7 +21,7 @@ for(const key of ['BTR_Userscript.sync','BTR_Userscript.local']){
 }
 gmValues.sync=withoutFloatingLauncher(gmValues.sync);
 const unsafeWindow = window;
-const GM_info = {scriptHandler:'Bili-Space',version:'0.1.43',injectInto:'page'};
+const GM_info = {scriptHandler:'Bili-Space',version:'0.1.44',injectInto:'page'};
 const GM = {
   getValue: async (key, fallback) => gmValues[key] ?? fallback,
   setValue: async (key, value) => { if(key==='sync')value=withoutFloatingLauncher(value);gmValues[key]=value; native('gm-set',{key,value}); }

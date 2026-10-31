@@ -11,7 +11,7 @@ w.matchMedia=q=>({matches:q.includes('prefers-reduced-motion')?reduceMotion:true
  w.chrome={webview:{postMessage:m=>messages.push(m)}};
  w.fetch=async()=>({ok:true,json:async()=>loggedIn?{code:0,data:{isLogin:true,mid:1234,uname:'测试账号',face:'https://i0.hdslb.com/bfs/face/test-avatar.png'}}:{code:-101,data:{isLogin:false}}});
  if(loggedIn)w.document.cookie='DedeUserID=1234; path=/';
- w.eval(`const APP_INFO=${JSON.stringify(JSON.parse(fs.readFileSync('assets/app-info.json','utf8')))};const INITIAL=${JSON.stringify({...initial,...config})};const GM_INITIAL={};const ICON_SETTINGS=${JSON.stringify(fs.readFileSync('assets/settings.svg','utf8'))};const ICON_SPARKLES=${JSON.stringify(fs.readFileSync('assets/sparkles.svg','utf8'))};const ICON_MESSAGE=${JSON.stringify(fs.readFileSync('assets/message-square-more.svg','utf8'))};\n`+fs.readFileSync(bridgeSource,'utf8')+'\n'+fs.readFileSync(source,'utf8'));
+ w.eval(`const APP_INFO=${JSON.stringify(JSON.parse(fs.readFileSync('assets/app-info.json','utf8')))};const INITIAL=${JSON.stringify({...initial,...config})};const GM_INITIAL={};const ICON_SETTINGS=${JSON.stringify(fs.readFileSync('assets/settings.svg','utf8'))};const ICON_SPARKLES=${JSON.stringify(fs.readFileSync('assets/sparkles.svg','utf8'))};const ICON_MESSAGE=${JSON.stringify(fs.readFileSync('assets/message-square-more.svg','utf8'))};\n`+fs.readFileSync(bridgeSource,'utf8')+'\n'+['assets/desktop44.js','assets/community44.js'].filter(p=>fs.existsSync(p)).map(p=>fs.readFileSync(p,'utf8')).join('\n')+'\n'+fs.readFileSync(source,'utf8'));
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
  return {dom,w,messages,historyStore,historyMessages,errors,close:()=>w.close()};
 }
