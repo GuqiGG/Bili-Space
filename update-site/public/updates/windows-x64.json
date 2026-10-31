@@ -2,19 +2,20 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.45",
+  "version": "0.1.46",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.45-win64.zip",
-  "sha256": "9f29ddd087c1ac3e465171f54e0281aaf3debaa15727253294c9629843ee8ebe",
-  "size": 60332700,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.45/Bili-Space-0.1.45-Setup.exe",
-  "setupSha256": "c16a7c5632a79344a68246fdca8c6e87e466941b775e834b6942568f1a5cdc2b",
-  "setupSize": 50538035,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.46-win64.zip",
+  "sha256": "026672d6564bad3894d1af318cf326208b75ba1eec86c6af4d9a06fe28872289",
+  "size": 60357460,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.46/Bili-Space-0.1.46-Setup.exe",
+  "setupSha256": "fdaa41e6136435082e604049d4b46451505230f11318a750ae5729ee64cba2ea",
+  "setupSize": 50546521,
   "changelog": [
-    "修复增强弹幕开启后原生弹幕仍然全屏的问题：视频识别成功即接管原生层，加载失败自动恢复；播放器后补的弹幕容器会被持续隐藏。",
-    "每秒最多显示上限放宽到 10000 条，设为 0 即关闭限制，设置项直接显示“不限”。",
-    "设置页签改为对话框内独立滚动，页签变多后仍能看到“关于与更新”。",
-    "弹幕状态栏显示已接管的原生层数量，接管是否生效一眼可见。"
+    "弹幕断档时自动回退原生层，数据恢复后重新接管；距分段结束 30 秒预取下一段、缓存扩到 24 段，跨段不再整屏空白。",
+    "下载线程上限提升到 128（默认 8），大文件可以开到极限；连接数会按文件大小收敛，避免小文件开过多分段。",
+    "设置左侧页签支持滚轮滚动并显示细滚动条，页签再多也能看到“关于与更新”。",
+    "新增本地插件接口：插件目录 + `plugin.json` + 受限 API（样式、存储、事件、播放器状态），设置里可开关、打开目录、重新加载；插件拿不到 native 能力。",
+    "随包提供插件文档与示例插件。"
   ]
 }
