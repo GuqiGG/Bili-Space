@@ -2,18 +2,21 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.42",
+  "version": "0.1.43",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.42-win64.zip",
-  "sha256": "67182417ffbd23716dc1be7ec732c2631a2799e4de92b342ba76f84e073ea700",
-  "size": 59050495,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.42/Bili-Space-0.1.42-Setup.exe",
-  "setupSha256": "6f75ee8c65904fc36cd62649b50a9b11fdebfc163baaf45c7ef18019643d6b39",
-  "setupSize": 50358013,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.43-win64.zip",
+  "sha256": "7f7673e462eb591489f5a22245bff9c9e59ada18d96844e56d502b5ed845bd54",
+  "size": 60212224,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.43/Bili-Space-0.1.43-Setup.exe",
+  "setupSha256": "e1911dd309df3584d6f517848ac333bd357d91d7558c174be16c956475c0959a",
+  "setupSize": 50461508,
   "changelog": [
-    "修复更新时旧进程已退出却被误判为不匹配，导致安装和重启中止。",
-    "更新器确认接管后客户端才退出；接管失败时保留客户端并显示原因。",
-    "使用文件身份核验进程路径，避免路径大小写造成误判；仍拒绝不相关的运行进程。"
+    "内置抖音美好体，无需另行安装字体，保留字体开关与原始 OFL 授权。",
+    "恢复默认设置前新增确认弹窗，支持取消、Esc 与键盘焦点循环。",
+    "新增设置搜索：支持跨分类、多关键词和中文输入法，点击结果定位原设置；Esc 先清空搜索，再关闭设置。",
+    "顶部视频链接支持 Shift＋点击复制当前播放时间点，保留分 P；普通点击仍复制原链接。",
+    "修复任务栏最小化/还原的窗口样式，保留 Windows 系统过渡路径；继续隐藏标题栏，画中画退出后恢复正常窗口样式。",
+    "README 与 GitHub 仓库增加官网入口 https://bili.gvqi.top，移除 README 中的网站部署说明入口。"
   ]
 }
