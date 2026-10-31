@@ -6,6 +6,7 @@
 <p align="center">熟悉的 B 站，属于你的空间。</p>
 <p align="center">
   <a href="../../releases">下载客户端</a> ·
+  <a href="https://bili.gvqi.top">官方网站</a> ·
   <a href="#界面一览">界面一览</a> ·
   <a href="docs/CHANGELOG.md">更新日志</a>
 </p>
@@ -72,7 +73,7 @@ MP4 视频下载，进度、速度、预计剩余时间集中显示，下载中�
 ## 开始使用
 
 1. 在 [Releases](../../releases) 下载 Windows x64 安装包。
-2. 完整解压，运行 **`Bili-Space.exe`**。
+2. 安装版运行 **Setup.exe**；便携版完整解压后运行 **`Bili-Space.exe`**。
 3. 打开设置，选择主题和布局。
 
 需要 [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)。关闭窗口可选择驻留托盘或退出；按 `Ctrl+,` 打开设置，`Ctrl+W` 关闭窗口。
@@ -84,7 +85,7 @@ MP4 视频下载，进度、速度、预计剩余时间集中显示，下载中�
 - 可选代理默认关闭。节点出口需符合内容授权地区，不保证免费节点的隐私与可用性。
 - 独立第三方客户端，与哔哩哔哩无隶属关系，不绕过会员、付费或地区授权。
 
-## 开发与部署
+## 本地开发
 
 ```powershell
 python scripts/bootstrap.py
@@ -96,7 +97,7 @@ python scripts/package.py
 
 运行时、模型与插件按 `vendor` 中的来源和锁定文件准备。
 
-[更新网站部署](UPDATE-SITE.md) · [实现与历史记录](docs/IMPLEMENTATION-NOTES.md) · [通用超分调研](docs/GENERAL-SR-MODELS.md)
+[实现与历史记录](docs/IMPLEMENTATION-NOTES.md) · [通用超分调研](docs/GENERAL-SR-MODELS.md)
 
 ## 许可
 
