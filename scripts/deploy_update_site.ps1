@@ -13,7 +13,8 @@
 param(
     [string]$Version = '',
     [switch]$VerifyOnly,
-    [switch]$DeepVerify
+    [switch]$DeepVerify,
+    [switch]$FetchRelease
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,11 +30,31 @@ $zip = Join-Path $root "releases/Bili-Space-$Version-win64.zip"
 $setup = Join-Path $root "releases/Bili-Space-$Version-Setup.exe"
 $manifestPath = Join-Path $root 'update-site/public/updates/windows-x64.json'
 
-foreach ($f in @($zip, $setup, $manifestPath)) {
-    if (-not (Test-Path $f)) { throw "missing artifact: $f" }
-}
+if (-not (Test-Path $manifestPath)) { throw "missing manifest: $manifestPath" }
 
 $manifest = Get-Content $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+if ($manifest.version -ne $Version) { throw "manifest version $($manifest.version) != $Version" }
+
+function Sync-ReleaseAsset([string]$path, [string]$name, [string]$expectedHash, [int64]$expectedSize) {
+    $hash = if (Test-Path $path) { (Get-FileHash $path -Algorithm SHA256).Hash.ToLower() } else { '' }
+    $size = if (Test-Path $path) { (Get-Item $path).Length } else { 0 }
+    if ($hash -eq $expectedHash -and $size -eq $expectedSize) { return }
+    if (-not $FetchRelease) {
+        throw "local $name does not match the manifest; rebuild it or pass -FetchRelease to pull the CI asset"
+    }
+    $url = "https://github.com/GuqiGG/Bili-Space/releases/download/v$Version/$name"
+    Write-Host "downloading $name from the GitHub release ..."
+    $temp = "$path.part"
+    Invoke-WebRequest -Uri $url -OutFile $temp -UseBasicParsing -TimeoutSec 900 -MaximumRedirection 5
+    $downloadHash = (Get-FileHash $temp -Algorithm SHA256).Hash.ToLower()
+    if ($downloadHash -ne $expectedHash) { Remove-Item $temp -Force; throw "downloaded $name sha256 does not match the manifest" }
+    Move-Item -Force $temp $path
+    Write-Host "synced $name ($($expectedSize) bytes)"
+}
+
+Sync-ReleaseAsset $zip "Bili-Space-$Version-win64.zip" $manifest.sha256 ([int64]$manifest.size)
+Sync-ReleaseAsset $setup "Bili-Space-$Version-Setup.exe" $manifest.setupSha256 ([int64]$manifest.setupSize)
+
 $zipHash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
 $setupHash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower()
 $zipSize = (Get-Item $zip).Length
@@ -46,7 +67,6 @@ Write-Host "manifest  : version=$($manifest.version) size=$($manifest.size) sha2
 
 # The manifest must describe the bytes we are about to upload, otherwise the client
 # verifies a download against a hash that belongs to a different build.
-if ($manifest.version -ne $Version) { throw "manifest version $($manifest.version) != $Version" }
 if ($manifest.sha256 -ne $zipHash -or [int64]$manifest.size -ne $zipSize) { throw 'manifest zip sha256/size does not match releases/*.zip' }
 if ($manifest.setupSha256 -ne $setupHash -or [int64]$manifest.setupSize -ne $setupSize) { throw 'manifest setup sha256/size does not match releases/*-Setup.exe' }
 if ($manifest.downloadUrl -ne "$site/releases/Bili-Space-$Version-win64.zip") { throw "unexpected downloadUrl: $($manifest.downloadUrl)" }
