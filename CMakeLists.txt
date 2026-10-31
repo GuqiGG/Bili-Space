@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(BetterBiliSpace VERSION 0.1.45 LANGUAGES CXX RC)
+project(BetterBiliSpace VERSION 0.1.46 LANGUAGES CXX RC)
 if(NOT WIN32)
   message(FATAL_ERROR "This first release targets Windows 10/11 with WebView2.")
 endif()

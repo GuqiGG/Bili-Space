@@ -1,0 +1,7 @@
+{
+  "id": "hello-plugin",
+  "name": "Hello Plugin",
+  "version": "1.0.0",
+  "description": "示例：给播放器加一条粉色边框，并在标题栏显示播放秒数",
+  "main": "main.js"
+}

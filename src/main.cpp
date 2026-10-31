@@ -280,7 +280,7 @@ struct DownloadWorkerOwner{std::thread thread;~DownloadWorkerOwner(){downloadCan
 std::string downloadPlanIdentity(const std::wstring& url,const std::wstring& audio,const std::string& identity={}){return identity.empty()?downloadResourceIdentity(url)+":"+(audio.empty()?"single":downloadResourceIdentity(audio)):identity;}
 fs::path downloadPartBase(const fs::path& target,const std::string& identity){auto p=target;p+=L".bs-part-"+wide(downloadDigest(identity).substr(0,20));return p;}
 void clearDownloadPlanParts(const fs::path& target,const std::string& identity){auto base=downloadPartBase(target,identity);for(auto suffix:{L".video.mp4",L".audio.mp4",L".mux.mp4"}){auto p=base;p+=suffix;removeDownloadTrackArtifacts(p);}}
-void runDownloadPlan(std::wstring url,std::wstring audio,fs::path target,std::string identity={},int configured=4){
+void runDownloadPlan(std::wstring url,std::wstring audio,fs::path target,std::string identity={},int configured=8){
     identity=downloadPlanIdentity(url,audio,identity);auto base=downloadPartBase(target,identity);auto video=base;video+=L".video.mp4";auto sound=base;sound+=L".audio.mp4";auto mux=base;mux+=L".mux.mp4";bool ok=false;std::string error;
     {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCommitted=false;downloadPeerFailed=false;}
     TransferProgress progress;progress.tracks=audio.empty()?1:2;const int connections=audio.empty()?configured:std::max(1,configured/2);
@@ -297,7 +297,7 @@ void runDownloadPlan(std::wstring url,std::wstring audio,fs::path target,std::st
     }catch(const std::exception& e){error=downloadCancelRequested?"已暂停，断点已保留":e.what();}
     std::error_code ec;if(ok)clearDownloadPlanParts(target,identity);else fs::remove(mux,ec);downloadBusy=false;finishDownload(ok,error);
 }
-void launchDownloadWorker(const std::wstring& url,const std::wstring& audio,const fs::path& target,const std::string& identity={}){if(downloadWorkerOwner.thread.joinable())downloadWorkerOwner.thread.join();const int connections=std::clamp(config.value("downloadConnections",4),1,4);downloadWorkerOwner.thread=std::thread([=]{runDownloadPlan(url,audio,target,identity,connections);});}
+void launchDownloadWorker(const std::wstring& url,const std::wstring& audio,const fs::path& target,const std::string& identity={}){if(downloadWorkerOwner.thread.joinable())downloadWorkerOwner.thread.join();const int connections=std::clamp(config.value("downloadConnections",8),1,128);downloadWorkerOwner.thread=std::thread([=]{runDownloadPlan(url,audio,target,identity,connections);});}
 
 void runDownload(std::wstring url,fs::path target){runDownloadPlan(url,{},target);}
 void saveDownload(const std::string& url,const std::string& title,const std::string& audio){
@@ -326,7 +326,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",true},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",4},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",true},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",8},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -348,16 +348,18 @@ void mergeConfig(const json& next){
         else if(key=="srMode"&&value.is_string()&&(value=="off"||value=="performance"||value=="quality"))config[key]=value;
         else if(key=="fiMode"&&value.is_string()&&(value=="off"||value=="rife"||value=="blend"))config[key]=value=="blend"?json("rife"):value;
         else if(key=="proxyNode"&&value.is_string()&&value.get<std::string>().size()<=96)config[key]=value;
+        else if(key=="pluginsDisabled"&&value.is_array()&&value.size()<=32){json ids=json::array();for(const auto& item:value)if(item.is_string()){const auto id=item.get<std::string>();if(std::regex_match(id,std::regex(R"([a-z0-9][a-z0-9._-]{0,39})")))ids.push_back(id);if(ids.size()>=32)break;}config[key]=ids;}
         else if(key=="categorySelection"&&value.is_array()&&value.size()<=18){json choices=json::array();for(const auto& v:value)if(v.is_number_integer()&&v.get<int>()>=0&&v.get<int>()<18&&std::find(choices.begin(),choices.end(),v)==choices.end())choices.push_back(v);config[key]=choices;}
         else if(value.is_boolean()&&defaults()[key].is_boolean())config[key]=value;
         else if(value.is_number_integer()){
             int n=value.get<int>();
-            if((key=="downloadConnections"&&(n==1||n==2||n==4))||(key=="pipDanmakuMinWidth"&&n>=320&&n<=1200)||(key=="volumeBoost"&&n>=100&&n<=200)||(key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||((key=="fiFps"||key=="srFps")&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
+            if((key=="downloadConnections"&&n>=1&&n<=128)||(key=="pipDanmakuMinWidth"&&n>=320&&n<=1200)||(key=="volumeBoost"&&n>=100&&n<=200)||(key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||((key=="fiFps"||key=="srFps")&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
         }
     }
 }
 #include "update_service.hpp"
 #include "community44.hpp"
+#include "plugins.hpp"
 bool trusted(const std::wstring& uri){
     for(auto host:{L"https://www.bilibili.com/",L"https://search.bilibili.com/",L"https://space.bilibili.com/",L"https://live.bilibili.com/",L"https://t.bilibili.com/",L"https://passport.bilibili.com/",L"https://account.bilibili.com/",L"https://message.bilibili.com/",L"https://manga.bilibili.com/"})if(uri.rfind(host,0)==0)return true;
     return testing&&uri.rfind(L"https://bili-space.local/",0)==0;
@@ -379,6 +381,8 @@ std::string script(){
     s+=read(root/L"assets/ai/anime4k-webgpu.js");s+="\n";
     s+=read(root/L"assets/desktop44.js");s+="\n";
     s+=read(root/L"assets/community44.js");s+="\n";
+    s+="const PLUGINS="+pluginsRegistry().dump()+";\n";
+    s+=read(root/L"assets/plugins.js");s+="\n";
     s+=read(root/L"assets/enhance.js");return s+"\n})();";
 }
 void refreshInjection(){
@@ -435,6 +439,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
     try{
         auto m=json::parse(raw);auto type=m.value("type",std::string{});
         if(type=="community"){communityAction(m);
+        }else if(type=="plugins"){pluginsAction(m);
         }else if(type=="media-state"){windowsMediaAccept(m);
         }else if(type=="updates"){updateAction(m.value("action",std::string{}),m.value("version",std::string{}));
         }else if(type=="window"){

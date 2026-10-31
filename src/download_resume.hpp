@@ -103,7 +103,7 @@ void fetchAcceleratedMediaFile(const std::wstring& url,const fs::path& target,Tr
     // Existing sequential checkpoints remain resumable rather than being discarded to re-segment them.
     if(connections<=1||(fs::is_regular_file(target)&&fs::file_size(target)>0)){fetchMediaFile(url,target,progress,track,identity);return;}
     const auto probe=probeDownloadResource(url);if(!probe.ranged||probe.total<4*1024*1024){fetchMediaFile(url,target,progress,track,identity);return;}
-    const int count=connections>=4?4:2;std::atomic<bool> failed=false;std::mutex failures;std::exception_ptr first;std::vector<std::future<void>> tasks;std::vector<fs::path> chunks;
+    int count=std::clamp(connections,1,128);count=std::min(count,int(std::max<unsigned long long>(1,probe.total/(1024*1024))));std::atomic<bool> failed=false;std::mutex failures;std::exception_ptr first;std::vector<std::future<void>> tasks;std::vector<fs::path> chunks;
     if(progress){progress->expected[track]=probe.total;progress->received[track]=0;progress->resumed[track]=0;}
     for(int i=0;i<count;i++){
         DownloadRange range{probe.total*i/count,probe.total*(i+1)/count-1,probe.total,probe.validator,probe.validatorHeader};auto chunk=target;chunk+=L".range"+std::to_wstring(i);chunks.push_back(chunk);
