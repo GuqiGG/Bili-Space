@@ -1,0 +1,3 @@
+# Preserve bundled font and upstream license bytes.
+assets/fonts/*.ttf binary
+vendor/DouyinSans.OFL.txt -text

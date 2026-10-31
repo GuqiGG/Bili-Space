@@ -14,3 +14,5 @@ The root noncommercial license applies only to original project contributions. R
 No proprietary Lossless Scaling binaries or models are distributed. Removing the project author byline does not remove legally required dependency attribution.
 
 - Anime4K WebGPU 1.0.0: MIT; vendor/anime4k.LICENSE and vendor/anime4k-source.json. Independent WebGPU port of the algorithm family used by Kazumi; no Kazumi GPL code copied.
+
+- DouyinSans Bold / 抖音美好体: unmodified font from https://github.com/bytedance/fonts ; SIL Open Font License 1.1, retained in vendor/DouyinSans.OFL.txt. Source revision and SHA-256 are in vendor/douyin-font-source.json. The font retains its own OFL license and is not subject to the project noncommercial restriction.

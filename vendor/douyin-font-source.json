@@ -1,0 +1,17 @@
+{
+  "upstream": "https://github.com/bytedance/fonts",
+  "commit": "327565b61501d7a6d4902ed6ce417a7bd2ae54e6",
+  "license": "SIL Open Font License 1.1",
+  "files": {
+    "assets/fonts/DouyinSansBold.ttf": {
+      "url": "https://raw.githubusercontent.com/bytedance/fonts/327565b61501d7a6d4902ed6ce417a7bd2ae54e6/DouyinSans/DouyinSansBold.ttf",
+      "bytes": 1919404,
+      "sha256": "fbecfacdfac33982774e301073a8d357a09c698cd3134bb6ddec0f5bfc268fa1"
+    },
+    "vendor/DouyinSans.OFL.txt": {
+      "url": "https://raw.githubusercontent.com/bytedance/fonts/327565b61501d7a6d4902ed6ce417a7bd2ae54e6/DouyinSans/OFL.txt",
+      "bytes": 4455,
+      "sha256": "a6d5700a002ea32bcfbe3310253d603997683dac8ac63777e375d06c07c30ea6"
+    }
+  }
+}

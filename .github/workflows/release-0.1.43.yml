@@ -1,4 +1,4 @@
-name: Release Bili-Space 0.1.43 small improvements and native taskbar transitions
+name: Release Bili-Space 0.1.43 bundled font, reset confirmation and native taskbar transitions
 on:
   workflow_dispatch:
   push:
