@@ -1,0 +1,2 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+test('README links to official website without website deployment instructions',()=>{const s=fs.readFileSync('README.md','utf8');assert.match(s,/<a href="https:\/\/bili\.gvqi\.top">官方网站<\/a>/);assert.doesNotMatch(s,/UPDATE-SITE\.md|更新网站部署|开发与部署|wrangler deploy/);assert.match(s,/assets\/branding\/bili-space\.png/);assert.match(s,/docs\/images\/showcase.webp/);assert.match(s,/安装版运行/);});

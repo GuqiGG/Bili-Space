@@ -2,7 +2,7 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 import json,hashlib,subprocess,threading,time,sys
 R=Path(__file__).resolve().parents[1];phase=sys.argv[1];exe=R/sys.argv[2];mode='force-stale';payload=b'MZ'+b'fixture-data'*1000
-base=dict(schema=1,appId='bili-space',platform='windows-x64',version='0.1.43',minimumSupportedVersion='0.1.0',force=False,downloadUrl='https://bili.gvqi.top/releases/Bili-Space-0.1.43-win64.zip',sha256='a'*64,size=100,changelog=['fixture'],setupUrl='https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.43/Bili-Space-0.1.43-Setup.exe',setupSha256=hashlib.sha256(payload).hexdigest(),setupSize=len(payload))
+base=dict(schema=1,appId='bili-space',platform='windows-x64',version='0.1.99',minimumSupportedVersion='0.1.0',force=False,downloadUrl='https://bili.gvqi.top/releases/Bili-Space-0.1.99-win64.zip',sha256='a'*64,size=100,changelog=['fixture'],setupUrl='https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.99/Bili-Space-0.1.99-Setup.exe',setupSha256=hashlib.sha256(payload).hexdigest(),setupSize=len(payload))
 class Server(BaseHTTPRequestHandler):
  def do_GET(self):
   if self.path=='/failure':self.send_response(500);self.end_headers();return
@@ -10,7 +10,7 @@ class Server(BaseHTTPRequestHandler):
   if self.path.endswith('windows-x64.json'):
    m={**base}
    if mode=='force-stale' and self.path.startswith('/updates/'):
-    m.update(version='0.1.43',force=True,downloadUrl='https://bili.gvqi.top/releases/Bili-Space-0.1.43-win64.zip');[m.pop(k) for k in ['setupUrl','setupSha256','setupSize']]
+    m.update(version='0.1.99',force=True,downloadUrl='https://bili.gvqi.top/releases/Bili-Space-0.1.99-win64.zip');[m.pop(k) for k in ['setupUrl','setupSha256','setupSize']]
    body=json.dumps(m).encode()
   else:body=payload
   self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)

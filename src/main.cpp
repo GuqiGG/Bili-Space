@@ -425,8 +425,9 @@ void toggleFull(bool on);
 void togglePip(bool on){
     if(on==pip)return;
     if(on){if(full)toggleFull(false);GetWindowRect(windowHandle,&savedRect);ShowWindow(windowHandle,SW_RESTORE);pip=true;
+        SetWindowLongPtrW(windowHandle,GWL_STYLE,(GetWindowLongPtrW(windowHandle,GWL_STYLE)&~LONG_PTR(WS_CAPTION|WS_SYSMENU))|WS_POPUP);
         SetWindowPos(windowHandle,HWND_TOPMOST,GetSystemMetrics(SM_CXSCREEN)-520,GetSystemMetrics(SM_CYSCREEN)-340,480,270,SWP_FRAMECHANGED|SWP_SHOWWINDOW);
-    }else{pip=false;SetWindowPos(windowHandle,HWND_NOTOPMOST,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_SHOWWINDOW);}
+    }else{pip=false;SetWindowLongPtrW(windowHandle,GWL_STYLE,(GetWindowLongPtrW(windowHandle,GWL_STYLE)&~LONG_PTR(WS_POPUP))|WS_OVERLAPPEDWINDOW);SetWindowPos(windowHandle,HWND_NOTOPMOST,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_SHOWWINDOW);}
     fit();execute(std::string("window.BiliSpace?.setPip(")+(pip?"true":"false")+")");log(pip?"PIP entered: borderless, topmost":"PIP restored");
 }
 void toggleFull(bool on){
@@ -450,7 +451,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             if(action=="test-restore"&&testing)restoreFromTray();
             else if(action=="close")PostMessageW(windowHandle,WM_CLOSE,0,0);
             else if(action=="close-ready"&&closePending)PostMessageW(windowHandle,WM_APP+72,0,0);
-            else if(action=="minimize")ShowWindow(windowHandle,SW_MINIMIZE);
+            else if(action=="minimize")PostMessageW(windowHandle,WM_SYSCOMMAND,SC_MINIMIZE,0);
             else if(action=="maximize"){if(pip)togglePip(false);else ShowWindow(windowHandle,IsZoomed(windowHandle)?SW_RESTORE:SW_MAXIMIZE);}
             else if(action=="drag"){ReleaseCapture();SendMessageW(windowHandle,WM_NCLBUTTONDOWN,HTCAPTION,0);}
             else if(action=="back")webview->GoBack();
@@ -606,7 +607,9 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     SetEnvironmentVariableW(L"WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",browserArgs.c_str());
     CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);
     WNDCLASSW wc{};wc.hIcon=LoadIconW(instance,MAKEINTRESOURCEW(1));wc.lpfnWndProc=proc;wc.hInstance=instance;wc.lpszClassName=L"BetterBiliSpace";wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hbrBackground=CreateSolidBrush(RGB(20,20,22));RegisterClassW(&wc);
-    windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Bili-Space [test]":L"Bili-Space",WS_POPUP|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,100,80,1380,880,nullptr,nullptr,instance,nullptr);
+    // Keep DWM's standard taskbar transitions; WM_NCCALCSIZE hides only the title bar.
+    windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Bili-Space [test]":L"Bili-Space",WS_OVERLAPPEDWINDOW,100,80,1380,880,nullptr,nullptr,instance,nullptr);
+    SetWindowPos(windowHandle,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
     DWORD borderColor=0xFFFFFFFE;DwmSetWindowAttribute(windowHandle,34,&borderColor,sizeof(borderColor));
     BOOL dark=TRUE;DwmSetWindowAttribute(windowHandle,20,&dark,sizeof(dark));int corner=2;DwmSetWindowAttribute(windowHandle,33,&corner,sizeof(corner));
     if(!testing||(testing&&args.find(L"--tray-preview")!=std::wstring::npos))installTray();
