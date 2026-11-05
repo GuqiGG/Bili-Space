@@ -2,20 +2,21 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.46",
+  "version": "0.1.47",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.46-win64.zip",
-  "sha256": "026672d6564bad3894d1af318cf326208b75ba1eec86c6af4d9a06fe28872289",
-  "size": 60357460,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.46/Bili-Space-0.1.46-Setup.exe",
-  "setupSha256": "fdaa41e6136435082e604049d4b46451505230f11318a750ae5729ee64cba2ea",
-  "setupSize": 50546521,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.47-win64.zip",
+  "sha256": "2196e56340179bcfdff387f82e51f54578bfc2d192602a7f508eee2cf94be6c0",
+  "size": 60408081,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.47/Bili-Space-0.1.47-Setup.exe",
+  "setupSha256": "f99bb83830c7b76f0738d6a16d7b38a9d511529395f93b71ded5ba745f342484",
+  "setupSize": 50581712,
   "changelog": [
-    "弹幕断档时自动回退原生层，数据恢复后重新接管；距分段结束 30 秒预取下一段、缓存扩到 24 段，跨段不再整屏空白。",
-    "下载线程上限提升到 128（默认 8），大文件可以开到极限；连接数会按文件大小收敛，避免小文件开过多分段。",
-    "设置左侧页签支持滚轮滚动并显示细滚动条，页签再多也能看到“关于与更新”。",
-    "新增本地插件接口：插件目录 + `plugin.json` + 受限 API（样式、存储、事件、播放器状态），设置里可开关、打开目录、重新加载；插件拿不到 native 能力。",
-    "随包提供插件文档与示例插件。"
+    "账号入口改为浮动登录面板：点击「登录 B站」不再整页跳到 passport，而是在页面内固定浮出一个面板，随时可关，主界面不会被导航打断。",
+    "面板内直接呈现官方登录页的全部方式：扫码登录、密码登录、短信登录，以及 Google / Facebook / 微信 / 微博 / QQ 等第三方登录，验证码与加密都交由官方页面处理。",
+    "面板按内容自适应：官方页是 1100×766 的桌面布局，面板按可用空间等比缩放整页，窄窗口下也不会把密码、短信或其他方式裁掉。",
+    "登录成功后面板自动收起，顶部头像与账户卡片同步刷新成已登录状态；点「已存账号」页签可以直接切换、添加或移除已保存的账号。",
+    "面板固定在视口里不随滚动移动，Esc 键和点击面板外部都能关闭；窗口宽度 620 以下依然可用。",
+    "修正已登录判定：头像地址不可用时，入口仍正确按已登录处理，点击进入个人空间而不是再次弹出登录。"
   ]
 }
