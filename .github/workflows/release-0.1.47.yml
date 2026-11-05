@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [master]
-    paths: ['.github/workflows/release-0.1.47.yml']
+    paths: ['.github/workflows/release-0.1.47.yml','package.json','package-lock.json','src/**','assets/**','scripts/**']
 permissions:
   contents: write
 concurrency:
