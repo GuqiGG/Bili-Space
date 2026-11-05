@@ -26,3 +26,13 @@ test('favorites signed out state offers login and closes with Escape',async()=>{
  s.querySelector('.favorites').dispatchEvent(new a.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert(s.querySelector('.favorites-panel').hidden);
  }finally{a.close();}
 });
+
+test('upload plus is home-only and shares settings stacking level; favorites uses the message icon colors',()=>{
+ const a=app();try{const s=a.w.document.querySelector('#bili-space-root').shadowRoot,upload=s.querySelector('.upload'),css=s.querySelector('style').textContent;
+ assert.equal(upload.hidden,false);assert(upload.querySelector('svg'));assert.equal(upload.textContent,'');
+ assert.match(css,/\.upload,#settings-trigger\{z-index:1\}/);assert.match(css,/\.favorites\{[^}]*color:var\(--muted\)/);
+ a.w.history.pushState({},'', '/video/BV1234567890');a.w.BiliSpace.syncRoute();assert(upload.hidden);
+ a.w.history.pushState({},'', '/');a.w.BiliSpace.syncRoute();assert.equal(upload.hidden,false);
+ assert.equal(s.querySelector('.back svg path').getAttribute('d'),'m12.6 4.4-6.2 5.6 6.2 5.6');
+ }finally{a.close();}
+});
