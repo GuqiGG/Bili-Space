@@ -1,13 +1,13 @@
-name: Release Bili-Space 0.1.47 floating login panel
+name: Release Bili-Space 0.1.48 rollback to 0.1.46 source
 on:
   workflow_dispatch:
   push:
     branches: [master]
-    paths: ['.github/workflows/release-0.1.47.yml','package.json','package-lock.json','src/**','assets/**','scripts/**']
+    paths: ['.github/workflows/release-0.1.48.yml','package.json','package-lock.json','src/**','assets/**','scripts/**']
 permissions:
   contents: write
 concurrency:
-  group: release-0.1.47
+  group: release-0.1.48
   cancel-in-progress: false
 env:
   PYTHONUTF8: '1'

@@ -1,7 +1,7 @@
 {
   "name": "bili-space",
   "private": true,
-  "version": "0.1.47",
+  "version": "0.1.48",
   "scripts": {
     "test": "node --test tests/*.test.cjs"
   },

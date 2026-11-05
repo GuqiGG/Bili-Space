@@ -2,9 +2,8 @@
 const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 0 32 32" aria-hidden="true"><path d="m10 3 6 5 6-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><rect x="3" y="8" width="26" height="21" rx="6" fill="currentColor"/><path d="M10 16v5m12-5v5" stroke="white" stroke-width="3" stroke-linecap="round"/></svg>';
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
-const ICON_SWAP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13"/><path d="m14 4.8 3.4 3.2L14 11.2"/><path d="M20 16H7"/><path d="m10 12.8-3.4 3.2L10 19.2"/></svg>';
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:8,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:true,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,headerHistoryBack:true,headerVideoLink:true,logoAutoHide:true,feedColumnsMin:4,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',parkInBackground:true,categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:8,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:true,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* PiP-only renderer. Protocol fields are independently parsed; no third-party parser code. */
 function parsePipDanmaku(buffer){
@@ -74,40 +73,14 @@ let revision=0;
 let routeKey='', loadingTimer, accountRequest, accountChecked=0;
 let homeLoadWakeKey='',homeLoadWakeTimer,homeLoadRetryTimer;
 const mediaTheme=matchMedia('(prefers-color-scheme: dark)');
-// The logo shows on the home page and can step aside on every other page when the
-// auto-hide switch (default on) is enabled. It stays an independent switch from the
-// copy-link button and the clock.
-function applyLogoVisibility(){
-  if(!shadow)return;
-  const logo=$('.brand-label',shadow);
-  if(!logo)return;
-  const auto=PREFS.logoAutoHide!==false;
-  // Narrow windows drop the wordmark; decided here in whole pixels rather than in a CSS
-  // max-width rule, because the CSS viewport can be 619.0000…8 at DPR 1.0000001 and would
-  // silently miss a max-width:619px boundary.
-  const narrow=window.innerWidth<620;
-  const wanted=Boolean(PREFS.headerBrand)&&!narrow&&!(auto&&pageKind()!=='home');
-  logo.hidden=!wanted;
-  if(wanted){
-    layoutHeaderLeading();
-    // No hidden-as-fallback here: a layout conflict must be fixed in the layout, not by making
-    // the element vanish (that hides the bug from every later assertion).
-  }}
 const HEADER_ITEMS=[
   ['headerHome','首页','[data-route="home"]'],['headerDynamic','动态','[data-route="dynamic"]'],['headerHistory','历史','[data-route="history"]'],
-  ['headerBrand','Logo','.brand-label'],['headerVideoLink','复制链接按钮','.video-link'],['headerSearch','搜索栏','.search'],['headerMessages','消息按钮','.messages'],['headerUpload','投稿按钮','.upload'],['headerAccount','头像 / 登录入口','.account'],['headerBack','分区展开入口','.back'],['headerHistoryBack','返回上一页','.history-back']
+  ['headerBrand','居中标题','.brand'],['headerSearch','搜索栏','.search'],['headerMessages','消息按钮','.messages'],['headerUpload','投稿按钮','.upload'],['headerAccount','头像 / 登录入口','.account'],['headerBack','分区展开入口','.back']
 ];
-function applyHeaderPreferences(){  if(!shadow)return;
-  // traffic lights and the SVG window buttons stay visible together: the setting only
-  // hides the mac-style lights, it never takes the window controls away.
-  // Logo, the copy-link button and the clock are three independent switches. headerBrand
-  // now means the logo only; the old "top toolbar" naming bundled unrelated controls.
-  const left=$('.header-left',shadow);left.dataset.controls=PREFS.trafficLights?'traffic':'windows';$('.lights',shadow).hidden=!PREFS.trafficLights;
+function applyHeaderPreferences(){
+  if(!shadow)return;
+  const left=$('.header-left',shadow);left.dataset.controls=PREFS.trafficLights?'traffic':'windows';$('.lights',shadow).hidden=!PREFS.trafficLights;$('.window-actions',shadow).hidden=Boolean(PREFS.trafficLights);
   for(const [key,,selector] of HEADER_ITEMS)$(selector,shadow).hidden=!PREFS[key];
-  applyLogoVisibility();
-  // The bottom-left dock is placed from measured geometry, not a fixed offset: the player
-  // control bar is page content, so its position moves with scrolling and window height.
-  requestAnimationFrame(layoutBottomDock);
   const categoriesOpen=$('.back',shadow).getAttribute('aria-expanded')==='true';
   $('.primary-nav',shadow).hidden=categoriesOpen||!$$('.primary-nav a',shadow).some(a=>!a.hidden);
   if(!PREFS.headerBack)setCategories(false);
@@ -116,113 +89,16 @@ function applyHeaderPreferences(){  if(!shadow)return;
   let empty=$('.category-empty',shadow);if(!empty){empty=document.createElement('button');empty.type='button';empty.className='category-empty';empty.textContent='未选择分区 · 前往设置';empty.onclick=()=>{openSettings();currentTab='categories';renderSettings();};$('#header-categories',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;
 }
 function updateHeaderClock(){if(!shadow)return;const clock=$('.header-clock',shadow);if(!clock)return;clock.hidden=!PREFS.showClock;if(clock.hidden){clock.textContent='';return;}const now=new Date();clock.textContent=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:false});clock.dateTime=now.toISOString();clock.title=now.toLocaleString();}
-function layoutHeaderLeading(){if(!shadow)return;
-  const brand=$('.brand',shadow),dock=$('.brand-leading',shadow),nav=$('.primary-nav',shadow),left=$('.header-left',shadow);
-  if(!brand||brand.hidden)return;
-  // .brand-leading floats out of flow; it is positioned from the header's own edges so its
-  // placement never depends on where .brand happens to sit in the grid.
-  const right=$('.header-right',shadow),logo=$('.brand-label',shadow);
-  const navRight=nav&&!nav.hidden?nav.getBoundingClientRect().right:left.getBoundingClientRect().left+110;
-  const logoRect=logo&&!logo.hidden&&getComputedStyle(logo).display!=='none'?logo.getBoundingClientRect():null;
-  // The dock's right edge must clear whichever of {nav, logo} reaches further right.
-  const anchor=logoRect?Math.max(navRight,logoRect.right+12):navRight;
-  const limit=right?right.getBoundingClientRect().left:(anchor+200);
-  const link=$('.video-link',shadow);
-  const dockWantsRoom=Boolean(dock)&&Boolean(link&&!link.hidden);
-  headerDockTight=dockWantsRoom&&Boolean(logoRect)&&(limit-anchor)<64;
-  headerLogoCramped=Boolean(logoRect)&&logoRect.x<navRight;
-  const available=Math.max(32,(headerDockTight?limit-navRight:limit-anchor)-12);
-  if(dock&&dockWantsRoom){
-    dock.style.position='fixed';
-    dock.style.right=(window.innerWidth-limit+12)+'px';
-    dock.style.maxWidth=available+'px';
-    dock.dataset.compact=String(available<(PREFS.showClock?150:100));
-  }else if(dock){
-    dock.style.maxWidth='';
-    dock.style.position='';
-    dock.style.right='';
-  }
-}
-// The bottom-left dock (投稿 + settings) must never sit on the player control bar. The bar is
-// page content, so its top edge is measured on every layout pass instead of assuming a fixed
-// offset; the dock then stacks the two buttons above whatever space is free.
-const DOCK_GAP=8,DOCK_BOTTOM_MIN=22;
-let dockObserverRef=null,headerDockTight=false,headerLogoCramped=false;
-// Re-point the dock observer at the current page's player bar; B站 replaces that node on
-// navigation, and an observer left on a detached node never fires again.
-function refreshDockObserver(){
-  if(!dockObserverRef)return;
-  dockObserverRef.disconnect();
-  for(const bar of document.querySelectorAll('.bpx-player-control-bottom,.bpx-player-control-wrap,.bs-video-bar'))dockObserverRef.observe(bar);
-  requestAnimationFrame(layoutBottomDock);
-}
-function layoutBottomDock(){
-  if(!shadow)return;
-  const upload=$('.upload',shadow),settings=$('#settings-trigger',shadow);
-  if(!settings)return;
-  const buttonH=44;
-  const screenBottom=window.innerHeight;
-  // Lowest visible player control bar that would collide with the dock column.
-  let floor=screenBottom-DOCK_BOTTOM_MIN;
-  for(const bar of document.querySelectorAll('.bpx-player-control-bottom,.bpx-player-control-wrap,.bilibili-player-video-control,.bs-video-bar,.bpx-player-control-bottom-center')){
-    const rect=bar.getBoundingClientRect(),style=getComputedStyle(bar);
-    if(style.display==='none'||style.visibility==='hidden'||rect.width<1||rect.height<1)continue;
-    if(rect.bottom<0||rect.top>screenBottom)continue;
-    if(rect.left>72)continue; // only bars reaching the dock column matter
-    floor=Math.min(floor,rect.top);
-  }
-  const uploadVisible=Boolean(upload)&&!upload.hidden;
-  const lowestBottom=screenBottom-floor;
-  // Keep a real gap above the bar: matching its top edge exactly still overlaps by a
-  // sub-pixel once the bar's own fractional geometry is in play.
-  const dockBottom=lowestBottom+DOCK_GAP;
-  const uploadBottom=uploadVisible?Math.max(DOCK_BOTTOM_MIN,dockBottom):null;
-  const settingsBottom=uploadVisible
-    ?Math.max(DOCK_BOTTOM_MIN,dockBottom+buttonH+DOCK_GAP)
-    :Math.max(DOCK_BOTTOM_MIN,dockBottom);
-  if(upload)upload.style.bottom=uploadVisible?uploadBottom+'px':'';
-  settings.style.bottom=settingsBottom+'px';
-  settings.dataset.dock=uploadVisible?'stacked':'solo';
-}
+function layoutHeaderLeading(){if(!shadow)return;const brand=$('.brand',shadow),dock=$('.brand-leading',shadow),nav=$('.primary-nav',shadow),left=$('.header-left',shadow);if(!dock||brand.hidden)return;const stop=nav&&!nav.hidden?nav.getBoundingClientRect().right:left.getBoundingClientRect().left+110;const available=Math.max(36,brand.getBoundingClientRect().left-stop-16);dock.style.maxWidth=available+'px';dock.dataset.compact=String(available<(PREFS.showClock?150:100));}
 let copiedVideoLinkTimer;
-// History back for the header button. Same origin only: an in-app page returns through
-// history, anything else falls back to the home page instead of leaving the app.
-function navigateBack(){
-  const referrer=document.referrer;
-  const sameOrigin=()=>{
-    try{return Boolean(referrer)&&new URL(referrer).origin===location.origin;}
-    catch{return false;}
-  };
-  if(history.length>1&&sameOrigin()){
-    history.back();
-    return;
-  }
-  native('navigate',{url:'https://www.bilibili.com/'});
-}
 function currentVideoLink(){
   if(pageKind()!=='video')return '';const path=location.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'').replace(/\/$/,'');
   const url=new URL('https://www.bilibili.com'+path);for(const key of ['p','t']){const value=new URLSearchParams(location.search).get(key);if(value&&/^\d+(?:\.\d+)?$/.test(value))url.searchParams.set(key,value);}return url.href;
 }
 function syncVideoLink(){
-  if(!shadow)return;const button=$('.video-link',shadow);if(!button)return;const url=currentVideoLink();
-  button.hidden=!url||PREFS.headerVideoLink===false;
-  // The button shows a short BV id rather than the whole URL: it stays a visible receipt of
-  // which video will be copied (multi-part pages differ by ?p), without looking like an input.
-  if(button.dataset.url!==url){clearTimeout(copiedVideoLinkTimer);delete button.dataset.copied;delete button.dataset.copyUrl;button.dataset.url=url;}
-  const bv=url?shortVideoRef(url):'';
-  const text=$('.video-link-text',button),label=bv?`复制链接 · ${bv}`:'复制链接';
-  if(text.textContent!==label)text.textContent=label;
-  requestAnimationFrame(layoutHeaderLeading);
-  button.title=url?'复制链接到剪贴板\nShift+点击复制当前时间点\n'+url:'';button.setAttribute('aria-label',url?'复制视频链接到剪贴板（Shift+点击含当前时间）：'+url:'复制视频链接');
-}
-// "复制链接 · BV1xx…" needs a compact, still-unambiguous reference to the video.
-function shortVideoRef(url){
-  try{
-    const parsed=new URL(url),bv=(parsed.pathname.match(/\/video\/(BV[0-9A-Za-z]+)/)||[])[1],part=parsed.searchParams.get('p');
-    if(bv)return part&&part!=='1'?`${bv} · P${part}`:bv;
-    const bangumi=(parsed.pathname.match(/\/(?:bangumi\/play|video)\/((?:ep|ss)\d+)/i)||[])[1];
-    return bangumi||parsed.pathname.split('/').filter(Boolean).pop()||'';
-  }catch{return '';}
+  if(!shadow)return;const button=$('.video-link',shadow);if(!button)return;const url=currentVideoLink();button.hidden=!url;
+  if(button.dataset.url!==url){clearTimeout(copiedVideoLinkTimer);delete button.dataset.copied;delete button.dataset.copyUrl;button.dataset.url=url;$('.video-link-text',button).textContent=url.replace('https://www.','');}
+  requestAnimationFrame(layoutHeaderLeading);button.title=url?'点击复制链接 · Shift+点击复制当前时间点\n'+url:'';button.setAttribute('aria-label',url?'复制视频链接（Shift+点击含当前时间）：'+url:'复制视频链接');
 }
 function copyCurrentVideoLink(withTime=false){
   const base=currentVideoLink();if(!base)return;const url=new URL(base),video=playbackVideo();
@@ -241,7 +117,7 @@ function mountVideoHome(){
   const host=$('.left-container')||$('.video-info-container')||$('#viewbox_report')||$('.video-container-v1,.video-container-v2');
   if(!host)return;
   const row=document.createElement('div');row.id='bili-space-video-bar';row.className='bs-video-bar';
-  row.innerHTML=`<a id="bili-space-video-home" class="bs-video-home" href="https://www.bilibili.com/" aria-label="返回 B站首页">${ICON_TV}<span>首页</span></a><button type="button" id="bili-space-video-download" class="bs-video-download" aria-label="下载到本地：用内置下载器保存这个视频" title="下载到本地 · 使用内置下载器保存视频文件"${PREFS.downloader?'':' hidden'}>${ICON_DOWNLOAD}<span>下载到本地</span></button><span id="bili-space-download-progress" class="bs-download-progress" role="status" aria-live="off" hidden></span><button type="button" id="bili-space-download-cancel" class="bs-video-download" hidden>取消</button>`;
+  row.innerHTML=`<a id="bili-space-video-home" class="bs-video-home" href="https://www.bilibili.com/" aria-label="返回 B站首页">${ICON_TV}<span>首页</span></a><button type="button" id="bili-space-video-download" class="bs-video-download" aria-label="用下载器保存这个视频" title="使用内置下载器保存视频"${PREFS.downloader?'':' hidden'}>${ICON_DOWNLOAD}<span>下载</span></button><span id="bili-space-download-progress" class="bs-download-progress" role="status" aria-live="off" hidden></span><button type="button" id="bili-space-download-cancel" class="bs-video-download" hidden>取消</button>`;
   host.prepend(row);
 }
 // Resolve an official combined audio/video stream; native code saves it without another app.
@@ -344,13 +220,8 @@ function syncRoute(){
   else{const toolbar=$('.video-toolbar-container');if(toolbar)toolbar.style.removeProperty('margin-top');}
   mountHomeBanner();
   compactHomeFeed();
-  // A new page brings a new player bar, so the dock must be re-measured and re-observed.
-  refreshDockObserver();
-  requestAnimationFrame(layoutBottomDock);
-  refreshFeedColumnsObserver();
   if(!shadow)return;
   syncVideoLink();const topHome=$('.video-home-top',shadow);if(topHome)topHome.hidden=kind!=='video';headerVideoTarget=kind==='video';if(headerSurfaceReady)animateHeaderRoute();
-  applyLogoVisibility();
   $$('nav a[data-route]',shadow).forEach(a=>{
     if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
   });
@@ -385,53 +256,9 @@ function mountHomeBanner(){
     }
   }
 }
-// The home feed keeps at least PREFS.feedColumnsMin columns and adds more as the window
-// widens. auto-fill does the counting, so the only job here is turning "at least N columns"
-// into a minimum column width for the current container. The floor only guards against a
-// degenerate number: the requested minimum always wins, even if that makes cards narrow.
-const FEED_GAP=20,FEED_MIN=80,FEED_MAX=420;
-function feedGridEl(){
-  return document.querySelector('[data-bs-feed=grid]')||
-    document.querySelector('.bili-feed4-layout .feed2')||
-    document.querySelector('.bili-feed4-layout');
-}
-function layoutFeedColumns(){
-  if(!shadow)return;
-  const grid=feedGridEl(),host=grid||document.body;
-  if(!grid)return;
-  const wanted=Math.max(1,Math.min(8,Number(PREFS.feedColumnsMin)||4));
-  const style=getComputedStyle(grid);
-  const inner=grid.clientWidth-(parseFloat(style.paddingLeft)||0)-(parseFloat(style.paddingRight)||0);
-  if(!(inner>0))return;
-  // N columns need N gaps of width G between them: inner = N*w + (N-1)*G.
-  // A card's own contents (stats row, icons) need a little room; taking one extra pixel per
-  // column keeps auto-fill from overfilling and leaving a few px of horizontal scroll.
-  const width=Math.floor((inner-(wanted-1)*FEED_GAP)/wanted)-2;
-  const clamped=Math.max(FEED_MIN,Math.min(FEED_MAX,width));
-  document.documentElement.style.setProperty('--bs-feed-min-width',clamped+'px');
-  document.documentElement.dataset.bsFeedMin=String(wanted);
-  document.documentElement.dataset.bsFeedColWidth=String(clamped);
-}
-let feedColumnsObserver=null,feedColumnsFrame=0;
-function scheduleFeedColumns(){
-  if(feedColumnsFrame)return;
-  feedColumnsFrame=requestAnimationFrame(()=>{feedColumnsFrame=0;layoutFeedColumns();});
-}
-function refreshFeedColumnsObserver(){
-  if(typeof ResizeObserver==='undefined')return;
-  const grid=feedGridEl();
-  if(!grid)return;
-  if(feedColumnsObserver&&feedColumnsObserver.target===grid)return;
-  feedColumnsObserver?.disconnect();
-  feedColumnsObserver=new ResizeObserver(()=>scheduleFeedColumns());
-  feedColumnsObserver.target=grid;
-  feedColumnsObserver.observe(grid);
-  scheduleFeedColumns();
-}
 function compactHomeFeed(){
   if(pageKind()!=='home')return;
   markAds();
-  layoutFeedColumns();
   const cardSelector='.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card';
   for(const layout of $$('.bili-feed4-layout')){
     const feeds=$$('.feed2',layout);
@@ -621,9 +448,6 @@ function renderAccountDecorations(){
   if(video){if(!card.hidden&&!reduced)media.play().catch(()=>{});else media.pause();}
 }
 let accountProfile=null,accountStatsAt=0,accountStatsRequest=null,accountHideTimer,accountShowTimer,accountMotion;
-// Saved-account switcher. The native side owns the cookie jars; this side only
-// draws the list and asks for a capture, an activation or a deletion.
-let accountList=[],activeAccountMid='',accountView='';
 let messageUnread={feed:{},direct:{}},messageAccount='',messageRequest=null,messageChecked=0;
 function unreadNumber(value){return Number.isSafeInteger(value)&&value>0?Math.min(value,999999):0;}
 function messageUnreadCounts(){
@@ -653,87 +477,6 @@ async function refreshMessageUnread(force=false){
   try{await Promise.all([read('https://api.vc.bilibili.com/x/im/web/msgfeed/unread?build=0&mobi_app=web','feed'),read('https://api.vc.bilibili.com/session_svr/v1/session_svr/single_unread?unread_type=0&build=0&mobi_app=web','direct')]);}
   finally{clearTimeout(timer);if(messageRequest===request)messageRequest=null;}
 }
-function accountPost(action,extra={}){native('accounts',{action,...extra});}
-// The native side owns every jar; this only mirrors the metadata it sends back.
-function acceptAccounts(state){
-  if(!state||typeof state!=='object')return;
-  accountList=Array.isArray(state.accounts)?state.accounts.filter(a=>a&&typeof a==='object'&&String(a.mid||'')):[];
-  activeAccountMid=String(state.active||'');
-  renderAccountList();
-}
-function accountInitial(entry){
-  const name=String(entry.uname||'').trim();
-  if(name)return name.slice(0,1).toUpperCase();
-  return String(entry.mid||'?').slice(0,1);
-}
-function renderAccountList(host){
-  const scope=host||(shadow&&$('#account-card',shadow));if(!scope)return;
-  const card=$('#account-card',shadow)||scope;
-  const target=host||card;
-  const list=$('.account-list',target),actions=$('.account-actions',target),note=$('.account-note',target);
-  if(!list)return;
-  const accountsView=host?true:accountView==='accounts';
-  if(!host)card.dataset.view=accountsView?'accounts':'profile';
-  $('.account-switch',card)?.setAttribute('aria-pressed',accountsView?'true':'false');
-  list.hidden=!accountsView;actions.hidden=!accountsView;
-  if(!accountsView){note.hidden=true;return;}
-  list.replaceChildren();
-  for(const entry of accountList){
-    const mid=String(entry.mid||''),row=document.createElement('div');
-    row.className='account-row';row.dataset.mid=mid;
-    const active=mid&&mid===activeAccountMid;
-    if(active)row.dataset.active='true';
-    const pick=document.createElement('button');
-    pick.type='button';pick.className='account-row-pick';pick.dataset.accountSelect=mid;
-    pick.setAttribute('aria-current',active?'true':'false');
-    pick.title=String(entry.uname||mid);
-    const face=document.createElement('img');
-    face.className='account-row-face';face.alt='';face.referrerPolicy='no-referrer';face.loading='lazy';
-    const source=profileMediaUrl(entry.face);
-    if(source){face.src=source;}else{
-      const blank=document.createElement('span');
-      blank.className='account-row-face';blank.dataset.empty='true';
-      blank.textContent=accountInitial(entry);
-      pick.append(blank);
-    }
-    if(source)pick.append(face);
-    const body=document.createElement('span');body.className='account-row-body';
-    const name=document.createElement('span');name.className='account-row-name';
-    name.textContent=String(entry.uname||('UID '+mid));
-    const meta=document.createElement('span');meta.className='account-row-meta';
-    const level=Number.isInteger(entry.level)&&entry.level>0?'Lv.'+entry.level:'未同步等级';
-    meta.textContent=active?level+' · 当前账号':level;
-    body.append(name,meta);pick.append(body);row.append(pick);
-    const drop=document.createElement('button');
-    drop.type='button';drop.className='account-row-drop';drop.dataset.accountDrop=mid;
-    drop.setAttribute('aria-label','移除 '+(entry.uname||mid));drop.title='移除存档';drop.textContent='×';
-    row.append(drop);
-    list.append(row);
-  }
-  note.hidden=accountList.length>0;
-  if(!accountList.length)note.textContent='还没有存档账号。登录后点「添加当前账号」，就能在这里一键切换。';
-  else note.textContent=activeAccountMid?'切换会复用已保存的登录状态，立即生效。':'点账号即可切换，无需重新登录。';
-}
-function forgetAccount(mid){
-  const entry=accountList.find(a=>String(a.mid)===String(mid));
-  accountList=accountList.filter(a=>String(a.mid)!==String(mid));
-  if(activeAccountMid===String(mid))activeAccountMid='';
-  renderAccountList();
-  if(entry)toast('已移除 '+(entry.uname||entry.mid));
-}
-function activateAccount(mid,entry){
-  if(!mid||mid===activeAccountMid)return;
-  toast('正在切换到 '+(entry?.uname||mid)+'…');
-  accountPost('activate',{mid});
-}
-function captureAccount(){
-  if(!accountProfile||!/^\d+$/.test(String(accountProfile.mid||''))){
-    toast('先登录 B站，再添加当前账号');
-    return;
-  }
-  accountPost('capture',{mid:String(accountProfile.mid),profile:{uname:accountProfile.uname||'',face:accountProfile.face||'',level:Number.isInteger(accountProfile.level)?accountProfile.level:0}});
-  toast('已保存 '+(accountProfile.uname||'当前账号'));
-}
 function renderAccountCard(){
   if(!shadow)return;const card=$('#account-card',shadow);if(!card)return;
   renderAccountDecorations();
@@ -748,134 +491,10 @@ async function refreshAccountStats(){
   const spacePath=ownSpaceInfoPath(current),officialRequest=spacePath?get(spacePath).then(data=>{if(data&&accountProfile===current){mergeAccountDecorations(data);renderAccountCard();}return data;}):Promise.resolve(null);
   accountStatsRequest=Promise.all([get('/x/web-interface/nav/stat'),get('/x/space/upstat?mid='+encodeURIComponent(current.mid)),get('/x/space/myinfo'),get('/x/web-interface/card?mid='+encodeURIComponent(current.mid)),get('/x/space/v2/myinfo'),officialRequest]).then(([stats,up,info,card,space,official])=>{if(accountProfile!==current)return;for(const key of ['follower','following'])if(Number.isFinite(stats?.[key])&&stats[key]>=0)current[key]=stats[key];if(Number.isFinite(up?.likes)&&up.likes>=0)current.likes=up.likes;mergeAccountDecorations({...space,...info,...official,top_photo_v2:official?.top_photo_v2||info?.top_photo_v2||space?.toutu,theme:official?.theme||info?.theme||space?.theme},card||{});renderAccountCard();}).finally(()=>accountStatsRequest=null);await accountStatsRequest;
 }
-function showAccountCard(animate=true){clearTimeout(accountHideTimer);const card=$('#account-card',shadow),wasHidden=card.hidden||card.dataset.open!=='true';card.hidden=false;renderAccountCard();renderAccountList();accountPost('state');$('.account',shadow).setAttribute('aria-expanded','true');const from=accountMotion?getComputedStyle(card).transform:null;accountMotion?.cancel();card.dataset.open='true';if(animate&&wasHidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&card.animate){card.style.transition='none';const frames=[];for(let i=0;i<=30;i++){const t=i/30*.5,x=1-Math.exp(-5*t)*(Math.cos(Math.sqrt(75)*t)+5/Math.sqrt(75)*Math.sin(Math.sqrt(75)*t)),scale=.96+.04*x;frames.push({offset:i/30,opacity:Math.min(1,t/.12),transform:i===30?'translateY(0) scale(1)':(i===0&&from&&from!=='none'?from:'translateY('+(-6*(1-x))+'px) scale('+scale+')')});}accountMotion=card.animate(frames,{duration:500,easing:'linear'});}refreshAccountStats();}
+function showAccountCard(animate=true){clearTimeout(accountHideTimer);const card=$('#account-card',shadow),wasHidden=card.hidden||card.dataset.open!=='true';card.hidden=false;renderAccountCard();$('.account',shadow).setAttribute('aria-expanded','true');const from=accountMotion?getComputedStyle(card).transform:null;accountMotion?.cancel();card.dataset.open='true';if(animate&&wasHidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&card.animate){card.style.transition='none';const frames=[];for(let i=0;i<=30;i++){const t=i/30*.5,x=1-Math.exp(-5*t)*(Math.cos(Math.sqrt(75)*t)+5/Math.sqrt(75)*Math.sin(Math.sqrt(75)*t)),scale=.96+.04*x;frames.push({offset:i/30,opacity:Math.min(1,t/.12),transform:i===30?'translateY(0) scale(1)':(i===0&&from&&from!=='none'?from:'translateY('+(-6*(1-x))+'px) scale('+scale+')')});}accountMotion=card.animate(frames,{duration:500,easing:'linear'});}refreshAccountStats();}
 
-function hideAccountCard(){clearTimeout(accountShowTimer);const card=$('#account-card',shadow);if(!card)return;const visual=getComputedStyle(card);const from={opacity:visual.opacity,transform:visual.transform};accountMotion?.cancel();card.dataset.open='false';$('.account',shadow).setAttribute('aria-expanded','false');if(card.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches){card.style.transition='none';accountMotion=card.animate([from,{opacity:0,transform:'translateY(-4px) scale(.98)'}],{duration:120,easing:'cubic-bezier(.23,1,.32,1)'});}accountHideTimer=setTimeout(()=>{card.hidden=true;$('video',card)?.pause();if(accountView){accountView='';renderAccountList();}},180);}
+function hideAccountCard(){clearTimeout(accountShowTimer);const card=$('#account-card',shadow);if(!card)return;const visual=getComputedStyle(card);const from={opacity:visual.opacity,transform:visual.transform};accountMotion?.cancel();card.dataset.open='false';$('.account',shadow).setAttribute('aria-expanded','false');if(card.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches){card.style.transition='none';accountMotion=card.animate([from,{opacity:0,transform:'translateY(-4px) scale(.98)'}],{duration:120,easing:'cubic-bezier(.23,1,.32,1)'});}accountHideTimer=setTimeout(()=>{card.hidden=true;$('video',card)?.pause();},180);}
 
-// Floating login panel. The scan-code page is the official passport page in an
-// iframe: Bilibili sends no X-Frame-Options and no CSP frame-ancestors, so the
-// QR refresh, password login and captcha stay entirely on their side. The
-// "已存账号" tab reuses renderAccountList/accountPost - there is no second list.
-let loginPanelPoll=null,loginPanelTab='login';
-const LOGIN_URL='https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F';
-function loginPanel(){return shadow?$('#login-panel',shadow):null;}
-function loginPanelOpen(){const panel=loginPanel();return Boolean(panel)&&!panel.hidden&&panel.dataset.open==='true';}
-function ensureLoginFrame(panel){
-  const host=$('.login-panel-frame-host',panel);if(!host)return;
-  if($('.login-panel-frame',host)){fitLoginFrame(panel);return;}
-  const frame=document.createElement('iframe');
-  frame.className='login-panel-frame';
-  frame.title='B站登录';
-  frame.setAttribute('allow','clipboard-write; fullscreen');
-  frame.dataset.naturalWidth='1100';
-  frame.dataset.naturalHeight='766';
-  frame.src=LOGIN_URL;
-  host.append(frame);
-  host.hidden=false;
-  frame.addEventListener('load',()=>fitLoginFrame(panel),{once:false});
-  fitLoginFrame(panel);
-}
-// The embedded passport page lays out at a fixed 1100x766. Scaling it preserves every
-// login method (scan, password, SMS, third-party) instead of cropping them away.
-function fitLoginFrame(panel){
-  const scope=panel||loginPanel();if(!scope)return;
-  const host=$('.login-panel-frame-host',scope),frame=$('.login-panel-frame',scope);
-  if(!host||!frame)return;
-  const natural=parseFloat(frame.dataset.naturalWidth)||1100;
-  const naturalHeight=parseFloat(frame.dataset.naturalHeight)||766;
-  const available=host.clientWidth||scope.clientWidth||natural;
-  const scale=Math.min(1,available/natural);
-  frame.style.transform='scale('+scale+')';
-  host.style.height=Math.round(naturalHeight*scale)+'px';
-  host.dataset.scale=scale.toFixed(3);
-}
-function scheduleLoginFrameFit(){
-  const panel=loginPanel();if(!panel||panel.hidden)return;
-  cancelAnimationFrame(loginFrameFitFrame);
-  loginFrameFitFrame=requestAnimationFrame(()=>fitLoginFrame(panel));
-}
-let loginFrameFitFrame=0;
-function setLoginTab(tab=loginPanelTab,{focus=false}={}){
-  const panel=loginPanel();if(!panel)return;
-  loginPanelTab=tab==='accounts'?'accounts':'login';
-  panel.dataset.tab=loginPanelTab;
-  const body=$('.login-panel-body',panel),host=$('.login-panel-frame-host',panel);
-  for(const button of panel.querySelectorAll('[data-login-tab]'))button.setAttribute('aria-selected',String(button.dataset.loginTab===loginPanelTab));
-  const list=$('.account-list',panel),actions=$('.account-actions',panel),note=$('.account-note',panel);
-  const accounts=loginPanelTab==='accounts';
-  if(body)body.dataset.tab=loginPanelTab;
-  if(host)host.hidden=accounts;
-  if(accounts){
-    ensureLoginFrame(panel); // keep it mounted so returning to the tab keeps its state
-    if(host)host.hidden=true;
-    if(list)list.hidden=false;
-    if(actions)actions.hidden=false;
-    accountView='accounts';
-    renderAccountList(panel);
-  }else{
-    ensureLoginFrame(panel);
-    if(list)list.hidden=true;
-    if(actions)actions.hidden=true;
-    if(note)note.hidden=true;
-  }
-  const label=$('#login-panel-title',panel);
-  if(label)label.textContent=accounts?'已存账号':'登录 B站';
-  const hint=$('#login-panel-note',panel);
-  if(hint){
-    hint.hidden=false;
-    hint.textContent=accounts?'切换会复用已保存的登录状态，立即生效。':'扫码或账号密码登录，登录状态会保存在本机。';
-  }
-  if(focus){const target=accounts?$('.account-row-pick',panel)||$('[data-account=add]',panel):$('.login-panel-close',panel);target?.focus();}
-}
-function openLoginPanel({tab='login',focus=true}={}){
-  const panel=loginPanel(),account=$('.account',shadow);if(!panel)return;
-  hideAccountCard();
-  panel.hidden=false;
-  panel.dataset.open='true';
-  account?.setAttribute('aria-expanded','true');
-  ensureLoginFrame(panel);
-  setLoginTab(tab,{focus:false});
-  scheduleLoginFrameFit();
-  accountPost('state');
-  startLoginPanelPoll();
-  if(focus){const target=panel.querySelector('[data-login-tab][aria-selected=true]')||$('.login-panel-close',panel);target?.focus();}
-}
-function closeLoginPanel({restoreFocus=true}={}){
-  const panel=loginPanel(),account=$('.account',shadow);if(!panel)return;
-  stopLoginPanelPoll();
-  panel.dataset.open='false';
-  account?.setAttribute('aria-expanded','false');
-  accountView='';
-  renderAccountList();
-  clearTimeout(loginPanel?.dataset ? loginPanelHideTimer : 0);
-  loginPanelHideTimer=setTimeout(()=>{if(panel.dataset.open!=='true')panel.hidden=true;},180);
-  if(restoreFocus)account?.focus?.();
-}
-function loginPanelToggle(){if(loginPanelOpen())closeLoginPanel();else openLoginPanel();}
-function startLoginPanelPoll(){
-  stopLoginPanelPoll();
-  const tick=async()=>{
-    if(!loginPanelOpen()){stopLoginPanelPoll();return;}
-    try{
-      const response=await fetch('https://api.bilibili.com/x/web-interface/nav',{credentials:'include',cache:'no-store'});
-      if(response.ok){
-        const result=await response.json();
-        if(result?.code===0&&result.data?.isLogin){
-          accountChecked=0;
-          await refreshAccount(true);
-          await refreshMessageUnread(true);
-          closeLoginPanel({restoreFocus:false});
-          toast('已登录 '+(accountProfile?.uname||'B站账号'));
-          return;
-        }
-      }
-    }catch{/* keep polling; a failed status read is not a login */ }
-    loginPanelPoll=setTimeout(tick,1800);
-  };
-  loginPanelPoll=setTimeout(tick,1200);
-}
-function stopLoginPanelPoll(){clearTimeout(loginPanelPoll);loginPanelPoll=null;}
-let loginPanelHideTimer=0;
 async function refreshAccount(force=false){
   if(accountRequest||(!force&&Date.now()-accountChecked<60000))return;
   accountChecked=Date.now();accountRequest=new AbortController();
@@ -884,18 +503,15 @@ async function refreshAccount(force=false){
     const response=await fetch('https://api.bilibili.com/x/web-interface/nav',{credentials:'include',signal:accountRequest.signal});
     if(!response.ok)throw Error('account status unavailable');
     const result=await response.json(),data=result.data;
-    if(result.code!==0||!data?.isLogin){accountProfile=null;resetMessageUnread();renderAccountCard();$('.account',shadow)?.removeAttribute('data-authenticated');return;}if(!accountProfile||String(accountProfile.mid)!==String(data.mid)){accountProfile={mid:data.mid,...cachedProfileBanner(data.mid)};accountStatsAt=0;}Object.assign(accountProfile,{uname:String(data.uname||'我的主页'),level:Number.isInteger(data.level_info?.current_level)?data.level_info.current_level:null,face:profileMediaUrl(data.face),wbi:data.wbi_img||accountProfile.wbi,vip:data.vip||{type:data.vipType,status:data.vipStatus,avatar_subscript:data.vip_avatar_subscript},pendant:data.pendant||accountProfile.pendant});renderAccountCard();refreshMessageUnread();
-    // Signed in: the header entry goes back to opening the user's space. This must not
-    // depend on the avatar URL passing the host allow-list below.
-    const signedIn=$('.account',shadow);
-    if(signedIn){signedIn.dataset.authenticated='true';signedIn.setAttribute('aria-label',data.uname||'我的主页');signedIn.title=data.uname||'我的主页';}
-    if(/^\d+$/.test(String(data.mid))&&signedIn)signedIn.href='https://space.bilibili.com/'+data.mid;
+    if(result.code!==0||!data?.isLogin){accountProfile=null;resetMessageUnread();renderAccountCard();return;}if(!accountProfile||String(accountProfile.mid)!==String(data.mid)){accountProfile={mid:data.mid,...cachedProfileBanner(data.mid)};accountStatsAt=0;}Object.assign(accountProfile,{uname:String(data.uname||'我的主页'),level:Number.isInteger(data.level_info?.current_level)?data.level_info.current_level:null,face:profileMediaUrl(data.face),wbi:data.wbi_img||accountProfile.wbi,vip:data.vip||{type:data.vipType,status:data.vipStatus,avatar_subscript:data.vip_avatar_subscript},pendant:data.pendant||accountProfile.pendant});renderAccountCard();refreshMessageUnread();
     const face=new URL(data.face,location.href);
     if(!['https:','http:'].includes(face.protocol)||!/(^|\.)(hdslb|bilibili)\.com$/i.test(face.hostname))return;
     face.protocol='https:';
     const account=$('.account',shadow),img=document.createElement('img');
     img.src=face.href;img.alt=data.uname||'我的头像';img.referrerPolicy='no-referrer';
-    renderAccountDecorations();
+    renderAccountDecorations();account.setAttribute('aria-label',data.uname||'我的主页');account.title=data.uname||'我的主页';
+    if(/^\d+$/.test(String(data.mid)))account.href='https://space.bilibili.com/'+data.mid;
+    account.dataset.authenticated='true';
   }catch(_){
     // Login cookies stay in the browser. A failed status read must not fake a profile.
   }finally{clearTimeout(timeout);accountRequest=null;}
@@ -1049,7 +665,7 @@ const pageCss = `
 @font-face{font-family:BiliDouyin;src:url("https://bili-space.local/fonts/DouyinSansBold.ttf") format("truetype"),local("DouyinSans Bold"),local("DOUYINSANSBOLD-GB"),local("抖音美好体 Bold");font-display:swap}
 #bs-video-loading{position:fixed;inset:var(--bs-header-height,58px) 0 0;z-index:2147483000;display:grid;place-items:center;text-align:center;background:var(--bg1,#161618);color:var(--text1,#eeeef0);animation:bs-loading-in 120ms cubic-bezier(.23,1,.32,1) both}#bs-video-loading svg{width:56px;height:56px;color:var(--bs-accent,#fb7299);animation:bs-loading-spin 700ms cubic-bezier(.77,0,.175,1) infinite}#bs-video-loading.leaving{animation:bs-loading-out 120ms cubic-bezier(.23,1,.32,1) forwards;pointer-events:none}@keyframes bs-loading-in{from{opacity:0}to{opacity:1}}@keyframes bs-loading-out{to{opacity:0}}@keyframes bs-loading-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#bs-video-loading,#bs-video-loading svg{animation:none!important}#bs-video-loading.leaving{opacity:0}}
 #bs-close-animation{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:var(--bg1,#161618);color:var(--bs-accent,#fb7299);text-align:center;animation:bs-close-in 180ms cubic-bezier(.23,1,.32,1) both}#bs-close-animation svg{width:64px;height:64px;animation:bs-tv-exit 240ms cubic-bezier(.77,0,.175,1) both}#bs-close-animation p{color:var(--text1,#eeeef0)}@keyframes bs-close-in{from{opacity:0}to{opacity:1}}@keyframes bs-tv-exit{to{transform:rotate(360deg) scale(.96)}}@media(prefers-reduced-motion:reduce){#bs-close-animation,#bs-close-animation svg{animation:none!important}}
-:root{--bs-accent:#fb7299;--bs-progress:#fb7299;--bs-progress-height:4px;--bs-progress-radius:6px;--bs-feed-min-width:240px;--bs-header-height:58px;scroll-padding-top:70px}
+:root{--bs-accent:#fb7299;--bs-progress:#fb7299;--bs-progress-height:4px;--bs-progress-radius:6px;--bs-feed-columns:4;--bs-header-height:58px;scroll-padding-top:70px}
 html[data-bs-font=true] body,html[data-bs-font=true] button,html[data-bs-font=true] input,html[data-bs-font=true] textarea{font-family:BiliDouyin,"Microsoft YaHei UI",sans-serif!important}
 html[data-bs-theme=dark]{color-scheme:dark;--bg1:#161618;--bg2:#202023;--bg3:#29292e;--bg1_rgb:22,22,24;--bg2_rgb:32,32,35;--bg3_rgb:41,41,46;--bg1_float_rgb:32,32,35;--bg2_float_rgb:41,41,46;--bg3_float_rgb:51,51,56;--text1_rgb:238,238,240;--text2_rgb:176,176,184;--line_regular_rgb:48,48,52;--bg1_float:#202023;--bg2_float:#29292e;--bg3_float:#333338;--graph_bg_thin:#202023;--graph_bg_regular:#29292e;--graph_bg_thick:#333338;--text1:#eeeef0;--text2:#b0b0b8;--text3:#8a8a94;--text4:#73737e;--line_light:#27272c;--line_regular:#303034;--line_bold:#45454c}
 html[data-bs-theme=dark] body{background:#161618!important;color:#eeeef0}
@@ -1075,22 +691,14 @@ html[data-bs-page=home] [data-bs-banner=true] :is(.banner-img,#bili-header-banne
 html[data-bs-ads=true] [data-bs-ad=true]{display:none!important}
 html[data-bs-channels=false] .bili-header__channel,html[data-bs-channels=false] .channel-container,html[data-bs-channels=false] .bili-feed4-layout .channel-floor{display:none!important}
 html[data-bs-page=home] .bili-feed4-layout{width:auto!important;margin-left:clamp(20px,3vw,48px)!important;margin-right:clamp(20px,3vw,48px)!important}
-html[data-bs-page=home] [data-bs-feed=grid]{display:grid!important;position:relative!important;grid-template-columns:repeat(auto-fill,minmax(var(--bs-feed-min-width,240px),1fr))!important;grid-template-rows:none!important;grid-template-areas:none!important;grid-auto-flow:row dense!important;grid-auto-rows:auto!important;gap:28px 20px!important;align-items:start!important;align-content:start!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:20px 0 0!important}
+html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=grid]{display:grid!important;position:relative!important;grid-template-columns:repeat(var(--bs-feed-columns),minmax(0,1fr))!important;grid-template-rows:none!important;grid-template-areas:none!important;grid-auto-flow:row dense!important;grid-auto-rows:auto!important;gap:28px 20px!important;align-items:start!important;align-content:start!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:20px 0 0!important}
 html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card][data-bs-empty=true]{display:none!important}
-html[data-bs-page=home] .fixed-channel-shim{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;pointer-events:none!important}
-html[data-bs-page=home] [data-bs-feed=wrapper]{display:contents!important}
-html[data-bs-page=home] [data-bs-feed=wrapper]::before,html[data-bs-page=home] [data-bs-feed=wrapper]::after{content:none!important}
-html[data-bs-page=home] [data-bs-feed=card]{position:relative!important;inset:auto!important;grid-area:auto!important;order:0!important;width:auto!important;min-width:0!important;max-width:100%!important;height:auto!important;min-height:0!important;margin:0!important;align-self:start!important}
-/* When the minimum-column setting squeezes a card, the stats row (fixed-width by default)
-   is what overflows the grid. Let it shrink and clip instead of widening the column. */
-html[data-bs-page=home] [data-bs-feed=grid]{overflow-x:clip!important}
-html[data-bs-page=home] [data-bs-feed=card] .bili-video-card__stats,html[data-bs-page=home] [data-bs-feed=card] .bili-video-card__stats--left{min-width:0!important;overflow:hidden!important}
-html[data-bs-page=home] [data-bs-feed=card] .bili-video-card__stats__duration{white-space:nowrap}
-/* An extremely narrow column (a high minimum on a small window) still lets a card's own
-   stats text sit a couple of pixels wide; clip the cell instead of scrolling the grid. */
-html[data-bs-page=home] [data-bs-feed=card]{overflow:hidden!important}
-html[data-bs-page=home] [data-bs-feed=grid] .load-more-anchor{display:block!important;position:absolute!important;bottom:0!important;left:0!important;width:100%!important;height:1px!important;overflow:hidden!important;margin:0!important}
-html[data-bs-page=home] [data-bs-feed=grid][data-bs-prefetch=true] .load-more-anchor{bottom:min(140vh,80%)!important}
+html[data-bs-page=home][data-bs-ads=true] .fixed-channel-shim{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;pointer-events:none!important}
+html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=wrapper]{display:contents!important}
+html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=wrapper]::before,html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=wrapper]::after{content:none!important}
+html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card]{position:relative!important;inset:auto!important;grid-area:auto!important;order:0!important;width:auto!important;min-width:0!important;max-width:100%!important;height:auto!important;min-height:0!important;margin:0!important;align-self:start!important}
+html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=grid] .load-more-anchor{display:block!important;position:absolute!important;bottom:0!important;left:0!important;width:100%!important;height:1px!important;overflow:hidden!important;margin:0!important}
+html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=grid][data-bs-prefetch=true] .load-more-anchor{bottom:min(140vh,80%)!important}
 html[data-bs-page=home][data-bs-ads=true] [data-bs-ad=true]{display:none!important}
 html[data-bs-page=home] :is(.bili-feed4-layout .container,.bili-feed4-layout .feed2){min-width:0!important}
 html[data-bs-channels=false] :is(.bili-header__channel,.channel-container,.channel-floor){height:0!important;min-height:0!important;margin:0!important;padding:0!important}
@@ -1169,12 +777,9 @@ html[data-bs-page=messages][data-bs-theme=dark] :is(.message-header,.message-box
 .bs-video-download[data-state=done]{color:#2f9e63!important;border-color:#2f9e63}
 .bs-video-download[data-state=blocked]{color:#c9812f!important;border-color:#c9812f}
 .bs-video-bar[hidden],.bs-video-home[hidden],.bs-video-download[hidden]{display:none!important}
-/* The feed is a minimum-columns grid: JS sets --bs-feed-min-width from the measured
-   container and the minimum column count, and auto-fill adds columns as the window grows.
-   The media queries only keep a sane floor before the first measurement runs. */
-@media(min-width:1600px){:root{--bs-feed-min-width:260px}}
-@media(max-width:1100px){:root{--bs-feed-min-width:220px}}
-@media(max-width:800px){:root{--bs-feed-min-width:200px}}
+@media(min-width:1600px){:root{--bs-feed-columns:5}}
+@media(max-width:1100px){:root{--bs-feed-columns:3}}
+@media(max-width:800px){:root{--bs-feed-columns:2}}
 @media(max-width:800px){:root{--bs-header-height:102px}}
 .bpx-player-progress-schedule-current,.bpx-player-progress-schedule-current:before,.bilibili-player-video-progress-slider .bui-bar{background:var(--bs-progress)!important}
 .bpx-player-progress-schedule,.bpx-player-progress-schedule-wrap{height:var(--bs-progress-height)!important;border-radius:var(--bs-progress-radius)!important}
@@ -1222,96 +827,29 @@ const shellCss=`
 *{box-sizing:border-box}button,input,select{font:inherit}button,a,input,select{pointer-events:auto}button{cursor:pointer;color:inherit}button:active{transform:scale(.97)}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}[hidden]{display:none!important}
 svg{width:20px;height:20px;vertical-align:middle}a{color:inherit;text-decoration:none}
 header{height:var(--bs-header-height,58px);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:16px;padding:0 24px;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);pointer-events:auto;user-select:none}
-.video-home-top{position:absolute;left:0;top:50%;height:32px;width:64px;display:inline-flex;align-items:center;justify-content:flex-start;gap:8px;font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;opacity:0;transform:translate(-8px,-50%);pointer-events:none;transition:opacity 180ms cubic-bezier(.23,1,.32,1),transform 240ms cubic-bezier(.23,1,.32,1)}.video-home-top[hidden]{display:none}.video-home-top svg{display:block;width:20px;height:20px;flex:0 0 20px;color:var(--accent)}.header-left[data-video=true] .video-home-top{opacity:1;transform:translate(0,-50%);pointer-events:auto}.header-left>.lights,.header-left>.back,.header-left>.nav-lane{transition:transform 240ms cubic-bezier(.23,1,.32,1);transform:translateX(0)}.header-left[data-video=true]>.lights,.header-left[data-video=true]>.back,.header-left[data-video=true]>.nav-lane{transform:translateX(80px)}.header-left[data-video=true]>.brand-label{transform:translateX(80px)}.header-left[data-video=true]{padding-right:80px;--header-home-shift:80px}@media(max-width:800px){.header-left[data-video=true]>.back{display:none}.header-left[data-video=true]{grid-column:1/-1}.header-left[data-video=true]~.brand{visibility:hidden}}@media(prefers-reduced-motion:reduce){.video-home-top,.header-left>.lights,.header-left>.back,.header-left>.nav-lane{transition:none!important}}
+.video-home-top{position:absolute;left:0;top:50%;height:32px;width:64px;display:inline-flex;align-items:center;justify-content:flex-start;gap:8px;font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;opacity:0;transform:translate(-8px,-50%);pointer-events:none;transition:opacity 180ms cubic-bezier(.23,1,.32,1),transform 240ms cubic-bezier(.23,1,.32,1)}.video-home-top[hidden]{display:none}.video-home-top svg{display:block;width:20px;height:20px;flex:0 0 20px;color:var(--accent)}.header-left[data-video=true] .video-home-top{opacity:1;transform:translate(0,-50%);pointer-events:auto}.header-left>.lights,.header-left>.back,.header-left>.nav-lane{transition:transform 240ms cubic-bezier(.23,1,.32,1);transform:translateX(0)}.header-left[data-video=true]>.lights,.header-left[data-video=true]>.back,.header-left[data-video=true]>.nav-lane{transform:translateX(80px)}.header-left[data-video=true]{padding-right:80px;--header-home-shift:80px}@media(max-width:800px){.header-left[data-video=true]>.back{display:none}.header-left[data-video=true]{grid-column:1/-1}.header-left[data-video=true]~.brand{visibility:hidden}}@media(prefers-reduced-motion:reduce){.video-home-top,.header-left>.lights,.header-left>.back,.header-left>.nav-lane{transition:none!important}}
 
 .header-left nav a{display:inline-flex;align-items:center;justify-content:center;height:32px;line-height:20px}.header-left>.lights{height:32px}.header-left[data-controls=windows]>.lights{display:none!important}.header-left[data-controls=windows]>.nav-lane{order:0}.header-left[data-controls=windows]>.back{order:0;margin-left:0}.window-actions{display:flex;gap:3px;align-items:center;margin-left:12px;padding-left:12px;border-left:1px solid var(--line);flex-shrink:0}.window-actions button{width:28px;height:32px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent}.window-actions button:hover{background:var(--field)}.window-actions button:last-child:hover{background:#e55353;color:white}.window-actions svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.5;fill:none;display:block}.header-left[data-controls=windows][data-video=true]>.back,.header-left[data-controls=windows][data-video=true]>.nav-lane{transform:translateX(0)}.header-left[data-controls=windows][data-video=true]{padding-right:0;--header-home-shift:0px}.header-left[data-controls=windows] .video-home-top{position:static;width:auto;gap:8px;padding-right:12px;border-right:1px solid var(--line);opacity:1;transform:none;pointer-events:auto}.header-left[data-controls=windows] .video-home-top svg{color:var(--accent)}.header-left[data-controls=windows][data-video=true] .primary-nav a[data-route=home]{display:none}.window-actions[hidden]{display:none!important}
 .header-left{position:relative;grid-column:1;grid-row:1;display:flex;align-items:center;gap:16px;min-width:0;max-width:100%;height:100%}.header-right{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:14px;min-width:0;height:100%}
-.back{flex-shrink:0}
-/* Explicit history Back. Kept separate from .back, which still expands the category strip. */
-.history-back{flex:0 0 auto;display:grid;place-items:center;width:26px;height:32px;padding:0;margin-right:6px;border:0;border-radius:7px;background:none;color:var(--muted);line-height:0;cursor:pointer}
-.history-back svg{display:block;width:18px;height:18px}
-.history-back:hover{color:var(--ink);background:var(--field)}
-.history-back:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.history-back[hidden]{display:none}.nav-lane{position:relative;flex:1;min-width:0;height:100%;display:flex;align-items:center;overflow:hidden}
-/* The logo rides right after the category lane instead of being pushed to the far end: the
-   lane itself stops growing once the logo is present, so the wordmark stays next to 历史. */
-.header-left:has(> .brand-label:not([hidden])) > .nav-lane{flex:0 1 auto}.nav-lane .primary-nav{transition:transform 240ms cubic-bezier(0.23,1,0.32,1);will-change:transform}
+.back{flex-shrink:0}.nav-lane{position:relative;flex:1;min-width:0;height:100%;display:flex;align-items:center;overflow:hidden}.nav-lane .primary-nav{transition:transform 240ms cubic-bezier(0.23,1,0.32,1);will-change:transform}
 .category-links{position:absolute;left:0;top:0;height:100%;width:var(--category-space,0px);display:flex;align-items:center;gap:18px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 16px),transparent);opacity:0;transform:translateX(-12px);transition:opacity 180ms ease,transform 240ms cubic-bezier(0.23,1,0.32,1);pointer-events:none}.category-links::-webkit-scrollbar{display:none}
 .category-links a{flex-shrink:0;font-size:15px;white-space:nowrap;color:var(--muted);padding:8px 0}.category-links a:hover,.category-links a:focus-visible{color:var(--accent)}.header-left[data-categories=true] .category-links{opacity:1;transform:translateX(0);pointer-events:auto}.back{transition:transform 180ms ease}.header-left[data-categories=true] .back{color:var(--accent);transform:translateX(var(--header-home-shift,0px))}.nav-lane.instant .primary-nav,.nav-lane.instant .category-links{transition:none}
-.back svg{width:17px;height:17px;transform:rotate(0deg);transition:transform 180ms cubic-bezier(.23,1,.32,1)}.back[aria-expanded=true] svg{transform:rotate(180deg)}.back[data-instant=true] svg{transition:none}@media(prefers-reduced-motion:reduce){.back svg{transition:none!important}}
+.back svg{transform:rotate(0deg);transition:transform 180ms cubic-bezier(.23,1,.32,1)}.back[aria-expanded=true] svg{transform:rotate(180deg)}.back[data-instant=true] svg{transition:none}@media(prefers-reduced-motion:reduce){.back svg{transition:none!important}}
 .lights{display:flex;align-items:center;flex:0 0 auto;gap:9px;margin-right:0}.lights .light{display:block;flex:0 0 14px;width:14px;height:14px;min-width:14px;border:0;border-radius:50%;padding:0;position:relative;line-height:0;appearance:none}.light.close{background:#ff5f57}.light.min{background:#febc2e}.light.max{background:#28c840}.lights .light svg{display:block;position:absolute;inset:3px;width:8px;height:8px;fill:none;stroke:#111a;stroke-width:1.4;stroke-linecap:round;opacity:0;pointer-events:none;transition:opacity 150ms ease}.lights:hover svg,.lights .light:focus-visible svg{opacity:1}
 .lights .light:before{content:'';position:absolute;inset:-5px;border-radius:50%}
 .video-link{display:inline-flex;align-items:center;gap:6px;flex:0 1 210px;min-width:36px;max-width:210px;height:32px;padding:0 9px;margin-left:auto;overflow:hidden;border:1px solid color-mix(in srgb,var(--muted) 45%,transparent);border-radius:7px;background:transparent;color:var(--muted);text-align:left;cursor:pointer}.video-link svg{width:15px;height:15px;flex:0 0 15px}.video-link-text{font:12px/18px Consolas,"Cascadia Mono",monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.video-link:hover,.video-link[data-copied=true]{border-color:var(--accent);color:var(--accent)}.header-left[data-video=true]>.video-link{transform:translateX(80px)}.header-left[data-controls=windows][data-video=true]>.video-link{transform:none}.header-left:has(.video-link:not([hidden]))>.nav-lane{flex:0 1 auto}.header-left:has(.video-link:not([hidden])) .primary-nav{flex-shrink:0}.video-link:focus-visible{outline:2px solid var(--accent);outline-offset:3px}@media(max-width:1050px){.video-link{flex-basis:100px;max-width:100px}}@media(max-width:600px){.video-link{flex-basis:36px;max-width:36px}.video-link-text{display:none}}
 .header-left[data-categories=true]>.nav-lane{flex:1 1 0!important;min-width:72px}.header-left[data-categories=true]>.video-link{flex:0 0 36px;max-width:36px}.header-left[data-categories=true]>.video-link .video-link-text{display:none}.category-empty{font-size:12px;white-space:nowrap;background:transparent;border:0;padding:6px;color:var(--muted)}
-@media(max-width:1050px){.header-left>.nav-lane{transform:none!important}.header-left[data-video=true]{padding-left:0;padding-right:0}.header-left[data-video=true]>.lights,.header-left[data-video=true]>.back,.header-left[data-video=true]>.nav-lane,.header-left[data-video=true]>.video-link{transform:none}.header-left[data-controls=windows][data-video=true]{padding-left:0}}
-.brand{position:relative;display:inline-flex;align-items:center;gap:10px;grid-column:2;grid-row:1;justify-self:center;min-width:0}
-/* The logo sits at the left end of the nav, next to 历史, not centred in the header. */
-.brand-label{flex:0 0 auto;font-family:BiliDouyin,sans-serif;font-size:16px;white-space:nowrap;letter-spacing:-.5px;color:var(--ink)}
-.brand-label[hidden]{display:none!important}.brand-label b{font-weight:400;color:var(--accent)}
-/* Narrow headers keep the wordmark, just smaller; only a genuinely tiny window drops it. */
-@media(max-width:800px){.brand-label{font-size:14px;padding-left:2px;letter-spacing:-.3px}}
-.brand-leading{position:absolute;right:calc(100% + 12px);display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;width:max-content;overflow:hidden}.brand-leading .video-link{margin:0;flex:0 1 180px;max-width:180px;min-width:32px;transform:none!important}.brand-leading[data-compact=true] .video-link{flex:0 0 32px;max-width:32px;padding-inline:7px}.brand-leading[data-compact=true] .video-link-text{display:none}.header-clock{flex:0 0 auto;color:var(--muted);font:500 12px/32px Consolas,monospace;font-variant-numeric:tabular-nums;letter-spacing:.3px}.brand b{font-weight:400;color:var(--accent)}
+@media(max-width:1050px){.header-left>.nav-lane{transform:none!important}.header-left[data-video=true]{padding-left:80px;padding-right:0}.header-left[data-video=true]>.lights,.header-left[data-video=true]>.back,.header-left[data-video=true]>.nav-lane,.header-left[data-video=true]>.video-link{transform:none}.header-left[data-controls=windows][data-video=true]{padding-left:0}}
+.brand{position:relative;display:inline-flex;align-items:center;grid-column:2;grid-row:1;justify-self:center;font-family:BiliDouyin,sans-serif;font-size:16px;white-space:nowrap;letter-spacing:-.5px}.brand-leading{position:absolute;right:calc(100% + 12px);display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;width:max-content;overflow:hidden}.brand-leading .video-link{margin:0;flex:0 1 180px;max-width:180px;min-width:32px;transform:none!important}.brand-leading[data-compact=true] .video-link{flex:0 0 32px;max-width:32px;padding-inline:7px}.brand-leading[data-compact=true] .video-link-text{display:none}.header-clock{flex:0 0 auto;color:var(--muted);font:500 12px/32px Consolas,monospace;font-variant-numeric:tabular-nums;letter-spacing:.3px}.brand b{font-weight:400;color:var(--accent)}
 nav{display:flex;flex-shrink:0;gap:22px;height:100%;align-items:center}nav a{font-size:14px;color:var(--muted);position:relative}nav a[aria-current=page]{color:var(--ink)}nav a[aria-current=page]:after{content:'';position:absolute;left:25%;right:25%;bottom:-10px;height:2px;border-radius:2px;background:var(--accent)}nav a:hover{color:var(--accent)}
 .search{flex:1;margin-left:0;width:0;min-width:60px;max-width:380px;position:relative}.search input{width:100%;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;padding:9px 36px 9px 13px;outline-offset:1px;font-size:12px}.search > button{position:absolute;right:7px;top:5px;border:0;background:none;color:var(--muted);padding:4px}
-.account-wrap{position:relative;flex:0 0 auto}.account-card{position:absolute;right:0;top:calc(100% + 10px);width:290px;max-width:calc(100vw - 32px);padding:18px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 36px #0003;opacity:0;transform:translateY(-4px) scale(.98);transform-origin:top right;transition:opacity 180ms cubic-bezier(.23,1,.32,1),transform 180ms cubic-bezier(.23,1,.32,1);pointer-events:none}.account-card[data-open=true]{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}.account-card[hidden]{display:none}.account-identity{display:flex;align-items:center;gap:12px}.account-card-head{display:flex;flex:1 1 0%;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0}.account-banner{height:100px;margin:-18px -18px 14px;overflow:hidden;border-radius:13px 13px 0 0;background:var(--field)}.account-banner[hidden],.account-portrait[hidden],.account-vip-label[hidden]{display:none}.account-banner img,.account-banner video{display:block;width:100%;height:100%;object-fit:cover}.account-portrait{position:relative;width:52px;height:52px;flex-shrink:0}.account-portrait .account-face{width:52px;height:52px;border-radius:50%;object-fit:cover}.account-vip-label{font-size:10px;background:#fb729918;color:#fb7299;border-radius:4px;padding:2px 5px}.account-portrait .account-pendant{position:absolute;inset:-9px;width:70px;height:70px;object-fit:contain;pointer-events:none}.account-portrait .account-vip-badge{position:absolute;right:-1px;bottom:-1px;width:17px;height:17px;object-fit:contain}.account-name{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.account-level{color:var(--accent);font-size:12px;flex-shrink:0}.account-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px;text-align:center}.account-stats b{display:block;font-size:15px;overflow-wrap:anywhere}.account-stats span{font-size:12px;color:var(--muted)}.account-status{font-size:11px;color:var(--muted);line-height:1.5;margin:14px 0 0}@media(prefers-reduced-motion:reduce){.account-card{transition:none!important}}
-/* Floating login panel: fixed to the viewport, above #chrome, below the settings scrim. */
-.login-panel{position:fixed;z-index:2147483200;top:calc(var(--bs-header-height,58px) + 10px);right:14px;display:flex;flex-direction:column;width:min(92vw,860px);max-width:min(calc(100vw - 28px),92vw);max-height:min(calc(100vh - var(--bs-header-height,58px) - 26px),90vh);padding:0;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 48px #0006;overflow:hidden;opacity:0;transform:translateY(-6px) scale(.99);transform-origin:top right;transition:opacity 170ms cubic-bezier(.23,1,.32,1),transform 170ms cubic-bezier(.23,1,.32,1);pointer-events:none}
-.login-panel[data-open=true]{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
-.login-panel[hidden]{display:none}
-.login-panel-head{display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:12px 12px 12px 16px;border-bottom:1px solid var(--line)}
-.login-panel-title{flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.login-panel-tabs{display:flex;flex:0 0 auto;gap:2px;padding:3px;border-radius:9px;background:var(--field)}
-.login-panel-tabs button{height:25px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:12px;cursor:pointer}
-.login-panel-tabs button[aria-selected=true]{background:var(--bg);color:var(--ink);box-shadow:0 1px 3px #0002}
-.login-panel-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.login-panel-close{flex:0 0 auto;width:26px;height:26px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--muted);font:17px/1 inherit;cursor:pointer}
-.login-panel-close:hover{background:var(--field);color:var(--ink)}
-.login-panel-close:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.login-panel-body{position:relative;flex:1 1 auto;min-height:280px;overflow:auto;background:var(--bg)}
-.login-panel-body[data-tab=accounts]{overflow:auto;padding:10px 12px;background:var(--bg)}
-/* passport.bilibili.com is a fixed 1100x766 desktop layout: any narrower iframe crops
-   away the password/SMS/third-party columns. Render it at its native size and scale
-   the whole frame down to the space we have, so every method stays clickable. */
-.login-panel-frame-host{position:relative;display:block;overflow:hidden;background:#fff}
-.login-panel-frame{position:absolute;left:0;top:0;display:block;width:1100px;height:766px;max-width:none;max-height:none;border:0;background:#fff;transform-origin:0 0}
-.login-panel[data-tab=accounts] .login-panel-frame{display:none}
-.login-panel-note{flex:0 0 auto;margin:0;padding:8px 14px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.5}
-.login-panel-note[hidden]{display:none}
-/* The account list reuses the card markup; inside the panel it needs no hover reveal. */
-.login-panel .account-list{margin:0}
-.login-panel .account-actions{margin-top:10px}
-.login-panel .account-note{margin:8px 2px 2px}
-.login-panel-empty{padding:26px 12px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
-@media(max-width:720px){.login-panel{right:5vw;left:5vw;width:auto;max-width:none;top:calc(var(--bs-header-height,58px) + 6px);max-height:min(calc(100vh - var(--bs-header-height,58px) - 20px),86vh)}.login-panel-body{min-height:180px}}
-@media(prefers-reduced-motion:reduce){.login-panel{transition:none!important}}
-.account-switch{display:inline-grid;place-items:center;flex:0 0 auto;width:23px;height:23px;padding:0;margin-left:auto;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--muted);opacity:.55;transition:opacity 160ms cubic-bezier(.23,1,.32,1),color 160ms,background 160ms,border-color 160ms;cursor:pointer}.account-switch:hover,.account-switch:focus-visible{opacity:1;color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent);background:color-mix(in srgb,var(--accent) 10%,transparent)}.account-switch:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.account-switch:active{opacity:.8}.account-switch[aria-pressed=true]{opacity:.9;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.account-switch svg{display:block;width:13px;height:13px}
-.account-card[data-view=accounts] .account-banner,.account-card[data-view=accounts] .account-portrait,.account-card[data-view=accounts] .account-name,.account-card[data-view=accounts] .account-level,.account-card[data-view=accounts] .account-vip-label,.account-card[data-view=accounts] .account-stats,.account-card[data-view=accounts] .account-status{display:none}.account-card[data-view=accounts] .account-identity{justify-content:flex-end}.account-card[data-view=accounts] .account-card-head{flex:1;justify-content:flex-end}
-.account-list{display:flex;flex-direction:column;gap:1px;margin:0 -4px}.account-list[hidden]{display:none}
-.account-row{display:flex;align-items:center;gap:4px;border-radius:9px}.account-row:hover,.account-row[data-active=true]{background:var(--field)}
-.account-row-pick{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:7px 6px;border:0;border-radius:9px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
-.account-row-face{width:30px;height:30px;flex:none;border-radius:50%;object-fit:cover;background:var(--field);border:1px solid var(--line)}.account-row-face[data-empty=true]{display:grid;place-items:center;color:var(--muted);font-size:12px;font-weight:600}
-.account-row-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}.account-row-name{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.account-row-meta{font-size:11px;color:var(--muted)}
-.account-row-drop{flex:none;width:26px;height:26px;border:0;border-radius:7px;background:none;color:var(--muted);font:15px/1 inherit;cursor:pointer}.account-row-drop:hover{background:var(--field);color:#f04452}
-.account-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.account-actions[hidden]{display:none}
-.account-actions button{flex:1 1 auto;min-width:0;height:31px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--ink);font-size:12px;cursor:pointer;white-space:nowrap}.account-actions button:hover{color:var(--accent)}
-.account-actions button[data-account=add]{border-color:transparent;background:var(--accent);color:#fff!important}.account-actions button[data-account=add]:hover{filter:brightness(1.07)}
-.account-note{font-size:11px;color:var(--muted);line-height:1.5;margin:10px 0 0}.account-note[hidden]{display:none}
-.account{font-size:12px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-width:30px;height:32px}.account{position:relative;overflow:visible!important}.account .account-face{width:30px;height:30px;display:block;border-radius:50%;object-fit:cover;border:1px solid var(--line)}.account .account-pendant{position:absolute;inset:-5px;width:40px;height:40px;object-fit:contain;pointer-events:none}.account .account-vip-badge{position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;object-fit:contain;pointer-events:none}/* 投稿 sits at the bottom-left dock next to the settings button, like the settings entry.
-   It stays in the DOM where it is so the existing open-external handling keeps working,
-   but is positioned out of the header flow. The dock is lifted above the player control
-   bar (which spans the bottom of the viewport on the home page) so it never covers the
-   progress or volume controls; the settings entry stacks above it in turn. */
-.upload{position:fixed;bottom:88px;left:20px;z-index:90;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;height:44px;padding:0;overflow:hidden;border:1px solid transparent;border-radius:13px;background:#fb7299;color:#fff!important;font-size:13px;font-weight:500;line-height:20px;box-shadow:0 4px 18px #0002;white-space:nowrap;transition:background 160ms,transform 120ms}.upload:hover{background:#ff85a7}.upload:active{transform:scale(.97)}
-.upload[hidden]{display:none!important}
-/* The settings entry lifts above the dock so both stay clickable, and both stay clear of
-   the player bar. Driven from applyHeaderPreferences, because :has() on a shadow host is
-   not dependable. */
-#settings-trigger{position:fixed;bottom:140px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
-#settings-trigger[data-dock=solo]{bottom:88px}.messages{position:relative;overflow:visible;display:flex;align-items:center;justify-content:center;width:32px;height:34px;flex-shrink:0;color:var(--muted);border-radius:8px}.message-unread{position:absolute;top:-2px;right:-6px;min-width:18px;height:18px;padding:0 4px;border:2px solid var(--bg);border-radius:10px;background:#f04452;color:#fff;font:600 10px/14px "Segoe UI",sans-serif;text-align:center;white-space:nowrap;pointer-events:none}.message-unread[data-kind=dot]{top:2px;right:1px;width:9px;min-width:9px;height:9px;padding:0;border-radius:50%}.messages:hover{background:var(--field);color:var(--ink)}.back{background:none;border:0;color:var(--muted);display:grid;place-items:center;width:26px;height:32px;line-height:0;padding:0}.back svg{display:block;width:20px;height:20px}
+.account-wrap{position:relative;flex:0 0 auto}.account-card{position:absolute;right:0;top:calc(100% + 10px);width:290px;max-width:calc(100vw - 32px);padding:18px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 36px #0003;opacity:0;transform:translateY(-4px) scale(.98);transform-origin:top right;transition:opacity 180ms cubic-bezier(.23,1,.32,1),transform 180ms cubic-bezier(.23,1,.32,1);pointer-events:none}.account-card[data-open=true]{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}.account-card[hidden]{display:none}.account-identity{display:flex;align-items:center;gap:12px}.account-card-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}.account-banner{height:100px;margin:-18px -18px 14px;overflow:hidden;border-radius:13px 13px 0 0;background:var(--field)}.account-banner[hidden],.account-portrait[hidden],.account-vip-label[hidden]{display:none}.account-banner img,.account-banner video{display:block;width:100%;height:100%;object-fit:cover}.account-portrait{position:relative;width:52px;height:52px;flex-shrink:0}.account-portrait .account-face{width:52px;height:52px;border-radius:50%;object-fit:cover}.account-vip-label{font-size:10px;background:#fb729918;color:#fb7299;border-radius:4px;padding:2px 5px}.account-portrait .account-pendant{position:absolute;inset:-9px;width:70px;height:70px;object-fit:contain;pointer-events:none}.account-portrait .account-vip-badge{position:absolute;right:-1px;bottom:-1px;width:17px;height:17px;object-fit:contain}.account-name{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.account-level{color:var(--accent);font-size:12px;flex-shrink:0}.account-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px;text-align:center}.account-stats b{display:block;font-size:15px;overflow-wrap:anywhere}.account-stats span{font-size:12px;color:var(--muted)}.account-status{font-size:11px;color:var(--muted);line-height:1.5;margin:14px 0 0}@media(prefers-reduced-motion:reduce){.account-card{transition:none!important}}
+.account{font-size:12px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-width:30px;height:32px}.account{position:relative;overflow:visible!important}.account .account-face{width:30px;height:30px;display:block;border-radius:50%;object-fit:cover;border:1px solid var(--line)}.account .account-pendant{position:absolute;inset:-5px;width:40px;height:40px;object-fit:contain;pointer-events:none}.account .account-vip-badge{position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;object-fit:contain;pointer-events:none}.upload{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;height:32px;padding:0 14px;border-radius:8px;background:#fb7299;color:#fff!important;font-size:13px;font-weight:500;line-height:20px}.upload:hover{background:#ff85a7}.upload:active{transform:scale(.97)}.messages{position:relative;overflow:visible;display:flex;align-items:center;justify-content:center;width:32px;height:34px;flex-shrink:0;color:var(--muted);border-radius:8px}.message-unread{position:absolute;top:-2px;right:-6px;min-width:18px;height:18px;padding:0 4px;border:2px solid var(--bg);border-radius:10px;background:#f04452;color:#fff;font:600 10px/14px "Segoe UI",sans-serif;text-align:center;white-space:nowrap;pointer-events:none}.message-unread[data-kind=dot]{top:2px;right:1px;width:9px;min-width:9px;height:9px;padding:0;border-radius:50%}.messages:hover{background:var(--field);color:var(--ink)}.back{background:none;border:0;color:var(--muted);display:grid;place-items:center;width:26px;height:32px;line-height:0;padding:0}.back svg{display:block;width:20px;height:20px}
 .search[aria-busy=true] > button svg{opacity:0}.search[aria-busy=true] > button:after{content:'';position:absolute;inset:6px;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:bs-search-spin .7s linear infinite}.search[aria-busy=true]:after{content:'';position:fixed;left:0;right:0;top:calc(var(--bs-header-height,58px) - 1px);height:2px;background:var(--accent);transform-origin:left;animation:bs-search-progress 1.2s ease-in-out infinite}
 .search-panel{position:absolute;top:calc(100% + 9px);left:0;right:0;max-height:min(460px,calc(100vh - var(--bs-header-height,58px) - 24px));overflow:auto;overscroll-behavior:contain;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 12px 32px #0004;pointer-events:auto;text-align:left}.search-panel[hidden]{display:none}.search-panel h2{position:relative;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0 9px;font-size:12px;color:var(--muted);font-weight:500}.search-panel p{font-size:12px;color:var(--muted);margin:12px 2px}.search-history-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.search-history-chip{display:inline-flex;align-items:center;max-width:100%;min-width:0;background:var(--field);border-radius:6px}.search-history-chip .search-choice{flex:0 1 auto!important;max-width:200px;padding:6px 8px!important;font-size:12px!important}.search-history-chip .search-remove{width:22px!important;height:24px!important;font-size:16px!important}.search-row{display:flex;align-items:center;min-width:0;border-radius:7px}.search-panel button{border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}.search-panel .search-choice{flex:1;min-width:0;text-align:left;padding:9px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;border-radius:7px}.search-choice:hover,.search-choice.selected{background:var(--field);color:var(--accent)}.search-panel .search-remove{flex:none;width:28px;height:28px;color:var(--muted);font-size:19px;border-radius:6px}.search-remove:hover,.search-panel .search-clear:hover{color:var(--accent);background:var(--field)}.search-panel .search-clear{padding:3px 5px;color:var(--muted);font-size:11px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @keyframes bs-search-spin{to{transform:rotate(360deg)}}@keyframes bs-search-progress{0%{transform:scaleX(.1)}70%{transform:scaleX(.85)}100%{transform:scaleX(1);opacity:.35}}
+#settings-trigger{position:fixed;bottom:22px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
 #settings-trigger svg{width:23px;height:23px}#settings-trigger circle,#settings-trigger path{stroke:currentColor}
 .scrim{position:fixed;inset:0;background:#08080c80;display:grid;place-items:center;padding:40px;pointer-events:auto}
 .dialog{width:min(940px,100%);height:min(660px,calc(100vh - 80px));min-height:260px;min-width:min(360px,100%);max-width:100%;max-height:100%;resize:both;display:grid;grid-template-columns:210px 1fr;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 32px 100px #0006;overflow:hidden}
@@ -1378,7 +916,7 @@ async function checkProxyRegion(){
     out.textContent=`当前出口：${data.country||'未知'}${data.city?' · '+data.city:''}${data.addr?' · '+data.addr:''} — ${mainland?'大陆出口；是否能播放仍受版权、账号权限等限制':'不能解锁“仅限中国大陆”的番剧'}`;
   }catch(e){out.textContent='检测失败：'+e.message+'（直连也可能被网站拒绝）';}
 }
-const tabs={downloads:['下载任务','plugins'],blocklist:['拉黑管理','plugins'],community:['弹幕与观看','sparkles'],categories:['分区选择','progress'],network:['客户端代理','plugins'],appearance:['个性化','appearance'],header:['顶部栏','progress'],progress:['进度条样式','progress'],clean:['首页与广告','clean'],play:['播放与画质','sparkles'],plugins:['扩展插件','plugins'],about:['关于与更新','plugins']};
+const tabs={downloads:['下载任务','plugins'],blocklist:['拉黑管理','plugins'],community:['弹幕与观看','sparkles'],categories:['分区选择','progress'],network:['客户端代理','plugins'],appearance:['个性化','appearance'],header:['顶部栏','progress'],progress:['进度条','progress'],clean:['页面净化','clean'],play:['播放与画质','sparkles'],plugins:['扩展插件','plugins'],about:['关于与更新','plugins']};
 const toggle=(key,title,hint)=>`<div class="row"><label for="pref-${key}">${title}${hint?`<span class="hint">${hint}</span>`:''}</label><input id="pref-${key}" data-pref="${key}" type="checkbox" ${PREFS[key]?'checked':''}></div>`;
 const range=(key,title,min,max,unit)=>`<div class="row"><label for="pref-${key}">${title}</label><div class="range"><input id="pref-${key}" type="range" data-pref="${key}" min="${min}" max="${max}" value="${PREFS[key]}"><output>${PREFS[key]}${unit}</output></div></div>`;
 let clientUpdate={status:'idle',message:'尚未检查更新'};
@@ -1440,10 +978,10 @@ function tabContent(){
     const on=Boolean(proxyInfo.running||PREFS.proxy);
     return `<h2>网络代理</h2><p class="subtitle">Mihomo · 仅代理客户端</p><div class="row"><label for="proxy-switch">代理开关<span class="hint">更改后重启客户端</span></label><input id="proxy-switch" type="checkbox" data-action="proxy-toggle" ${on?'checked':''}></div><div class="note" id="proxy-status">${proxyLine()}</div><div class="row"><label for="proxy-node">当前节点</label><select id="proxy-node" aria-label="代理节点"></select></div>${toggle('proxyAll','全局代理','所有客户端流量通过代理')}<div class="actions"><button class="link" id="proxy-free">用内置免费节点</button><button class="link" id="proxy-import">导入 Clash 配置…</button><button class="link" id="proxy-check">检测出口地区</button></div><div class="note" id="proxy-region">尚未检测</div><div class="note">节点出口需符合番剧授权地区。免费节点来源不受信任，请勿用于敏感账户。</div>`;
   }
-  if(currentTab==='header')return `<h2>顶部栏</h2>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,'')).join('')}${toggle('logoAutoHide','Logo 自动隐藏','只在主页显示，进入视频等页面自动隐藏')}<div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>`;
-  if(currentTab==='appearance')return `<h2>个性化</h2>${toggle('trafficLights','使用红绿灯窗口按钮','')}${toggle('showClock','显示时间','Logo 左侧')}${toggle('pipDanmaku','画中画弹幕','')}${range('pipDanmakuMinWidth','弹幕显示最小宽度',320,1200,'px')}<div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W</label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="row"><label for="pref-videoLoadingMode">加载动画结束时机</label><select id="pref-videoLoadingMode" data-pref="videoLoadingMode"><option value="page">页面就绪</option><option value="video">视频画面就绪</option></select></div>${toggle('clipboardAutoOpen','剪贴板 BV 自动跳转','读取新复制的 BV 号或视频链接')}${toggle('parkInBackground','后台释放内存','最小化或隐藏到托盘时关掉网页内核，恢复时自动回到当前页面')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色</label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','')}${range('zoom','窗口缩放',75,200,'%')}<div class="row"><label for="pref-feedColumnsMin">每行最少显示几个视频<span class="hint">窗口变宽会自动增多</span></label><div class="range"><input id="pref-feedColumnsMin" type="range" data-pref="feedColumnsMin" min="3" max="8" value="${PREFS.feedColumnsMin}"><output>${PREFS.feedColumnsMin} 个</output></div></div>${toggle('autoZoom','最大化 / 全屏时自动放大','')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">数值越小，界面越大</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div>`;
-  if(currentTab==='progress')return `<h2>进度条样式</h2><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','')}${toggle('progressAlways','始终显示播放控制条','')}<p class="note" data-setting-keywords="进度条">只调整进度条本身：颜色、高度、圆角与拖动圆点。</p>`;
-  if(currentTab==='clean')return `<h2>首页与广告</h2>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('showChannels','显示首页频道分区','')}<div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div><p class="note" data-setting-keywords="页面净化">清掉首页里的运营位和推广卡片，页面净化后只剩正常内容。</p>`;
+  if(currentTab==='header')return `<h2>顶部栏</h2>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,'')).join('')}<div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>`;
+  if(currentTab==='appearance')return `<h2>个性化</h2>${toggle('trafficLights','使用红绿灯窗口按钮','')}${toggle('showClock','显示时间','Logo 左侧')}${toggle('pipDanmaku','画中画弹幕','')}${range('pipDanmakuMinWidth','弹幕显示最小宽度',320,1200,'px')}<div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W</label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="row"><label for="pref-videoLoadingMode">加载动画结束时机</label><select id="pref-videoLoadingMode" data-pref="videoLoadingMode"><option value="page">页面就绪</option><option value="video">视频画面就绪</option></select></div>${toggle('clipboardAutoOpen','剪贴板 BV 自动跳转','读取新复制的 BV 号或视频链接')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色</label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">数值越小，界面越大</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div>`;
+  if(currentTab==='progress')return `<h2>进度条</h2><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','')}${toggle('progressAlways','始终显示播放控制条','')}`;
+  if(currentTab==='clean')return `<h2>页面净化</h2>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('showChannels','显示首页频道分区','')}<div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
   if(currentTab==='play')return `<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">Anime4K · WebGPU</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">调度上限，不增加源帧数</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-fiFlowScale">光流规模</label><select id="pref-fiFlowScale" data-pref="fiFlowScale"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`;
   return `<h2>扩展</h2>${toggle('btr','Bilibili 线程撕裂者','更改后刷新页面')}<div class="actions"><button id="btr-settings" class="link">打开线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器 / DOWNLOAD</div>${toggle('downloader','视频页显示下载按钮','')}<div class="note">支持 AVC / AAC 单视频下载；暂不支持批量、多段与番剧。</div><div class="section-label">插件 / PLUGINS</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本"></div>`;
 }
@@ -1504,36 +1042,18 @@ function openSettings(){
 }
 function mountShell(){
   root=document.createElement('bili-space-shell');root.id='bili-space-root';shadow=root.attachShadow({mode:'open'});
-  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left" data-video="false"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="history-back" type="button" aria-label="返回上一页" title="返回上一页"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11.5 4.5 6 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><g fill="currentColor"><rect x="3" y="3" width="4" height="4" rx="1"/><rect x="8" y="3" width="4" height="4" rx="1"/><rect x="13" y="3" width="4" height="4" rx="1"/><rect x="3" y="8" width="4" height="4" rx="1"/><rect x="8" y="8" width="4" height="4" rx="1"/><rect x="13" y="8" width="4" height="4" rx="1"/><rect x="3" y="13" width="4" height="4" rx="1"/><rect x="8" y="13" width="4" height="4" rx="1"/><rect x="13" y="13" width="4" height="4" rx="1"/></g></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div><span class="brand-label">Bili-<b>Space</b></span></div><div class="brand"><div class="brand-leading"><button type="button" class="video-link" aria-label="复制视频链接" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 .1l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7-.1l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span class="video-link-text"></span></button><time class="header-clock" aria-label="当前时间" hidden></time></div></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span><section id="search-panel" class="search-panel" aria-label="搜索历史和官方联想" hidden></section></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="upload" href="https://member.bilibili.com/platform/upload/video/frame" aria-label="投稿" title="投稿到B站">投稿</a><div class="account-wrap"><a class="account" aria-controls="login-panel" aria-expanded="false" role="button" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a><section id="account-card" class="account-card" role="region" aria-label="我的账户信息" hidden><div class="account-banner" hidden></div><div class="account-identity"><div class="account-portrait" hidden></div><div class="account-card-head"><strong class="account-name"></strong><span class="account-level"></span><span class="account-vip-label" hidden></span><button type="button" class="account-switch" aria-label="切换账号" title="切换账号" aria-pressed="false">${ICON_SWAP}</button></div></div><div class="account-stats"><div><b data-stat="follower">—</b><span>粉丝</span></div><div><b data-stat="following">—</b><span>关注</span></div><div><b data-stat="likes">—</b><span>获赞</span></div></div><p class="account-status"></p><div class="account-list" hidden></div><div class="account-actions" hidden><button type="button" data-account="add">添加当前账号</button></div><p class="account-note" hidden></p></section></div><section id="login-panel" class="login-panel" role="dialog" aria-modal="false" aria-labelledby="login-panel-title" data-tab="login" hidden><header class="login-panel-head"><span class="login-panel-title" id="login-panel-title">登录 B站</span><div class="login-panel-tabs" role="tablist" aria-label="登录面板"><button type="button" role="tab" data-login-tab="login" aria-selected="true" aria-controls="login-panel-body">扫码登录</button><button type="button" role="tab" data-login-tab="accounts" aria-selected="false" aria-controls="login-panel-body">已存账号</button></div><button type="button" class="login-panel-close" data-login-close aria-label="关闭登录面板" title="关闭">×</button></header><div class="login-panel-body" id="login-panel-body" data-tab="login"><div class="login-panel-frame-host" hidden></div><div class="account-list" hidden></div><div class="account-actions" hidden><button type="button" data-account="add">添加当前账号</button></div><p class="account-note" hidden></p></div><p class="login-panel-note" id="login-panel-note">扫码或账号密码登录，登录状态会保存在本机。</p></section><div class="window-actions" aria-label="窗口控制"><button type="button" data-window="minimize" aria-label="最小化"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button><button type="button" data-window="maximize" aria-label="最大化或还原"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1"/></svg></button><button type="button" data-window="close" aria-label="关闭"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></button></div></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><input id="settings-query" type="search" aria-label="搜索客户端设置" placeholder="搜索设置" maxlength="80" autocomplete="off"><p id="settings-search-status" role="status" aria-live="polite"></p><div id="settings-matches" class="settings-matches" aria-label="匹配的设置" hidden></div><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Bili-Space</b>${APP_META.version}</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel" tabindex="-1"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
+  shadow.innerHTML=`<style>${shellCss}</style><header id="chrome"><div class="header-left" data-video="false"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="分区 · 点击展开 / 返回"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand"><div class="brand-leading"><button type="button" class="video-link" aria-label="复制视频链接" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 .1l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7-.1l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span class="video-link-text"></span></button><time class="header-clock" aria-label="当前时间" hidden></time></div><span class="brand-label">Bili-<b>Space</b></span></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span><section id="search-panel" class="search-panel" aria-label="搜索历史和官方联想" hidden></section></form><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="upload" href="https://member.bilibili.com/platform/upload/video/frame" aria-label="投稿" title="投稿到B站">投稿</a><div class="account-wrap"><a class="account" aria-controls="account-card" aria-expanded="false" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a><section id="account-card" class="account-card" role="region" aria-label="我的账户信息" hidden><div class="account-banner" hidden></div><div class="account-identity"><div class="account-portrait" hidden></div><div class="account-card-head"><strong class="account-name"></strong><span class="account-level"></span><span class="account-vip-label" hidden></span></div></div><div class="account-stats"><div><b data-stat="follower">—</b><span>粉丝</span></div><div><b data-stat="following">—</b><span>关注</span></div><div><b data-stat="likes">—</b><span>获赞</span></div></div><p class="account-status"></p></section></div><div class="window-actions" aria-label="窗口控制" hidden><button type="button" data-window="minimize" aria-label="最小化"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button><button type="button" data-window="maximize" aria-label="最大化或还原"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1"/></svg></button><button type="button" data-window="close" aria-label="关闭"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></button></div></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><input id="settings-query" type="search" aria-label="搜索客户端设置" placeholder="搜索设置" maxlength="80" autocomplete="off"><p id="settings-search-status" role="status" aria-live="polite"></p><div id="settings-matches" class="settings-matches" aria-label="匹配的设置" hidden></div><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Bili-Space</b>${APP_META.version}</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel" tabindex="-1"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
   const updateCss=document.createElement('style');updateCss.textContent='#settings-trigger[data-update-available=true]::after{content: "";position:absolute;right:7px;top:7px;width:7px;height:7px;border-radius:50%;background:#fb7299}#update-notes{padding-left:20px;line-height:1.9;overflow-wrap:anywhere;max-height:220px;overflow:auto}';shadow.append(updateCss);
   document.documentElement.append(root);
   renderMessageUnread();
   const dialog=$('.dialog',shadow);if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(([entry])=>{if(entry.contentRect.width>0)dialog.dataset.compact=String(entry.contentRect.width<620);});observer.observe(dialog);}
   shadow.addEventListener('click',e=>{
     const upload=e.target.closest('a.upload');if(upload){e.preventDefault();native('open-external',{url:upload.href});return;}
-    const accountLink=e.target.closest('a.account');
-    if(accountLink&&e.button===0&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey){
-      // The login entry opens the floating panel instead of navigating to passport.
-      // A signed-in avatar keeps its original "go to my space" behaviour.
-      if(accountLink.dataset.authenticated!=='true'){e.preventDefault();e.stopPropagation();loginPanelToggle();return;}
-    }
     const b=e.target.closest('button');
     if(['check','download','ignore','install','log'].includes(b?.dataset.update)){native('updates',{action:b.dataset.update});return;}
     if(b?.classList.contains('video-link')){copyCurrentVideoLink(e.shiftKey);return;}
     if(b?.dataset.settingTab){currentTab=b.dataset.settingTab;const id=b.dataset.settingTarget;clearSettingsSearch();renderSettings();const control=id?shadow.getElementById(id):$('#tab-content',shadow);control?.focus();if(control&&typeof control.scrollIntoView==='function')control.scrollIntoView({block:'nearest'});return;}
     if(b?.dataset.window){native('window',{action:b.dataset.window});return;}
-    if(b?.classList.contains('account-switch')){
-      accountView=accountView==='accounts'?'profile':'accounts';
-      renderAccountList();
-      if(accountView==='accounts')accountPost('state');
-      return;
-    }
-    if(b?.dataset.accountSelect){activateAccount(b.dataset.accountSelect,accountList.find(a=>String(a.mid)===b.dataset.accountSelect));return;}
-    if(b?.dataset.accountDrop){forgetAccount(b.dataset.accountDrop);accountPost('forget',{mid:b.dataset.accountDrop});return;}
-    if(b?.dataset.account==='add'){captureAccount();return;}
-    if(b?.dataset.loginTab){setLoginTab(b.dataset.loginTab,{focus:false});return;}
-    if(b?.hasAttribute?.('data-login-close')){closeLoginPanel();return;}
-    if(b?.classList.contains('history-back')){navigateBack();return;}
     if(b?.classList.contains('back')){setCategories(b.getAttribute('aria-expanded')!=='true',e.detail===0);return;}
     if(b?.id==='settings-trigger')openSettings();
     if(b?.id==='dismiss'||e.target.id==='settings')closeSettings();
@@ -1577,7 +1097,6 @@ function mountShell(){
     update({[key]:v});
     if(key==='btr')toast('刷新页面后生效');
     if(key==='proxyAll')toast('重启后生效');
-    if(key==='feedColumnsMin')scheduleFeedColumns();
   });
   installSearchPanel();
   $('.search',shadow).addEventListener('submit',e=>{e.preventDefault();submitSearch();});
@@ -1605,22 +1124,7 @@ function mountShell(){
   left.addEventListener('focusout',()=>setTimeout(()=>{if(!left.contains(shadow.activeElement))setCategories(false);},0));
   left.addEventListener('keydown',e=>{if(e.key==='Escape'){setCategories(false,true);trigger.focus();e.stopPropagation();}if(e.target===trigger&&e.key==='ArrowDown'){e.preventDefault();setCategories(true,true);$('#header-categories a:not([hidden])',shadow)?.focus();}});
   document.addEventListener('pointerdown',e=>{if(!e.composedPath().includes(left))setCategories(false);},{passive:true});
-  // Click outside closes the floating login panel; the header entry toggles itself.
-  document.addEventListener('pointerdown',e=>{
-    if(!loginPanelOpen())return;
-    const path=e.composedPath();
-    if(path.some(n=>n?.id==='login-panel'))return;
-    if(path.some(n=>n?.classList?.contains?.('account')))return;
-    closeLoginPanel({restoreFocus:false});
-  },{passive:true});
-  let feedResize;window.addEventListener('resize',()=>{setCategories(trigger.getAttribute('aria-expanded')==='true');scheduleLoginFrameFit();layoutBottomDock();scheduleFeedColumns();cancelAnimationFrame(feedResize);feedResize=requestAnimationFrame(()=>{compactHomeFeed();window.dispatchEvent(new Event('scroll'));alignVideoToolbar();});});
-  // The player bar moves with scrolling (and with its own expand/collapse), so the dock is
-  // re-measured on scroll and whenever the bar's box changes.
-  let dockScrollFrame=0;window.addEventListener('scroll',()=>{cancelAnimationFrame(dockScrollFrame);dockScrollFrame=requestAnimationFrame(layoutBottomDock);},{passive:true});
-  if(typeof ResizeObserver!=='undefined'){
-    dockObserverRef=new ResizeObserver(()=>layoutBottomDock());
-    refreshDockObserver();
-  }
+  let feedResize;window.addEventListener('resize',()=>{setCategories(trigger.getAttribute('aria-expanded')==='true');cancelAnimationFrame(feedResize);feedResize=requestAnimationFrame(()=>{compactHomeFeed();window.dispatchEvent(new Event('scroll'));alignVideoToolbar();});});
   setCategories(false);
   renderSettings();
 }
@@ -1743,26 +1247,8 @@ class FrameInterpolator {
   fail(message){this.stop();this.status=message;this.showStatus();diagnostic(message);}
   stop(){if(this.stopped)return;this.stopped=true;this.epoch++;this.pending=null;this.lastFrame=null;this.clock=new PresentationClock();this.uploadedPair=null;cancelAnimationFrame(this.raf);if(this.video.cancelVideoFrameCallback&&this.captureHandle!=null)this.video.cancelVideoFrameCallback(this.captureHandle);else cancelAnimationFrame(this.captureHandle);this.video.removeEventListener('seeking',this.reset);this.video.removeEventListener('ratechange',this.reset);this.canvas.removeEventListener('webglcontextlost',this.lost);this.canvas.remove();const gl=this.gl;this.textures.forEach(t=>gl.deleteTexture(t));gl.deleteBuffer(this.buffer);gl.deleteProgram(this.program);restoreVideo(this.video,this);}
 }
-// The GPU stack is 3.5 MB of script. A default session never downloads it: each
-// file is appended on first use, and the promise is cached per path.
-const gpuScripts=new Map();
-function ensureScript(path){
-  if(gpuScripts.has(path))return gpuScripts.get(path);
-  const task=new Promise((resolve,reject)=>{
-    const el=document.createElement('script');
-    el.src='https://bili-space.local/'+path;el.async=true;
-    el.onload=()=>{el.remove();resolve();};
-    el.onerror=()=>{el.remove();reject(Error('本地模块加载失败'));};
-    (document.head||document.documentElement).append(el);
-  });
-  gpuScripts.set(path,task);
-  task.catch(()=>gpuScripts.delete(path));
-  return task;
-}
 function startInterpolation(){
   interpolator?.stop();interpolator=null;if(PREFS.fiMode==='off')return;const video=playbackVideo();if(!video)return;
-  if(!navigator.gpu){diagnostic('AI 光流补帧需要 WebGPU');return;}
-  if(typeof ort==='undefined'){ensureScript('ai/ort.webgpu.min.js').then(startInterpolation,e=>toast('AI 光流不可用：'+e.message));return;}
   try{interpolator=new FrameInterpolator(video,PREFS.fiFps);}catch(e){diagnostic(e.message);toast('AI 光流不可用：'+e.message);}
 }
 
@@ -1774,9 +1260,7 @@ function exclusiveGpu(task){const run=inferenceQueue.then(task,task);inferenceQu
 async function runLocalSession(session,feeds){return exclusiveGpu(async()=>{const tensors=await session.run(feeds);try{return Object.fromEntries(Object.entries(tensors).map(([name,t])=>[name,{dims:[...t.dims],data:t.data.slice()}]));}finally{Object.values(tensors).forEach(t=>t.dispose());}});}
 
 async function ensureGpuRuntime(){
-  if(!navigator.gpu)throw Error('本地 AI 需要 WebGPU；已保留原生播放');
-  if(typeof ort==='undefined')await ensureScript('ai/ort.webgpu.min.js');
-  if(typeof ort==='undefined')throw Error('本地 AI 模块加载失败；已保留原生播放');
+  if(!navigator.gpu||typeof ort==='undefined')throw Error('本地 AI 需要 WebGPU；已保留原生播放');
   if(!gpuRuntimePromise)gpuRuntimePromise=(async()=>{
     const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('找不到 WebGPU 显卡');
     ort.env.webgpu.adapter=adapter;ort.env.wasm.wasmPaths='https://bili-space.local/ai/';ort.env.wasm.numThreads=1;ort.env.wasm.proxy=false;
@@ -1968,8 +1452,6 @@ function startGpu(){
   gpu?.stop();gpu=null;
   if(PREFS.srMode==='off'){status='未开启';updateStatus();return;}
   const video=playbackVideo();if(!video){status='等待视频';updateStatus();return;}
-  if(!navigator.gpu){status='这台设备没有可用的 WebGPU';updateStatus();return;}
-  if(!window['anime4k-webgpu']){status='正在载入 Anime4K…';updateStatus();ensureScript('ai/anime4k-webgpu.js').then(startGpu,e=>{status='Anime4K 加载失败：'+e.message+'；恢复原生播放';updateStatus();});return;}
   try{status='等待可读取的视频帧';gpu=new Anime4KScaler(video,PREFS.srMode,PREFS.srScale);updateStatus();}
   catch(e){status=e.message;updateStatus();toast('增强不可用，原生播放不受影响：'+e.message);diagnostic(status);}
 }
@@ -2101,16 +1583,12 @@ function boot(){
   const controls=document.createElement('div');controls.className='bs-pip-controls';controls.innerHTML='<button type="button" aria-label="返回客户端" title="返回客户端"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M3 3l7 7M14 3h7v18H3v-7"/></svg></button><button class="bs-pip-play" type="button" data-paused="true" aria-label="播放" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="pip-play-glyph" d="M8 5l11 7-11 7z"/><g class="pip-pause-glyph"><path d="M7 5v14M17 5v14"/></g></svg></button>';
   document.body.append(controls);$('button',controls).onclick=()=>native('window',{action:'pip'});$('.bs-pip-play',controls).onclick=()=>{const v=playbackVideo();if(v){if(v.paused)v.play().catch(()=>{});else v.pause();}syncPipPlayback();};
   for(const type of ['play','pause','ended','emptied'])document.addEventListener(type,()=>{syncPipPlayback();if(pipDanmaku.timer)pipDanmaku.tick();},true);document.addEventListener('loadedmetadata',()=>{if(pipActive)syncPipPresentation();},true);
-  let logoResizeFrame=0;window.addEventListener('resize',()=>{syncPipPresentation();cancelAnimationFrame(logoResizeFrame);logoResizeFrame=requestAnimationFrame(()=>{applyLogoVisibility();layoutHeaderLeading();});});
+  window.addEventListener('resize',()=>{layoutHeaderLeading();syncPipPresentation();});
   updateHeaderClock();setInterval(updateHeaderClock,1000);syncPipPlayback();
   document.addEventListener('keydown',e=>{
     if(e.ctrlKey&&e.key.toLowerCase()==='w'){e.preventDefault();e.stopImmediatePropagation();native('window',{action:'close'});return;}
     if(e.ctrlKey&&e.key===','){e.preventDefault();openSettings();}
-    if(e.key==='Escape'){if(!$('#settings',shadow).hidden)closeSettings();else if(loginPanelOpen())closeLoginPanel();if(pipActive)native('window',{action:'pip'});}
-    if(e.key==='Escape'&&loginPanelOpen()){
-      // Inside the panel Esc closes the panel only; the player shortcuts must not fire.
-      e.preventDefault();e.stopImmediatePropagation();
-    }
+    if(e.key==='Escape'){if(!$('#settings',shadow).hidden)closeSettings();if(pipActive)native('window',{action:'pip'});}
     if(e.key==='F5'){e.preventDefault();native('window',{action:'reload'});}
   });
   document.addEventListener('mousedown',e=>{if(pipActive&&e.button===0&&!e.target.closest('button'))native('window',{action:'drag'});});
@@ -2120,7 +1598,7 @@ function boot(){
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,acceptAccounts,surfaceRevealed,beginVideoLoading,finishVideoLoading,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
+  window.BiliSpace={refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};

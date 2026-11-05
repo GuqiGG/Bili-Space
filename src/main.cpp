@@ -44,17 +44,7 @@ namespace fs = std::filesystem;
 HWND windowHandle{};
 ICoreWebView2Controller* controller{};
 ICoreWebView2* webview{};
-ICoreWebView2Environment* environment{};
-using CreateEnvironmentFn=HRESULT(STDAPICALLTYPE*)(PCWSTR,PCWSTR,ICoreWebView2EnvironmentOptions*,ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler*);
-CreateEnvironmentFn createEnvironment=nullptr;
-// A parked session keeps only the URL: the whole WebView2 tree is gone, which is
-// the only way to get the browser processes out of memory instead of idling them.
-std::wstring parkUrl;
-bool webviewParked=false;
-// Whether the "off screen" cost has already been applied, so WM_SIZE bursts from
-// a resize drag do not repeat the teardown/revive work on every pixel.
-bool backgroundApplied=false;
-    fs::path root, dataPath;
+fs::path root, dataPath;
 bool testing=false, pip=false, full=false,lifecyclePreview=false;
 std::wstring lastClipboardVideo,startupTarget;bool closePending=false;
 bool surfaceWaiting=false,surfaceCommitted=false,surfaceDark=true;ULONGLONG surfaceStart{};
@@ -63,33 +53,13 @@ constexpr UINT trayMessage=WM_APP+71;
 NOTIFYICONDATAW trayIcon{};bool trayReady=false;
 UINT taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
 void execute(const std::string&);
-void log(const std::string&);
-void trimWebview(bool parked);
-void handleBackgroundState();
-void teardownWebview();
-bool reviveWebview();
-void setSurface(bool dark);
-void fit();
-void applyZoom();
-std::string script();
-void restoreFromTray(){
-    if(closePending)SetWindowPos(windowHandle,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);
-    closePending=false;KillTimer(windowHandle,72);KillTimer(windowHandle,74);
-    // Show first: handleBackgroundState reads the real visibility and window state,
-    // so putting the window back on screen has to happen before it decides anything.
-    ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);
-    execute("document.querySelector('#bs-close-animation')?.remove();window.BiliSpace?.restoreFromTray()");
-    handleBackgroundState();
-}
+void restoreFromTray(){if(closePending)SetWindowPos(windowHandle,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);closePending=false;KillTimer(windowHandle,72);KillTimer(windowHandle,74);execute("document.querySelector('#bs-close-animation')?.remove();window.BiliSpace?.restoreFromTray()");ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
 void installTray(){
     trayIcon={};trayIcon.cbSize=sizeof(trayIcon);trayIcon.hWnd=windowHandle;trayIcon.uID=1;
     trayIcon.uFlags=NIF_MESSAGE|NIF_ICON|NIF_TIP;trayIcon.uCallbackMessage=trayMessage;
     trayIcon.hIcon=LoadIconW(GetModuleHandleW(nullptr),MAKEINTRESOURCEW(1));
     lstrcpynW(trayIcon.szTip,L"Bili-Space · 双击打开",128);
     trayReady=Shell_NotifyIconW(NIM_ADD,&trayIcon)!=FALSE;
-    // Without an icon there is nowhere to restore from, so a failed add changes
-    // the close path from "hide" to "exit"; say so instead of guessing later.
-    log(trayReady?"tray: icon added":"tray: icon add failed err="+std::to_string(GetLastError())+" hIcon="+std::to_string(reinterpret_cast<ULONG_PTR>(trayIcon.hIcon)));
 }
 
 std::wstring injectionId;
@@ -111,17 +81,7 @@ std::string utf8(const std::wstring& s) {
     std::string v(n,0); if(n) WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),v.data(),n,nullptr,nullptr); return v;
 }
 std::string read(const fs::path& path) {std::ifstream f(path,std::ios::binary); return {std::istreambuf_iterator<char>(f),{}};}
-void log(const std::string& line) {
-    // Before the data directory resolves there is nowhere else to write. Falling
-    // back to the exe folder keeps the first few boot lines observable, because a
-    // silent early exit is the hardest failure to diagnose from the outside.
-    if(dataPath.empty()){
-        wchar_t exe[MAX_PATH]{};GetModuleFileNameW(nullptr,exe,MAX_PATH);
-        std::ofstream(fs::path(exe).parent_path()/L"boot.log",std::ios::app)<<line<<'\n';
-        return;
-    }
-    std::ofstream(dataPath/L"runtime.log",std::ios::app)<<line<<'\n';
-}
+void log(const std::string& line) { std::ofstream(dataPath/L"runtime.log",std::ios::app)<<line<<'\n'; }
 void execute(const std::string& s) {if(webview) webview->ExecuteScript(wide(s).c_str(),nullptr);}
 #include "windows_media.hpp"
 int freePort(){SOCKET s=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(s==INVALID_SOCKET)return 0;sockaddr_in a{};a.sin_family=AF_INET;a.sin_addr.s_addr=htonl(INADDR_LOOPBACK);if(bind(s,reinterpret_cast<sockaddr*>(&a),sizeof(a))){closesocket(s);return 0;}int size=sizeof(a);getsockname(s,reinterpret_cast<sockaddr*>(&a),&size);int p=ntohs(a.sin_port);closesocket(s);return p;}
@@ -366,123 +326,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-bool webMemoryLow=false;
-bool controllerVisible=true;
-// TrySuspend refuses to run while the controller reports itself visible, so the
-// park sequence hides it first. The web view is only hidden when the window is
-// already off screen, which keeps the old "blank page on minimise" bug impossible.
-void setControllerVisible(bool on){
-    if(!controller||on==controllerVisible)return;
-    controllerVisible=on;
-    controller->put_IsVisible(on?TRUE:FALSE);
-}
-// Trimming caches only costs a re-read on the next paint, so it is safe while the
-// page keeps running (unfocused). Suspension is not: it freezes scripts and audio,
-// so it stays reserved for the states where the window is already off screen.
-void setWebMemoryLevel(bool low){
-    if(!webview||low==webMemoryLow)return;
-    ICoreWebView2_19* v19{};
-    if(SUCCEEDED(webview->QueryInterface(IID_ICoreWebView2_19,reinterpret_cast<void**>(&v19)))&&v19){
-        v19->put_MemoryUsageTargetLevel(low?COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW:COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL);
-        v19->Release();
-        webMemoryLow=low;
-    }
-}
-// A hidden or minimised window still keeps a full renderer alive. Suspending the
-// WebView2 tree drops it to a near-idle footprint while the page keeps its DOM,
-// its playback position and its login; Resume() brings it back without a reload.
-void trimWebview(bool parked){
-    setWebMemoryLevel(parked);
-    if(!webview)return;
-    ICoreWebView2_3* v3{};
-    if(FAILED(webview->QueryInterface(IID_ICoreWebView2_3,reinterpret_cast<void**>(&v3)))||!v3)return;
-    if(parked){
-        BOOL suspended{FALSE};
-        if(SUCCEEDED(v3->get_IsSuspended(&suspended))&&!suspended){
-            // Ask the renderer to drop caches and collect before the tree freezes;
-            // after suspension this call can no longer reach it.
-            webview->CallDevToolsProtocolMethod(L"Memory.simulatePressureNotification",L"{\"level\":\"critical\"}",nullptr);
-            setControllerVisible(false);
-            auto handler=callback<ICoreWebView2TrySuspendCompletedHandler,HRESULT,BOOL>([](HRESULT hr,BOOL ok){log(FAILED(hr)?"suspend failed hr="+std::to_string(static_cast<unsigned long>(hr)):(ok?"suspend ok":"suspend declined"));return S_OK;});
-            v3->TrySuspend(handler);handler->Release();
-        }
-    }else{
-        v3->Resume();
-        setControllerVisible(true);
-    }
-    v3->Release();
-}
-// One place decides what "in the background" costs, so the window state and the
-// WebView2 state can never drift apart. Minimised and hidden both count: the user
-// only ever sees the window when it is on screen, and that is the only state that
-// needs a live renderer. Everything else is parked until it comes back.
-void handleBackgroundState(){
-    const bool offScreen=IsIconic(windowHandle)||!IsWindowVisible(windowHandle);
-    // Resizing fires WM_SIZE too, so only edges do work; otherwise every drag
-    // would re-send pause/restore to the page.
-    if(offScreen==backgroundApplied&&!webviewParked)return;
-    if(offScreen){
-        backgroundApplied=true;
-        if(!webview)return;
-        execute("window.BiliSpace?.pauseForTray()");
-        if(config.value("parkInBackground",true)){teardownWebview();return;}
-        trimWebview(true);
-    }else{
-        backgroundApplied=false;
-        if(webviewParked){reviveWebview();return;}
-        if(!webview)return;
-        trimWebview(false);
-        execute("window.BiliSpace?.restoreFromTray()");
-    }
-}
-// Dropping the controller and the browser processes is what actually returns the
-// several hundred megabytes a WebView2 session holds. The current URL is kept so
-// the restore is a reload of the same page, not a trip back to the home page.
-void teardownWebview(){
-    if(webviewParked||!webview)return;
-    LPWSTR source{};webview->get_Source(&source);
-    std::wstring current=source?source:L"";
-    CoTaskMemFree(source);
-    if(current.rfind(L"https://",0)==0&&current.size()<=4096)parkUrl=current;
-    webviewParked=true;
-    log("webview parked: "+utf8(parkUrl));
-    if(controller){controller->Close();controller->Release();controller=nullptr;}
-    if(webview){webview->Release();webview=nullptr;}
-}
-// Rebuilds the tree and reloads the parked URL, so the tab looks untouched while
-// the process tree was gone. Safe to call repeatedly: a missing environment just
-// leaves the window showing its own background.
-bool reviveWebview(){
-    if(!webviewParked)return false;
-    if(!environment){webviewParked=false;return false;}
-    webviewParked=false;
-    auto target=parkUrl;
-    auto handler=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([target](HRESULT hr,ICoreWebView2Controller* c){
-        if(FAILED(hr)||!c){log("revive failed hr="+std::to_string(static_cast<unsigned long>(hr)));return S_OK;}
-        controller=c;controller->AddRef();controllerVisible=true;
-        setSurface(surfaceDark);controller->get_CoreWebView2(&webview);
-        fit();applyZoom();
-        ICoreWebView2_3* v3{};
-        if(SUCCEEDED(webview->QueryInterface(__uuidof(ICoreWebView2_3),reinterpret_cast<void**>(&v3)))){v3->SetVirtualHostNameToFolderMapping(L"bili-space.local",(root/L"assets").c_str(),COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);v3->Release();}
-        EventRegistrationToken token;
-        auto mh=callback<ICoreWebView2WebMessageReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebMessageReceivedEventArgs*>([](ICoreWebView2*,auto args){receive(args);return S_OK;});webview->add_WebMessageReceived(mh,&token);mh->Release();
-        auto nh=callback<ICoreWebView2NavigationStartingEventHandler,ICoreWebView2*,ICoreWebView2NavigationStartingEventArgs*>([](ICoreWebView2*,auto args){
-            LPWSTR u{};args->get_Uri(&u);std::wstring uri=u?u:L"";CoTaskMemFree(u);
-            bool site=false;for(auto host:{L"www.bilibili.com",L"search.bilibili.com",L"space.bilibili.com",L"passport.bilibili.com",L"account.bilibili.com",L"live.bilibili.com",L"t.bilibili.com",L"message.bilibili.com",L"manga.bilibili.com"})if(uri.rfind(std::wstring(L"https://")+host+L"/",0)==0)site=true;
-            if(!site&&!(testing&&uri.rfind(L"https://bili-space.local/",0)==0)){args->put_Cancel(TRUE);if(uri.rfind(L"https://",0)==0)ShellExecuteW(nullptr,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);return S_OK;}
-            execute("window.BiliSpace?.beginNavigation("+json(utf8(uri)).dump()+")");return S_OK;
-        });webview->add_NavigationStarting(nh,&token);nh->Release();
-        auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([](ICoreWebView2*,auto args){LPWSTR uri{};args->get_Uri(&uri);args->put_Handled(TRUE);if(uri){webview->Navigate(uri);CoTaskMemFree(uri);}return S_OK;});webview->add_NewWindowRequested(ph,&token);ph->Release();
-        auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"revive navigation completed":"revive navigation failed");return S_OK;});webview->add_NavigationCompleted(ready,&token);ready->Release();
-        auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([target](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;webview->Navigate(target.c_str());}else log("revive injection failed");return S_OK;});
-        webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();
-        return S_OK;
-    });
-    environment->CreateCoreWebView2Controller(windowHandle,handler);handler->Release();
-    return true;
-}
-
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",true},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",8},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"parkInBackground",true},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",true},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",8},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -520,7 +364,6 @@ bool trusted(const std::wstring& uri){
     for(auto host:{L"https://www.bilibili.com/",L"https://search.bilibili.com/",L"https://space.bilibili.com/",L"https://live.bilibili.com/",L"https://t.bilibili.com/",L"https://passport.bilibili.com/",L"https://account.bilibili.com/",L"https://message.bilibili.com/",L"https://manga.bilibili.com/"})if(uri.rfind(host,0)==0)return true;
     return testing&&uri.rfind(L"https://bili-space.local/",0)==0;
 }
-#include "accounts.hpp"
 std::string script(){
     std::string s="(()=>{if(window.top!==window)return; const host=location.hostname;if(!(['www.bilibili.com','search.bilibili.com','space.bilibili.com','live.bilibili.com','t.bilibili.com','passport.bilibili.com','account.bilibili.com','message.bilibili.com','manga.bilibili.com'].includes(host)";
     if(testing)s+="||host==='bili-space.local'";
@@ -534,9 +377,10 @@ std::string script(){
     s+="\nif(INITIAL.btr){(()=>{\n"+read(root/L"assets/btr.user.js")+"\n})();}\n";
     // Upstream only executes on bilibili.com; fixture policy tests load it separately.
     s+="if(host==='www.bilibili.com'){(()=>{\n"+read(root/L"assets/blocker.home.user.js")+"\n})();}\n";
-    // The GPU stack (3.5 MB) is fetched on demand by enhance.js only when a
-    // quality feature is switched on, so a default session never pays for it.
-    s+=read(root/L"assets/desktop44.js");s+="\n";    s+=read(root/L"assets/community44.js");s+="\n";
+    s+=read(root/L"assets/ai/ort.webgpu.min.js");s+="\n";
+    s+=read(root/L"assets/ai/anime4k-webgpu.js");s+="\n";
+    s+=read(root/L"assets/desktop44.js");s+="\n";
+    s+=read(root/L"assets/community44.js");s+="\n";
     s+="const PLUGINS="+pluginsRegistry().dump()+";\n";
     s+=read(root/L"assets/plugins.js");s+="\n";
     s+=read(root/L"assets/enhance.js");return s+"\n})();";
@@ -595,7 +439,6 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
     try{
         auto m=json::parse(raw);auto type=m.value("type",std::string{});
         if(type=="community"){communityAction(m);
-        }else if(type=="accounts"){accountAction(m);
         }else if(type=="plugins"){pluginsAction(m);
         }else if(type=="media-state"){windowsMediaAccept(m);
         }else if(type=="updates"){updateAction(m.value("action",std::string{}),m.value("version",std::string{}));
@@ -607,8 +450,8 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             else if(action=="minimize")PostMessageW(windowHandle,WM_SYSCOMMAND,SC_MINIMIZE,0);
             else if(action=="maximize"){if(pip)togglePip(false);else ShowWindow(windowHandle,IsZoomed(windowHandle)?SW_RESTORE:SW_MAXIMIZE);}
             else if(action=="drag"){ReleaseCapture();SendMessageW(windowHandle,WM_NCLBUTTONDOWN,HTCAPTION,0);}
-            else if(action=="back"){if(webview)webview->GoBack();}
-            else if(action=="reload"){if(webview)webview->Reload();}
+            else if(action=="back")webview->GoBack();
+            else if(action=="reload")webview->Reload();
             else if(action=="pip")togglePip(!pip);
             else if(action=="fullscreen")toggleFull(!full);
         }else if(type=="navigate"){
@@ -728,15 +571,12 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
         if(l)return HTLEFT;if(rr)return HTRIGHT;if(t)return HTTOP;if(bb)return HTBOTTOM;break;
     }
     case WM_GETMINMAXINFO:{auto p=reinterpret_cast<MINMAXINFO*>(lp);p->ptMinTrackSize={pip?160:480,pip?90:320};return 0;}
-    case WM_SIZE:handleBackgroundState();fit();return 0;
-    // Hiding to the tray changes visibility without resizing, so WM_SIZE alone
-    // would leave a suspended renderer frozen behind a window the user reopened.
-    case WM_SHOWWINDOW:handleBackgroundState();break;
+    case WM_SIZE:fit();return 0;
     case WM_DPICHANGED:{auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
     case WM_TIMER:if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
-    case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");handleBackgroundState();return 0;}DestroyWindow(hwnd);return 0;
+    case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");return 0;}DestroyWindow(hwnd);return 0;
     case WM_DESTROY:windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
     }
     return DefWindowProcW(hwnd,msg,wp,lp);
@@ -753,15 +593,8 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     testing=std::wstring(command).find(L"--test")!=std::wstring::npos;lifecyclePreview=args.find(L"--lifecycle-preview")!=std::wstring::npos;
     if(!testing){auto existing=FindWindowW(L"BetterBiliSpace",nullptr);if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);return 0;}}
     PWSTR local{};SHGetKnownFolderPath(FOLDERID_LocalAppData,0,nullptr,&local);dataPath=testing?root/L".appdata":fs::path(local?local:L".")/L"BetterBiliSpace";CoTaskMemFree(local);
-    // --data=<path> keeps a production run's profile wherever the caller says.
-    // It exists because a managed host may deny writes outside its own tree,
-    // and a profile folder the process cannot create fails as E_UNEXPECTED.
-    {auto at=args.find(L"--data=");if(at!=std::wstring::npos){std::wstring value=args.substr(at+7);while(!value.empty()&&(value.back()=='"'||value.back()==' '))value.pop_back();while(!value.empty()&&(value.front()=='"'||value.front()==' '))value.erase(value.begin());if(!value.empty())dataPath=fs::path(value);}}
-    std::error_code dirError;fs::create_directories(dataPath,dirError);
-    if(dirError)log("profile folder unavailable: "+dirError.message());
-    config=defaults();gm=json::object();
+    fs::create_directories(dataPath);config=defaults();gm=json::object();
     try{auto stored=json::parse(read(dataPath/L"settings.json"));mergeConfig(stored.value("config",json::object()));if(stored.contains("gm")&&stored["gm"].is_object())gm=stored["gm"];searchHistory=cleanSearchHistory(stored.value("searchHistory",json::array()));}catch(...){}
-    loadAccounts();
     proxyEnabled=config.value("proxy",false);
     if(!proxyEnabled&&fs::exists(dataPath/L"proxy-enabled")){proxyEnabled=true;config["proxy"]=true;}
     if(!startProxy()){
@@ -771,33 +604,12 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     }
     std::wstring browserArgs=testing?L"--remote-debugging-port=9223 --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --disable-features=CalculateNativeWinOcclusion":L"";
     browserArgs+=L" --autoplay-policy=no-user-gesture-required";
-    // Every switch here trades a Chromium cache or a spare helper process for
-    // resident memory. None of them changes what the site can do, and the shell
-    // already handles updates, telemetry and background work natively.
-    if(args.find(L"--no-memory-args")==std::wstring::npos){
-        browserArgs+=L" --renderer-process-limit=1";
-        browserArgs+=L" --js-flags=--max-old-space-size=256";
-        browserArgs+=L" --disk-cache-size=67108864 --media-cache-size=33554432";
-        browserArgs+=L" --disable-component-update --disable-domain-reliability --no-pings";
-        browserArgs+=L" --disable-features=Translate,MediaRouter,OptimizationHints,CalculateNativeWinOcclusion";
-    }
     if(proxyEnabled)browserArgs+=L" --proxy-server=http://127.0.0.1:"+std::to_wstring(proxyPort)+L" --proxy-bypass-list=bili-space.local;127.0.0.1;localhost";
     SetEnvironmentVariableW(L"WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",browserArgs.c_str());
     CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);
     WNDCLASSW wc{};wc.hIcon=LoadIconW(instance,MAKEINTRESOURCEW(1));wc.lpfnWndProc=proc;wc.hInstance=instance;wc.lpszClassName=L"BetterBiliSpace";wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hbrBackground=CreateSolidBrush(RGB(20,20,22));RegisterClassW(&wc);
     // Keep DWM's standard taskbar transitions; WM_NCCALCSIZE hides only the title bar.
-    // Startup size: 80% of the working area of the primary monitor, so the first window
-    // shows a full grid of cards on large displays without covering the whole desktop.
-    // There is no saved window geometry yet (WM_EXITSIZEMOVE only logs), so this is the
-    // first-creation value only and cannot overwrite a size the user chose by hand.
-    RECT work{};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);
-    const int workW=std::max(640,static_cast<int>(work.right-work.left));
-    const int workH=std::max(480,static_cast<int>(work.bottom-work.top));
-    const int startupW=std::min(static_cast<int>(workW*0.8),1920);
-    const int startupH=std::min(static_cast<int>(workH*0.8),1200);
-    const int startupX=work.left+(workW-startupW)/2;
-    const int startupY=work.top+(workH-startupH)/2;
-    windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Bili-Space [test]":L"Bili-Space",WS_OVERLAPPEDWINDOW,startupX,startupY,startupW,startupH,nullptr,nullptr,instance,nullptr);
+    windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Bili-Space [test]":L"Bili-Space",WS_OVERLAPPEDWINDOW,100,80,1380,880,nullptr,nullptr,instance,nullptr);
     SetWindowPos(windowHandle,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
     DWORD borderColor=0xFFFFFFFE;DwmSetWindowAttribute(windowHandle,34,&borderColor,sizeof(borderColor));
     BOOL dark=TRUE;DwmSetWindowAttribute(windowHandle,20,&dark,sizeof(dark));int corner=2;DwmSetWindowAttribute(windowHandle,33,&corner,sizeof(corner));
@@ -810,9 +622,8 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     if(!create){MessageBoxW(windowHandle,L"WebView2Loader.dll 缺失，请使用完整 dist 目录。",L"启动失败",MB_OK|MB_ICONERROR);return 1;}
     auto envHandler=callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler,HRESULT,ICoreWebView2Environment*>([resumeUrl](HRESULT hr,ICoreWebView2Environment* env){
         if(FAILED(hr)||!env){log("WebView2 environment failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"请安装 Microsoft Edge WebView2 Evergreen Runtime 后重试。",L"启动失败",MB_OK);DestroyWindow(windowHandle);return S_OK;}
-        environment=env;environment->AddRef();
         auto h=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([resumeUrl](HRESULT hr,ICoreWebView2Controller* c){
-            if(FAILED(hr)||!c){log("controller creation failed hr="+std::to_string(static_cast<unsigned long>(hr)));DestroyWindow(windowHandle);return S_OK;}
+            if(FAILED(hr)||!c){log("controller creation failed");DestroyWindow(windowHandle);return S_OK;}
             controller=c;controller->AddRef();setSurface(config.value("theme",std::string("dark"))!="light");controller->get_CoreWebView2(&webview);fit();applyZoom();PostMessageW(windowHandle,restoreWebFocusMessage,0,0);
             EventRegistrationToken acceleratorToken;
             auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller*,auto args){
