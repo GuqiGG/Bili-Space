@@ -81,7 +81,7 @@ std::string utf8(const std::wstring& s) {
     std::string v(n,0); if(n) WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),v.data(),n,nullptr,nullptr); return v;
 }
 std::string read(const fs::path& path) {std::ifstream f(path,std::ios::binary); return {std::istreambuf_iterator<char>(f),{}};}
-void log(const std::string& line) { std::ofstream(dataPath/L"runtime.log",std::ios::app)<<line<<'\n'; }
+void log(const std::string& line) { std::ofstream f(dataPath/L"runtime.log",std::ios::app);if(f)f<<line<<'\n';else{std::ofstream fallback(root/L"runtime-fallback.log",std::ios::app);fallback<<line<<'\n';} }
 void execute(const std::string& s) {if(webview) webview->ExecuteScript(wide(s).c_str(),nullptr);}
 #include "windows_media.hpp"
 int freePort(){SOCKET s=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(s==INVALID_SOCKET)return 0;sockaddr_in a{};a.sin_family=AF_INET;a.sin_addr.s_addr=htonl(INADDR_LOOPBACK);if(bind(s,reinterpret_cast<sockaddr*>(&a),sizeof(a))){closesocket(s);return 0;}int size=sizeof(a);getsockname(s,reinterpret_cast<sockaddr*>(&a),&size);int p=ntohs(a.sin_port);closesocket(s);return p;}
@@ -326,7 +326,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",true},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",8},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",8},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -353,7 +353,7 @@ void mergeConfig(const json& next){
         else if(value.is_boolean()&&defaults()[key].is_boolean())config[key]=value;
         else if(value.is_number_integer()){
             int n=value.get<int>();
-            if((key=="downloadConnections"&&n>=1&&n<=128)||(key=="pipDanmakuMinWidth"&&n>=320&&n<=1200)||(key=="volumeBoost"&&n>=100&&n<=200)||(key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||((key=="fiFps"||key=="srFps")&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
+            if((key=="feedColumns"&&(n==0||(n>=2&&n<=8)))||(key=="downloadConnections"&&n>=1&&n<=128)||(key=="pipDanmakuMinWidth"&&n>=320&&n<=1200)||(key=="volumeBoost"&&n>=100&&n<=200)||(key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="srScale"&&n>=1&&n<=3)||((key=="fiFps"||key=="srFps")&&(n==60||n==120))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
         }
     }
 }
@@ -383,6 +383,7 @@ std::string script(){
     s+=read(root/L"assets/community44.js");s+="\n";
     s+="const PLUGINS="+pluginsRegistry().dump()+";\n";
     s+=read(root/L"assets/plugins.js");s+="\n";
+    s+=read(root/L"assets/favorites49.js");s+="\n";
     s+=read(root/L"assets/enhance.js");return s+"\n})();";
 }
 void refreshInjection(){
@@ -523,6 +524,8 @@ void restoreWebFocus(){
     if(testing)log("web keyboard focus restore: "+std::to_string(hr));
 }
 
+#include "startup49.hpp"
+
 LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     if(windowsMediaMessage(msg,wp,lp))return 0;
     if(msg==taskbarCreated&&!testing){installTray();return 0;}
@@ -591,10 +594,13 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     WSADATA sockets{};WSAStartup(MAKEWORD(2,2),&sockets);
     wchar_t exe[MAX_PATH];GetModuleFileNameW(nullptr,exe,MAX_PATH);root=fs::path(exe).parent_path();
     testing=std::wstring(command).find(L"--test")!=std::wstring::npos;lifecyclePreview=args.find(L"--lifecycle-preview")!=std::wstring::npos;
-    if(!testing){auto existing=FindWindowW(L"BetterBiliSpace",nullptr);if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);return 0;}}
+    if(!testing){auto existing=FindWindowW(L"BetterBiliSpace",L"Bili-Space");if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);return 0;}}
     PWSTR local{};SHGetKnownFolderPath(FOLDERID_LocalAppData,0,nullptr,&local);dataPath=testing?root/L".appdata":fs::path(local?local:L".")/L"BetterBiliSpace";CoTaskMemFree(local);
-    fs::create_directories(dataPath);config=defaults();gm=json::object();
+    try{if(!prepareAppData()){MessageBoxW(nullptr,L"应用数据目录不可写。请将完整程序目录放到可写位置后重试，原登录数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}}catch(const std::exception&){MessageBoxW(nullptr,L"无法准备应用数据目录，原数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}
+    config=defaults();gm=json::object();
+    log(std::string("startup ")+appVersion+(testing?" test":" normal"));
     try{auto stored=json::parse(read(dataPath/L"settings.json"));mergeConfig(stored.value("config",json::object()));if(stored.contains("gm")&&stored["gm"].is_object())gm=stored["gm"];searchHistory=cleanSearchHistory(stored.value("searchHistory",json::array()));}catch(...){}
+    log("startup: settings loaded");
     proxyEnabled=config.value("proxy",false);
     if(!proxyEnabled&&fs::exists(dataPath/L"proxy-enabled")){proxyEnabled=true;config["proxy"]=true;}
     if(!startProxy()){
@@ -603,18 +609,21 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
         else{proxyEnabled=false;config["proxy"]=false;save();}
     }
     std::wstring browserArgs=testing?L"--remote-debugging-port=9223 --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --disable-features=CalculateNativeWinOcclusion":L"";
+    if(!testing&&args.find(L"--diagnostics")!=std::wstring::npos)browserArgs=L"--remote-debugging-port=9224";
     browserArgs+=L" --autoplay-policy=no-user-gesture-required";
     if(proxyEnabled)browserArgs+=L" --proxy-server=http://127.0.0.1:"+std::to_wstring(proxyPort)+L" --proxy-bypass-list=bili-space.local;127.0.0.1;localhost";
     SetEnvironmentVariableW(L"WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",browserArgs.c_str());
     CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);
     WNDCLASSW wc{};wc.hIcon=LoadIconW(instance,MAKEINTRESOURCEW(1));wc.lpfnWndProc=proc;wc.hInstance=instance;wc.lpszClassName=L"BetterBiliSpace";wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hbrBackground=CreateSolidBrush(RGB(20,20,22));RegisterClassW(&wc);
     // Keep DWM's standard taskbar transitions; WM_NCCALCSIZE hides only the title bar.
-    windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Bili-Space [test]":L"Bili-Space",WS_OVERLAPPEDWINDOW,100,80,1380,880,nullptr,nullptr,instance,nullptr);
+    windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Bili-Space [test]":L"Bili-Space",WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,std::min(1600,GetSystemMetrics(SM_CXSCREEN)),std::min(1000,GetSystemMetrics(SM_CYSCREEN)-40),nullptr,nullptr,instance,nullptr);
     SetWindowPos(windowHandle,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
     DWORD borderColor=0xFFFFFFFE;DwmSetWindowAttribute(windowHandle,34,&borderColor,sizeof(borderColor));
     BOOL dark=TRUE;DwmSetWindowAttribute(windowHandle,20,&dark,sizeof(dark));int corner=2;DwmSetWindowAttribute(windowHandle,33,&corner,sizeof(corner));
     if(!testing||(testing&&args.find(L"--tray-preview")!=std::wstring::npos))installTray();
+    log("startup: window created");
     windowsMediaInit(windowHandle,[](const std::string& command){execute("window.BiliSpace?.mediaCommand("+json(command).dump()+")");});
+    log("startup: media initialized");
     ShowWindow(windowHandle,SW_SHOW);UpdateWindow(windowHandle);
     auto dll=LoadLibraryW((root/L"WebView2Loader.dll").c_str());
     using Create=HRESULT(STDAPICALLTYPE*)(PCWSTR,PCWSTR,ICoreWebView2EnvironmentOptions*,ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler*);
@@ -623,7 +632,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     auto envHandler=callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler,HRESULT,ICoreWebView2Environment*>([resumeUrl](HRESULT hr,ICoreWebView2Environment* env){
         if(FAILED(hr)||!env){log("WebView2 environment failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"请安装 Microsoft Edge WebView2 Evergreen Runtime 后重试。",L"启动失败",MB_OK);DestroyWindow(windowHandle);return S_OK;}
         auto h=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([resumeUrl](HRESULT hr,ICoreWebView2Controller* c){
-            if(FAILED(hr)||!c){log("controller creation failed");DestroyWindow(windowHandle);return S_OK;}
+            if(FAILED(hr)||!c){log("controller creation failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"浏览器数据目录暂时无法打开。请关闭其他 Bili-Space 窗口后重试；登录数据不会被清除。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);DestroyWindow(windowHandle);return S_OK;}
             controller=c;controller->AddRef();setSurface(config.value("theme",std::string("dark"))!="light");controller->get_CoreWebView2(&webview);fit();applyZoom();PostMessageW(windowHandle,restoreWebFocusMessage,0,0);
             EventRegistrationToken acceleratorToken;
             auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller*,auto args){

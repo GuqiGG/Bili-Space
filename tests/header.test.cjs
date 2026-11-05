@@ -7,16 +7,16 @@ test('requested message SVG and square maximize glyph appear in the centered-tit
  assert(s.querySelector('.light.max rect'));assert(s.querySelector('.messages .lucide-message-square-more'));
  const parser=new a.w.DOMParser(),expected=parser.parseFromString(fs.readFileSync('assets/message-square-more.svg','utf8'),'image/svg+xml');
  assert.deepEqual([...s.querySelectorAll('.messages svg path')].map(x=>x.getAttribute('d')),[...expected.querySelectorAll('path')].map(x=>x.getAttribute('d')));
- assert.equal(s.querySelector('.brand').textContent,'Bili-Space');assert(s.querySelector('.header-left nav [data-route=home]'));a.close();
+ assert.equal(s.querySelector('.brand-label').textContent,'Bili-Space');assert(s.querySelector('.header-left nav [data-route=home]'));a.close();
 });
 test('header settings individually hide all eight optional items without hiding window controls',()=>{
  const a=app(),s=a.w.document.querySelector('#bili-space-root').shadowRoot;
- s.querySelector('[data-tab=header]').click();
+ s.querySelector('[data-tab=appearance]').click();
  const keys=['headerHome','headerDynamic','headerHistory','headerBrand','headerSearch','headerMessages','headerAccount','headerBack'];
  for(const key of keys)assert(s.querySelector(`[data-pref=${key}]`));
  a.w.BiliSpace.update(Object.fromEntries(keys.map(key=>[key,false])));
  for(const selector of ['nav','.brand','.search','.messages','.account','.back'])assert.equal(s.querySelector(selector).hidden,true,selector);
- assert.equal(s.querySelectorAll('.lights button').length,3);assert.equal(s.querySelector('.lights').hidden,false);
+ assert.equal(s.querySelectorAll('.lights button').length,3);assert.equal(s.querySelector('.window-actions').hidden,false);
  s.querySelector('#header-reset').click();for(const key of keys)assert.equal(a.w.BiliSpace.state.prefs[key],true,key);a.close();
 });
 test('video webpage has an independent homepage anchor, even with the top Home item disabled',()=>{

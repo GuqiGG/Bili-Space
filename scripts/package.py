@@ -20,7 +20,7 @@ with zipfile.ZipFile(target,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9
    z.write(f,Path('Bili-Space')/name)
 with zipfile.ZipFile(target) as z:
  assert z.testzip() is None
- assert not any('.appdata' in n or 'settings.json' in n for n in z.namelist())
+ assert not any('.appdata' in n or '.userdata' in n or 'settings.json' in n for n in z.namelist())
  assert z.read('Bili-Space/Bili-Space.exe')[:2]==b'MZ'
  assert z.read('Bili-Space/assets/fonts/DouyinSansBold.ttf')==(ROOT/'assets/fonts/DouyinSansBold.ttf').read_bytes()
  assert z.read('Bili-Space/vendor/DouyinSans.OFL.txt')==(ROOT/'vendor/DouyinSans.OFL.txt').read_bytes()
