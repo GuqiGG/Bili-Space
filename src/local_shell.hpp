@@ -1,0 +1,21 @@
+#pragma once
+namespace localShell {
+constexpr UINT replyMessage=WM_APP+81;
+bool serve(ICoreWebView2WebResourceRequestedEventArgs* args,ICoreWebView2Environment* env){
+ ICoreWebView2WebResourceRequest* request{};args->get_Request(&request);if(!request)return false;LPWSTR raw{};request->get_Uri(&raw);std::wstring uri=raw?raw:L"";CoTaskMemFree(raw);request->Release();
+ if(uri.rfind(L"https://www.bilibili.com/__client/app.html",0)!=0)return false;auto html=read(root/L"assets/app.html");IStream* stream{};if(FAILED(CreateStreamOnHGlobal(nullptr,TRUE,&stream)))return false;ULONG written{};stream->Write(html.data(),ULONG(html.size()),&written);LARGE_INTEGER zero{};stream->Seek(zero,STREAM_SEEK_SET,nullptr);ICoreWebView2WebResourceResponse* response{};auto hr=env->CreateWebResourceResponse(stream,200,L"OK",L"Content-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\n",&response);stream->Release();if(SUCCEEDED(hr)){args->put_Response(response);response->Release();return true;}return false;
+}
+bool allowed(const std::wstring& url){return url.size()<4096&&url.find_first_of(L"\r\n") == std::wstring::npos&&(url.rfind(L"https://api.bilibili.com/x/",0)==0||url==L"https://www.bilibili.com/");}
+void request(const json& message){
+ auto id=message.value("id",std::string{});auto url=wide(message.value("url",std::string{}));if(id.size()>80||!allowed(url))return;
+ account50::readJar([id,url](json jar){std::wstring cookie;for(const auto& c:jar){auto domain=c.value("domain",std::string{});if(domain!=".bilibili.com"&&domain!="bilibili.com")continue;auto name=c.value("name",std::string{}),value=c.value("value",std::string{});if(name.find_first_of("\r\n;=")!=std::string::npos||value.find_first_of("\r\n;")!=std::string::npos)continue;cookie+=wide(name+"="+value+"; ");}const auto port=proxyEnabled&&proxyRunning?proxyPort:0;
+ std::thread([id,url,cookie,port]{json reply={{"id",id},{"ok",false}};HINTERNET session{},connection{},request{};try{
+  auto proxy=L"http://127.0.0.1:"+std::to_wstring(port);session=WinHttpOpen(L"Mozilla/5.0 Bili-Space",port?WINHTTP_ACCESS_TYPE_NAMED_PROXY:WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,port?proxy.c_str():WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);if(!session)throw std::runtime_error("无法创建请求");WinHttpSetTimeouts(session,5000,5000,10000,10000);
+  URL_COMPONENTS parts{};parts.dwStructSize=sizeof(parts);parts.dwHostNameLength=parts.dwUrlPathLength=parts.dwExtraInfoLength=DWORD(-1);if(!WinHttpCrackUrl(url.c_str(),DWORD(url.size()),0,&parts))throw std::runtime_error("地址无效");std::wstring host(parts.lpszHostName,parts.dwHostNameLength),path(parts.lpszUrlPath,parts.dwUrlPathLength);if(parts.dwExtraInfoLength)path.append(parts.lpszExtraInfo,parts.dwExtraInfoLength);
+  connection=WinHttpConnect(session,host.c_str(),INTERNET_DEFAULT_HTTPS_PORT,0);request=WinHttpOpenRequest(connection,L"GET",path.c_str(),nullptr,WINHTTP_NO_REFERER,WINHTTP_DEFAULT_ACCEPT_TYPES,WINHTTP_FLAG_SECURE);if(!request)throw std::runtime_error("请求失败");DWORD redirect=WINHTTP_OPTION_REDIRECT_POLICY_NEVER;WinHttpSetOption(request,WINHTTP_OPTION_REDIRECT_POLICY,&redirect,sizeof(redirect));
+  std::wstring headers=L"Referer: https://www.bilibili.com/\r\nOrigin: https://www.bilibili.com\r\nAccept: application/json,text/html\r\n";if(!cookie.empty())headers+=L"Cookie: "+cookie+L"\r\n";
+  if(!WinHttpSendRequest(request,headers.c_str(),DWORD(headers.size()),WINHTTP_NO_REQUEST_DATA,0,0,0)||!WinHttpReceiveResponse(request,nullptr))throw std::runtime_error("网络请求失败");DWORD status{},n=sizeof(status);WinHttpQueryHeaders(request,WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,WINHTTP_HEADER_NAME_BY_INDEX,&status,&n,WINHTTP_NO_HEADER_INDEX);std::string body;char buffer[16384];DWORD count{};while(WinHttpReadData(request,buffer,sizeof(buffer),&count)&&count){body.append(buffer,count);if(body.size()>8*1024*1024)throw std::runtime_error("响应过大");}reply["ok"]=status>=200&&status<300;reply["status"]=status;reply["body"]=body;
+ }catch(const std::exception& e){reply["error"]=e.what();}if(request)WinHttpCloseHandle(request);if(connection)WinHttpCloseHandle(connection);if(session)WinHttpCloseHandle(session);auto result=new json(std::move(reply));if(!PostMessageW(windowHandle,replyMessage,0,reinterpret_cast<LPARAM>(result)))delete result;
+ }).detach();});
+}
+}

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Native GTK/WebKit host. Browser profiles stay in per-user WebKit data directories."""
-import json, os, re, secrets, sys, uuid
+import base64, io, json, os, re, secrets, sys, uuid, threading, urllib.request, urllib.error
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 import gi
 gi.require_version('Gtk','3.0')
 gi.require_version('WebKit2','4.1')
-from gi.repository import Gtk, Gdk, Gio, GLib, WebKit2, Soup
+gi.require_foreign('cairo')
+from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, WebKit2, Soup
 
 ALLOWED={'www.bilibili.com','search.bilibili.com','space.bilibili.com','t.bilibili.com','passport.bilibili.com','account.bilibili.com','message.bilibili.com','live.bilibili.com','manga.bilibili.com'}
 def trusted(url):
@@ -23,8 +24,10 @@ class App(Gtk.Application):
         self.directory.mkdir(parents=True,exist_ok=True,mode=0o700);self.directory.chmod(0o700)
         self.state=self.read(self.directory/'state.json');defaults=self.read(self.resources/'defaults.json');defaults.update(self.state.get('config',{}));self.state['config']=defaults
         self.state.setdefault('gm',{});self.state.setdefault('profiles',[])
+        self.pending_add=None
+        if self.state.get('pendingAccountID'):self.state['activeID']=self.state.pop('pendingAccountID')
         self.renderer=(self.resources/'renderer.js').read_text(encoding='utf-8');self.web=None;self.pending='';self.popups=[]
-        self.frame_policy_seen=False;self.last_clipboard='';self.connect('activate',self.activate)
+        self.transition=None;self.transition_cache=None;self.transition_serial=0;self.transition_reduced=False;self.transition_busy=False;self.frame_policy_seen=False;self.last_clipboard='';self.connect('activate',self.activate)
     @staticmethod
     def read(path):
         try:
@@ -45,11 +48,12 @@ class App(Gtk.Application):
         Gtk.Settings.get_default().set_property('gtk-application-prefer-dark-theme',self.state['config'].get('theme')=='dark')
         self.window=Gtk.ApplicationWindow(application=self);self.window.set_title('Bili-Space');self.window.set_default_size(1440,940)
         self.window.set_size_request(520,420);self.window.set_decorated(False)
+        self.stack=Gtk.Overlay();self.plate=Gtk.Image();self.stack.add_overlay(self.plate);self.stack.set_overlay_pass_through(self.plate,True);self.window.add(self.stack)
         self.window.connect('focus-in-event',self.clipboard_focus)
         self.window.connect('delete-event',lambda *_:self.save() or False)
         self.open_profile(self.state.get('activeID'))
-        if not self.testing:self.window.show_all()
-        else:GLib.timeout_add_seconds(30,self.test_timeout)
+        self.window.show_all();self.plate.hide()
+        if self.testing:GLib.timeout_add_seconds(45,self.test_timeout)
     def clipboard_focus(self,*_):
         if not self.testing and self.web and not self.web.is_loading() and self.state['config'].get('clipboardAutoOpen',True):
             Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).request_text(self.clipboard_text,None)
@@ -75,13 +79,17 @@ class App(Gtk.Application):
         payload={'appInfo':self.read(self.resources/'assets/app-info.json'),'config':self.state['config'],'gm':self.state['gm'],'runtime':{'platform':'linux','testing':self.testing,'running':False}}
         bridge="(()=>{if(window.top!==window)return;const token="+json.dumps(self.token)+";window.__BILI_NATIVE__="+json.dumps(payload,ensure_ascii=False)+";window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(JSON.stringify({token,message:m}))};})();\n"
         script=WebKit2.UserScript.new(bridge+self.renderer,WebKit2.UserContentInjectedFrames.TOP_FRAME,WebKit2.UserScriptInjectionTime.START,None,None);content.add_script(script)
-        if self.web:self.window.remove(self.web);self.web.destroy()
+        if self.web:self.stack.remove(self.web);self.web.destroy()
+        self.transition=None;self.transition_cache=None;self.plate.hide()
         self.web=WebKit2.WebView(web_context=self.context,user_content_manager=content)
-        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False)
+        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False);settings.set_enable_mediasource(True);settings.set_user_agent_with_application_details('BiliSpace','0.1.52')
         self.web.add_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.POINTER_MOTION_MASK)
         self.web.connect('button-press-event',self.resize_press);self.web.connect('motion-notify-event',self.resize_motion)
         self.web.connect('decide-policy',self.policy);self.web.connect('create',self.popup);self.web.connect('load-changed',self.loaded)
-        self.window.add(self.web);self.web.show();self.web.load_uri('bili-space://assets/fixture.html' if self.testing else 'https://www.bilibili.com/')
+        self.stack.add(self.web);self.web.show();self.web.connect('size-allocate',lambda *_:self.transition_plate());self.web.load_uri('bili-space://assets/fixture.html') if self.testing else self.load_local()
+    def load_local(self):
+        source=(self.resources/'assets/app.html').read_text(encoding='utf-8').replace('https://bili-space.local/','bili-space://assets/')
+        self.web.load_html(source,'https://www.bilibili.com/__client/app.html')
     def resize_edge(self,event):
         if self.window.is_maximized():return None
         w,h=self.window.get_size();x,y=event.x,event.y
@@ -99,7 +107,7 @@ class App(Gtk.Application):
     def scheme(self,request,*_):
         try:
             root=(self.resources/'assets').resolve();path=(root/unquote(urlparse(request.get_uri()).path).lstrip('/')).resolve();path.relative_to(root)
-            data=path.read_bytes();mime={'.js':'application/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.ttf':'font/ttf','.png':'image/png','.json':'application/json'}.get(path.suffix,'application/octet-stream')
+            data=path.read_bytes();mime={'.js':'application/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.ttf':'font/ttf','.png':'image/png','.json':'application/json','.mp4':'video/mp4'}.get(path.suffix,'application/octet-stream')
             stream=Gio.MemoryInputStream.new_from_bytes(GLib.Bytes.new(data));response=WebKit2.URISchemeResponse.new(stream,len(data));response.set_content_type(mime)
             headers=Soup.MessageHeaders.new(Soup.MessageHeadersType.RESPONSE);headers.append('Access-Control-Allow-Origin','*');response.set_http_headers(headers);request.finish_with_response(response)
         except (OSError,ValueError) as error:request.finish_error(GLib.Error.new_literal(Gio.io_error_quark(),str(error),Gio.IOErrorEnum.NOT_FOUND))
@@ -118,8 +126,15 @@ class App(Gtk.Application):
         child=WebKit2.WebView(related_view=self.web,user_content_manager=WebKit2.UserContentManager());window=Gtk.Window(title='登录 · '+(urlparse(url).hostname or 'B站'));window.set_transient_for(self.window);window.set_default_size(760,720);window.add(child);self.popups.append(window)
         child.connect('decide-policy',self.policy);child.connect('create',self.popup);child.connect('ready-to-show',lambda *_:window.show_all());child.connect('close',lambda *_:window.destroy());return child
     def loaded(self,web,event):
+        if web is not self.web:return
+        if event==WebKit2.LoadEvent.STARTED:
+            self.transition_serial+=1;uri=web.get_uri() or ''
+            if self.transition_cache and not self.transition_reduced and not self.transition_video(uri):
+                self.transition={'id':str(self.transition_serial),'index':secrets.randbelow(12),'old':self.transition_cache,'hold':True};self.transition_plate()
+            else:self.transition=None;self.plate.hide()
+        if event==WebKit2.LoadEvent.REDIRECTED and self.transition_video(web.get_uri() or ''):self.transition=None;self.plate.hide()
         if event!=WebKit2.LoadEvent.FINISHED:return
-        self.js('window.BiliSpace?.surfaceRevealed?.();window.BiliSpace?.setLoading(false)')
+        self.js('window.BiliSpace?.surfaceRevealed?.();window.BiliSpace?.setLoading(false);window.TransitionManager?.ready()')
         if self.window.is_active():self.clipboard_focus()
         if self.testing:
             code="(()=>{const s=document.querySelector('#bili-space-root')?.shadowRoot;return !!window.BiliSpace&&!!s?.querySelector('.account-switch')&&s.querySelector('.lights').hidden&&!s.querySelector('.window-actions').hidden})()"
@@ -129,7 +144,12 @@ class App(Gtk.Application):
                 if not ok or self.window.get_decorated():print('Linux frameless renderer self-test: failed',flush=True);os._exit(1)
                 web.run_javascript("(()=>{const f=document.createElement('iframe');f.hidden=true;f.src='https://s1.hdslb.com/bfs/seed/jinkela/short/cols/iframe.html';document.body.append(f)})()",None,None,None)
                 def frames_done():
-                    ok=self.frame_policy_seen;print('Linux frameless renderer and cross-origin iframe policy self-test:', 'passed' if ok else 'failed',flush=True);os._exit(0 if ok else 1)
+                    ok=self.frame_policy_seen
+                    if not ok:print('iframe regression failed',flush=True);os._exit(1)
+                    def media_done(view,result,*_):
+                        try:view.run_javascript_finish(result)
+                        except GLib.Error as e:print('Linux media error',str(e),flush=True);os._exit(1)
+                    web.run_javascript("window.BiliMediaProbe.run().then(x=>chrome.webview.postMessage({type:'media-probe-result',ok:true,result:x})).catch(e=>chrome.webview.postMessage({type:'media-probe-result',ok:false,error:e.message}))",None,media_done,None)
                 GLib.timeout_add_seconds(3,frames_done)
             web.run_javascript(code,None,complete,None)
     def test_timeout(self):print('Linux WebKit renderer self-test timed out',flush=True);os._exit(2)
@@ -141,7 +161,10 @@ class App(Gtk.Application):
             m=wrapper['message'];kind=m.get('type');action=m.get('action')
             if kind=='config' and isinstance(m.get('value'),dict):self.state['config'].update(m['value']);self.save()
             elif kind=='gm-set':self.state['gm'][m['key']]=m.get('value');self.save()
+            elif kind=='media-probe-result' and self.testing:print('Linux media decode self-test:',json.dumps(m),flush=True);os._exit(0 if m.get('ok') else 1)
             elif kind=='accounts':self.accounts(m)
+            elif kind=='transition':self.transition_message(m)
+            elif kind=='local-api':self.local_api(m)
             elif kind=='navigate' and trusted(m.get('url')):self.web.load_uri(m['url'])
             elif kind=='open-external' and urlparse(m.get('url','')).scheme=='https':Gio.AppInfo.launch_default_for_uri(m['url'],None)
             elif kind=='window':
@@ -156,6 +179,76 @@ class App(Gtk.Application):
                 Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).set_text(m.get('url',''),-1);self.send('videoLinkCopied',{'url':m.get('url',''),'ok':True})
             elif kind=='updates':self.send('acceptUpdateStatus',{'available':False,'message':'Linux 版本请从 GitHub Release 更新'})
         except (ValueError,KeyError,GLib.Error,TypeError):pass
+    def local_api(self,m):
+        url=m.get('url','');identifier=m.get('id','');parsed=urlparse(url)
+        if len(identifier)>80 or len(url)>4096 or parsed.scheme!='https' or parsed.username or parsed.password:return
+        if not(parsed.hostname=='api.bilibili.com' and parsed.path.startswith('/x/') or url=='https://www.bilibili.com/'):return
+        web=self.web;user_agent=web.get_settings().get_user_agent() or 'Mozilla/5.0'
+        def cookies_ready(manager,result,*_):
+            try:cookie='; '.join(c.get_name()+'='+c.get_value() for c in manager.get_cookies_finish(result))
+            except GLib.Error:cookie=''
+            def request():
+                reply={'id':identifier,'ok':False}
+                class NoRedirect(urllib.request.HTTPRedirectHandler):
+                    def redirect_request(self,*_):return None
+                try:
+                    req=urllib.request.Request(url,headers={'User-Agent':user_agent,'Referer':'https://www.bilibili.com/','Origin':'https://www.bilibili.com','Cookie':cookie,'Accept-Encoding':'identity'})
+                    with urllib.request.build_opener(NoRedirect).open(req,timeout=12) as r:
+                        data=r.read(8*1024*1024+1)
+                        if len(data)>8*1024*1024:raise ValueError('response too large')
+                        reply.update(ok=True,status=r.status,body=data.decode('utf-8'))
+                except Exception as e:reply['error']=str(e)
+                def deliver():
+                    if self.web is web:self.js('window.BiliLocalAPI?.accept('+json.dumps(reply,ensure_ascii=False)+')')
+                    return False
+                GLib.idle_add(deliver)
+            threading.Thread(target=request,daemon=True).start()
+        self.cookies.get_cookies('https://api.bilibili.com/',None,cookies_ready,None)
+    @staticmethod
+    def transition_video(uri):return bool(re.match(r'^/(?:zh-Hans/|zh-Hant/|en/)?(?:video|bangumi|list|cheese)(?:/|$)',urlparse(uri).path))
+    def transition_plate(self):
+        if not self.transition or not self.transition.get('hold'):return
+        raw=base64.b64decode(self.transition['old'].split(',',1)[1]);stream=Gio.MemoryInputStream.new_from_bytes(GLib.Bytes.new(raw));pix=GdkPixbuf.Pixbuf.new_from_stream(stream,None)
+        size=self.web.get_allocation();pix=pix.scale_simple(max(1,size.width),max(1,size.height),GdkPixbuf.InterpType.BILINEAR);self.plate.set_from_pixbuf(pix);self.plate.show()
+    def transition_snapshot(self,done):
+        if self.transition_busy:GLib.timeout_add(24,lambda:self.transition_snapshot(done) or False);return
+        self.transition_busy=True;web=self.web
+        def captured(view,result,*_):
+            self.transition_busy=False
+            try:
+                surface=view.get_snapshot_finish(result);data=io.BytesIO();surface.write_to_png(data);image='data:image/png;base64,'+base64.b64encode(data.getvalue()).decode();done(image if web is self.web else '')
+            except (GLib.Error,ValueError):done('')
+        web.get_snapshot(WebKit2.SnapshotRegion.VISIBLE,WebKit2.SnapshotOptions.NONE,None,captured,None)
+    def transition_message(self,m):
+        action=m.get('action')
+        if action=='local-begin':
+            token=m.get('token');self.local_transition_token=token
+            def local_start(image):
+                if token!=self.local_transition_token:return
+                if not image or m.get('reduced'):self.js('window.TransitionManager?.commitLocal('+json.dumps({'localToken':token})+')');return
+                self.transition_serial+=1;self.transition={'id':str(self.transition_serial),'index':secrets.randbelow(12),'old':image,'hold':True,'localToken':token};self.transition_plate();self.js('window.TransitionManager?.accept('+json.dumps(self.transition)+')')
+            self.transition_snapshot(local_start);return
+        if action=='snapshot':
+            self.transition_reduced=bool(m.get('reduced'))
+            if self.transition or self.transition_reduced:return
+            owner=self.transition_serial
+            def cached(image):
+                if owner==self.transition_serial and not self.transition:self.transition_cache=image
+            self.transition_snapshot(cached);return
+        state=self.transition
+        if action=='arrive':
+            if state:self.js('window.TransitionManager?.accept('+json.dumps({k:state[k] for k in ['id','index','old']})+')')
+            return
+        if not state or m.get('id')!=state['id']:return
+        if action=='attached':state['hold']=False;self.plate.hide()
+        elif action=='ready':state['hold']=True;self.transition_plate();self.js('window.TransitionManager?.prepareSnapshot()')
+        elif action=='capture-new':
+            def captured(image):
+                if self.transition is not state:return
+                if image:self.js('window.TransitionManager?.present('+json.dumps({'id':state['id'],'image':image})+')')
+                else:self.transition=None;self.plate.hide();self.js('window.TransitionManager?.cancel()')
+            self.transition_snapshot(captured)
+        elif action in ('done','cancel'):self.transition=None;self.plate.hide()
     def accounts(self,m):
         action=m.get('action')
         if action=='list':event=self.pending;self.pending='';self.account_state(event)
@@ -165,10 +258,17 @@ class App(Gtk.Application):
                 try:
                     cookies=manager.get_cookies_finish(result)
                     if any(c.get_name()=='DedeUserID' and c.get_value()==str(metadata.get('mid')) for c in cookies):
-                        profile.update({k:str(metadata.get(k,'')) for k in ['mid','uname','face']});self.save();self.account_state('saved')
+                        profile.update({k:str(metadata.get(k,'')) for k in ['mid','uname','face']});self.save()
+                        if self.pending_add:
+                            previous=self.pending_add;self.pending_add=None;self.state.pop('pendingAccountID',None);self.open_profile(previous,event='added')
+                        else:self.account_state('saved')
                 except GLib.Error:self.account_state('error','账号保存失败，请重试')
             self.cookies.get_cookies('https://www.bilibili.com/',None,captured,None)
-        elif action=='add':self.open_profile(event='login')
+        elif action=='add':
+            self.pending_add=self.state.get('activeID');self.state['pendingAccountID']=self.pending_add;self.save();self.open_profile(event='login-add')
+        elif action=='cancel-add':
+            previous=self.pending_add or self.state.get('pendingAccountID');self.pending_add=None;self.state.pop('pendingAccountID',None)
+            if previous:self.open_profile(previous,event='add-restored')
         elif action=='switch':
             profile=next((p for p in self.state['profiles'] if p.get('mid')==m.get('mid')),None)
             if profile:self.open_profile(profile['id'],'switched')

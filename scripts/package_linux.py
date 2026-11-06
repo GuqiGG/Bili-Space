@@ -15,7 +15,7 @@ desktop=stage/'usr/share/applications/bili-space.desktop';desktop.parent.mkdir(p
 desktop.write_text('[Desktop Entry]\nType=Application\nName=Bili-Space\nComment=Bilibili desktop client\nExec=bili-space\nIcon=bili-space\nTerminal=false\nCategories=AudioVideo;Video;Network;\nStartupWMClass=BiliSpace\n',encoding='utf-8')
 icon=stage/'usr/share/icons/hicolor/256x256/apps/bili-space.png';icon.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(ROOT/'assets/branding/bili-space.png',icon)
 control=stage/'DEBIAN/control';control.parent.mkdir(exist_ok=True)
-control.write_text(f'Package: bili-space\nVersion: {version}\nArchitecture: all\nMaintainer: Bili-Space contributors\nDepends: python3, python3-gi, gir1.2-gtk-3.0, gir1.2-webkit2-4.1\nSection: video\nPriority: optional\nHomepage: https://github.com/GuqiGG/Bili-Space\nDescription: Bilibili desktop client with native GTK and isolated account profiles\n',encoding='utf-8')
+control.write_text(f'Package: bili-space\nVersion: {version}\nArchitecture: all\nMaintainer: Bili-Space contributors\nDepends: python3, python3-gi, python3-gi-cairo, python3-cairo, gstreamer1.0-libav, gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly, gir1.2-gtk-3.0, gir1.2-webkit2-4.1\nSection: video\nPriority: optional\nHomepage: https://github.com/GuqiGG/Bili-Space\nDescription: Bilibili desktop client with native GTK and isolated account profiles\n',encoding='utf-8')
 out=ROOT/'releases';out.mkdir(exist_ok=True)
 if sys.platform.startswith('linux'):
     subprocess.run(['dpkg-deb','--root-owner-group','--build',str(stage),str(out/f'Bili-Space-{version}-linux.deb')],check=True)
