@@ -89,7 +89,7 @@ class App(Gtk.Application):
         self.web.connect('button-press-event',self.resize_press);self.web.connect('motion-notify-event',self.resize_motion)
         self.web.connect('resource-load-started',self.resource_started)
         self.web.connect('decide-policy',self.policy);self.web.connect('create',self.popup);self.web.connect('load-changed',self.loaded)
-        self.stack.add(self.web);self.web.show();self.web.connect('size-allocate',lambda *_:self.transition_plate());self.web.load_html((self.resources/'assets/fixture.html').read_text(encoding='utf-8'),'https://www.bilibili.com/') if self.testing else self.web.load_uri('https://www.bilibili.com/')
+        self.stack.add(self.web);self.web.show();self.web.connect('size-allocate',lambda *_:self.transition_plate());self.web.load_html((self.resources/'assets/fixture.html').read_text(encoding='utf-8').replace('</head>','<link rel="stylesheet" href="bili-space://assets/cache-probe.css"><script src="bili-space://assets/cache-probe.js"></script></head>'),'https://www.bilibili.com/') if self.testing else self.web.load_uri('https://www.bilibili.com/')
     def resize_edge(self,event):
         if self.window.is_maximized():return None
         w,h=self.window.get_size();x,y=event.x,event.y
@@ -183,7 +183,7 @@ class App(Gtk.Application):
         self.js('window.BiliSpace?.surfaceRevealed?.();window.BiliSpace?.setLoading(false);window.TransitionManager?.ready()')
         if self.window.is_active():self.clipboard_focus()
         if self.testing:
-            code="(()=>{const s=document.querySelector('#bili-space-root')?.shadowRoot;return location.origin==='https://www.bilibili.com'&&!!window.BiliSpace&&!!s?.querySelector('.account-switch')&&s.querySelector('.lights').hidden&&!s.querySelector('.window-actions').hidden})()"
+            code="(()=>{const s=document.querySelector('#bili-space-root')?.shadowRoot;return window.__biliCachedScriptLoaded&&getComputedStyle(document.documentElement).getPropertyValue('--bili-cached-style-loaded').trim()==='yes'&&location.origin==='https://www.bilibili.com'&&!!window.BiliSpace&&!!s?.querySelector('.account-switch')&&s.querySelector('.lights').hidden&&!s.querySelector('.window-actions').hidden})()"
             def complete(view,result,*_):
                 try:ok=view.run_javascript_finish(result).get_js_value().to_boolean()
                 except GLib.Error:ok=False

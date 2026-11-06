@@ -1,0 +1,2 @@
+/* Native self-test only: verify a cached stylesheet can load on the official origin. */
+:root { --bili-cached-style-loaded: yes; }
