@@ -1,0 +1,77 @@
+name: Validate native Windows, macOS and Linux clients
+on:
+  push:
+    branches: [codex/navigation-accounts-platforms]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: platforms-0.1.50-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {filter: 'blob:none'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build universal native app
+        run: |
+          cmake -S . -B build/macos -DCMAKE_BUILD_TYPE=Release '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0
+          cmake --build build/macos --config Release -j 3
+          codesign --force --deep --sign - build/macos/Bili-Space.app
+          build/macos/Bili-Space.app/Contents/MacOS/Bili-Space --self-test
+          mkdir -p releases
+          ditto -c -k --sequesterRsrc --keepParent build/macos/Bili-Space.app releases/Bili-Space-0.1.50-macos-universal.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-universal
+          path: releases/Bili-Space-0.1.50-macos-universal.zip
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {filter: 'blob:none'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install native system WebKit
+        run: sudo apt-get update && sudo apt-get install -y python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1 xvfb dbus-x11
+      - name: Package and launch GTK app
+        run: |
+          python3 scripts/package_linux.py
+          BILI_SPACE_RESOURCES="$PWD/build/linux-package/usr/lib/bili-space" WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 xvfb-run -a dbus-run-session -- /usr/bin/python3 src/linux_main.py --self-test
+          dpkg-deb --contents releases/Bili-Space-0.1.50-linux.deb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb
+          path: releases/Bili-Space-0.1.50-linux.deb
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env: {PYTHONUTF8: '1'}
+    steps:
+      - uses: actions/checkout@v4
+        with: {filter: 'blob:none'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Verify shared UI and build native host
+        shell: pwsh
+        run: |
+          npm ci
+          if ($LASTEXITCODE) { throw 'npm ci failed' }
+          node --test --test-force-exit tests/*.test.cjs
+          if ($LASTEXITCODE) { throw 'UI regression failed' }
+          New-Item -ItemType Directory -Force .tools,verification | Out-Null
+          ./scripts/build.ps1
+          if ($LASTEXITCODE) { throw 'Windows build failed' }
+          ./scripts/test_accounts50_native.ps1
+          if ($LASTEXITCODE) { throw 'Encrypted account tests failed' }
+          ./scripts/build_win7.ps1
+          if ($LASTEXITCODE) { throw 'Windows 7 compatibility build failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-compatibility
+          path: releases/Bili-Space-0.1.50-win7-x64.zip

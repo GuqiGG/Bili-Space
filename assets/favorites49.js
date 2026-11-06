@@ -1,5 +1,7 @@
 /* Official Bilibili favorites, loaded only when the user opens the panel. */
 (()=>{
+function coverURL(value){if(typeof value!=='string'||value.length>4096)return '';try{const u=new URL(value,location.href);if(!['http:','https:'].includes(u.protocol)||u.username||u.password||!/(^|\.)(hdslb|biliimg)\.com$/i.test(u.hostname))return '';u.protocol='https:';return u.href;}catch{return '';}}
+window.BiliFavoriteCoverURL=coverURL;
 window.installBiliFavorites=({shadow,native,closeSearch})=>{
  const wrap=shadow.querySelector('.favorites-wrap'),button=wrap.querySelector('.favorites'),panel=wrap.querySelector('.favorites-panel');
  let request,generation=0,folders=[],selected=0,page=1,mid='';
@@ -15,7 +17,7 @@ window.installBiliFavorites=({shadow,native,closeSearch})=>{
   try{const data=await json('/x/v3/fav/resource/list?media_id='+id+'&pn='+page+'&ps=20&platform=web',signal);if(revision!==generation)return;
    let grid=body.querySelector('.favorites-grid');if(!more){grid=node('div','favorites-grid');body.replaceChildren(grid);}body.querySelector('.favorites-more')?.remove();
    for(const video of data.medias||[]){const bvid=String(video.bvid||'');const card=node('a','favorites-video');const available=/^BV[a-z0-9]{10}$/i.test(bvid)&&!(Number(video.attr)&1);card.href=available?'https://www.bilibili.com/video/'+bvid:'https://www.bilibili.com/';
-    const cover=node('div','favorites-cover');try{const url=new URL(video.cover,location.href);if(url.protocol==='https:'&&/(^|\.)hdslb\.com$/.test(url.hostname)){const image=node('img','');image.src=url.href;image.alt='';image.loading='lazy';image.referrerPolicy='no-referrer';cover.append(image);}}catch{}
+    const cover=node('div','favorites-cover'),source=coverURL(video.cover);if(source){const image=node('img','');image.alt='';image.loading=grid.children.length<6?'eager':'lazy';image.decoding='async';image.referrerPolicy='no-referrer';image.onerror=()=>{image.remove();cover.append(node('span','favorites-cover-error','封面暂不可用'));};image.src=source;cover.append(image);}else cover.append(node('span','favorites-cover-error','暂无封面'));
     const title=node('strong','',video.title||'已失效的视频');card.title=title.textContent;card.append(cover,title,node('span','favorites-author',video.upper?.name||'已收藏'));
     if(!available){card.setAttribute('aria-disabled','true');card.onclick=e=>e.preventDefault();}else card.onclick=e=>{e.preventDefault();close();native('navigate',{url:card.href});};grid.append(card);
    }

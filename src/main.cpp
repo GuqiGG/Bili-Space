@@ -364,10 +364,16 @@ bool trusted(const std::wstring& uri){
     for(auto host:{L"https://www.bilibili.com/",L"https://search.bilibili.com/",L"https://space.bilibili.com/",L"https://live.bilibili.com/",L"https://t.bilibili.com/",L"https://passport.bilibili.com/",L"https://account.bilibili.com/",L"https://message.bilibili.com/",L"https://manga.bilibili.com/"})if(uri.rfind(host,0)==0)return true;
     return testing&&uri.rfind(L"https://bili-space.local/",0)==0;
 }
+#include "accounts50.hpp"
+#include "auth_popup50.hpp"
 std::string script(){
     std::string s="(()=>{if(window.top!==window)return; const host=location.hostname;if(!(['www.bilibili.com','search.bilibili.com','space.bilibili.com','live.bilibili.com','t.bilibili.com','passport.bilibili.com','account.bilibili.com','message.bilibili.com','manga.bilibili.com'].includes(host)";
     if(testing)s+="||host==='bili-space.local'";
     s+="))return;\nconst APP_INFO="+appInfo().dump()+";const INITIAL="+config.dump()+";const GM_INITIAL="+gm.dump()+";const RUNTIME="+proxyState().dump()+";\n";
+    s+="RUNTIME.platform='windows';\n";
+#ifdef BILI_LEGACY_WIN7
+    s+="RUNTIME.legacyWin7=true;\n";
+#endif
     s+="RUNTIME.testing="+std::string(testing?"true":"false")+";\n";
     s+=R"JS((()=>{const dark=INITIAL.theme==='dark'||(INITIAL.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);const paint=()=>{if(!document.documentElement)return false;document.documentElement.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const style=document.createElement('style');style.id='bs-navigation-surface';style.textContent='html,body'+(location.hostname==='space.bilibili.com'?'':',#app')+'{background-color:'+(dark?'#161618':'#fafafa')+'!important}';document.documentElement.append(style);return true;};if(!paint()){const observer=new MutationObserver(()=>{if(paint())observer.disconnect();});observer.observe(document,{childList:true,subtree:true});}window.__bsPaintReady=()=>setTimeout(()=>{if(document.documentElement&&chrome?.webview){getComputedStyle(document.documentElement).backgroundColor;chrome.webview.postMessage({type:'surface-ready'});}},32);if(RUNTIME.testing){window.__bsSurfaceSamples=[];const sample=()=>{if(document.documentElement)window.__bsSurfaceSamples.push(getComputedStyle(document.documentElement).backgroundColor);if(window.__bsSurfaceSamples.length<12)requestAnimationFrame(sample);};requestAnimationFrame(sample);}})();)JS";
     auto settings=read(root/L"assets/settings.svg"), sparkles=read(root/L"assets/sparkles.svg");
@@ -377,14 +383,17 @@ std::string script(){
     s+="\nif(INITIAL.btr){(()=>{\n"+read(root/L"assets/btr.user.js")+"\n})();}\n";
     // Upstream only executes on bilibili.com; fixture policy tests load it separately.
     s+="if(host==='www.bilibili.com'){(()=>{\n"+read(root/L"assets/blocker.home.user.js")+"\n})();}\n";
+#ifndef BILI_LEGACY_WIN7
     s+=read(root/L"assets/ai/ort.webgpu.min.js");s+="\n";
     s+=read(root/L"assets/ai/anime4k-webgpu.js");s+="\n";
+#endif
     s+=read(root/L"assets/desktop44.js");s+="\n";
     s+=read(root/L"assets/community44.js");s+="\n";
     s+="const PLUGINS="+pluginsRegistry().dump()+";\n";
     s+=read(root/L"assets/plugins.js");s+="\n";
+    s+=read(root/L"assets/accounts50.js");s+="\n";
     s+=read(root/L"assets/favorites49.js");s+="\n";
-    s+=read(root/L"assets/enhance.js");return s+"\n})();";
+    s+=read(root/L"assets/enhance.js");return read(root/L"assets/login-frame50.js")+"\n"+s+"\n})();";
 }
 void refreshInjection(){
     if(!webview)return;
@@ -443,6 +452,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="plugins"){pluginsAction(m);
         }else if(type=="media-state"){windowsMediaAccept(m);
         }else if(type=="updates"){updateAction(m.value("action",std::string{}),m.value("version",std::string{}));
+        }else if(type=="accounts"){account50::action(m);
         }else if(type=="window"){
             auto action=m.value("action",std::string{});
             if(action=="test-restore"&&testing)restoreFromTray();
@@ -580,7 +590,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
     case WM_TIMER:if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
     case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");return 0;}DestroyWindow(hwnd);return 0;
-    case WM_DESTROY:windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}PostQuitMessage(0);return 0;
+    case WM_DESTROY:{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
     }
     return DefWindowProcW(hwnd,msg,wp,lp);
 }
@@ -631,7 +641,8 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     if(!create){MessageBoxW(windowHandle,L"WebView2Loader.dll 缺失，请使用完整 dist 目录。",L"启动失败",MB_OK|MB_ICONERROR);return 1;}
     auto envHandler=callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler,HRESULT,ICoreWebView2Environment*>([resumeUrl](HRESULT hr,ICoreWebView2Environment* env){
         if(FAILED(hr)||!env){log("WebView2 environment failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"请安装 Microsoft Edge WebView2 Evergreen Runtime 后重试。",L"启动失败",MB_OK);DestroyWindow(windowHandle);return S_OK;}
-        auto h=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([resumeUrl](HRESULT hr,ICoreWebView2Controller* c){
+        authEnvironment50=env;authEnvironment50->AddRef();
+        auto h=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([resumeUrl,env](HRESULT hr,ICoreWebView2Controller* c){
             if(FAILED(hr)||!c){log("controller creation failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"浏览器数据目录暂时无法打开。请关闭其他 Bili-Space 窗口后重试；登录数据不会被清除。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);DestroyWindow(windowHandle);return S_OK;}
             controller=c;controller->AddRef();setSurface(config.value("theme",std::string("dark"))!="light");controller->get_CoreWebView2(&webview);fit();applyZoom();PostMessageW(windowHandle,restoreWebFocusMessage,0,0);
             EventRegistrationToken acceleratorToken;
@@ -655,14 +666,18 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
                 else{if(site||(testing&&uri.rfind(L"https://bili-space.local/",0)==0)){surfaceCommitted=false;surfaceWaiting=false;}execute("window.BiliSpace?.beginNavigation("+json(utf8(uri)).dump()+")");}
                 return S_OK;
             });webview->add_NavigationStarting(nh,&token);nh->Release();
-            auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([](ICoreWebView2*,auto args){LPWSTR uri{};args->get_Uri(&uri);args->put_Handled(TRUE);if(uri){webview->Navigate(uri);CoTaskMemFree(uri);}return S_OK;});webview->add_NewWindowRequested(ph,&token);ph->Release();
+            auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([env](ICoreWebView2*,auto args){LPWSTR uri{};args->get_Uri(&uri);if(uri){if(authProvider50(uri))authPopup50(env,args);else{args->put_Handled(TRUE);webview->Navigate(uri);}CoTaskMemFree(uri);}return S_OK;});webview->add_NewWindowRequested(ph,&token);ph->Release();
             auto fh=callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2*,IUnknown*){BOOL on{};webview->get_ContainsFullScreenElement(&on);toggleFull(on);return S_OK;});webview->add_ContainsFullScreenElementChanged(fh,&token);fh->Release();
             auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(!IsWindowVisible(windowHandle))execute("window.BiliSpace?.pauseForTray()");if(success){surfaceCommitted=true;execute("window.__bsPaintReady?.()");}else{surfaceWaiting=false;KillTimer(windowHandle,75);KillTimer(windowHandle,76);controller->put_IsVisible(TRUE);}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});webview->add_NavigationCompleted(ready,&token);ready->Release();
             auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;if(loadRequiredUpdate()){showRequiredUpdate();return S_OK;}std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));if(testing&&!lifecyclePreview)webview->Navigate(target.c_str());else{startupTarget=target;auto splash=read(root/L"assets/startup.html");if(config.value("theme",std::string("dark"))!="system")splash+=config.value("theme",std::string("dark"))=="light"?"<style>body{background:#fafafa}p{color:#202024}</style>":"<style>body{background:#161618}p{color:#eeeef0}</style>";webview->NavigateToString(wide(splash).c_str());SetTimer(windowHandle,73,2500,nullptr);}if(!testing)AddClipboardFormatListener(windowHandle);}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
             webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();return S_OK;
         });env->CreateCoreWebView2Controller(windowHandle,h);h->Release();return S_OK;
     });
-    auto hr=create(nullptr,(dataPath/L"WebView2").c_str(),nullptr,envHandler);envHandler->Release();
+    std::wstring fixedBrowser;
+#ifdef BILI_LEGACY_WIN7
+    if(fs::exists(root/L"runtime/webview2-109/msedgewebview2.exe"))fixedBrowser=(root/L"runtime/webview2-109").wstring();
+#endif
+    auto hr=create(fixedBrowser.empty()?nullptr:fixedBrowser.c_str(),(dataPath/L"WebView2").c_str(),nullptr,envHandler);envHandler->Release();
     if(FAILED(hr)){log("environment start failed: "+std::to_string(hr));DestroyWindow(windowHandle);return 2;}
     MSG msg;while(GetMessageW(&msg,nullptr,0,0)>0){TranslateMessage(&msg);DispatchMessageW(&msg);}windowsMediaShutdown();CoUninitialize();return 0;
 }
