@@ -1,3 +1,6 @@
 # Preserve bundled font and upstream license bytes.
 assets/fonts/*.ttf binary
 vendor/DouyinSans.OFL.txt -text
+
+# Preserve captured HTTP response bytes and manifest hashes.
+assets/web-copy/** -text
