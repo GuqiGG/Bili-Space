@@ -5,7 +5,8 @@ out=ROOT/'releases';out.mkdir(exist_ok=True)
 version=json.loads((ROOT/'package.json').read_text())['version']
 target=out/f'Bili-Space-{version}-win64.zip'
 files=[ROOT/'dist/Bili-Space.exe',ROOT/'dist/WebView2Loader.dll']
-files+=list((ROOT/'dist/assets').rglob('*'))
+# Package current source assets; stale files from earlier incremental builds must not return.
+files+=list((ROOT/'assets').rglob('*'))
 files+=list((ROOT/'dist/runtime').rglob('*'))
 files+=[ROOT/'vendor/mihomo.LICENSE',ROOT/'vendor/onnxruntime.LICENSE',ROOT/'vendor/espcn.LICENSE',ROOT/'vendor/rife.LICENSE',ROOT/'vendor/anime4k.LICENSE',ROOT/'vendor/anime4k-source.json',ROOT/'vendor/rife-model.json',ROOT/'vendor/runtime.lock.json',ROOT/'vendor/free-nodes-sources.json']
 files+=[ROOT/'vendor/iana-tlds.txt',ROOT/'vendor/iana-tlds-source.json']
