@@ -3,6 +3,12 @@ $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 $zig = Join-Path $root '.tools\zig\zig-windows-x86_64-0.13.0\zig.exe'
 if (!(Test-Path $zig)) { python scripts/bootstrap.py; if ($LASTEXITCODE) { throw 'Toolchain bootstrap failed' } }
+# Zig defaults its caches next to the toolchain. When that path is not writable (stale
+# handle, read-only mount, confined shell) the compiler exits with a bare
+# "error: AccessDenied" that reads like a source problem. Pin both caches inside .tools.
+$env:ZIG_GLOBAL_CACHE_DIR = Join-Path $root '.tools\zig-cache-global'
+$env:ZIG_LOCAL_CACHE_DIR = Join-Path $root '.tools\zig-cache-local'
+New-Item -ItemType Directory -Force $env:ZIG_GLOBAL_CACHE_DIR, $env:ZIG_LOCAL_CACHE_DIR, (Join-Path $root '.tools') | Out-Null
 New-Item -ItemType Directory -Force dist | Out-Null
 & $zig rc /I . /fo .tools/app-icon.res src/app.rc
 if ($LASTEXITCODE) { throw "Icon resource build failed: $LASTEXITCODE" }

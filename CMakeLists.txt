@@ -11,7 +11,8 @@ if(APPLE)
   add_custom_command(TARGET BiliSpaceMac POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_CONTENT_DIR:BiliSpaceMac>/Resources"
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets" "$<TARGET_BUNDLE_CONTENT_DIR:BiliSpaceMac>/Resources/assets"
-    COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/build_web_bundle.py" --output "$<TARGET_BUNDLE_CONTENT_DIR:BiliSpaceMac>/Resources")
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/build_web_bundle.py" --output "$<TARGET_BUNDLE_CONTENT_DIR:BiliSpaceMac>/Resources"
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/scripts/build_icns.py" --output "$<TARGET_BUNDLE_CONTENT_DIR:BiliSpaceMac>/Resources/Bili-Space.icns")
   return()
 elseif(UNIX)
   find_package(Python3 COMPONENTS Interpreter REQUIRED)

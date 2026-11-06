@@ -16,7 +16,27 @@ window.installBiliAccounts=({shadow,native,refreshAccount,hideAccountCard,toast}
  @media(max-width:650px){#bili-space-login-mount .bili-mini-content-wp{display:grid!important;grid-template-columns:minmax(0,1fr)!important;padding:28px 18px 18px!important}#bili-space-login-mount .login-scan-wp{grid-column:1;grid-row:1;width:100%!important}#bili-space-login-mount .bili-mini-login-right-wp{grid-column:1;grid-row:2}#bili-space-login-mount .login-agreement-wp{grid-column:1;grid-row:3}}
  `;(document.head||document.documentElement).append(portalStyle);
  function applyTheme(){const computed=getComputedStyle(shadow.host);for(const key of ['--bg','--panel','--field','--ink','--muted','--line','--accent','--font','--elevation-control','--elevation-panel','--surface-sheen'])panel.style.setProperty(key,computed.getPropertyValue(key));panel.style.setProperty('--bs-header-height',getComputedStyle(document.documentElement).getPropertyValue('--bs-header-height')||'58px');}
- function loadSDK(){if(typeof window.MiniLogin==='function')return Promise.resolve();if(sdkPromise)return sdkPromise;sdkPromise=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://s1.hdslb.com/bfs/seed/jinkela/short/mini-login-v2/miniLogin.umd.min.js';script.referrerPolicy='no-referrer';const timer=setTimeout(()=>{script.remove();sdkPromise=null;reject(Error('登录组件加载超时'));},12000);script.onload=()=>{clearTimeout(timer);if(typeof window.MiniLogin==='function')resolve();else{sdkPromise=null;reject(Error('登录组件暂不可用'));}};script.onerror=()=>{clearTimeout(timer);script.remove();sdkPromise=null;reject(Error('登录组件加载失败'));};(document.head||document.documentElement).append(script);});return sdkPromise;}
+ function loadSDK(){
+  if(typeof window.MiniLogin==='function')return Promise.resolve();
+  if(sdkPromise)return sdkPromise;
+  sdkPromise=new Promise((resolve,reject)=>{
+    // The page can be torn down while the SDK is still loading: navigation, window close
+    // or test teardown. Every callback bails out instead of touching a dead document.
+    const alive=()=>{try{return Boolean(window&&window.document);}catch{return false;}};
+    const script=document.createElement('script');
+    script.src='https://s1.hdslb.com/bfs/seed/jinkela/short/mini-login-v2/miniLogin.umd.min.js';
+    script.referrerPolicy='no-referrer';
+    const timer=setTimeout(()=>{
+      if(!alive())return;
+      try{script.remove();}catch{}
+      sdkPromise=null;reject(Error('登录组件加载超时'));
+    },12000);
+    script.onload=()=>{clearTimeout(timer);if(!alive())return;if(typeof window.MiniLogin==='function')resolve();else{sdkPromise=null;reject(Error('登录组件暂不可用'));}};
+    script.onerror=()=>{clearTimeout(timer);if(!alive())return;try{script.remove();}catch{}sdkPromise=null;reject(Error('登录组件加载失败'));};
+    (document.head||document.documentElement).append(script);
+  });
+  return sdkPromise;
+ }
  const style=node('style','');style.textContent=`
  .account-card-head{position:relative;padding:0;min-width:0;flex:1;align-items:flex-start;gap:6px}.account-heading-top{display:flex;align-items:center;gap:10px;width:100%;min-width:0}.account-heading-top .account-name{min-width:0;flex:1;max-width:100%;line-height:24px}.account-switch{position:static;flex:0 0 32px;width:32px;height:32px;padding:7px;line-height:0;border:0;border-radius:8px;background:var(--field);color:var(--muted);display:grid;place-items:center}.account-switch svg{width:18px;height:18px}.account-switch:hover,.account-switch[aria-expanded=true]{color:var(--accent)}.account-card[data-manage=true] .account-stats{display:none}.account-manager{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}.account-manager[hidden]{display:none!important}.account-manager-title{font-size:11px;color:var(--muted);margin:0 0 10px}.account-row{display:flex;align-items:center;gap:10px;width:100%;padding:9px;border:0;border-radius:9px;background:none;color:var(--ink);text-align:left}.account-row:hover{background:var(--field)}.account-row img{width:28px;height:28px;border-radius:50%;object-fit:cover}.account-row-label{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.account-row-current{font-size:10px;color:var(--accent)}.account-manager-actions{display:flex;gap:8px;margin-top:12px}.account-manager-actions button{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 6px;background:var(--field);color:var(--ink);font-size:11px}.account-manager-actions .account-add{color:var(--accent)}.account-manager-note{font-size:10px;line-height:1.7;color:var(--muted);margin:10px 0 0}.account-manager button:disabled{opacity:.5;cursor:wait}
  `;
@@ -35,6 +55,10 @@ window.installBiliAccounts=({shadow,native,refreshAccount,hideAccountCard,toast}
  panel.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden){e.preventDefault();e.stopPropagation();closeLogin(true);}});
  document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!e.composedPath().includes(panel)&&!e.composedPath().includes(account))closeLogin();},{passive:true});
  window.addEventListener('pagehide',()=>closeLogin());draw();post('list');
- return {openLogin,closeLogin,applyTheme,setProfile(value){const key=JSON.stringify(value?{mid:value.mid,uname:value.uname,face:value.face}:null),changed=key!==profileKey;profileKey=key;profile=value;if(value&&String(value.mid)!==remembered){remembered=String(value.mid);post('remember');}if(value&&!panel.hidden){adding=false;closeLogin();toast('登录成功');pendingLoginReload=true;}if(changed)draw();},accept(value){state=value||state;if(state.event==='saved'&&pendingLoginReload){pendingLoginReload=false;native('window',{action:'reload'});}if(state.message)toast(state.message);if(state.event==='login'){profile=null;remembered='';refreshAccount(true);openLogin();}if(state.event==='error')adding=false;draw();},isLoginOpen:()=>!panel.hidden};
+ // The native host answers asynchronously; by then the page may already be gone
+ // (navigation, window close, test teardown). Rebuilding the card from a dead
+ // document throws inside a promise nobody can catch, so bail out first.
+ const pageAlive=()=>{try{return Boolean(shadow&&shadow.isConnected&&window.document&&window.document.body);}catch{return false;}};
+ return {openLogin,closeLogin,applyTheme,setProfile(value){if(!pageAlive())return;const key=JSON.stringify(value?{mid:value.mid,uname:value.uname,face:value.face}:null),changed=key!==profileKey;profileKey=key;profile=value;if(value&&String(value.mid)!==remembered){remembered=String(value.mid);post('remember');}if(value&&!panel.hidden){adding=false;closeLogin();toast('登录成功');pendingLoginReload=true;}if(changed)draw();},accept(value){if(!pageAlive())return;state=value||state;if(state.event==='saved'&&pendingLoginReload){pendingLoginReload=false;native('window',{action:'reload'});}if(state.message)toast(state.message);if(state.event==='login'){profile=null;remembered='';refreshAccount(true);openLogin();}if(state.event==='error')adding=false;draw();},isLoginOpen:()=>!panel.hidden};
 };
 })();
