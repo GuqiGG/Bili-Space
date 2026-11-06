@@ -24,7 +24,7 @@ class App(Gtk.Application):
         self.state=self.read(self.directory/'state.json');defaults=self.read(self.resources/'defaults.json');defaults.update(self.state.get('config',{}));self.state['config']=defaults
         self.state.setdefault('gm',{});self.state.setdefault('profiles',[])
         self.renderer=(self.resources/'renderer.js').read_text(encoding='utf-8');self.web=None;self.pending='';self.popups=[]
-        self.last_clipboard='';self.connect('activate',self.activate)
+        self.frame_policy_seen=False;self.last_clipboard='';self.connect('activate',self.activate)
     @staticmethod
     def read(path):
         try:
@@ -44,7 +44,7 @@ class App(Gtk.Application):
     def activate(self,*_):
         Gtk.Settings.get_default().set_property('gtk-application-prefer-dark-theme',self.state['config'].get('theme')=='dark')
         self.window=Gtk.ApplicationWindow(application=self);self.window.set_title('Bili-Space');self.window.set_default_size(1440,940)
-        self.window.set_size_request(520,420);header=Gtk.HeaderBar(title='Bili-Space');header.set_show_close_button(True);self.window.set_titlebar(header)
+        self.window.set_size_request(520,420);self.window.set_decorated(False)
         self.window.connect('focus-in-event',self.clipboard_focus)
         self.window.connect('delete-event',lambda *_:self.save() or False)
         self.open_profile(self.state.get('activeID'))
@@ -74,12 +74,28 @@ class App(Gtk.Application):
         content=WebKit2.UserContentManager();content.register_script_message_handler('native');content.connect('script-message-received::native',self.message)
         payload={'appInfo':self.read(self.resources/'assets/app-info.json'),'config':self.state['config'],'gm':self.state['gm'],'runtime':{'platform':'linux','testing':self.testing,'running':False}}
         bridge="(()=>{if(window.top!==window)return;const token="+json.dumps(self.token)+";window.__BILI_NATIVE__="+json.dumps(payload,ensure_ascii=False)+";window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(JSON.stringify({token,message:m}))};})();\n"
-        script=WebKit2.UserScript.new(bridge+self.renderer,WebKit2.UserContentInjectedFrames.ALL_FRAMES,WebKit2.UserScriptInjectionTime.START,None,None);content.add_script(script)
+        script=WebKit2.UserScript.new(bridge+self.renderer,WebKit2.UserContentInjectedFrames.TOP_FRAME,WebKit2.UserScriptInjectionTime.START,None,None);content.add_script(script)
         if self.web:self.window.remove(self.web);self.web.destroy()
         self.web=WebKit2.WebView(web_context=self.context,user_content_manager=content)
         settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False)
+        self.web.add_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.POINTER_MOTION_MASK)
+        self.web.connect('button-press-event',self.resize_press);self.web.connect('motion-notify-event',self.resize_motion)
         self.web.connect('decide-policy',self.policy);self.web.connect('create',self.popup);self.web.connect('load-changed',self.loaded)
         self.window.add(self.web);self.web.show();self.web.load_uri('bili-space://assets/fixture.html' if self.testing else 'https://www.bilibili.com/')
+    def resize_edge(self,event):
+        if self.window.is_maximized():return None
+        w,h=self.window.get_size();x,y=event.x,event.y
+        left,right,top,bottom=x<6,x>w-6,y<6,y>h-6
+        name=('NORTH' if top else 'SOUTH' if bottom else '')+('_' if (top or bottom) and (left or right) else '')+('WEST' if left else 'EAST' if right else '')
+        return getattr(Gdk.WindowEdge,name,None) if name else None
+    def resize_press(self,web,event):
+        edge=self.resize_edge(event)
+        if event.button==1 and edge is not None:self.window.begin_resize_drag(edge,1,int(event.x_root),int(event.y_root),event.time);return True
+        return False
+    def resize_motion(self,web,event):
+        edge=self.resize_edge(event);names={Gdk.WindowEdge.NORTH:'n-resize',Gdk.WindowEdge.SOUTH:'s-resize',Gdk.WindowEdge.EAST:'e-resize',Gdk.WindowEdge.WEST:'w-resize',Gdk.WindowEdge.NORTH_WEST:'nw-resize',Gdk.WindowEdge.NORTH_EAST:'ne-resize',Gdk.WindowEdge.SOUTH_WEST:'sw-resize',Gdk.WindowEdge.SOUTH_EAST:'se-resize'}
+        if web.get_window():web.get_window().set_cursor(Gdk.Cursor.new_from_name(web.get_display(),names[edge]) if edge is not None else None)
+        return False
     def scheme(self,request,*_):
         try:
             root=(self.resources/'assets').resolve();path=(root/unquote(urlparse(request.get_uri()).path).lstrip('/')).resolve();path.relative_to(root)
@@ -90,10 +106,11 @@ class App(Gtk.Application):
     def policy(self,web,decision,kind):
         if kind not in (WebKit2.PolicyDecisionType.NAVIGATION_ACTION,WebKit2.PolicyDecisionType.NEW_WINDOW_ACTION):return False
         url=decision.get_request().get_uri();scheme=urlparse(url).scheme
-        if trusted(url) or (scheme=='https' and urlparse(url).hostname=='b23.tv') or (self.testing and scheme=='bili-space') or url=='about:blank' or (web is not self.web and scheme=='https'):decision.use()
+        if self.testing and urlparse(url).hostname=='s1.hdslb.com':self.frame_policy_seen=True
+        # This signal also covers cross-origin iframes, not just main-frame links.
+        if scheme in ('https','about','blob','data') or (self.testing and scheme=='bili-space'):decision.use()
         else:
             decision.ignore()
-            if scheme=='https':Gio.AppInfo.launch_default_for_uri(url,None)
         return True
     def popup(self,web,action):
         url=action.get_request().get_uri()
@@ -105,11 +122,15 @@ class App(Gtk.Application):
         self.js('window.BiliSpace?.surfaceRevealed?.();window.BiliSpace?.setLoading(false)')
         if self.window.is_active():self.clipboard_focus()
         if self.testing:
-            code="(()=>{const s=document.querySelector('#bili-space-root')?.shadowRoot;return !!window.BiliSpace&&!!s?.querySelector('.account-switch')&&s.querySelector('.lights').hidden&&s.querySelector('.window-actions').hidden})()"
+            code="(()=>{const s=document.querySelector('#bili-space-root')?.shadowRoot;return !!window.BiliSpace&&!!s?.querySelector('.account-switch')&&s.querySelector('.lights').hidden&&!s.querySelector('.window-actions').hidden})()"
             def complete(view,result,*_):
                 try:ok=view.run_javascript_finish(result).get_js_value().to_boolean()
                 except GLib.Error:ok=False
-                print('Linux WebKit renderer self-test:', 'passed' if ok else 'failed',flush=True);os._exit(0 if ok else 1)
+                if not ok or self.window.get_decorated():print('Linux frameless renderer self-test: failed',flush=True);os._exit(1)
+                web.run_javascript("(()=>{const f=document.createElement('iframe');f.hidden=true;f.src='https://s1.hdslb.com/bfs/seed/jinkela/short/cols/iframe.html';document.body.append(f)})()",None,None,None)
+                def frames_done():
+                    ok=self.frame_policy_seen;print('Linux frameless renderer and cross-origin iframe policy self-test:', 'passed' if ok else 'failed',flush=True);os._exit(0 if ok else 1)
+                GLib.timeout_add_seconds(3,frames_done)
             web.run_javascript(code,None,complete,None)
     def test_timeout(self):print('Linux WebKit renderer self-test timed out',flush=True);os._exit(2)
     def message(self,content,result):
@@ -129,6 +150,7 @@ class App(Gtk.Application):
                 elif action=='minimize':self.window.iconify()
                 elif action=='maximize':self.window.unmaximize() if self.window.is_maximized() else self.window.maximize()
                 elif action=='close':self.window.close()
+                elif action=='drag':self.window.begin_move_drag(1,int(m.get('screenX',0)),int(m.get('screenY',0)),Gdk.CURRENT_TIME)
             elif kind=='copy-video-link':
                 from gi.repository import Gdk
                 Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).set_text(m.get('url',''),-1);self.send('videoLinkCopied',{'url':m.get('url',''),'ok':True})

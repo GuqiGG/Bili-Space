@@ -574,7 +574,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
             auto bounds=reinterpret_cast<NCCALCSIZE_PARAMS*>(lp);const LONG top=bounds->rgrc[0].top;
             auto result=DefWindowProcW(hwnd,msg,wp,lp);
             // Keep side/bottom system resize borders, not the raised top frame.
-            bounds->rgrc[0].top=top+(IsZoomed(hwnd)?GetSystemMetrics(SM_CYFRAME)+GetSystemMetrics(SM_CXPADDEDBORDER):1);
+            bounds->rgrc[0].top=top+(IsZoomed(hwnd)?GetSystemMetrics(SM_CYFRAME)+GetSystemMetrics(SM_CXPADDEDBORDER):0);
             return result;
         }break;
     case WM_NCHITTEST:{
