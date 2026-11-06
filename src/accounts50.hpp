@@ -24,7 +24,7 @@ void action(const json& message){
  if(a=="list"){if(!addingId.empty()&&!adding){action({{"action","cancel-add"}});return;}state();return;}
  if(busy)return;busy=true;state();auto profile=message.value("profile",json::object());auto target=message.value("mid",std::string{});
  readJar([a,profile,target](json old){try{
-  if(a=="cancel-add"){restoreAddition(old);busy=false;state("add-restored");if(webview)webview->Reload();return;}
+  if(a=="cancel-add"){bool authenticated=false;for(const auto& c:old)if(c.value("name",std::string{})=="SESSDATA"&&!c.value("value",std::string{}).empty())authenticated=true;if(adding&&authenticated)remember(old,profile);restoreAddition(old);busy=false;state(authenticated?"added":"add-restored");if(webview)webview->Reload();return;}
   if(a=="remember"){
    if(adding&&mid(old).empty()){busy=false;state();return;}
    remember(old,profile);

@@ -8,7 +8,7 @@ version=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))['version']
 stage=ROOT/'build/linux-package';app=stage/'usr/lib/bili-space'
 app.mkdir(parents=True,exist_ok=True)
 shutil.copytree(ROOT/'assets',app/'assets',dirs_exist_ok=True)
-shutil.copy2(ROOT/'src/linux_main.py',app/'linux_main.py');build(app)
+shutil.copy2(ROOT/'src/web_cache.py',app/'web_cache.py');shutil.copy2(ROOT/'src/linux_main.py',app/'linux_main.py');build(app)
 binary=stage/'usr/bin/bili-space';binary.parent.mkdir(parents=True,exist_ok=True)
 binary.write_text('#!/bin/sh\nexec /usr/bin/python3 /usr/lib/bili-space/linux_main.py "$@"\n');binary.chmod(0o755)
 desktop=stage/'usr/share/applications/bili-space.desktop';desktop.parent.mkdir(parents=True,exist_ok=True)

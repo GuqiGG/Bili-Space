@@ -8,11 +8,11 @@
  const stats=[];const record=(event,s)=>{if(testing){stats.push({event,id:s.id,index:s.index,time:performance.now()});if(stats.length>120)stats.shift();}};
  const testing=typeof RUNTIME!=='undefined'&&RUNTIME.testing;
  const video=value=>{try{return /^\/(?:zh-Hans\/|zh-Hant\/|en\/)?(?:video|bangumi|list|cheese)(?:\/|$)/.test(new URL(value,location.href).pathname);}catch{return true;}};
- function ordinary(value){try{const u=new URL(value,location.href);return ['https:','http:'].includes(u.protocol)&&(/(^|\.)bilibili\.com$/.test(u.hostname)||u.hostname==='bili-space.local')&&!video(u.href)&&!(/\.(zip|exe|dmg|deb|mp4|pdf)$/i.test(u.pathname))&&!(u.pathname===location.pathname&&u.search===location.search&&u.hash!==location.hash);}catch{return false;}}
+ function ordinary(value){try{const u=new URL(value,location.href);return ['https:','http:'].includes(u.protocol)&&(/(^|\.)bilibili\.com$/.test(u.hostname)||u.hostname==='bili-space.local')&&!video(u.href)&&!(/\.(zip|exe|dmg|deb|mp4|pdf)$/i.test(u.pathname))&&!(u.pathname===location.pathname&&u.search===location.search&&u.hash!==location.hash&&!u.hash.startsWith('#/'));}catch{return false;}}
  const pick=()=>Math.floor(Math.random()*12); // Independent uniform draws; rerendering never draws.
  function cleanup(notify=true){
   clearTimeout(checkTimer);checkTimer=0;
-  if(!state)return;const old=state;if(testing)stats.push({event:'frames',id:old.id,index:old.index,gaps:old.frameTimes||[]});record('done',old);state=null;
+  if(!state)return;const old=state;old.observer?.disconnect();if(testing)stats.push({event:'frames',id:old.id,index:old.index,gaps:old.frameTimes||[]});record('done',old);state=null;
   cancelAnimationFrame(old.frameId);old.animations.forEach(a=>{a.onfinish=null;a.cancel();});clearTimeout(old.guard);old.host.remove();
   if(notify)send('done',{id:old.id});
  }
@@ -73,17 +73,19 @@
  function accept(record){
   if(!record||!Number.isInteger(record.index)||record.index<0||record.index>11||!record.old?.startsWith('data:image/png;base64,'))return;
   if(video(location.href)||reduced.matches){send('cancel',{id:record.id});return;}
-  const s=mount(record);s.localPending=!!record.localToken;recordEvent(s);Promise.all([loaded(s.old),loaded(s.base)]).then(()=>{if(state!==s)return;send('attached',{id:s.id});if(s.index===0||s.index===11)animate(s,'cover');else s.covered=true;if(record.localToken)commitLocal(record);maybeReady();});
+  const s=mount(record);if(record.soft){s.lastMutation=performance.now();s.observer=new MutationObserver(()=>s.lastMutation=performance.now());s.observer.observe(document.body,{subtree:true,childList:true,characterData:true});setTimeout(()=>{if(state===s){nativeReady=true;maybeReady();}},180);}s.localPending=!!record.localToken;recordEvent(s);Promise.all([loaded(s.old),loaded(s.base)]).then(()=>{if(state!==s)return;send('attached',{id:s.id});if(s.index===0||s.index===11)animate(s,'cover');else s.covered=true;if(record.localToken)commitLocal(record);maybeReady();});
  }
  function contentReady(){
+  if(window.BiliLocalApp?.readyToReveal===false)return false;
   if(document.readyState!=='complete'||!document.body||!document.querySelector('#bili-space-root')||!nativeReady)return false;
   const body=document.body;if(!body.children.length||body.getBoundingClientRect().height<1)return false;
   if(document.querySelector('#bs-video-loading'))return false;
   if(document.fonts?.status==='loading')return false;
-  return [...document.images].filter(e=>!e.closest('#bs-transition')).every(e=>{const r=e.getBoundingClientRect();return !r.width||!r.height||r.bottom<0||r.top>innerHeight||r.left>innerWidth||e.complete||e.loading==='lazy';});
+  return [...document.images].filter(e=>!e.closest('#bs-transition')).every(e=>{const r=e.getBoundingClientRect();return !r.width||!r.height||r.bottom<0||r.top>innerHeight||r.left>innerWidth||e.complete;});
  }
  function maybeReady(){
   clearTimeout(checkTimer);if(!state||state.phase==='animating')return;
+  if(state.soft&&performance.now()-state.lastMutation<100){checkTimer=setTimeout(maybeReady,50);return;}
   if(state.localPending||!state.covered||!contentReady()){checkTimer=setTimeout(maybeReady,50);return;}
   const s=state;if(s.requested)return;s.requested=true;send('ready',{id:s.id});
  }
@@ -101,6 +103,11 @@
  function cancel(){cleanup();}
  function resized(){if(!state)return;const s=state,a=s.animations[0];if(a&&s.phase!=='waiting'){const p=s.progress+(1-s.progress)*Math.min(1,Number(a.currentTime||0)/Number(a.effect.getTiming().duration));animate(s,s.phase,p);}}
  const onReduced=()=>{if(reduced.matches)cancel();scheduleSnapshot();};
+  let observedURL=location.href;
+ function softRoute(){const current=location.href;if(current===observedURL)return;const previous=new URL(observedURL),next=new URL(current);observedURL=current;if(previous.pathname===next.pathname&&previous.search===next.search&&!previous.hash.startsWith('#/')&&!next.hash.startsWith('#/'))return;if(document.readyState!=='complete'||!ordinary(current)||reduced.matches)return;nativeReady=false;send('soft-navigation',{url:current});}
+ for(const name of ['pushState','replaceState']){const original=history[name];history[name]=function(...args){const result=original.apply(this,args);softRoute();return result;};}
+ window.addEventListener('popstate',softRoute);window.addEventListener('hashchange',softRoute);
+window.addEventListener('pageshow',e=>{if(e.persisted){observedURL=location.href;arrived=false;nativeReady=true;arrive();ready();}});
  window.addEventListener('resize',resized,{passive:true});window.addEventListener('scroll',scheduleSnapshot,{passive:true});window.addEventListener('pagehide',()=>cleanup(false));window.addEventListener('load',()=>{ready();},{once:true});reduced.addEventListener('change',onReduced);
  const manager={navigate,commitLocal,arrive,leave,ready,accept,prepareSnapshot,present,cancel,pick,RECIPES:12};
  if(testing)manager.test={stats,frames,shape,durations:DURATIONS,async preview(index,oldImage,newImage){accept({id:'test-'+(++serial),index,old:oldImage});await new Promise(r=>setTimeout(r,index===0||index===11?DURATIONS[index]/2+30:20));if(!state)return;state.requested=true;await present({id:state.id,image:newImage});},get state(){return state?{id:state.id,index:state.index,phase:state.phase,covered:state.covered,requested:state.requested,nativeReady,bodyHeight:document.body?.getBoundingClientRect().height,oldLoaded:state.old.naturalWidth,baseLoaded:state.base.naturalWidth}:null;}};

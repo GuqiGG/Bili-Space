@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Native GTK/WebKit host. Browser profiles stay in per-user WebKit data directories."""
-import base64, io, json, os, re, secrets, sys, uuid, threading, urllib.request, urllib.error
+import base64, hashlib, io, json, os, re, secrets, sys, uuid, threading, urllib.request, urllib.error
 from pathlib import Path
 from urllib.parse import unquote, urlparse
+from web_cache import WebCache, is_page
 import gi
 gi.require_version('Gtk','3.0')
 gi.require_version('WebKit2','4.1')
@@ -71,6 +72,7 @@ class App(Gtk.Application):
         self.state['activeID']=identifier;self.pending=event;self.save();self.token=secrets.token_urlsafe(32)
         directory=self.directory/'profiles'/identifier;directory.mkdir(parents=True,exist_ok=True,mode=0o700);directory.chmod(0o700)
         manager=WebKit2.WebsiteDataManager(base_data_directory=str(directory/'data'),base_cache_directory=str(directory/'cache'))
+        self.web_cache=WebCache(self.resources,directory);self.cached_loading=None
         self.context=WebKit2.WebContext.new_with_website_data_manager(manager)
         self.context.register_uri_scheme('bili-space',self.scheme,None)
         security=self.context.get_security_manager();security.register_uri_scheme_as_secure('bili-space');security.register_uri_scheme_as_cors_enabled('bili-space')
@@ -82,14 +84,12 @@ class App(Gtk.Application):
         if self.web:self.stack.remove(self.web);self.web.destroy()
         self.transition=None;self.transition_cache=None;self.plate.hide()
         self.web=WebKit2.WebView(web_context=self.context,user_content_manager=content)
-        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False);settings.set_enable_mediasource(True);settings.set_user_agent_with_application_details('BiliSpace','0.1.52')
+        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False);settings.set_enable_mediasource(True);settings.set_user_agent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 BiliSpace/0.1.52')
         self.web.add_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.POINTER_MOTION_MASK)
         self.web.connect('button-press-event',self.resize_press);self.web.connect('motion-notify-event',self.resize_motion)
+        self.web.connect('resource-load-started',self.resource_started)
         self.web.connect('decide-policy',self.policy);self.web.connect('create',self.popup);self.web.connect('load-changed',self.loaded)
-        self.stack.add(self.web);self.web.show();self.web.connect('size-allocate',lambda *_:self.transition_plate());self.web.load_uri('bili-space://assets/fixture.html') if self.testing else self.load_local()
-    def load_local(self):
-        source=(self.resources/'assets/app.html').read_text(encoding='utf-8').replace('https://bili-space.local/','bili-space://assets/')
-        self.web.load_html(source,'https://www.bilibili.com/__client/app.html')
+        self.stack.add(self.web);self.web.show();self.web.connect('size-allocate',lambda *_:self.transition_plate());self.web.load_uri('bili-space://assets/fixture.html' if self.testing else 'https://www.bilibili.com/')
     def resize_edge(self,event):
         if self.window.is_maximized():return None
         w,h=self.window.get_size();x,y=event.x,event.y
@@ -107,13 +107,58 @@ class App(Gtk.Application):
     def scheme(self,request,*_):
         try:
             root=(self.resources/'assets').resolve();path=(root/unquote(urlparse(request.get_uri()).path).lstrip('/')).resolve();path.relative_to(root)
+            if not path.exists() and unquote(urlparse(request.get_uri()).path).lstrip('/').startswith('web-copy/'):
+                relative=unquote(urlparse(request.get_uri()).path).lstrip('/')[9:];host=relative.split('/')[0]
+                if host.endswith('.hdslb.com') and re.search(r'\.(m?js|css|woff2?|ttf|wasm)$',relative):self.static_fallback(request,'https://'+relative);return
             data=path.read_bytes();mime={'.js':'application/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.ttf':'font/ttf','.png':'image/png','.json':'application/json','.mp4':'video/mp4'}.get(path.suffix,'application/octet-stream')
             stream=Gio.MemoryInputStream.new_from_bytes(GLib.Bytes.new(data));response=WebKit2.URISchemeResponse.new(stream,len(data));response.set_content_type(mime)
             headers=Soup.MessageHeaders.new(Soup.MessageHeadersType.RESPONSE);headers.append('Access-Control-Allow-Origin','*');response.set_http_headers(headers);request.finish_with_response(response)
         except (OSError,ValueError) as error:request.finish_error(GLib.Error.new_literal(Gio.io_error_quark(),str(error),Gio.IOErrorEnum.NOT_FOUND))
+    def static_fallback(self,request,url):
+        target=self.directory/'web-static'/(hashlib.sha256(url.encode()).hexdigest()+'.bin');mime='application/javascript' if re.search(r'\.m?js$',url) else 'text/css' if url.endswith('.css') else 'application/wasm' if url.endswith('.wasm') else 'font/woff2'
+        def fetch():
+            try:
+                if target.exists():data=target.read_bytes()
+                else:
+                    with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'}),timeout=12) as response:
+                        if not urlparse(response.geturl()).hostname.endswith('.hdslb.com'):raise ValueError('invalid asset redirect')
+                        data=response.read(8*1024*1024+1)
+                    if len(data)>8*1024*1024:raise ValueError('asset too large')
+                    target.parent.mkdir(exist_ok=True,mode=0o700);target.write_bytes(data)
+                def finish():
+                    try:
+                        stream=Gio.MemoryInputStream.new_from_bytes(GLib.Bytes.new(data));response=WebKit2.URISchemeResponse.new(stream,len(data));response.set_content_type(mime);headers=Soup.MessageHeaders.new(Soup.MessageHeadersType.RESPONSE);headers.append('Access-Control-Allow-Origin','*');response.set_http_headers(headers);request.finish_with_response(response)
+                    except GLib.Error:pass
+                    return False
+                GLib.idle_add(finish)
+            except Exception:
+                def failed():
+                    try:request.finish_error(GLib.Error.new_literal(Gio.io_error_quark(),'Asset unavailable',Gio.IOErrorEnum.NOT_FOUND))
+                    except GLib.Error:pass
+                    return False
+                GLib.idle_add(failed)
+        threading.Thread(target=fetch,daemon=True).start()
+    def resource_started(self,web,resource,request):
+        if not is_page(request.get_uri()):return
+        cache=self.web_cache
+        def finished(resource):
+            if self.cached_loading==resource.get_uri():return
+            def data_ready(resource,result,*_):
+                try:
+                    data=resource.get_data_finish(result)
+                    if isinstance(data,tuple):data=data[0]
+                    cache.store(resource.get_uri(),bytes(data))
+                except (GLib.Error,OSError,TypeError,ValueError):pass
+            resource.get_data(None,data_ready,None)
+        resource.connect('finished',finished)
     def policy(self,web,decision,kind):
         if kind not in (WebKit2.PolicyDecisionType.NAVIGATION_ACTION,WebKit2.PolicyDecisionType.NEW_WINDOW_ACTION):return False
         url=decision.get_request().get_uri();scheme=urlparse(url).scheme
+        action=decision.get_navigation_action()
+        if web is self.web and is_page(url) and self.cached_loading!=url and action.get_navigation_type()!=WebKit2.NavigationType.BACK_FORWARD:
+            cached=self.web_cache.get(url)
+            if cached:
+                decision.ignore();self.cached_loading=url;GLib.idle_add(lambda:web.load_html(self.web_cache.offline(cached),url) or False);return True
         if self.testing and urlparse(url).hostname=='s1.hdslb.com':self.frame_policy_seen=True
         # This signal also covers cross-origin iframes, not just main-frame links.
         if scheme in ('https','about','blob','data') or (self.testing and scheme=='bili-space'):decision.use()
@@ -134,6 +179,7 @@ class App(Gtk.Application):
             else:self.transition=None;self.plate.hide()
         if event==WebKit2.LoadEvent.REDIRECTED and self.transition_video(web.get_uri() or ''):self.transition=None;self.plate.hide()
         if event!=WebKit2.LoadEvent.FINISHED:return
+        self.cached_loading=None
         self.js('window.BiliSpace?.surfaceRevealed?.();window.BiliSpace?.setLoading(false);window.TransitionManager?.ready()')
         if self.window.is_active():self.clipboard_focus()
         if self.testing:
@@ -164,7 +210,6 @@ class App(Gtk.Application):
             elif kind=='media-probe-result' and self.testing:print('Linux media decode self-test:',json.dumps(m),flush=True);os._exit(0 if m.get('ok') else 1)
             elif kind=='accounts':self.accounts(m)
             elif kind=='transition':self.transition_message(m)
-            elif kind=='local-api':self.local_api(m)
             elif kind=='navigate' and trusted(m.get('url')):self.web.load_uri(m['url'])
             elif kind=='open-external' and urlparse(m.get('url','')).scheme=='https':Gio.AppInfo.launch_default_for_uri(m['url'],None)
             elif kind=='window':
@@ -179,31 +224,6 @@ class App(Gtk.Application):
                 Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).set_text(m.get('url',''),-1);self.send('videoLinkCopied',{'url':m.get('url',''),'ok':True})
             elif kind=='updates':self.send('acceptUpdateStatus',{'available':False,'message':'Linux 版本请从 GitHub Release 更新'})
         except (ValueError,KeyError,GLib.Error,TypeError):pass
-    def local_api(self,m):
-        url=m.get('url','');identifier=m.get('id','');parsed=urlparse(url)
-        if len(identifier)>80 or len(url)>4096 or parsed.scheme!='https' or parsed.username or parsed.password:return
-        if not(parsed.hostname=='api.bilibili.com' and parsed.path.startswith('/x/') or url=='https://www.bilibili.com/'):return
-        web=self.web;user_agent=web.get_settings().get_user_agent() or 'Mozilla/5.0'
-        def cookies_ready(manager,result,*_):
-            try:cookie='; '.join(c.get_name()+'='+c.get_value() for c in manager.get_cookies_finish(result))
-            except GLib.Error:cookie=''
-            def request():
-                reply={'id':identifier,'ok':False}
-                class NoRedirect(urllib.request.HTTPRedirectHandler):
-                    def redirect_request(self,*_):return None
-                try:
-                    req=urllib.request.Request(url,headers={'User-Agent':user_agent,'Referer':'https://www.bilibili.com/','Origin':'https://www.bilibili.com','Cookie':cookie,'Accept-Encoding':'identity'})
-                    with urllib.request.build_opener(NoRedirect).open(req,timeout=12) as r:
-                        data=r.read(8*1024*1024+1)
-                        if len(data)>8*1024*1024:raise ValueError('response too large')
-                        reply.update(ok=True,status=r.status,body=data.decode('utf-8'))
-                except Exception as e:reply['error']=str(e)
-                def deliver():
-                    if self.web is web:self.js('window.BiliLocalAPI?.accept('+json.dumps(reply,ensure_ascii=False)+')')
-                    return False
-                GLib.idle_add(deliver)
-            threading.Thread(target=request,daemon=True).start()
-        self.cookies.get_cookies('https://api.bilibili.com/',None,cookies_ready,None)
     @staticmethod
     def transition_video(uri):return bool(re.match(r'^/(?:zh-Hans/|zh-Hant/|en/)?(?:video|bangumi|list|cheese)(?:/|$)',urlparse(uri).path))
     def transition_plate(self):
@@ -221,6 +241,10 @@ class App(Gtk.Application):
         web.get_snapshot(WebKit2.SnapshotRegion.VISIBLE,WebKit2.SnapshotOptions.NONE,None,captured,None)
     def transition_message(self,m):
         action=m.get('action')
+        if action=='soft-navigation':
+            if self.transition_cache and not self.transition_reduced and not self.transition_video(m.get('url','')):
+                self.transition_serial+=1;self.transition={'id':str(self.transition_serial),'index':secrets.randbelow(12),'old':self.transition_cache,'hold':True,'soft':True};self.transition_plate();self.js('window.TransitionManager?.accept('+json.dumps(self.transition)+')')
+            return
         if action=='local-begin':
             token=m.get('token');self.local_transition_token=token
             def local_start(image):

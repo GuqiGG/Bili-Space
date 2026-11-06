@@ -1,0 +1,600 @@
+{
+  "schema": 1,
+  "resources": {
+    "https://www.bilibili.com/zh-Hans": {
+      "file": "www.bilibili.com/zh-Hans/index.html",
+      "mime": "text/html",
+      "sha256": "e04b903138218c34d94e81c1efc82f081f1ba88e91db03673f24085918b4ab2a",
+      "bytes": 133877,
+      "type": "Document"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-4d416e23.css": {
+      "file": "s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-4d416e23.css",
+      "mime": "text/css",
+      "sha256": "4d416e23b775f6de703d334c94b74a9f1d7e9be8869733b0408dd324bcf1a05f",
+      "bytes": 386983,
+      "type": "Stylesheet",
+      "webkitFile": "s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-4d416e23.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-84fb5632.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-84fb5632.js",
+      "mime": "application/javascript",
+      "sha256": "271ecaca131b61e909601b56c5a652ec8014ad0409bfefb863b832a2c14c0465",
+      "bytes": 1669609,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/bmg/register/fallback.js": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/bmg/register/fallback.js",
+      "mime": "application/javascript",
+      "sha256": "2656d90078c87ba8221f645396b595eb283faa95dabc2431c21578fa62ea5c3c",
+      "bytes": 21444,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/b-mirror/biliMirror.umd.mini.js": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/b-mirror/biliMirror.umd.mini.js",
+      "mime": "application/javascript",
+      "sha256": "6cde295a714286b3b9066ad937d18e884a68eb6936347988bb34dba0480cf0c0",
+      "bytes": 114708,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/seed/log/report/log-reporter.js": {
+      "file": "s1.hdslb.com/bfs/seed/log/report/log-reporter.js",
+      "mime": "application/javascript",
+      "sha256": "dbb08a1285d3b2bb1a3a33da48c3174dbe7015cb819105d5537233c2908df3c5",
+      "bytes": 133973,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.a1.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.a1.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "acf580b1c416336116fb5e865da88fcfc5ffdee2f5d7e44e35bcf024a5e96f50",
+      "bytes": 7696,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.a0.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.a0.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "d3ba3ecfd3c11d44136f1ac775a0ca43de755d30403e475c1b607a25dacdc6aa",
+      "bytes": 8608,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.az.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.az.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "522baca47d165b1f44c18b7c57627a7f820adb0fc6d2c5196d5ce5be8894ae05",
+      "bytes": 10368,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.av.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.av.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "1daef52b2602e0270c1a71af33b693c20afd1ec8780ab0681f73e041b2405f57",
+      "bytes": 10420,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ap.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ap.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "c6b34eb2a2d7712b7a44a422759f82dab95687bb9c09346fe056c7642dfee119",
+      "bytes": 12652,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ao.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ao.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "376bf203d952450cfe12bbc2d2c56941eb3cb2163eafbf28807e44bc25f7efc1",
+      "bytes": 12284,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.aq.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.aq.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "7da570c5acda87045995f9e1bc375acf8f116566bbed362138dbf498bf38248a",
+      "bytes": 17504,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.al.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.al.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "0ce32262a15bb9ab517f53dc2a09c864c3bfdd81878218e1b80de391397ea883",
+      "bytes": 17776,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ai.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ai.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "521284ee58baf0622bf67d38ca84d2fe85d7ae676ef4c3d2929f6490927f3cb0",
+      "bytes": 17552,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ak.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ak.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "2d50e1cf8ba55521e070c1dba5a5dc618f6ab6501f4ff870495c5cf4eac9a84b",
+      "bytes": 14796,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.z.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.z.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "ea17a063f0c93b357799a527bb47efc0946cdc44f2589034fac17a59adbeb78b",
+      "bytes": 15724,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.t.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.t.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "2ae26e5a7129ee715b8c565d0ab6c853701b84fe1951866d262ca90f905a0b2d",
+      "bytes": 15448,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.j.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.j.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "534a6b201698a787796c2afeeb09042236cca0ddd96128d6048de73cee93b0da",
+      "bytes": 16144,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.g.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.g.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "e2d080217cd17f3e2957b7bc4024f9ffcc36d7d0315c29114339eccbc2438fb7",
+      "bytes": 11788,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.m.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.m.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "8d5a53a215a5765590b837f596e4c6cc0474d8206e6b6e17e61396f24e9519fc",
+      "bytes": 15972,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.u.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.u.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "bce12190cc34beb041cc9bdffdf51f73194ca42053c60738b689855162fdbf1a",
+      "bytes": 18644,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ax.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ax.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "6401ff255d0255400d5811fc0e1861f44a9d0ba407b253582e5a267fe845fece",
+      "bytes": 13140,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ah.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ah.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "dc3a03c4fe0713265ca6f94c7347549e2b4f4bf52edd8b546f1d70126492ff75",
+      "bytes": 12376,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.as.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.as.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "f8e735ee25fb3cba836ecf8fcb7f57819f509540ad3ff92206572ff01b5c103a",
+      "bytes": 13664,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ar.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ar.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "636dcc8e62e2a63fd1ab358ba9d9496af45e9bc1ba017edd0a95d1f14979da31",
+      "bytes": 13820,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.aw.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.aw.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "f5a5e8072b4f80730341fe0c44c30c35ed5576eafa30e25c1a434716114225aa",
+      "bytes": 13408,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.an.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.an.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "9cff6eb7d2f6dc0e1fe16dd9bedde44ce9bda0b52b03a05e9185a4c6c4e66c96",
+      "bytes": 14624,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ag.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ag.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "36bfa965260f9c719b3d68d7f0808fadc43a4c31dd072ff2d99aa37d114d1591",
+      "bytes": 13200,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.y.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.y.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "54bdb015b9e1bd7f33a5a16719b42a069e0bbd7e58796fb729743af9abb5391c",
+      "bytes": 14396,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.l.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.l.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "bd3c1a2010785337e68c25e3a16e9f7798f925306236668e751a68a27b6e9cc2",
+      "bytes": 16036,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ae.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ae.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "212f4a9a2687944bd42a59fd221d0561a68f6cc69a3e09b86c82cb0b46ba33f9",
+      "bytes": 14488,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.r.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.r.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "3d0727f8da177e18425420c6fe2e0abbfa141f48ac2a4e059d9a097c982dabe6",
+      "bytes": 12108,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.am.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.am.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "e47e44fe2277e39e15630771dcfdbb047ff3af6cb96c59bab74690c47bb3b73b",
+      "bytes": 14512,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ad.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ad.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "901d9f7291d782e3fdd2837882e389ce74e24e6c7baf348f975fc39b14a79076",
+      "bytes": 15612,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.v.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.v.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "2d23c29f3179aa38970fbe1a33b0256c2d62d75ca13550bb3f753f28d37b9b0b",
+      "bytes": 18736,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.aj.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.aj.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "653aa1c040b933defc2a6675b9be381d34fe2e83c7ba4d90f047dd42fbfb8734",
+      "bytes": 17468,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.k.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.k.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "a4f2a19ec6dfb0a9bcaa1aeab1b33a37f96169a08bbc6bbbfef12dda8d9d3fc7",
+      "bytes": 16520,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.o.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.o.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "21d154ff5238f7dc668ea966277df16d3a6ae33e073b8f95ad4c43ccbea86de5",
+      "bytes": 15820,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.x.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.x.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "71fb9e023be56cf37d361018b2e1f378bdbcd886374f2df29eb7c49de0b80068",
+      "bytes": 14944,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.i.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.i.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "ec71f9c1eed196614012dd34247eaa3d0160849024ff4d58fb6f6f42ae4d1209",
+      "bytes": 14492,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ac.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ac.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "3e8ce24fd87139c0b09e5dd9f28c062e951f9553d08f19f4a4228afa060813fa",
+      "bytes": 18848,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.w.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.w.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "8f0d65ee6638d0d5f5a7c029e0478515446c95662f4b30f4bdc479cba8e8c236",
+      "bytes": 15852,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.h.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.h.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "78b6d6aad2e4b07ecd0c01deb352ad53d32cb7cef9c32b13fe67db331759e271",
+      "bytes": 15876,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/cm/cm-sdk/static/js/bili-collect.js": {
+      "file": "s1.hdslb.com/bfs/cm/cm-sdk/static/js/bili-collect.js",
+      "mime": "text/javascript",
+      "sha256": "0ced00918f6e5125446bf0713bc8d4ce0229dfc611dd26feab000bcca79cad6e",
+      "bytes": 39731,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.au.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.au.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "a16c1db9627a68b248fe1155404d25f4cd52f570b4bf964a382d859dad341a80",
+      "bytes": 10828,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ab.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ab.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "a6347701420c274fd1d9493628a37eba90946ab9d1a8738f92294dc3bc46a694",
+      "bytes": 16792,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ay.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.ay.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "b094710435d3b73f61457b063df158970b9bed77511f99bb6deb321c5bcb5741",
+      "bytes": 13940,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/kv-sdk/index.js": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/kv-sdk/index.js",
+      "mime": "application/javascript",
+      "sha256": "288b558fee65b0e0381fe4fd25ced9f02c7f93cef5b447e3589b1ca7a3190bc4",
+      "bytes": 14812,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.n.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.n.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "13bc6f4a92e276191beddfd04c98095810fe5a9cc92ec53c2ca2a806f64a60d6",
+      "bytes": 15852,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.s.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.s.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "d199539db7e8ddafc194cec60fec2869a4fb339ab8c36a3633e6218c39ea1edc",
+      "bytes": 16952,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.e.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.e.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "01c0fd31d6bbf61f1e0833d17ecba2ec657c684e772f5259042bf46866d69944",
+      "bytes": 1819124,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.q.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.q.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "c414de6f0e54e07631e806c3d64850961fbf29878072be92dd8cd24b89574884",
+      "bytes": 17124,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.at.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.at.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "932b6989d4b76d5d8ee7f61e6440a1488824d0cc0ea8ec8fe4fa7f6fbfcba8fa",
+      "bytes": 13908,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.p.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.p.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "d60c2bd860ddf7a244528b824b7d67a832ff56bf0e9020e164fe88ad775809fe",
+      "bytes": 16624,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.aa.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.aa.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "ce166381d295ba400a1d3da52644a21359bbe599c8e46b21460e2582c42f47fa",
+      "bytes": 15528,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.f.woff2": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/HarmonyOS_Regular.f.woff2",
+      "mime": "application/octet-stream",
+      "sha256": "b5ba7c15ace7c40e9bc94d6a5c2ee18eb9f10cce2c5b617cc24ea1bb289661d1",
+      "bytes": 45272,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/reporter-pb/index.js": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/reporter-pb/index.js",
+      "mime": "application/javascript",
+      "sha256": "e1cff03742b25fbbfd9f7a26de4dfe76f5da8528d203622b9823ad0e63a717c5",
+      "bytes": 121497,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/seed/log/report/950.3cf17.function.chunk.js": {
+      "file": "s1.hdslb.com/bfs/seed/log/report/950.3cf17.function.chunk.js",
+      "mime": "application/javascript",
+      "sha256": "8fe5dea69808a05d0dac759c481719e9175e2b0e22d56fc22bc2cb4468839cb9",
+      "bytes": 986,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/seed/log/report/86.e192d.function.chunk.js": {
+      "file": "s1.hdslb.com/bfs/seed/log/report/86.e192d.function.chunk.js",
+      "mime": "application/javascript",
+      "sha256": "c792949d1f22971dc43c0530064016bb148fd7769c5716734bf11e40a791d581",
+      "bytes": 3219,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/minntaki-wasm-sdk/bili-sc-sdk.umd.js": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/minntaki-wasm-sdk/bili-sc-sdk.umd.js",
+      "mime": "application/javascript",
+      "sha256": "1358f3b2006add8176f7258fbad44b4188fe48987efc5a8f932ea69a78468f0d",
+      "bytes": 377583,
+      "type": "Script"
+    },
+    "https://t.bilibili.com/zh-Hans": {
+      "file": "t.bilibili.com/zh-Hans/index.html",
+      "mime": "text/html",
+      "sha256": "8c7d13164005af46f888f1747eb7b8c2d706d8c0f825d11c9f4913587caa5404",
+      "bytes": 3648,
+      "type": "Document"
+    },
+    "https://s1.hdslb.com/bfs/seed/laputa-header/bili-header.umd.js": {
+      "file": "s1.hdslb.com/bfs/seed/laputa-header/bili-header.umd.js",
+      "mime": "application/javascript",
+      "sha256": "39f116023c640357e767b6ba5b0ebb3786c457bcc1e5671e9b2b90db58bee829",
+      "bytes": 1839424,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/2233-monorepo/dyn-home/static/js/index.ae117a6a.js": {
+      "file": "s1.hdslb.com/bfs/static/2233-monorepo/dyn-home/static/js/index.ae117a6a.js",
+      "mime": "application/javascript",
+      "sha256": "46e00a6cfd7794356ac95e819469fe1fb3ed71034138e83ab956cedad453ed59",
+      "bytes": 3042295,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/2233-monorepo/dyn-home/static/css/index.d1676860.css": {
+      "file": "s1.hdslb.com/bfs/static/2233-monorepo/dyn-home/static/css/index.d1676860.css",
+      "mime": "text/css",
+      "sha256": "0343de4f8d91ba450d887d6a06845723fdfe644245743b08ea09add13eee7fba",
+      "bytes": 514324,
+      "type": "Stylesheet",
+      "webkitFile": "s1.hdslb.com/bfs/static/2233-monorepo/dyn-home/static/css/index.d1676860.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/medium.css": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/medium.css",
+      "mime": "text/css",
+      "sha256": "b5856270d02c5abacecb42a2d21104e7931d8c4b1d2217e93bec566792ac426e",
+      "bytes": 38644,
+      "type": "Stylesheet",
+      "webkitFile": "s1.hdslb.com/bfs/static/jinkela/long/font/medium.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/font/regular.css": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/font/regular.css",
+      "mime": "text/css",
+      "sha256": "f9a0a98e2ab0e9af4eb5e8143e9fe6c55eead6d8d1d2a5638de965b3ca42a7ab",
+      "bytes": 38752,
+      "type": "Stylesheet",
+      "webkitFile": "s1.hdslb.com/bfs/static/jinkela/long/font/regular.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/user-fingerprint/bili-user-fingerprint.min.js": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/user-fingerprint/bili-user-fingerprint.min.js",
+      "mime": "application/javascript",
+      "sha256": "053fb245e90083d9da2e2fbb66c856e5286647112433db0967519bf32621f189",
+      "bytes": 40191,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/map.css": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/map.css",
+      "mime": "text/css",
+      "sha256": "69fc627e9d19ad3b014ca285f82e40b01c45aa30968e9d964ff1fe3ef2e4797f",
+      "bytes": 2529,
+      "type": "Stylesheet",
+      "webkitFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/map.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light.css": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light.css",
+      "mime": "text/css",
+      "sha256": "efcaa29f5911a9323448b2492b856bfb2333eda9f874037ec0efe5d68e3e09cf",
+      "bytes": 6936,
+      "type": "Stylesheet",
+      "webkitFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light_u.css": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light_u.css",
+      "mime": "text/css",
+      "sha256": "204ad7cac0c62a9a8e9d89459c5125cc09d755228b96d9a2e52ab565321e4c93",
+      "bytes": 6794,
+      "type": "Stylesheet",
+      "webkitFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light_u.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/unify-http-request/forticket.min.js": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/unify-http-request/forticket.min.js",
+      "mime": "application/javascript",
+      "sha256": "090e46a0c4d9309af412c183b7d4034d81617710447ae74db817a044f6db9801",
+      "bytes": 9607,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/reporter-pb/fingerPrint.js": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/reporter-pb/fingerPrint.js",
+      "mime": "application/javascript",
+      "sha256": "2b7af5e9a22e43cb6ecdcd89ab117f1b53fbac99b7c8503be86880a960e3a2d5",
+      "bytes": 81742,
+      "type": "Script"
+    },
+    "https://www.bilibili.com/zh-Hans/history": {
+      "file": "www.bilibili.com/zh-Hans/history/index.html",
+      "mime": "text/html",
+      "sha256": "aa6348c9d02b658a9940b805503cdebbedd70eea5cd5de20c58dd3d325cf70b1",
+      "bytes": 4774,
+      "type": "Document"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/history-record/assets/polyfills-2aed4887.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/history-record/assets/polyfills-2aed4887.js",
+      "mime": "application/javascript",
+      "sha256": "3c8b939eb79c86e2ab43828a942d727eaea08c097f971339738b9776e9f05854",
+      "bytes": 102642,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.css": {
+      "file": "s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.css",
+      "mime": "text/css",
+      "sha256": "6b098f2ed494bc5906e2d4e91b9dc4f51d30cac6119a9b8c79c16f5bedaa1190",
+      "bytes": 4008,
+      "type": "Stylesheet",
+      "webkitFile": "s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/history-record/assets/index-d270e984.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/history-record/assets/index-d270e984.js",
+      "mime": "application/javascript",
+      "sha256": "32cd7298b007b92f5610afa121bb87d330df2b9e59994cc8f44127b1b296cd91",
+      "bytes": 725044,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/history-record/assets/index-eb133f4e.css": {
+      "file": "s1.hdslb.com/bfs/static/shanks/history-record/assets/index-eb133f4e.css",
+      "mime": "text/css",
+      "sha256": "eb133f4e73371a4a370c67a4b3b71f183f64ee423bef6f7b4d0b6647938bc39b",
+      "bytes": 104165,
+      "type": "Stylesheet",
+      "webkitFile": "s1.hdslb.com/bfs/static/shanks/history-record/assets/index-eb133f4e.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/seed/laputa-footer/bili-footer.umd.js": {
+      "file": "s1.hdslb.com/bfs/seed/laputa-footer/bili-footer.umd.js",
+      "mime": "application/javascript",
+      "sha256": "671bc9db6aa6a1e65dd65d56ac053a3c0cff3400b2918ad4c26d23facf196e30",
+      "bytes": 241793,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/laputa-home/assets/polyfills-legacy-8a67a3a6.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/laputa-home/assets/polyfills-legacy-8a67a3a6.js",
+      "mime": "application/javascript",
+      "type": "Script",
+      "bytes": 113677,
+      "sha256": "f36e8bc5bd147b7d757ec8a95f531811f6edaec4ff08e5e4d19b151ac147b404"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-legacy-d8ee4d4b.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-legacy-d8ee4d4b.js",
+      "mime": "application/javascript",
+      "type": "Script",
+      "bytes": 1993667,
+      "sha256": "4e11377fea76d469a05aedb5d254265e3c957bf5d7e4798b3bce30b9ca92257b"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/history-record/assets/index-legacy-5c0726dd.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/history-record/assets/index-legacy-5c0726dd.js",
+      "mime": "application/javascript",
+      "type": "Script",
+      "bytes": 807990,
+      "sha256": "3523e2dd83b9d81c267382b2a35e91b5722d447f5b5a27f4df4a607ca4e22d7e"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/history-record/assets/polyfills-legacy-03f3a79e.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/history-record/assets/polyfills-legacy-03f3a79e.js",
+      "mime": "application/javascript",
+      "type": "Script",
+      "bytes": 96029,
+      "sha256": "267b3670871860153f381f88025d16eefa38807ab42a5c943dae4d8a4689bbaa"
+    }
+  },
+  "pages": {
+    "home": "https://www.bilibili.com/zh-Hans",
+    "dynamic": "https://t.bilibili.com/zh-Hans",
+    "history": "https://www.bilibili.com/zh-Hans/history"
+  }
+}

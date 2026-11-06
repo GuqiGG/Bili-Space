@@ -16,3 +16,5 @@ No proprietary Lossless Scaling binaries or models are distributed. Removing the
 - Anime4K WebGPU 1.0.0: MIT; vendor/anime4k.LICENSE and vendor/anime4k-source.json. Independent WebGPU port of the algorithm family used by Kazumi; no Kazumi GPL code copied.
 
 - DouyinSans Bold / 抖音美好体: unmodified font from https://github.com/bytedance/fonts ; SIL Open Font License 1.1, retained in vendor/DouyinSans.OFL.txt. Source revision and SHA-256 are in vendor/douyin-font-source.json. The font retains its own OFL license and is not subject to the project noncommercial restriction.
+
+- Cached Bilibili website HTML and CDN scripts/styles/fonts: original URLs and SHA-256 hashes in assets/web-copy/manifest.json; original notices retained. All rights remain with Bilibili and the respective authors. These copies are not relicensed under this project license.

@@ -37,6 +37,7 @@ void message(const json& m){
  auto a=m.value("action",std::string{});if(testing&&a!="snapshot"&&a!="inspect")log("transition message "+a+" id "+m.value("id",std::string{}));
  if(testing&&a=="force"){auto n=m.value("index",-1);if(n>=0&&n<12)forced=n;return;}
  if(testing&&a=="inspect"){execute("window.__transitionNative="+json{{"cached",!cached.empty()},{"bitmap",bitmap!=nullptr},{"active",active},{"hold",hold},{"capturing",capturing},{"index",index}}.dump());return;}
+ if(a=="soft-navigation"){auto uri=wide(m.value("url",std::string{}));begin(uri,++localSerial);if(active)execute("window.TransitionManager?.accept("+json{{"id",std::to_string(epoch)},{"index",index},{"old",oldImage},{"soft",true}}.dump()+")");return;}
  if(a=="local-begin"){
   auto token=m.value("token",std::string{});if(token.size()>80)return;localTicket=token;auto uri=wide(m.value("url",std::string{}));reduced=m.value("reduced",false);
   capture([token,uri](std::string data,IStream* stream){if(token!=localTicket)return;if(data.empty()||reduced){cancel();execute("window.TransitionManager?.commitLocal("+json{{"localToken",token}}.dump()+")");return;}cached=data;decode(stream);begin(uri,++localSerial);if(!active){execute("window.TransitionManager?.commitLocal("+json{{"localToken",token}}.dump()+")");return;}execute("window.TransitionManager?.accept("+json{{"id",std::to_string(epoch)},{"index",index},{"old",oldImage},{"localToken",token}}.dump()+")");});return;
