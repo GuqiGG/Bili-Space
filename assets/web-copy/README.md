@@ -5,3 +5,5 @@ These are unmodified HTTP response bodies captured from public Bilibili pages an
 `scripts/cache_official_pages.py` captures an isolated guest browser session. `scripts/prepare_web_cache.py` creates separate `.webkit.css` variants that only resolve resource URLs for the native WebKit resource scheme; original bytes remain intact.
 
 Bundled guest HTML is retained as source provenance. It is not substituted for an authenticated user's first visit. The native hosts cache that user's actual official HTML in the private account/browser profile for up to 24 hours. API responses, account cookies and video streams are not included here. Unknown or updated resources continue to load from the official network.
+
+On macOS, cached scripts and styles use supported data URLs because WKWebView blocks HTTPS pages from loading active resources over the custom app scheme. CSS portable variants resolve relative URLs to their original CDN. Script delivery retains the original `import.meta.url` and `document.currentScript.src` source URL so lazy asset resolution continues to work. Original response files remain unchanged.
