@@ -53,7 +53,8 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
  configuration.websiteDataStore=self.selfTest?WKWebsiteDataStore.nonPersistentDataStore:[WKWebsiteDataStore dataStoreForIdentifier:[[NSUUID alloc]initWithUUIDString:identifier]];
  [configuration setURLSchemeHandler:self forURLScheme:@"bili-space"];
  [configuration.userContentController addScriptMessageHandler:self name:@"native"];
- NSDictionary *payload=@{@"appInfo":[self readJSON:[self.resources URLByAppendingPathComponent:@"assets/app-info.json"]],@"config":self.state[@"config"],@"gm":self.state[@"gm"],@"runtime":@{@"platform":@"macos",@"testing":@(self.selfTest),@"running":@NO}};
+ NSMutableDictionary *media=NSMutableDictionary.dictionary;if(self.selfTest)for(NSString *name in @[@"avc-aac.mp4",@"avc-mse.mp4"]){NSData *bytes=[NSData dataWithContentsOfURL:[self.resources URLByAppendingPathComponent:[@"assets/media-probe/" stringByAppendingString:name]]];if(bytes)media[name]=[bytes base64EncodedStringWithOptions:0];}
+ NSDictionary *payload=@{@"appInfo":[self readJSON:[self.resources URLByAppendingPathComponent:@"assets/app-info.json"]],@"config":self.state[@"config"],@"gm":self.state[@"gm"],@"runtime":@{@"platform":@"macos",@"testing":@(self.selfTest),@"running":@NO,@"mediaFixtures":media}};
  NSString *bridge=[NSString stringWithFormat:@"(()=>{if(window.top!==window)return;window.__BILI_NATIVE__=%@;window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(m)};})();\n",JSONString(payload)];
  [configuration.userContentController addUserScript:[[WKUserScript alloc]initWithSource:[bridge stringByAppendingString:self.renderer] injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES]];
  [self.web.configuration.userContentController removeScriptMessageHandlerForName:@"native"];

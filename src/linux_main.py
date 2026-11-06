@@ -78,7 +78,7 @@ class App(Gtk.Application):
         security=self.context.get_security_manager();security.register_uri_scheme_as_secure('bili-space');security.register_uri_scheme_as_cors_enabled('bili-space')
         self.cookies=self.context.get_cookie_manager();self.cookies.set_persistent_storage(str(directory/'cookies.sqlite'),WebKit2.CookiePersistentStorage.SQLITE)
         content=WebKit2.UserContentManager();content.register_script_message_handler('native');content.connect('script-message-received::native',self.message)
-        payload={'appInfo':self.read(self.resources/'assets/app-info.json'),'config':self.state['config'],'gm':self.state['gm'],'runtime':{'platform':'linux','testing':self.testing,'running':False}}
+        payload={'appInfo':self.read(self.resources/'assets/app-info.json'),'config':self.state['config'],'gm':self.state['gm'],'runtime':{'platform':'linux','testing':self.testing,'running':False,'mediaFixtures':{name:base64.b64encode((self.resources/'assets/media-probe'/name).read_bytes()).decode() for name in ['avc-aac.mp4','avc-mse.mp4']} if self.testing else {}}}
         bridge="(()=>{if(window.top!==window)return;const token="+json.dumps(self.token)+";window.__BILI_NATIVE__="+json.dumps(payload,ensure_ascii=False)+";window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(JSON.stringify({token,message:m}))};})();\n"
         script=WebKit2.UserScript.new(bridge+self.renderer,WebKit2.UserContentInjectedFrames.TOP_FRAME,WebKit2.UserScriptInjectionTime.START,None,None);content.add_script(script)
         if self.web:self.stack.remove(self.web);self.web.destroy()
