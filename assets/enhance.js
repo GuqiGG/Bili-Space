@@ -1636,6 +1636,8 @@ function boot(){
     acceptDownloadQueue(value){window.BiliDesktop44?.acceptQueue(value);},
     resolveQueuedDownload(item){return window.BiliDesktop44?.resolveQueuedDownload(item);},
     mediaCommand(command){window.BiliDesktop44?.mediaCommand(command);},
+    openLoginPanel(){accountsController?.openLogin();},
+    closeLoginPanel(){accountsController?.closeLogin();},
     acceptAccountState(state){if(state.event==='login'||state.event==='signed-out'){accountRequest?.abort();accountRequest=null;accountChecked=0;accountProfile=null;renderAccountCard();}accountsController?.accept(state);},
     acceptCommunityState(state){window.BiliCommunity44?.acceptState(state);},
     downloadProgress,
