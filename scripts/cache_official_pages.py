@@ -25,7 +25,7 @@ async def main():
    try:t=next(x for x in json.load(urllib.request.urlopen('http://127.0.0.1:9223/json/list',timeout=1)) if x.get('type')=='page');break
    except (OSError,StopIteration):await asyncio.sleep(.2)
   async with connect(t['webSocketDebuggerUrl'],max_size=40*1024*1024) as ws:
-   s=Session(ws);await s.call('Network.enable',{'maxTotalBufferSize':100000000,'maxResourceBufferSize':10000000})
+   s=Session(ws);await s.call('Network.clearBrowserCookies');await s.call('Network.enable',{'maxTotalBufferSize':100000000,'maxResourceBufferSize':10000000})
    for _ in range(100):
     if await s.js('!!window.BiliSpace'):break
     await asyncio.sleep(.2)
