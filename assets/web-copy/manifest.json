@@ -14,7 +14,8 @@
       "sha256": "4d416e23b775f6de703d334c94b74a9f1d7e9be8869733b0408dd324bcf1a05f",
       "bytes": 386983,
       "type": "Stylesheet",
-      "webkitFile": "s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-4d416e23.css.webkit.css"
+      "webkitFile": "s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-4d416e23.css.webkit.css",
+      "portableFile": "s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-4d416e23.css.portable.css"
     },
     "https://s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-84fb5632.js": {
       "file": "s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-84fb5632.js",
@@ -456,7 +457,8 @@
       "sha256": "0343de4f8d91ba450d887d6a06845723fdfe644245743b08ea09add13eee7fba",
       "bytes": 514324,
       "type": "Stylesheet",
-      "webkitFile": "s1.hdslb.com/bfs/static/2233-monorepo/dyn-home/static/css/index.d1676860.css.webkit.css"
+      "webkitFile": "s1.hdslb.com/bfs/static/2233-monorepo/dyn-home/static/css/index.d1676860.css.webkit.css",
+      "portableFile": "s1.hdslb.com/bfs/static/2233-monorepo/dyn-home/static/css/index.d1676860.css.portable.css"
     },
     "https://s1.hdslb.com/bfs/static/jinkela/long/font/medium.css": {
       "file": "s1.hdslb.com/bfs/static/jinkela/long/font/medium.css",
@@ -464,7 +466,8 @@
       "sha256": "b5856270d02c5abacecb42a2d21104e7931d8c4b1d2217e93bec566792ac426e",
       "bytes": 38644,
       "type": "Stylesheet",
-      "webkitFile": "s1.hdslb.com/bfs/static/jinkela/long/font/medium.css.webkit.css"
+      "webkitFile": "s1.hdslb.com/bfs/static/jinkela/long/font/medium.css.webkit.css",
+      "portableFile": "s1.hdslb.com/bfs/static/jinkela/long/font/medium.css.portable.css"
     },
     "https://s1.hdslb.com/bfs/static/jinkela/long/font/regular.css": {
       "file": "s1.hdslb.com/bfs/static/jinkela/long/font/regular.css",
@@ -472,7 +475,8 @@
       "sha256": "f9a0a98e2ab0e9af4eb5e8143e9fe6c55eead6d8d1d2a5638de965b3ca42a7ab",
       "bytes": 38752,
       "type": "Stylesheet",
-      "webkitFile": "s1.hdslb.com/bfs/static/jinkela/long/font/regular.css.webkit.css"
+      "webkitFile": "s1.hdslb.com/bfs/static/jinkela/long/font/regular.css.webkit.css",
+      "portableFile": "s1.hdslb.com/bfs/static/jinkela/long/font/regular.css.portable.css"
     },
     "https://s1.hdslb.com/bfs/seed/jinkela/short/user-fingerprint/bili-user-fingerprint.min.js": {
       "file": "s1.hdslb.com/bfs/seed/jinkela/short/user-fingerprint/bili-user-fingerprint.min.js",
@@ -487,7 +491,8 @@
       "sha256": "69fc627e9d19ad3b014ca285f82e40b01c45aa30968e9d964ff1fe3ef2e4797f",
       "bytes": 2529,
       "type": "Stylesheet",
-      "webkitFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/map.css.webkit.css"
+      "webkitFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/map.css.webkit.css",
+      "portableFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/map.css.portable.css"
     },
     "https://s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light.css": {
       "file": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light.css",
@@ -495,7 +500,8 @@
       "sha256": "efcaa29f5911a9323448b2492b856bfb2333eda9f874037ec0efe5d68e3e09cf",
       "bytes": 6936,
       "type": "Stylesheet",
-      "webkitFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light.css.webkit.css"
+      "webkitFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light.css.webkit.css",
+      "portableFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light.css.portable.css"
     },
     "https://s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light_u.css": {
       "file": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light_u.css",
@@ -503,7 +509,8 @@
       "sha256": "204ad7cac0c62a9a8e9d89459c5125cc09d755228b96d9a2e52ab565321e4c93",
       "bytes": 6794,
       "type": "Stylesheet",
-      "webkitFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light_u.css.webkit.css"
+      "webkitFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light_u.css.webkit.css",
+      "portableFile": "s1.hdslb.com/bfs/seed/jinkela/short/bili-theme/light_u.css.portable.css"
     },
     "https://s1.hdslb.com/bfs/static/jinkela/long/unify-http-request/forticket.min.js": {
       "file": "s1.hdslb.com/bfs/static/jinkela/long/unify-http-request/forticket.min.js",
@@ -539,7 +546,8 @@
       "sha256": "6b098f2ed494bc5906e2d4e91b9dc4f51d30cac6119a9b8c79c16f5bedaa1190",
       "bytes": 4008,
       "type": "Stylesheet",
-      "webkitFile": "s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.css.webkit.css"
+      "webkitFile": "s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.css.webkit.css",
+      "portableFile": "s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.css.portable.css"
     },
     "https://s1.hdslb.com/bfs/static/shanks/history-record/assets/index-d270e984.js": {
       "file": "s1.hdslb.com/bfs/static/shanks/history-record/assets/index-d270e984.js",
@@ -554,7 +562,8 @@
       "sha256": "eb133f4e73371a4a370c67a4b3b71f183f64ee423bef6f7b4d0b6647938bc39b",
       "bytes": 104165,
       "type": "Stylesheet",
-      "webkitFile": "s1.hdslb.com/bfs/static/shanks/history-record/assets/index-eb133f4e.css.webkit.css"
+      "webkitFile": "s1.hdslb.com/bfs/static/shanks/history-record/assets/index-eb133f4e.css.webkit.css",
+      "portableFile": "s1.hdslb.com/bfs/static/shanks/history-record/assets/index-eb133f4e.css.portable.css"
     },
     "https://s1.hdslb.com/bfs/seed/laputa-footer/bili-footer.umd.js": {
       "file": "s1.hdslb.com/bfs/seed/laputa-footer/bili-footer.umd.js",

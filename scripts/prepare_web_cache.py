@@ -14,6 +14,9 @@ for uri,item in manifest['resources'].items():
         target=urljoin(uri,raw);record=manifest['resources'].get(target)
         value='bili-space://assets/web-copy/'+quote(record['file']) if record else target
         return 'url("'+value+'")'
+    portable=re.sub(r'url\(([^)]+)\)',lambda m:m[0] if m[1].strip().strip(chr(34)+chr(39)).startswith(('data:','#')) else 'url("'+urljoin(uri,m[1].strip().strip(chr(34)+chr(39)))+'")',text)
+    item['portableFile']=item['file']+'.portable.css'
+    (folder/item['portableFile']).write_text(portable,encoding='utf-8')
     text=re.sub(r'url\(([^)]+)\)',replace,text)
     item['webkitFile']=item['file']+'.webkit.css'
     (folder/item['webkitFile']).write_text(text,encoding='utf-8')

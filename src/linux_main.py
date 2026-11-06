@@ -140,9 +140,9 @@ class App(Gtk.Application):
         threading.Thread(target=fetch,daemon=True).start()
     def resource_started(self,web,resource,request):
         if not is_page(request.get_uri()):return
-        cache=self.web_cache
+        cache=self.web_cache;from_cache=self.cached_loading==request.get_uri()
         def finished(resource):
-            if self.cached_loading==resource.get_uri():return
+            if from_cache:return
             def data_ready(resource,result,*_):
                 try:
                     data=resource.get_data_finish(result)
