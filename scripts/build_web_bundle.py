@@ -14,7 +14,7 @@ def build(destination):
     (destination / 'defaults.json').write_text(json.dumps(initial, ensure_ascii=False), encoding='utf-8')
     icons = {key: (assets / name).read_text(encoding='utf-8') for key, name in {
         'ICON_SETTINGS':'settings.svg','ICON_SPARKLES':'sparkles.svg','ICON_MESSAGE':'message-square-more.svg','ICON_FRAMES':'frame-interpolation.svg'}.items()}
-    chunks = [(assets / 'login-frame50.js').read_text(encoding='utf-8'), '''
+    chunks = ['''
 (()=>{if(window.top!==window)return;const payload=window.__BILI_NATIVE__;if(!payload)return;
 if(!['www.bilibili.com','search.bilibili.com','space.bilibili.com','live.bilibili.com','t.bilibili.com','passport.bilibili.com','account.bilibili.com','message.bilibili.com','manga.bilibili.com','bili-space.local','assets'].includes(location.hostname))return;
 const APP_INFO=payload.appInfo,INITIAL=payload.config,GM_INITIAL=payload.gm||{},RUNTIME=payload.runtime,PLUGINS=[];

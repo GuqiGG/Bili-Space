@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Native GTK/WebKit host. Browser profiles stay in per-user WebKit data directories."""
-import json, os, secrets, sys, uuid
+import json, os, re, secrets, sys, uuid
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 import gi
 gi.require_version('Gtk','3.0')
 gi.require_version('WebKit2','4.1')
-from gi.repository import Gtk, Gio, GLib, WebKit2, Soup
+from gi.repository import Gtk, Gdk, Gio, GLib, WebKit2, Soup
 
 ALLOWED={'www.bilibili.com','search.bilibili.com','space.bilibili.com','t.bilibili.com','passport.bilibili.com','account.bilibili.com','message.bilibili.com','live.bilibili.com','manga.bilibili.com'}
 def trusted(url):
@@ -24,7 +24,7 @@ class App(Gtk.Application):
         self.state=self.read(self.directory/'state.json');defaults=self.read(self.resources/'defaults.json');defaults.update(self.state.get('config',{}));self.state['config']=defaults
         self.state.setdefault('gm',{});self.state.setdefault('profiles',[])
         self.renderer=(self.resources/'renderer.js').read_text(encoding='utf-8');self.web=None;self.pending='';self.popups=[]
-        self.connect('activate',self.activate)
+        self.last_clipboard='';self.connect('activate',self.activate)
     @staticmethod
     def read(path):
         try:
@@ -45,10 +45,21 @@ class App(Gtk.Application):
         Gtk.Settings.get_default().set_property('gtk-application-prefer-dark-theme',self.state['config'].get('theme')=='dark')
         self.window=Gtk.ApplicationWindow(application=self);self.window.set_title('Bili-Space');self.window.set_default_size(1440,940)
         self.window.set_size_request(520,420);header=Gtk.HeaderBar(title='Bili-Space');header.set_show_close_button(True);self.window.set_titlebar(header)
+        self.window.connect('focus-in-event',self.clipboard_focus)
         self.window.connect('delete-event',lambda *_:self.save() or False)
         self.open_profile(self.state.get('activeID'))
         if not self.testing:self.window.show_all()
         else:GLib.timeout_add_seconds(30,self.test_timeout)
+    def clipboard_focus(self,*_):
+        if not self.testing and self.web and not self.web.is_loading() and self.state['config'].get('clipboardAutoOpen',True):
+            Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).request_text(self.clipboard_text,None)
+        return False
+    def clipboard_text(self,clipboard,text,*_):
+        if not self.state['config'].get('clipboardAutoOpen',True):return
+        if text and len(text)<=16384 and re.search(r'BV[A-Za-z0-9]{10}|b23\.tv/',text,re.I):
+            if text!=self.last_clipboard:self.send('offerClipboardVideo',text)
+            self.last_clipboard=text
+        else:self.last_clipboard=''
     def open_profile(self,identifier=None,event=''):
         if not identifier:identifier=str(uuid.uuid4())
         profile=next((p for p in self.state['profiles'] if p['id']==identifier),None)
@@ -79,7 +90,7 @@ class App(Gtk.Application):
     def policy(self,web,decision,kind):
         if kind not in (WebKit2.PolicyDecisionType.NAVIGATION_ACTION,WebKit2.PolicyDecisionType.NEW_WINDOW_ACTION):return False
         url=decision.get_request().get_uri();scheme=urlparse(url).scheme
-        if trusted(url) or (self.testing and scheme=='bili-space') or url=='about:blank' or (web is not self.web and scheme=='https'):decision.use()
+        if trusted(url) or (scheme=='https' and urlparse(url).hostname=='b23.tv') or (self.testing and scheme=='bili-space') or url=='about:blank' or (web is not self.web and scheme=='https'):decision.use()
         else:
             decision.ignore()
             if scheme=='https':Gio.AppInfo.launch_default_for_uri(url,None)
@@ -92,6 +103,7 @@ class App(Gtk.Application):
     def loaded(self,web,event):
         if event!=WebKit2.LoadEvent.FINISHED:return
         self.js('window.BiliSpace?.surfaceRevealed?.();window.BiliSpace?.setLoading(false)')
+        if self.window.is_active():self.clipboard_focus()
         if self.testing:
             code="(()=>{const s=document.querySelector('#bili-space-root')?.shadowRoot;return !!window.BiliSpace&&!!s?.querySelector('.account-switch')&&s.querySelector('.lights').hidden&&s.querySelector('.window-actions').hidden})()"
             def complete(view,result,*_):

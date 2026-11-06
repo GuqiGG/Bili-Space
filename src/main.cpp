@@ -326,7 +326,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",8},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalControlsV1",false},{"fiMode","off"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",8},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -393,7 +393,7 @@ std::string script(){
     s+=read(root/L"assets/plugins.js");s+="\n";
     s+=read(root/L"assets/accounts50.js");s+="\n";
     s+=read(root/L"assets/favorites49.js");s+="\n";
-    s+=read(root/L"assets/enhance.js");return read(root/L"assets/login-frame50.js")+"\n"+s+"\n})();";
+    s+=read(root/L"assets/enhance.js");return s+"\n})();";
 }
 void refreshInjection(){
     if(!webview)return;
@@ -504,7 +504,7 @@ std::wstring clipboardVideoUrl(std::wstring text){
         if(match.position()>0){auto c=text[match.position()-1];if(iswalnum(c)||c==L'.'||c==L'/'||c==L'@'||c==L'-')return L"";}
         id=match[3].str();auto tail=match[4].str();static const std::wregex param(LR"([?&](t|p)=([0-9]+(\.[0-9]+)?)(?=&|#|$))");
         for(std::wsregex_iterator it(tail.begin(),tail.end(),param),last;it!=last;++it){if(query.size()>100)break;query+=(query.empty()?L"?":L"&")+(*it)[1].str()+L"="+(*it)[2].str();}
-    }else return L"";
+    }else {static const std::wregex shortLink(LR"((https?://)?b23\.tv/([A-Za-z0-9]+)(?=[/?#\s<>]|$))",std::regex_constants::icase);if(std::regex_search(text,match,shortLink)){if(match.position()>0){auto c=text[match.position()-1];if(iswalnum(c)||c==L'.'||c==L'/'||c==L'@'||c==L'-')return L"";}return L"https://b23.tv/"+match[2].str();}return L"";}
     id[0]=L'B';id[1]=L'V';return L"https://www.bilibili.com/video/"+id+query;
 }
 void copyVideoLink(const std::string& value){
@@ -523,7 +523,7 @@ bool externalWebUrl(const std::wstring& uri){
 void checkClipboardVideo(){
     if(!webview||!config.value("clipboardAutoOpen",true)||!IsClipboardFormatAvailable(CF_UNICODETEXT)||!OpenClipboard(windowHandle))return;
     std::wstring text;auto data=GetClipboardData(CF_UNICODETEXT);if(data){auto size=GlobalSize(data);if(size&&size<=32770){auto value=static_cast<const wchar_t*>(GlobalLock(data));if(value){const auto count=size/sizeof(wchar_t);size_t n=0;while(n<count&&value[n])n++;if(n<count)text.assign(value,n);GlobalUnlock(data);}}}CloseClipboard();
-    auto uri=clipboardVideoUrl(text);if(uri.empty()){lastClipboardVideo.clear();return;}if(uri!=lastClipboardVideo){lastClipboardVideo=uri;webview->Navigate(uri.c_str());}
+    auto uri=clipboardVideoUrl(text);if(uri.empty()){lastClipboardVideo.clear();return;}if(uri!=lastClipboardVideo){lastClipboardVideo=uri;execute("window.BiliSpace?.offerClipboardVideo("+json(utf8(uri)).dump()+")");}
 }
 
 // Restore native WebView focus without changing the DOM's last focused control.
@@ -661,7 +661,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
                 const bool gateDocument=updateRequired&&updateGateNavigationPending&&uri.rfind(L"data:text/html;charset=utf-8;base64,",0)==0;
                 if(updateRequired&&uri!=L"about:blank"){if(gateDocument)updateGateNavigationPending=false;else{args->put_Cancel(TRUE);return S_OK;}}
                 bool local=gateDocument||(updateRequired&&uri==L"about:blank")||(!startupTarget.empty()&&(uri.rfind(L"about:blank",0)==0||uri.rfind(L"data:text/html",0)==0))||(testing&&uri.rfind(L"https://bili-space.local/",0)==0);
-                bool site=false;for(auto host:{L"www.bilibili.com",L"search.bilibili.com",L"space.bilibili.com",L"passport.bilibili.com",L"account.bilibili.com",L"live.bilibili.com",L"t.bilibili.com",L"message.bilibili.com",L"manga.bilibili.com"})if(uri.rfind(std::wstring(L"https://")+host+L"/",0)==0)site=true;
+                bool site=uri.rfind(L"https://b23.tv/",0)==0;for(auto host:{L"www.bilibili.com",L"search.bilibili.com",L"space.bilibili.com",L"passport.bilibili.com",L"account.bilibili.com",L"live.bilibili.com",L"t.bilibili.com",L"message.bilibili.com",L"manga.bilibili.com"})if(uri.rfind(std::wstring(L"https://")+host+L"/",0)==0)site=true;
                 if(!local&&!site){args->put_Cancel(TRUE);if(uri.rfind(L"https://",0)==0)ShellExecuteW(nullptr,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);}
                 else{if(site||(testing&&uri.rfind(L"https://bili-space.local/",0)==0)){surfaceCommitted=false;surfaceWaiting=false;}execute("window.BiliSpace?.beginNavigation("+json(utf8(uri)).dump()+")");}
                 return S_OK;

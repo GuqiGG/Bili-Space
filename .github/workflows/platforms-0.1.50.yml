@@ -3,6 +3,11 @@ on:
   push:
     branches: [codex/navigation-accounts-platforms]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish verified 0.1.50 release
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -69,9 +74,33 @@ jobs:
           if ($LASTEXITCODE) { throw 'Windows build failed' }
           ./scripts/test_accounts50_native.ps1
           if ($LASTEXITCODE) { throw 'Encrypted account tests failed' }
+          python scripts/package.py
+          if ($LASTEXITCODE) { throw 'ZIP failed' }
+          python scripts/build_installer.py
+          if ($LASTEXITCODE) { throw 'Installer failed' }
           ./scripts/build_win7.ps1
           if ($LASTEXITCODE) { throw 'Windows 7 compatibility build failed' }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-compatibility
-          path: releases/Bili-Space-0.1.50-win7-x64.zip
+          path: |
+            releases/Bili-Space-0.1.50-win7-x64.zip
+            releases/Bili-Space-0.1.50-win64.zip
+            releases/Bili-Space-0.1.50-Setup.exe
+  publish:
+    if: (github.event_name == 'workflow_dispatch' && inputs.publish) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[release-0.1.50]'))
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: releases
+          merge-multiple: true
+      - name: Publish verified platform packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 scripts/publish_current_release.py

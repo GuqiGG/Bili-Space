@@ -6,11 +6,14 @@ version = json.loads((ROOT/'package.json').read_text(encoding='utf8'))['version'
 tag = 'v'+version
 repo = os.environ['GH_REPO']
 files = [ROOT/'releases'/f'Bili-Space-{version}-win64.zip', ROOT/'releases'/f'Bili-Space-{version}-Setup.exe']
+if version=='0.1.50':
+    files += [ROOT/'releases'/f'Bili-Space-{version}-{name}' for name in ['win7-x64.zip','macos-universal.zip','linux.deb']]
+    assert all(p.is_file() for p in files), 'All platform packages are required before publication'
 manifest = None
 if tuple(map(int,version.split('.'))) >= (0,1,38):
-    zipfile, setup = files
+    zipfile, setup = files[:2]
     manifest = {'schema':1,'appId':'bili-space','platform':'windows-x64','version':version,'minimumSupportedVersion':'0.1.0','force':False,
-        'downloadUrl':f'https://bili.gvqi.top/releases/{zipfile.name}','sha256':hashlib.sha256(zipfile.read_bytes()).hexdigest(),'size':zipfile.stat().st_size,
+        'downloadUrl':f'https://github.com/{repo}/releases/download/{tag}/{zipfile.name}','sha256':hashlib.sha256(zipfile.read_bytes()).hexdigest(),'size':zipfile.stat().st_size,
         'setupUrl':f'https://github.com/{repo}/releases/download/{tag}/{setup.name}','setupSha256':hashlib.sha256(setup.read_bytes()).hexdigest(),'setupSize':setup.stat().st_size,
         'changelog':[line[2:].strip() for line in (ROOT/'docs'/f'RELEASE-{version}.md').read_text(encoding='utf8').splitlines() if line.startswith('- ')]}
     manifest_file=ROOT/'releases/windows-x64.json'

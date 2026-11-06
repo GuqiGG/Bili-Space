@@ -6,7 +6,7 @@ data=(stage/'Bili-Space.exe').read_bytes();pe=struct.unpack_from('<I',data,0x3c)
 major,minor=struct.unpack_from('<HH',data,optional+40);assert (major,minor)<=(6,1),'PE requires an OS newer than Windows 7'
 readme='''Windows 7 x64 compatibility build
 
-Requires Windows 7 SP1 x64 and the Microsoft WebView2 Runtime 109.
+Requires Windows 7 SP1 x64, Universal C Runtime (KB2999226 or a suitable VC runtime), and Microsoft WebView2 Runtime 109.
 Microsoft ended Win7 WebView2 support after version 109. Install the last official 109 runtime, or place a Microsoft Fixed Version Runtime 109 under runtime/webview2-109/ (msedgewebview2.exe directly inside).
 This build disables optional WebGPU super-resolution/frame interpolation.
 Build/import checks do not replace testing on a real Windows 7 machine. The Bilibili website itself may change its browser requirements.
