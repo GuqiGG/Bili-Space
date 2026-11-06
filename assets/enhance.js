@@ -703,7 +703,7 @@ function installWheelInertia(){
 
 const pageCss = `
 html[data-bs-page=home] [data-bs-banner=true] .inner-logo{display:none!important}
-html[data-bs-page=home] :is(.bili-header__channel,.channel-container){margin-block:0!important;padding-block:8px!important;min-height:0!important}
+html[data-bs-page=home] :is(.bili-header__channel,.channel-container){margin-block:0!important;padding-block:0!important;min-height:0!important}
 html[data-bs-page=home] :is(.channel-fixed,.channel-fixed-container){top:var(--bs-header-height,58px)!important;margin-top:0!important}
 
 html[data-bs-page=home][data-bs-theme] :is(.channel-link,.channel-link__right,.channel-items__left>a){border:0!important;box-shadow:0 3px 10px #00000018!important}

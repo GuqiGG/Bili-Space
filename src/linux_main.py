@@ -149,7 +149,7 @@ class App(Gtk.Application):
                     def media_done(view,result,*_):
                         try:view.run_javascript_finish(result)
                         except GLib.Error as e:print('Linux media error',str(e),flush=True);os._exit(1)
-                    web.run_javascript("window.BiliMediaProbe.run().then(x=>chrome.webview.postMessage({type:'media-probe-result',ok:true,result:x})).catch(e=>chrome.webview.postMessage({type:'media-probe-result',ok:false,error:e.message}))",None,media_done,None)
+                    web.run_javascript("void window.BiliMediaProbe.run().then(x=>chrome.webview.postMessage({type:'media-probe-result',ok:true,result:x})).catch(e=>chrome.webview.postMessage({type:'media-probe-result',ok:false,error:e.message}))",None,media_done,None)
                 GLib.timeout_add_seconds(3,frames_done)
             web.run_javascript(code,None,complete,None)
     def test_timeout(self):print('Linux WebKit renderer self-test timed out',flush=True);os._exit(2)
