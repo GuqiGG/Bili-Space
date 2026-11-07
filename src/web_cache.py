@@ -5,7 +5,7 @@ from urllib.parse import urlparse,quote
 
 def is_page(uri):
     u=urlparse(uri or '');path=u.path.rstrip('/')
-    return u.scheme=='https' and (u.hostname=='www.bilibili.com' and path in ('','/zh-Hans','/history','/account/history','/zh-Hans/history') or u.hostname=='t.bilibili.com' and path in ('','/zh-Hans'))
+    return u.scheme=='https' and (u.hostname=='www.bilibili.com' and path in ('','/zh-Hans','/history','/account/history','/zh-Hans/history') or u.hostname=='t.bilibili.com' and path in ('','/zh-Hans') or u.hostname=='message.bilibili.com' and path=='' or u.hostname=='space.bilibili.com' and path.removeprefix('/zh-Hans')[1:].isdigit() and len(path.removeprefix('/zh-Hans'))<=21 and path.isascii())
 
 class WebCache:
     def __init__(self,resources,profile):

@@ -12,6 +12,13 @@ for url,item in manifest['resources'].items():
     assert len(data)==item['bytes'],url
 assert is_page('https://www.bilibili.com/history')
 assert is_page('https://www.bilibili.com/history?from=header')
+assert is_page('https://space.bilibili.com/2')
+assert is_page('https://space.bilibili.com/2/?spm_id_from=333')
+assert is_page('https://message.bilibili.com/#/reply')
+assert is_page('https://space.bilibili.com/zh-Hans/2')
+assert not is_page('https://space.bilibili.com/2/favlist')
+assert not is_page('https://space.bilibili.com/abc')
+assert not is_page('https://search.bilibili.com/all?keyword=x')
 assert not is_page('https://www.bilibili.com/video/BV123')
 assert not is_page('https://evil.test/?url=https://www.bilibili.com/')
 with tempfile.TemporaryDirectory() as directory:

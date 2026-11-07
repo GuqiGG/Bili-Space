@@ -599,11 +599,187 @@
       "type": "Script",
       "bytes": 96029,
       "sha256": "267b3670871860153f381f88025d16eefa38807ab42a5c943dae4d8a4689bbaa"
+    },
+    "https://space.bilibili.com/zh-Hans/2": {
+      "file": "space.bilibili.com/zh-Hans/2/index.html",
+      "mime": "text/html",
+      "sha256": "1d8718babc33f6bd9218644737ba83b5da31e4b0cd9ac950c9dbe32680e78a1c",
+      "bytes": 10600,
+      "type": "Document"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/fresh-space/assets/polyfills-0b02e0b6.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/fresh-space/assets/polyfills-0b02e0b6.js",
+      "mime": "application/javascript",
+      "sha256": "f540ee344a7ef6d36a14b6ac85a41a21db6115a1a1d202911df126b44ec5424b",
+      "bytes": 134093,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht.css": {
+      "file": "s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht.css",
+      "mime": "text/css",
+      "sha256": "f3985d74c019e98f2f7d6ff217917aca33a2dd5a72e91a2136e9222c25d7e044",
+      "bytes": 11245,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/fresh-space/assets/index-c5b07bd7.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/fresh-space/assets/index-c5b07bd7.js",
+      "mime": "application/javascript",
+      "sha256": "2953307ae459bf065e4cb1b8fe16f04950a08c3e0ca279afd7ebb76beef057a4",
+      "bytes": 1935628,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/fresh-space/assets/index-7f7ca3ba.css": {
+      "file": "s1.hdslb.com/bfs/static/shanks/fresh-space/assets/index-7f7ca3ba.css",
+      "mime": "text/css",
+      "sha256": "7f7ca3ba62931848035c20309494feebba63287f24de98a4d32360e30494c024",
+      "bytes": 227526,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/static/shanks/fresh-space/assets/index-7f7ca3ba.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/static/shanks/fresh-space/assets/index-7f7ca3ba.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/auto-append-spmid.js": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/auto-append-spmid.js",
+      "mime": "application/x-javascript",
+      "sha256": "d60666e3fc9909576cb66df4d8d1088e82a6a8a523c0fbd3e1fef755024551a9",
+      "bytes": 1006,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/laputa-css/map.css": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/laputa-css/map.css",
+      "mime": "text/css",
+      "sha256": "52c3d88076bd45e00512820b2840b6dd4eac919011f66cbe3d7b9dc3457098f1",
+      "bytes": 2529,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/static/jinkela/long/laputa-css/map.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/static/jinkela/long/laputa-css/map.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/laputa-css/light_u.css": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/laputa-css/light_u.css",
+      "mime": "text/css",
+      "sha256": "83932ec055b0e3fb92bc552352b9463f080876531d253feef685c0b69820ff9f",
+      "bytes": 2933,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/static/jinkela/long/laputa-css/light_u.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/static/jinkela/long/laputa-css/light_u.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/jinkela/long/laputa-css/light.css": {
+      "file": "s1.hdslb.com/bfs/static/jinkela/long/laputa-css/light.css",
+      "mime": "text/css",
+      "sha256": "1d6cbc67155012281a285f51c0008740cc6b49d9ef17f4519041e451d7f76688",
+      "bytes": 3583,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/static/jinkela/long/laputa-css/light.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/static/jinkela/long/laputa-css/light.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht.woff2": {
+      "file": "s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht.woff2",
+      "mime": "font/woff2",
+      "sha256": "264bff3df11d3f9e704b9c0bf827f73166a2a41ef36be9fab5e597449ca04863",
+      "bytes": 20208,
+      "type": "Font"
+    },
+    "https://s1.hdslb.com/bfs/static/2233-monorepo/passport/static/js/index.dffca18c.js": {
+      "file": "s1.hdslb.com/bfs/static/2233-monorepo/passport/static/js/index.dffca18c.js",
+      "mime": "application/javascript",
+      "sha256": "d0c2ac49628c729c0561050e1ebcc4272b84d50b54fa54f963c92d3036f8ae36",
+      "bytes": 1136120,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/2233-monorepo/passport/static/css/index.0a8f35ed.css": {
+      "file": "s1.hdslb.com/bfs/static/2233-monorepo/passport/static/css/index.0a8f35ed.css",
+      "mime": "text/css",
+      "sha256": "85ee5eb05ed9f6d168b97538f8f2277ebc24bf0a5617612ec4fe352b03944455",
+      "bytes": 217325,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/static/2233-monorepo/passport/static/css/index.0a8f35ed.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/static/2233-monorepo/passport/static/css/index.0a8f35ed.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/2233-monorepo/passport/static/css/async/942.2bae398d.css": {
+      "file": "s1.hdslb.com/bfs/static/2233-monorepo/passport/static/css/async/942.2bae398d.css",
+      "mime": "text/css",
+      "sha256": "46dfe016c3685a0ab1d2b9ddf7eab33b5fd7dc1fcf89c5c90b661d7bf7fb3631",
+      "bytes": 20194,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/static/2233-monorepo/passport/static/css/async/942.2bae398d.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/static/2233-monorepo/passport/static/css/async/942.2bae398d.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/2233-monorepo/passport/static/js/async/942.4a120455.js": {
+      "file": "s1.hdslb.com/bfs/static/2233-monorepo/passport/static/js/async/942.4a120455.js",
+      "mime": "application/javascript",
+      "sha256": "6ef5ec9a9211bba98f01b87fc73c87cf30dc6b95393cba97db21768cc1d2dd97",
+      "bytes": 250260,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/fingerprint/shm/lib/du_web_sdk_2.1.2.js": {
+      "file": "s1.hdslb.com/bfs/static/fingerprint/shm/lib/du_web_sdk_2.1.2.js",
+      "mime": "application/javascript",
+      "sha256": "a2a10d8601180effdea5a46f8d2b4faabfa2f126deb069870eba8d08a0e6e7ad",
+      "bytes": 158517,
+      "type": "Script"
+    },
+    "https://search.bilibili.com/zh-Hans/all?keyword=bilibili": {
+      "file": "search.bilibili.com/zh-Hans/all/index.html.__a98342977ed6",
+      "mime": "text/html",
+      "sha256": "d786391b0b20702fa82e7d23d148ae8ebaec23ffc6a50fc49747bb1a56664d7f",
+      "bytes": 300112,
+      "type": "Document"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/laputa-search/assets/index-7b4c9b2c.css": {
+      "file": "s1.hdslb.com/bfs/static/shanks/laputa-search/assets/index-7b4c9b2c.css",
+      "mime": "text/css",
+      "sha256": "7b4c9b2c668aa148206216347a56144c3c515b2ac42d7b086b1cef7a1644ea77",
+      "bytes": 222145,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/static/shanks/laputa-search/assets/index-7b4c9b2c.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/static/shanks/laputa-search/assets/index-7b4c9b2c.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/shanks/laputa-search/assets/index-ac4b081b.js": {
+      "file": "s1.hdslb.com/bfs/static/shanks/laputa-search/assets/index-ac4b081b.js",
+      "mime": "application/javascript",
+      "sha256": "3a9750dd5d199de2ee78552f9e053ad7691a266fc00818959fa88ba2d4e8ecb3",
+      "bytes": 1571120,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/svg-next/font/2024-08-21/BDC-erj847ivanq.css": {
+      "file": "s1.hdslb.com/bfs/svg-next/font/2024-08-21/BDC-erj847ivanq.css",
+      "mime": "text/css",
+      "sha256": "3d772995f673503fa0e4ca200d0fa8c3856c91b856dd41fae033a68d21182e10",
+      "bytes": 47242,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/svg-next/font/2024-08-21/BDC-erj847ivanq.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/svg-next/font/2024-08-21/BDC-erj847ivanq.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/static/2233-monorepo/message-pc/static/css/index.bbda9289.css": {
+      "file": "s1.hdslb.com/bfs/static/2233-monorepo/message-pc/static/css/index.bbda9289.css",
+      "mime": "text/css",
+      "sha256": "825320c53eb2162eb033488d391989bad8e345774c7fd8ab492fea7cdf7b94c1",
+      "bytes": 141779,
+      "type": "Stylesheet",
+      "portableFile": "s1.hdslb.com/bfs/static/2233-monorepo/message-pc/static/css/index.bbda9289.css.portable.css",
+      "webkitFile": "s1.hdslb.com/bfs/static/2233-monorepo/message-pc/static/css/index.bbda9289.css.webkit.css"
+    },
+    "https://s1.hdslb.com/bfs/seed/jinkela/short/unios/web.min.js": {
+      "file": "s1.hdslb.com/bfs/seed/jinkela/short/unios/web.min.js",
+      "mime": "application/javascript",
+      "sha256": "341d107d671b1770d96c77f1fd94050ceb5f02efdedb32a4874a646c1f425974",
+      "bytes": 86251,
+      "type": "Script"
+    },
+    "https://s1.hdslb.com/bfs/static/2233-monorepo/message-pc/static/js/index.f9c057f6.js": {
+      "file": "s1.hdslb.com/bfs/static/2233-monorepo/message-pc/static/js/index.f9c057f6.js",
+      "mime": "application/javascript",
+      "sha256": "7f485400ea2ed4e24b01c0f172c60d53ca2f8ca5dd3c48d1f027b8d1b29b6645",
+      "bytes": 1639473,
+      "type": "Script"
     }
   },
   "pages": {
     "home": "https://www.bilibili.com/zh-Hans",
     "dynamic": "https://t.bilibili.com/zh-Hans",
-    "history": "https://www.bilibili.com/zh-Hans/history"
+    "history": "https://www.bilibili.com/zh-Hans/history",
+    "space": "https://space.bilibili.com/zh-Hans/2",
+    "search": "https://search.bilibili.com/zh-Hans/all?keyword=bilibili"
   }
 }

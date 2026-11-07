@@ -1,6 +1,6 @@
 # Original Bilibili website resources
 
-These are unmodified HTTP response bodies captured from public Bilibili pages and their CDN resources, not replacement page templates. `manifest.json` records the original URLs, MIME types, byte counts and SHA-256 hashes. The source pages are homepage, dynamic feed and history. Rights and trademarks remain with Bilibili and the respective resource authors; the application license does not apply to these copies.
+These are unmodified HTTP response bodies captured from public Bilibili pages and their CDN resources, not replacement page templates. `manifest.json` records the original URLs, MIME types, byte counts and SHA-256 hashes. The source pages are homepage, dynamic feed, history, a public personal space, the message centre (guest view, including its login redirect) and search results. Static files whose response body had been released by the browser are fetched again unchanged from the same public CDN URL. Rights and trademarks remain with Bilibili and the respective resource authors; the application license does not apply to these copies.
 
 `scripts/cache_official_pages.py` captures an isolated guest browser session. `scripts/prepare_web_cache.py` creates separate `.webkit.css` variants that only resolve resource URLs for the native WebKit resource scheme; original bytes remain intact.
 
