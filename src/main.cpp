@@ -623,6 +623,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
         if(l)return HTLEFT;if(rr)return HTRIGHT;if(t)return HTTOP;if(bb)return HTBOTTOM;break;
     }
     case WM_GETMINMAXINFO:{auto p=reinterpret_cast<MINMAXINFO*>(lp);p->ptMinTrackSize={pip?160:480,pip?90:320};return 0;}
+    case dockActionMessage:dockAction(wp,lp);return 0;
     case WM_SIZE:fit();dockLayout();return 0;
     case WM_MOVE:case WM_SHOWWINDOW:case WM_WINDOWPOSCHANGED:dockLayout();break;
     case WM_DPICHANGED:{auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}

@@ -49,7 +49,8 @@ void activateTab(Tab* t){
 }
 void closeTab(Tab* t){
     if(!t||!t->video||t->closed)return;t->closed=true;
-    if(t==activeTab){Tab* next=homeTab;for(auto o:videoTabs())if(o!=t&&o->controller&&(!next||o->used>next->used))next=o;activateTab(next);}
+    // Closing the visible video moves to its neighbour in the dock, like closing a browser tab; home only when no video is left.
+    if(t==activeTab){auto list=videoTabs();Tab* next=homeTab;auto at=std::find(list.begin(),list.end(),t);if(at!=list.end()){if(at+1!=list.end()&&(*(at+1))->controller)next=*(at+1);else if(at!=list.begin()&&(*(at-1))->controller)next=*(at-1);}activateTab(next);}
     if(t->controller){t->controller->Close();t->controller->Release();t->controller=nullptr;}
     if(t->view){t->view->Release();t->view=nullptr;}
     tabs.erase(std::remove(tabs.begin(),tabs.end(),t),tabs.end());delete t;dockSync();
@@ -89,8 +90,9 @@ bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
 bool tabAccelerator(UINT key,COREWEBVIEW2_KEY_EVENT_KIND kind){
     if(!(GetKeyState(VK_CONTROL)&0x8000)||(GetKeyState(VK_MENU)&0x8000)||(GetKeyState(VK_SHIFT)&0x8000))return false;
     if(kind!=COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN&&kind!=COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN)return false;
-    if(key=='T'){if(homeTab)activateTab(homeTab);return true;}
-    if(key>='1'&&key<='9'){auto list=videoTabs();size_t i=key-'1';if(i<list.size()&&list[i]->controller)activateTab(list[i]);return true;}
+    // Ctrl+1 is home and Ctrl+2-9 are the videos in dock order; Ctrl+T also returns home.
+    if(key=='T'||key=='1'){if(homeTab)activateTab(homeTab);return true;}
+    if(key>='2'&&key<='9'){auto list=videoTabs();size_t i=key-'2';if(i<list.size()&&list[i]->controller)activateTab(list[i]);return true;}
     if(key=='W'&&activeTab&&activeTab->video){closeTab(activeTab);return true;}
     return false;
 }
