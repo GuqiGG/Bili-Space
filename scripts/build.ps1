@@ -12,7 +12,7 @@ New-Item -ItemType Directory -Force $env:ZIG_GLOBAL_CACHE_DIR, $env:ZIG_LOCAL_CA
 New-Item -ItemType Directory -Force dist | Out-Null
 & $zig rc /I . /fo .tools/app-icon.res src/app.rc
 if ($LASTEXITCODE) { throw "Icon resource build failed: $LASTEXITCODE" }
-& $zig c++ src/main.cpp .tools/app-icon.res -std=c++20 -O2 -target x86_64-windows-gnu -fms-extensions -municode '-Wl,/subsystem:windows' -DUNICODE -D_UNICODE -DNOMINMAX -Ivendor -I.tools/webview2/build/native/include -lole32 -luser32 -lgdi32 -lshell32 -ldwmapi -luuid -lws2_32 -lwinhttp -lcomdlg32 -lmfplat -lmfreadwrite -lmfuuid -lbcrypt -lcrypt32 -o dist/Bili-Space.exe
+& $zig c++ src/main.cpp .tools/app-icon.res -std=c++20 -O2 -target x86_64-windows-gnu -fms-extensions -municode '-Wl,/subsystem:windows' -DUNICODE -D_UNICODE -DNOMINMAX -Ivendor -I.tools/webview2/build/native/include -lole32 -luser32 -lgdi32 -lshell32 -ldwmapi -luuid -lws2_32 -lwinhttp -lcomdlg32 -lmfplat -lmfreadwrite -lmfuuid -lbcrypt -lcrypt32 -lgdiplus -o dist/Bili-Space.exe
 if ($LASTEXITCODE) { throw "C++ build failed: $LASTEXITCODE" }
 Copy-Item .tools/webview2/build/native/x64/WebView2Loader.dll dist -Force
 Copy-Item assets dist -Recurse -Force
