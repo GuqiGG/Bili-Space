@@ -47,6 +47,7 @@ ICoreWebView2* webview{};
 fs::path root, dataPath;
 bool testing=false, pip=false, full=false,lifecyclePreview=false;
 std::wstring lastClipboardVideo,startupTarget;bool closePending=false;
+bool headerBrandShown=false;
 bool surfaceWaiting=false,surfaceCommitted=false,surfaceDark=true;ULONGLONG surfaceStart{};
 RECT savedRect{},closeRect{};ULONGLONG closeStarted{};
 constexpr UINT trayMessage=WM_APP+71;
@@ -449,7 +450,8 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
     if(!trusted(uri))return;
     try{
         auto m=json::parse(raw);auto type=m.value("type",std::string{});
-        if(type=="community"){communityAction(m);
+        if(type=="header-brand"){auto action=m.value("action",std::string{});if(action=="read")execute(std::string("window.__bsAcceptBrandState?.(")+(headerBrandShown?"true":"false")+")");else if(action=="write"&&m.contains("shown")&&m["shown"].is_boolean())headerBrandShown=m["shown"].get<bool>();
+        }else if(type=="community"){communityAction(m);
         }else if(type=="plugins"){pluginsAction(m);
         }else if(type=="media-state"){windowsMediaAccept(m);
         }else if(type=="updates"){updateAction(m.value("action",std::string{}),m.value("version",std::string{}));

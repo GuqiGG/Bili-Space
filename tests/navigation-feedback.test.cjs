@@ -6,7 +6,7 @@ test('auto-hidden brand slides left before its slot collapses and can be interru
   a.w.Element.prototype.animate=function(frames,options){const motion={frames,options,onfinish:null,cancel(){this.cancelled=true;}};animations.push(motion);return motion;};
   a.w.history.pushState({},'','/history');
   assert.equal(s.querySelector('.brand-label').hidden,false);
-  assert.equal(animations.length,2);assert.equal(animations[1].frames.at(-1).transform,'translateX(-100%)');
+  assert.equal(animations.length,2);assert.equal(animations[0].options.duration,360);assert.equal(animations[0].options.easing,'cubic-bezier(.4,0,.2,1)');assert.equal(animations[1].frames.at(-1).transform,'translateX(-100%)');
   animations[0].onfinish();assert(s.querySelector('.brand-slot').hidden);
   a.w.BiliSpace.update({logoAutoHide:false});assert(!s.querySelector('.brand-slot').hidden);
   a.w.BiliSpace.update({logoAutoHide:true});assert(animations[2].cancelled);

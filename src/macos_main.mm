@@ -14,6 +14,7 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
 @property(nonatomic,strong) NSURL *dataDirectory;
 @property(nonatomic,copy) NSString *renderer;
 @property(nonatomic) BOOL selfTest;
+@property(nonatomic) BOOL headerBrandShown;
 @property(nonatomic,copy) NSString *pendingEvent;
 @property(nonatomic) NSInteger clipboardChange;
 @property(nonatomic,strong) NSURLSession *cacheSession;
@@ -77,6 +78,7 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
  NSDictionary *m=message.body;NSString *type=m[@"type"],*action=m[@"action"];
  if(self.selfTest&&[type isEqualToString:@"media-probe-result"]){fprintf(stdout,"macOS media decode self-test: %s\n",[JSONString(m) UTF8String]);exit([m[@"ok"] boolValue]?0:1);}
  if([type isEqualToString:@"config"]&&[m[@"value"] isKindOfClass:NSDictionary.class]){[self.state[@"config"] addEntriesFromDictionary:m[@"value"]];[self save];[self appearance];}
+ else if([type isEqualToString:@"header-brand"]){if([action isEqualToString:@"read"])[self runJS:[NSString stringWithFormat:@"window.__bsAcceptBrandState?.(%@)",self.headerBrandShown?@"true":@"false"]];else if([action isEqualToString:@"write"]&&[m[@"shown"] isKindOfClass:NSNumber.class])self.headerBrandShown=[m[@"shown"] boolValue];}
  else if([type isEqualToString:@"gm-set"]&&[m[@"key"] isKindOfClass:NSString.class]){self.state[@"gm"][m[@"key"]]=m[@"value"]?:NSNull.null;[self save];}
  else if([type isEqualToString:@"navigate"]){NSURL *url=[NSURL URLWithString:m[@"url"]];if(BiliURL(url))[self.web loadRequest:[NSURLRequest requestWithURL:url]];}
  else if([type isEqualToString:@"open-external"]){NSURL *url=[NSURL URLWithString:m[@"url"]];if([url.scheme isEqualToString:@"https"])[NSWorkspace.sharedWorkspace openURL:url];}

@@ -25,7 +25,7 @@ class App(Gtk.Application):
         self.directory.mkdir(parents=True,exist_ok=True,mode=0o700);self.directory.chmod(0o700)
         self.state=self.read(self.directory/'state.json');defaults=self.read(self.resources/'defaults.json');defaults.update(self.state.get('config',{}));self.state['config']=defaults
         self.state.setdefault('gm',{});self.state.setdefault('profiles',[])
-        self.pending_add=None
+        self.header_brand_shown=False;self.pending_add=None
         if self.state.get('pendingAccountID'):self.state['activeID']=self.state.pop('pendingAccountID')
         self.renderer=(self.resources/'renderer.js').read_text(encoding='utf-8');self.web=None;self.pending='';self.popups=[]
         self.frame_policy_seen=False;self.last_clipboard='';self.connect('activate',self.activate)
@@ -199,6 +199,9 @@ class App(Gtk.Application):
             if not trusted(self.web.get_uri()) and not(self.testing and urlparse(self.web.get_uri()).scheme=='bili-space'):return
             m=wrapper['message'];kind=m.get('type');action=m.get('action')
             if kind=='config' and isinstance(m.get('value'),dict):self.state['config'].update(m['value']);self.save()
+            elif kind=='header-brand':
+                if action=='read':self.js('window.__bsAcceptBrandState?.('+json.dumps(self.header_brand_shown)+')')
+                elif action=='write' and isinstance(m.get('shown'),bool):self.header_brand_shown=m['shown']
             elif kind=='gm-set':self.state['gm'][m['key']]=m.get('value');self.save()
             elif kind=='media-probe-result' and self.testing:print('Linux media decode self-test:',json.dumps(m),flush=True);os._exit(0 if m.get('ok') else 1)
             elif kind=='accounts':self.accounts(m)

@@ -95,18 +95,21 @@ function applyHeaderPreferences(){
   $$('#header-categories a',shadow).forEach((a,i)=>a.hidden=!PREFS.categorySelection.includes(i));
   let empty=$('.category-empty',shadow);if(!empty){empty=document.createElement('button');empty.type='button';empty.className='category-empty';empty.textContent='未选择分区 · 前往设置';empty.onclick=()=>{openSettings();currentTab='categories';renderSettings();};$('#header-categories',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;
 }
-let brandMotion=[],brandShown;
+let brandMotion=[],brandShown,brandStateRequested=false;
 function syncHeaderBrand(){
   const slot=$('.brand-slot',shadow),label=$('.brand-label',shadow);if(!slot||!label)return;
+  if(brandShown===undefined&&typeof RUNTIME!=='undefined'&&!brandStateRequested){brandStateRequested=true;slot.hidden=true;label.hidden=true;let fallback;window.__bsAcceptBrandState=previous=>{if(brandShown!==undefined)return;clearTimeout(fallback);brandShown=typeof previous==='boolean'?previous:false;syncHeaderBrand();};fallback=setTimeout(()=>window.__bsAcceptBrandState(false),150);native('header-brand',{action:'read'});return;}
+  if(brandShown===undefined&&brandStateRequested)return;
   const show=!!PREFS.headerBrand&&(!PREFS.logoAutoHide||pageKind()==='home');if(brandShown===show)return;
-  const initial=brandShown===undefined;brandShown=show;
+  const initial=brandShown===undefined;brandShown=show;native('header-brand',{action:'write',shown:show});
+  const continuing=brandMotion.length>0,previousTransform=getComputedStyle(label).transform||'none',previousMargin=getComputedStyle(slot).marginRight;
   const previousWidth=slot.getBoundingClientRect().width;brandMotion.forEach(a=>{a.onfinish=null;a.cancel();});brandMotion=[];
   slot.hidden=false;label.hidden=false;const width=label.getBoundingClientRect().width||label.scrollWidth;
   const finish=()=>{slot.hidden=!show;label.hidden=!show;brandMotion.forEach(a=>{a.onfinish=null;a.cancel();});brandMotion=[];};
-  if(!PREFS.headerBrand||!slot.animate||matchMedia('(prefers-reduced-motion: reduce)').matches||(initial&&show)){finish();return;}
-  const gap=parseFloat(getComputedStyle(slot.parentElement).columnGap)||16,options={duration:180,easing:'cubic-bezier(.23,1,.32,1)',fill:'forwards'};
-  const size=slot.animate([{width:(initial?(show?0:width):previousWidth)+'px',marginRight:(show?-gap:0)+'px'},{width:(show?width:0)+'px',marginRight:(show?0:-gap)+'px'}],options);
-  const text=label.animate([{transform:show?'translateX(-100%)':'translateX(0)'},{transform:show?'translateX(0)':'translateX(-100%)'}],options);
+  if(!slot.animate||matchMedia('(prefers-reduced-motion: reduce)').matches||(initial&&show)){finish();return;}
+  const gap=parseFloat(getComputedStyle(slot.parentElement).columnGap)||16,options={duration:360,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'};
+  const size=slot.animate([{width:(initial?(show?0:width):(previousWidth||(!show?width:0)))+'px',marginRight:continuing?previousMargin:(show?-gap:0)+'px'},{width:(show?width:0)+'px',marginRight:(show?0:-gap)+'px'}],options);
+  const text=label.animate([{transform:continuing?previousTransform:(show?'translateX(-100%)':'translateX(0)')},{transform:show?'translateX(0)':'translateX(-100%)'}],options);
   brandMotion=[size,text];size.onfinish=finish;
 }
 function updateHeaderClock(){if(!shadow)return;const clock=$('.header-clock',shadow);if(!clock)return;clock.hidden=!PREFS.showClock;if(clock.hidden){clock.textContent='';return;}const now=new Date();clock.textContent=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:false});clock.dateTime=now.toISOString();clock.title=now.toLocaleString();}
@@ -1786,7 +1789,7 @@ function boot(){
     },
     setFullscreen(on){fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
     emitPipDanmaku(items,time){for(const item of items)pipDanmaku.emit(item,time);},
-    get state(){return {pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
+    get state(){return {headerBrand:{shown:brandShown,moving:brandMotion.length>0},pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
   };
   const route44=()=>({url:currentVideoLink(),title:$('.video-title,h1')?.textContent||document.title});
   window.BiliDesktop44?.install({native,getVideo:playbackVideo,getRoute:route44,getAccountId:()=>String(accountProfile?.mid||''),wbiQuery:downloadWbiQuery,chooseStreams:chooseDownloadStreams});
