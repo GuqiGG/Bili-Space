@@ -10,7 +10,7 @@ std::string entry(const std::string& url){
  std::string clean=url.substr(0,url.find_first_of("?#")),route;
  if(clean=="https://www.bilibili.com/"||clean=="https://www.bilibili.com/zh-Hans"||clean=="https://www.bilibili.com/zh-Hans/")route="home";
  else if(clean=="https://t.bilibili.com/"||clean=="https://t.bilibili.com/zh-Hans"||clean=="https://t.bilibili.com/zh-Hans/")route="dynamic";
- else if(clean=="https://www.bilibili.com/account/history"||clean=="https://www.bilibili.com/zh-Hans/history")route="history";
+ else if(clean=="https://www.bilibili.com/history"||clean=="https://www.bilibili.com/account/history"||clean=="https://www.bilibili.com/zh-Hans/history")route="history";
  if(!route.empty()&&manifest.contains("pages"))return manifest["pages"].value(route,std::string{});return {};
 }
 bool serve(ICoreWebView2WebResourceRequestedEventArgs* args,ICoreWebView2Environment* env){
@@ -18,7 +18,7 @@ bool serve(ICoreWebView2WebResourceRequestedEventArgs* args,ICoreWebView2Environ
  COREWEBVIEW2_WEB_RESOURCE_CONTEXT context{};args->get_ResourceContext(&context);if(record.value("type",std::string{})=="Document")return false;
  auto bytes=read(root/L"assets/web-copy"/wide(relative));if(bytes.empty())return false;IStream* stream{};if(FAILED(CreateStreamOnHGlobal(nullptr,TRUE,&stream)))return false;ULONG written{};stream->Write(bytes.data(),ULONG(bytes.size()),&written);LARGE_INTEGER zero{};stream->Seek(zero,STREAM_SEEK_SET,nullptr);ICoreWebView2WebResourceResponse* response{};auto headers=wide("Content-Type: "+record.value("mime",std::string("application/octet-stream"))+"\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-cache\r\n");auto hr=env->CreateWebResourceResponse(stream,200,L"OK",headers.c_str(),&response);stream->Release();if(SUCCEEDED(hr)){args->put_Response(response);response->Release();return true;}return false;
 }
-bool page(const std::string& uri){auto clean=uri.substr(0,uri.find_first_of("?#"));return clean=="https://www.bilibili.com/"||clean=="https://www.bilibili.com/zh-Hans"||clean=="https://www.bilibili.com/zh-Hans/"||clean=="https://t.bilibili.com/"||clean=="https://t.bilibili.com/zh-Hans"||clean=="https://www.bilibili.com/account/history"||clean=="https://www.bilibili.com/zh-Hans/history";}
+bool page(const std::string& uri){auto clean=uri.substr(0,uri.find_first_of("?#"));return clean=="https://www.bilibili.com/"||clean=="https://www.bilibili.com/zh-Hans"||clean=="https://www.bilibili.com/zh-Hans/"||clean=="https://t.bilibili.com/"||clean=="https://t.bilibili.com/zh-Hans"||clean=="https://www.bilibili.com/history"||clean=="https://www.bilibili.com/account/history"||clean=="https://www.bilibili.com/zh-Hans/history";}
 fs::path cachePath(const std::string& uri,const std::string& scope){UpdateHash hash;hash.start();hash.add(uri.data(),DWORD(uri.size()));return dataPath/L"web-cache"/wide(scope)/wide(hash.finish()+".html");}
 void handle(ICoreWebView2WebResourceRequestedEventArgs* args,ICoreWebView2Environment* env){
  if(serve(args,env))return;COREWEBVIEW2_WEB_RESOURCE_CONTEXT context{};args->get_ResourceContext(&context);if(context!=COREWEBVIEW2_WEB_RESOURCE_CONTEXT_DOCUMENT)return;

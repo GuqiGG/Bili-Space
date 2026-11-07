@@ -10,6 +10,8 @@ for url,item in manifest['resources'].items():
     data=(ROOT/'assets/web-copy'/item['file']).read_bytes()
     assert hashlib.sha256(data).hexdigest()==item['sha256'],url
     assert len(data)==item['bytes'],url
+assert is_page('https://www.bilibili.com/history')
+assert is_page('https://www.bilibili.com/history?from=header')
 assert not is_page('https://www.bilibili.com/video/BV123')
 assert not is_page('https://evil.test/?url=https://www.bilibili.com/')
 with tempfile.TemporaryDirectory() as directory:
