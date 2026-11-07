@@ -16,7 +16,7 @@ constexpr float ITEM=44,PAD=8,GAP=8,RADIUS=20,INNER=12,MARGIN=26,TIP=300,OFFSET=
 // ---- everything below runs on the dock thread ----
 // A damped spring: interruptible because it carries velocity; under-damped values give the small bounce.
 struct Spring{float value=0,velocity=0;bool step(float target,float dt,float stiffness,float damping){float a=stiffness*(target-value)-damping*velocity;velocity+=a*dt;value+=velocity*dt;if(std::fabs(target-value)<.0008f&&std::fabs(velocity)<.01f){value=target;velocity=0;return false;}return true;}};
-struct Item{Entry entry;Spring y,scale{.5f,0};float alpha=0,white=0,hover=0;bool placed=false,fetching=false;std::unique_ptr<Bitmap> image;std::string imageFor;};
+struct Item{Entry entry;Spring y,scale{.5f,0};float alpha=0,white=0,hover=0;bool placed=false,fetching=false,leaving=false;std::unique_ptr<Bitmap> image;std::string imageFor;};
 struct CoverReply{uintptr_t id;std::string cover,bytes;};
 ULONG_PTR gdiplusToken{};State view;std::vector<std::unique_ptr<Item>> items;Spring pill,homeScale{1,0};float shown=0,homeShown=0,tipAlpha=0,pillHeight=PAD*2+ITEM;
 int hovered=-2,pressed=-2;bool closeHovered=false,tracking=false,animating=false,outside=true;ULONGLONG lastFrame=0;std::string tipText;std::unique_ptr<GraphicsPath> homeGlyph;
@@ -73,7 +73,8 @@ void acceptCover(CoverReply* reply){
         item->image=std::move(square);item->imageFor=reply->cover;kick();return;}
 }
 float approach(float value,float target,float dt,float tau=.075f){return value+(target-value)*(1-std::exp(-dt/tau));}
-float contentHeight(){float h=PAD*2+homeShown*(ITEM+GAP);if(!items.empty())h+=items.size()*ITEM+(items.size()-1)*GAP;else h=std::max(h-GAP*homeShown,PAD*2+ITEM);return h;}
+size_t liveCount(){size_t n=0;for(auto& it:items)if(!it->leaving)++n;return n;}
+float contentHeight(){float h=PAD*2+homeShown*(ITEM+GAP);size_t n=liveCount();if(n)h+=n*ITEM+(n-1)*GAP;if(!n)h=std::max(h-GAP*homeShown,PAD*2+ITEM);return h;}
 void ensureCanvas(int w,int h){
     if(canvasDc&&w==canvasW&&h==canvasH)return;
     if(canvasDc){SelectObject(canvasDc,canvasPrevious);DeleteObject(canvasBitmap);DeleteDC(canvasDc);}
@@ -100,9 +101,13 @@ void paint(){
                 float size=ITEM*s*tileScale,cx=px+pw/2,x=cx-size/2,y=py+cy*s+(ITEM*s-size)/2;RectF box(x,y,size,size);if(alpha<.01f)return box;
                 softShadow(g,x,y,size,size,INNER*s*tileScale,alpha*(active?1.5f:.75f),(active?9:5)*s);
                 GraphicsPath tilePath;rounded(tilePath,x,y,size,size,INNER*s*tileScale);
-                if(isHome){SolidBrush b(dark?Color(BYTE(alpha*255),50,50,56):Color(BYTE(alpha*255),238,238,242));g.FillPath(&b,&tilePath);
-                    if(homeGlyph){Matrix m;float glyph=size*.5f,u=glyph/32.f;m.Translate(x+(size-glyph)/2+4.5f*u,y+(size-glyph)/2);m.Scale(u,u);GraphicsPath copy;copy.AddPath(homeGlyph.get(),FALSE);copy.Transform(&m);
-                        SolidBrush ink(dark?Color(BYTE(alpha*240),240,240,244):Color(BYTE(alpha*240),36,36,42));g.FillPath(&ink,&copy);}
+                if(isHome){const Color pink(BYTE(alpha*255),251,114,153);SolidBrush b(pink);g.FillPath(&b,&tilePath);
+                    // Bilibili's television (viewBox 32): antenna, rounded body, and eyes cut back to the tile colour.
+                    float glyph=size*.56f,u=glyph/32.f,ox=x+(size-glyph)/2,oy=y+(size-glyph)/2+.5f*u;
+                    Pen antenna(Color(BYTE(alpha*255),255,255,255),3*u);antenna.SetStartCap(LineCapRound);antenna.SetEndCap(LineCapRound);antenna.SetLineJoin(LineJoinRound);
+                    PointF ear[]={{ox+10*u,oy+3*u},{ox+16*u,oy+8*u},{ox+22*u,oy+3*u}};g.DrawLines(&antenna,ear,3);
+                    GraphicsPath body;rounded(body,ox+3*u,oy+8*u,26*u,21*u,6*u);SolidBrush white(Color(BYTE(alpha*255),255,255,255));g.FillPath(&white,&body);
+                    Pen eye(pink,3*u);eye.SetStartCap(LineCapRound);eye.SetEndCap(LineCapRound);g.DrawLine(&eye,ox+10*u,oy+16*u,ox+10*u,oy+21*u);g.DrawLine(&eye,ox+22*u,oy+16*u,ox+22*u,oy+21*u);
                 }else if(image){
                     // A texture-filled rounded path keeps the cover edge anti-aliased (clip regions are not).
                     ImageAttributes ia;ColorMatrix cm={{{1,0,0,0,0},{0,1,0,0,0},{0,0,1,0,0},{0,0,0,alpha,0},{0,0,0,0,1}}};ia.SetColorMatrix(&cm);
@@ -144,7 +149,9 @@ void step(){
         // Dock-style magnification: the hovered tile swells and its neighbours lean in a little.
         float lift=0;if(hovered>=0){int d=std::abs(int(i)-hovered);lift=d==0?.16f:d==1?.05f:0.f;}
         float target=(it.entry.active?1.08f:1.f)+lift;if(int(i)==pressed)target=.94f;
+        if(it.leaving){bounce(it.scale,.55f);move(it.alpha,0.f,.06f);move(it.hover,0.f,.05f);move(it.white,0.f,.06f);continue;}
         glide(it.y,y);bounce(it.scale,target);move(it.alpha,1.f,.07f);move(it.white,it.entry.active?1.f:0.f,.08f);move(it.hover,int(i)==hovered?1.f:0.f,.06f);y+=ITEM+GAP;}
+    for(size_t i=items.size();i-->0;)if(items[i]->leaving&&items[i]->alpha<.02f){items.erase(items.begin()+i);if(hovered>=int(i))hovered=hovered==int(i)?-2:hovered-1;}
     glide(pill,contentHeight());pillHeight=std::max(PAD*2+ITEM*.5f,pill.value);move(tipAlpha,hovered>=0?1.f:0.f,.05f);
     paint();if(!moving){animating=false;KillTimer(window,1);lastFrame=0;}
 }
@@ -153,7 +160,9 @@ void acceptState(){
     {std::lock_guard<std::mutex> guard(stateLock);view=latest;}
     std::vector<std::unique_ptr<Item>> next;
     for(auto& e:view.entries){std::unique_ptr<Item> item;for(auto& old:items)if(old&&old->entry.id==e.id){item=std::move(old);break;}
-        if(!item)item=std::make_unique<Item>();bool coverChanged=item->entry.cover!=e.cover;item->entry=e;if(coverChanged){item->fetching=false;fetchCover(*item);}next.push_back(std::move(item));}
+        if(!item)item=std::make_unique<Item>();bool coverChanged=item->entry.cover!=e.cover;item->entry=e;item->leaving=false;if(coverChanged){item->fetching=false;fetchCover(*item);}next.push_back(std::move(item));}
+    // Closed videos stay in place as leaving tiles so they can shrink away instead of vanishing.
+    for(size_t i=0;i<items.size();++i)if(items[i]){items[i]->leaving=true;items[i]->entry.active=false;next.insert(next.begin()+std::min(i,next.size()),std::move(items[i]));}
     items=std::move(next);if(hovered>=int(items.size()))hovered=-2;if(hovered>=0)tipText=items[hovered]->entry.title;kick();
 }
 int hit(POINT p,bool* onClose){
@@ -162,7 +171,7 @@ int hit(POINT p,bool* onClose){
     if(onClose&&hovered>=0&&hovered<int(items.size())){auto& it=*items[hovered];float size=ITEM*s*it.scale.value,top=it.y.value*s+(ITEM*s-size)/2,rad=CLOSE*s,cx=geo.pw/2+size/2-rad*.3f,cy=top+rad*.3f;if((lx-cx)*(lx-cx)+(ly-cy)*(ly-cy)<=rad*rad*1.3f){*onClose=true;return hovered;}}
     if(lx<0||lx>geo.pw||ly<0||ly>pillHeight*s)return -3;
     if(homeShown>.5f&&ly>=PAD*s&&ly<=(PAD+ITEM)*s)return -1;
-    for(size_t i=0;i<items.size();++i){float top=items[i]->y.value*s;if(ly>=top-GAP*s/2&&ly<=top+ITEM*s+GAP*s/2)return int(i);}
+    for(size_t i=0;i<items.size();++i){if(items[i]->leaving)continue;float top=items[i]->y.value*s;if(ly>=top-GAP*s/2&&ly<=top+ITEM*s+GAP*s/2)return int(i);}
     return -2;
 }
 void act(WPARAM action,uintptr_t id){PostMessageW(windowHandle,dockActionMessage,action,LPARAM(id));}

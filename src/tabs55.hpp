@@ -40,7 +40,8 @@ void activateTab(Tab* t){
     Tab* old=activeTab;activeTab=t;t->used=++tabClock;webview=t->view;controller=t->controller;viewScopeActive=true;
     tabMemory(t,false);fit();t->controller->put_IsVisible(TRUE);
     if(old&&old->controller&&!old->closed){
-        old->view->ExecuteScript(L"document.querySelectorAll('video,audio').forEach(m=>{try{m.pause()}catch{}});window.BiliSpace?.tabHidden?.()",nullptr);
+        // The page remembers what was playing so switching back resumes it.
+        old->view->ExecuteScript(L"window.BiliSpace?.tabHidden?window.BiliSpace.tabHidden():document.querySelectorAll('video,audio').forEach(m=>{try{m.pause()}catch{}})",nullptr);
         old->controller->put_IsVisible(FALSE);tabMemory(old,true);
     }
     pushNavigationState();execute("window.BiliSpace?.tabShown?.()");
@@ -90,9 +91,9 @@ bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
 bool tabAccelerator(UINT key,COREWEBVIEW2_KEY_EVENT_KIND kind){
     if(!(GetKeyState(VK_CONTROL)&0x8000)||(GetKeyState(VK_MENU)&0x8000)||(GetKeyState(VK_SHIFT)&0x8000))return false;
     if(kind!=COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN&&kind!=COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN)return false;
-    // Ctrl+1 is home and Ctrl+2-9 are the videos in dock order; Ctrl+T also returns home.
-    if(key=='T'||key=='1'){if(homeTab)activateTab(homeTab);return true;}
-    if(key>='2'&&key<='9'){auto list=videoTabs();size_t i=key-'2';if(i<list.size()&&list[i]->controller)activateTab(list[i]);return true;}
+    // Ctrl+1-9 are the videos in dock order; Ctrl+T returns home.
+    if(key=='T'){if(homeTab)activateTab(homeTab);return true;}
+    if(key>='1'&&key<='9'){auto list=videoTabs();size_t i=key-'1';if(i<list.size()&&list[i]->controller)activateTab(list[i]);return true;}
     if(key=='W'&&activeTab&&activeTab->video){closeTab(activeTab);return true;}
     return false;
 }

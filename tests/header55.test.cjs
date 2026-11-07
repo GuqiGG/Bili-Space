@@ -4,7 +4,7 @@ test('the current nav item carries a refresh icon and label without changing its
  const a=app();try{const s=a.w.document.querySelector('#bili-space-root').shadowRoot,home=s.querySelector('.primary-nav a[data-route=home]'),dynamic=s.querySelector('.primary-nav a[data-route=dynamic]');
   assert.equal(home.textContent,'首页');assert(home.querySelector('.route-text'));assert(home.querySelector('svg.route-refresh'));
   assert.equal(home.getAttribute('aria-current'),'page');assert.equal(home.getAttribute('aria-label'),'刷新首页');assert.equal(dynamic.getAttribute('aria-label'),null);
-  const css=s.querySelector('style').textContent;assert.match(css,/@media\(hover:hover\)\{\.primary-nav a\[aria-current=page\]:hover \.route-text\{opacity:0/);
+  const css=s.querySelector('style').textContent;assert.match(css,/@media\(hover:hover\)\{\.header-left:not\(\[data-settling\]\) \.primary-nav a\[aria-current=page\]:hover \.route-text\{opacity:0/);
  }finally{a.close();}
 });
 
