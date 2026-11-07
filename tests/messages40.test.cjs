@@ -16,3 +16,14 @@ test('malformed/negative counts cannot inject content or inflate badge',async()=
 test('switching accounts ignores late replies from the old account',async()=>{const a=await setup({like:1},{});try{const pending=[];a.w.fetch=async()=>new Promise(resolve=>pending.push(resolve));const old=a.w.BiliSpace.refreshMessageUnread(true);a.w.fetch=async url=>({ok:true,json:async()=>({code:0,data:String(url).includes('unread')?{reply:2}:{isLogin:true,mid:4321,uname:'new',face:'https://i0.hdslb.com/bfs/face/new.png'}})});await a.w.BiliSpace.refreshAccount(true);await wait();for(const resolve of pending)resolve({ok:true,json:async()=>({code:0,data:{like:99,follow_unread:99}})});await old;assert.equal(a.badge().textContent,'2');}finally{a.close();}});
 test('an official unauthenticated response clears the badge without writing read state',async()=>{const a=await setup({like:3},{});try{a.w.fetch=async()=>({ok:true,json:async()=>({code:-101})});await a.w.BiliSpace.refreshMessageUnread(true);assert.equal(a.badge().hidden,true);}finally{a.close();}});
 test('turning the message button back on refreshes unread counts immediately',async()=>{const a=await setup({like:5},{},{headerMessages:false});try{a.w.BiliSpace.update({headerMessages:true});await wait();assert.equal(a.badge().textContent,'5');}finally{a.close();}});
+test('hover menu lists each message type: counts for replies, mentions and likes, dots for system and private messages',async()=>{const a=await setup({reply:3,at:1,like:12,sys_msg:2},{follow_unread:1});try{
+ const menu=a.s.querySelector('#messages-menu'),items=[...menu.querySelectorAll('.messages-item')];
+ assert.deepEqual(items.map(i=>i.querySelector('span').textContent),['回复我的','@我的','收到的赞','系统消息','我的消息']);
+ assert.deepEqual(items.map(i=>i.getAttribute('href')),['reply','at','love','system','whisper'].map(k=>'https://message.bilibili.com/#/'+k));
+ const badge=i=>items[i].querySelector('.messages-count');
+ assert.deepEqual([0,1,2].map(i=>[badge(i).dataset.kind,badge(i).textContent,badge(i).hidden]),[['count','3',false],['count','1',false],['count','12',false]]);
+ assert.deepEqual([3,4].map(i=>[badge(i).dataset.kind,badge(i).textContent,badge(i).hidden]),[['dot','',false],['dot','',false]]);
+ a.link().dispatchEvent(new a.w.Event('pointerenter'));await new Promise(r=>setTimeout(r,120));assert.equal(menu.hidden,false);assert.equal(a.link().getAttribute('aria-expanded'),'true');
+ menu.dispatchEvent(new a.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(menu.hidden,true);
+ a.set({},{});await a.w.BiliSpace.refreshMessageUnread(true);assert(items.every(i=>i.querySelector('.messages-count').hidden));
+}finally{a.close();}});

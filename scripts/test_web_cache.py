@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory() as directory:
     a=WebCache(ROOT,Path(directory)/'a');b=WebCache(ROOT,Path(directory)/'b');url='https://www.bilibili.com/'
     html=b'<html><body>original account A</body></html>'
     a.store(url,html);assert a.get(url)==html.decode();assert b.get(url) is None
-    os.utime(a.path(url),(time.time()-86401,)*2);assert a.get(url) is None
+    os.utime(a.path(url),(time.time()-30*86400-1,)*2);assert a.get(url) is None
     a.store(url,b'not HTML');assert a.get(url) is None
     static=next(u for u,v in manifest['resources'].items() if v['type']=='Stylesheet')
     rewritten=a.offline('<html><link href="'+static+'"></html>')

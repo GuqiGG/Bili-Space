@@ -2,6 +2,8 @@
 import hashlib,json,time
 from pathlib import Path
 from urllib.parse import urlparse,quote
+# A local copy opens instantly for up to 30 days; the page refetches it in the background after each visit.
+MAX_AGE=30*86400
 
 def is_page(uri):
     u=urlparse(uri or '');path=u.path.rstrip('/')
@@ -17,7 +19,7 @@ class WebCache:
         if not is_page(uri):return None
         try:
             p=self.path(uri)
-            return p.read_text(encoding='utf-8') if time.time()-p.stat().st_mtime<86400 else None
+            return p.read_text(encoding='utf-8') if time.time()-p.stat().st_mtime<MAX_AGE else None
         except (OSError,UnicodeError):return None
     def store(self,uri,data):
         if not is_page(uri) or len(data)>8*1024*1024 or b'<html' not in data.lower():return
