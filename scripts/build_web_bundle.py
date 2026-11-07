@@ -24,7 +24,7 @@ window.__bsPaintReady=()=>window.chrome.webview.postMessage({type:'surface-ready
     chunks += [(assets / 'bridge.js').read_text(encoding='utf-8')]
     chunks += ["if(INITIAL.btr){(()=>{"+(assets/'btr.user.js').read_text(encoding='utf-8')+'})();}']
     chunks += ["if(location.hostname==='www.bilibili.com'){(()=>{"+(assets/'blocker.home.user.js').read_text(encoding='utf-8')+'})();}']
-    chunks += [(assets/name).read_text(encoding='utf-8') for name in ['desktop44.js','community44.js','plugins.js','transition51.js','accounts50.js','favorites49.js','enhance.js','media-probe.js']]
+    chunks += [(assets/name).read_text(encoding='utf-8') for name in ['desktop44.js','community44.js','plugins.js','accounts50.js','favorites49.js','enhance.js','media-probe.js']]
     chunks += ['})();']
     bundle = '\n'.join(chunks).replace('https://bili-space.local/', 'bili-space://assets/')
     (destination / 'renderer.js').write_text(bundle, encoding='utf-8')

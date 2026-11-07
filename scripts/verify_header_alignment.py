@@ -29,7 +29,7 @@ async def main():
             report={}
             for theme in ['dark','light']:
                 await c.js('BiliSpace.update('+json.dumps({'theme':theme,'headerBrand':True,'logoAutoHide':False})+')');await asyncio.sleep(.5)
-                await c.js("(async()=>{await document.fonts.ready;TransitionManager.cancel();chrome.webview.postMessage({type:'transition',action:'cancel'});return true})()")
+                await c.js("(async()=>{await document.fonts.ready;return true})()")
                 value=await c.js("""(()=>{const s=document.querySelector('#bili-space-root').shadowRoot,r=e=>{if(!e)return null;const b=e.getBoundingClientRect();return {x:b.x,y:b.y,w:b.width,h:b.height,cy:b.y+b.height/2}};return {header:Object.fromEntries(['.brand-label','.primary-nav a','.favorites','.messages','.account','.favorites svg','.messages svg','.account-face'].map(k=>[k,r(s.querySelector(k))])),roll:[...document.querySelectorAll('.roll-btn,.feed-roll-btn')].map(e=>({class:e.className,border:getComputedStyle(e).borderColor,shadow:getComputedStyle(e).boxShadow}))}})()""")
                 report[theme]=value;await c.shot('header-align-'+theme+'.png')
                 values=list(value['header'].values());assert all(values),value
