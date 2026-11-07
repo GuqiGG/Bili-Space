@@ -1,7 +1,7 @@
 #pragma once
 // Video pages open as their own native WebView next to the single home view. Only the active view is
 // visible; a view that is switched away from pauses its media, is suspended and asks for low memory.
-struct Tab{ICoreWebView2Controller* controller{};ICoreWebView2* view{};bool video=false,closed=false,suspended=false;std::wstring url,key,injectionId;std::string title,cover;unsigned long long used=0,order=0;};
+struct Tab{ICoreWebView2Controller* controller{};ICoreWebView2* view{};Tab* opener{};bool video=false,closed=false,suspended=false,pendingShow=false;std::wstring url,key,injectionId;std::string title,cover;unsigned long long used=0,order=0;};
 std::vector<Tab*> tabs;Tab* homeTab{};Tab* activeTab{};unsigned long long tabClock=0;bool viewScopeActive=true;
 constexpr size_t maxVideoTabs=9;
 void fit();void applyZoom();std::string script();void wireView(ICoreWebView2Controller*,ICoreWebView2*,ICoreWebView2Environment*);
@@ -50,17 +50,25 @@ void activateTab(Tab* t){
 }
 void closeTab(Tab* t){
     if(!t||!t->video||t->closed)return;t->closed=true;
-    // Closing the visible video moves to its neighbour in the dock, like closing a browser tab; home only when no video is left.
-    if(t==activeTab){auto list=videoTabs();Tab* next=homeTab;auto at=std::find(list.begin(),list.end(),t);if(at!=list.end()){if(at+1!=list.end()&&(*(at+1))->controller)next=*(at+1);else if(at!=list.begin()&&(*(at-1))->controller)next=*(at-1);}activateTab(next);}
+    // Closing the visible video returns to the video watched before it; home only when no other video is open.
+    if(t==activeTab){Tab* next=nullptr;for(auto o:videoTabs())if(o!=t&&o->controller&&(!next||o->used>next->used))next=o;activateTab(next?next:homeTab);}
     if(t->controller){t->controller->Close();t->controller->Release();t->controller=nullptr;}
     if(t->view){t->view->Release();t->view=nullptr;}
     tabs.erase(std::remove(tabs.begin(),tabs.end(),t),tabs.end());delete t;dockSync();
 }
-void openVideoTab(const std::wstring& uri,const std::wstring& key){
+constexpr UINT_PTR pendingRevealTimer=7755;
+// A new video view loads hidden while the page that opened it keeps its loading animation, then takes over once ready.
+void revealPendingTab(Tab* t){
+    if(!t||!t->pendingShow||t->closed||!t->controller)return;t->pendingShow=false;Tab* from=activeTab;
+    if(from&&from!=t->opener&&from!=t)return;
+    activateTab(t);if(from&&from->view)cancelNavigationFeedback(from->view);
+}
+void revealPendingTabs(){for(auto t:videoTabs())revealPendingTab(t);}
+void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nullptr){
     for(auto t:videoTabs())if(t->key==key){if(t->controller)activateTab(t);return;}
     auto list=videoTabs();
     if(list.size()>=maxVideoTabs){Tab* oldest{};for(auto t:list)if(t!=activeTab&&(!oldest||t->used<oldest->used))oldest=t;closeTab(oldest);}
-    auto t=new Tab;t->video=true;t->url=uri;t->key=key;t->order=++tabClock;t->used=t->order;tabs.push_back(t);dockSync();
+    auto t=new Tab;t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;tabs.push_back(t);dockSync();
     if(!authEnvironment50){closeTab(t);return;}
     auto env=authEnvironment50;
     auto created=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([t,env](HRESULT hr,ICoreWebView2Controller* c){
@@ -71,7 +79,7 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key){
         wireView(c,t->view,env);
         auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([t](HRESULT hr,LPCWSTR id){if(std::find(tabs.begin(),tabs.end(),t)==tabs.end()||!t->view)return S_OK;if(SUCCEEDED(hr)&&id)t->injectionId=id;t->view->Navigate(t->url.c_str());return S_OK;});
         t->view->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();
-        activateTab(t);log("video view opened");return S_OK;
+        RECT rc{};GetClientRect(windowHandle,&rc);c->put_Bounds(rc);t->pendingShow=true;SetTimer(windowHandle,pendingRevealTimer,8000,nullptr);log("video view opened");return S_OK;
     });
     env->CreateCoreWebView2Controller(windowHandle,created);created->Release();
 }
@@ -83,7 +91,7 @@ bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
     if(!key.empty()){
         if(from->video&&from->key==key)return false;
         if(from==homeTab){LPWSTR source{};homeTab->view->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"https://",0)!=0)return false;}
-        cancelNavigationFeedback(sender);openVideoTab(uri,key);return true;
+        sender->ExecuteScript(wide("window.BiliSpace?.beginVideoLoading?.("+json(utf8(uri)).dump()+")").c_str(),nullptr);openVideoTab(uri,key,from);return true;
     }
     if(from->video&&homeDestination(uri)){cancelNavigationFeedback(sender);homeTab->view->Navigate(uri.c_str());activateTab(homeTab);return true;}
     return false;

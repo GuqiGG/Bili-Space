@@ -1862,7 +1862,10 @@ function startPagePending(){
   window.addEventListener('pagehide',()=>clearTimeout(pagePendingTimer),{once:true});
 }
 /* The header grows in small windows and the gain eases off as the window widens: 1240px gives about 20%, 2000px about 8%, 2560px about 5%. */
-function applyUiScale(){const html=document.documentElement;if(!html)return;const width=Math.max(320,innerWidth||1240),scale=Math.round(Math.min(1.28,Math.max(1,1+.2*Math.pow(1240/width,2)))*1000)/1000;html.style.setProperty('--bs-ui-scale',String(scale));html.style.setProperty('--bs-header-height',Math.round((width<=800?102:58)*scale)+'px');}
+// The scale lives in its own stylesheet: Bilibili rewrites the root element's inline style while it loads.
+function applyUiScale(){const html=document.documentElement;if(!html)return;const width=Math.max(320,innerWidth||1240),scale=Math.round(Math.min(1.28,Math.max(1,1+.2*Math.pow(1240/width,2)))*1000)/1000;
+  let sheet=document.getElementById('bs-ui-scale');if(!sheet){sheet=document.createElement('style');sheet.id='bs-ui-scale';html.append(sheet);}
+  const css='html:root{--bs-ui-scale:'+scale+';--bs-header-height:'+Math.round((width<=800?102:58)*scale)+'px}';if(sheet.textContent!==css)sheet.textContent=css;if(!sheet.isConnected)html.append(sheet);}
 let uiScaleFrame;window.addEventListener('resize',()=>{cancelAnimationFrame(uiScaleFrame);uiScaleFrame=requestAnimationFrame(applyUiScale);});
 /* Video pages tell the native host their title and cover so the video dock can label them. */
 let tabInfoSent='',tabInfoTimer;
