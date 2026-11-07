@@ -3,7 +3,7 @@ const {app}=require('./ui-harness.cjs');
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 test('back is a centered SVG, hidden at home and visible on inner routes',()=>{
  const a=app();try{const s=a.w.document.querySelector('#bili-space-root').shadowRoot,b=s.querySelector('.history-back');assert(b.hidden);assert(b.querySelector('svg'));assert.equal(b.textContent,'');
- a.w.history.pushState({},'', '/video/BV1234567890');a.w.BiliSpace.syncRoute();assert.equal(b.hidden,false);b.click();assert(a.messages.some(m=>m.type==='window'&&m.action==='back'));
+ a.w.history.pushState({},'', '/video/BV1234567890');a.w.BiliSpace.syncRoute();assert.equal(b.hidden,false);a.w.__bsAcceptNavigationState({back:true,forward:false,visible:3});b.click();assert(a.messages.some(m=>m.type==='window'&&m.action==='back'));
  a.w.history.pushState({},'', '/');a.w.BiliSpace.syncRoute();assert(b.hidden);
  }finally{a.close();}
 });

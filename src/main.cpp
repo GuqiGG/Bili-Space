@@ -47,7 +47,7 @@ ICoreWebView2* webview{};
 fs::path root, dataPath;
 bool testing=false, pip=false, full=false,lifecyclePreview=false;
 std::wstring lastClipboardVideo,startupTarget;bool closePending=false;
-bool headerBrandShown=false;
+bool headerBrandShown=false;int navigationVisible=0;
 bool surfaceWaiting=false,surfaceCommitted=false,surfaceDark=true;ULONGLONG surfaceStart{};
 RECT savedRect{},closeRect{};ULONGLONG closeStarted{};
 constexpr UINT trayMessage=WM_APP+71;
@@ -84,6 +84,8 @@ std::string utf8(const std::wstring& s) {
 std::string read(const fs::path& path) {std::ifstream f(path,std::ios::binary); return {std::istreambuf_iterator<char>(f),{}};}
 void log(const std::string& line) { std::ofstream f(dataPath/L"runtime.log",std::ios::app);if(f)f<<line<<'\n';else{std::ofstream fallback(root/L"runtime-fallback.log",std::ios::app);fallback<<line<<'\n';} }
 void execute(const std::string& s) {if(webview) webview->ExecuteScript(wide(s).c_str(),nullptr);}
+void pushNavigationState(){if(!webview)return;BOOL back{},forward{};webview->get_CanGoBack(&back);webview->get_CanGoForward(&forward);execute("window.__bsAcceptNavigationState?.("+json{{"back",bool(back)},{"forward",bool(forward)},{"visible",navigationVisible}}.dump()+")");}
+
 #include "windows_media.hpp"
 int freePort(){SOCKET s=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);if(s==INVALID_SOCKET)return 0;sockaddr_in a{};a.sin_family=AF_INET;a.sin_addr.s_addr=htonl(INADDR_LOOPBACK);if(bind(s,reinterpret_cast<sockaddr*>(&a),sizeof(a))){closesocket(s);return 0;}int size=sizeof(a);getsockname(s,reinterpret_cast<sockaddr*>(&a),&size);int p=ntohs(a.sin_port);closesocket(s);return p;}
 void stopProxy(){proxyRunning=false;if(proxyJob){CloseHandle(proxyJob);proxyJob=nullptr;}if(proxyProcess){WaitForSingleObject(proxyProcess,3000);CloseHandle(proxyProcess);proxyProcess=nullptr;}}
@@ -450,7 +452,8 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
     if(!trusted(uri))return;
     try{
         auto m=json::parse(raw);auto type=m.value("type",std::string{});
-        if(type=="header-brand"){auto action=m.value("action",std::string{});if(action=="read")execute(std::string("window.__bsAcceptBrandState?.(")+(headerBrandShown?"true":"false")+")");else if(action=="write"&&m.contains("shown")&&m["shown"].is_boolean())headerBrandShown=m["shown"].get<bool>();
+        if(type=="navigation-state"){if(m.value("action",std::string{})=="visibility")navigationVisible=m.value("visible",0)&3;else pushNavigationState();
+        }else if(type=="header-brand"){auto action=m.value("action",std::string{});if(action=="read")execute(std::string("window.__bsAcceptBrandState?.(")+(headerBrandShown?"true":"false")+")");else if(action=="write"&&m.contains("shown")&&m["shown"].is_boolean())headerBrandShown=m["shown"].get<bool>();
         }else if(type=="community"){communityAction(m);
         }else if(type=="plugins"){pluginsAction(m);
         }else if(type=="media-state"){windowsMediaAccept(m);
@@ -465,6 +468,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             else if(action=="maximize"){if(pip)togglePip(false);else ShowWindow(windowHandle,IsZoomed(windowHandle)?SW_RESTORE:SW_MAXIMIZE);}
             else if(action=="drag"){ReleaseCapture();SendMessageW(windowHandle,WM_NCLBUTTONDOWN,HTCAPTION,0);}
             else if(action=="back")webview->GoBack();
+            else if(action=="forward")webview->GoForward();
             else if(action=="reload")webview->Reload();
             else if(action=="pip")togglePip(!pip);
             else if(action=="fullscreen")toggleFull(!full);
@@ -658,6 +662,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
             if(SUCCEEDED(webview->QueryInterface(__uuidof(ICoreWebView2_3),reinterpret_cast<void**>(&v3)))){v3->SetVirtualHostNameToFolderMapping(L"bili-space.local",(root/L"assets").c_str(),COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);v3->Release();}
             EventRegistrationToken token;
             auto mh=callback<ICoreWebView2WebMessageReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebMessageReceivedEventArgs*>([](ICoreWebView2*,auto args){receive(args);return S_OK;});webview->add_WebMessageReceived(mh,&token);mh->Release();
+            auto historyChanged=callback<ICoreWebView2HistoryChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2*,IUnknown*){pushNavigationState();return S_OK;});webview->add_HistoryChanged(historyChanged,&token);historyChanged->Release();
             auto nh=callback<ICoreWebView2NavigationStartingEventHandler,ICoreWebView2*,ICoreWebView2NavigationStartingEventArgs*>([](ICoreWebView2*,auto args){
                 LPWSTR u{};args->get_Uri(&u);std::wstring uri=u?u:L"";CoTaskMemFree(u);
                 if(testing)log("test navigation starting: "+utf8(uri.substr(0,60)));

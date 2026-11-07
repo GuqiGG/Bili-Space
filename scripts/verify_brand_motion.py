@@ -6,13 +6,15 @@ from verify_login50_runtime import Session
 from smoke import ROOT
 
 class FixtureSession(Session):
+    def __init__(self,ws,document=None):
+        super().__init__(ws);self.document=document or (ROOT/'assets/fixture.html').read_bytes()
     async def call(self,method,params=None,session=None):
         self.sequence+=1;number=self.sequence
         await self.ws.send(json.dumps({'id':number,'method':method,'params':params or {}}))
         while True:
             value=json.loads(await asyncio.wait_for(self.ws.recv(),25))
             if value.get('method')=='Fetch.requestPaused':
-                await self.ws.send(json.dumps({'id':1000000+number,'method':'Fetch.fulfillRequest','params':{'requestId':value['params']['requestId'],'responseCode':200,'responseHeaders':[{'name':'Content-Type','value':'text/html; charset=utf-8'}],'body':base64.b64encode((ROOT/'assets/fixture.html').read_bytes()).decode()}}))
+                await self.ws.send(json.dumps({'id':1000000+number,'method':'Fetch.fulfillRequest','params':{'requestId':value['params']['requestId'],'responseCode':200,'responseHeaders':[{'name':'Content-Type','value':'text/html; charset=utf-8'}],'body':base64.b64encode(self.document).decode()}}))
             if value.get('id')==number:
                 if 'error' in value:raise RuntimeError(value['error'])
                 return value.get('result',{})

@@ -25,7 +25,7 @@ class App(Gtk.Application):
         self.directory.mkdir(parents=True,exist_ok=True,mode=0o700);self.directory.chmod(0o700)
         self.state=self.read(self.directory/'state.json');defaults=self.read(self.resources/'defaults.json');defaults.update(self.state.get('config',{}));self.state['config']=defaults
         self.state.setdefault('gm',{});self.state.setdefault('profiles',[])
-        self.header_brand_shown=False;self.pending_add=None
+        self.navigation_visible=0;self.header_brand_shown=False;self.pending_add=None
         if self.state.get('pendingAccountID'):self.state['activeID']=self.state.pop('pendingAccountID')
         self.renderer=(self.resources/'renderer.js').read_text(encoding='utf-8');self.web=None;self.pending='';self.popups=[]
         self.frame_policy_seen=False;self.last_clipboard='';self.connect('activate',self.activate)
@@ -42,6 +42,7 @@ class App(Gtk.Application):
     def send(self,method,value):self.js('window.BiliSpace?.'+method+'('+json.dumps(value,ensure_ascii=False)+')')
     def js(self,source):
         if self.web:self.web.run_javascript(source,None,None,None)
+    def navigation_state(self):self.js('window.__bsAcceptNavigationState?.('+json.dumps({'back':self.web.can_go_back(),'forward':self.web.can_go_forward(),'visible':self.navigation_visible})+')')
     def account_state(self,event='',message=''):
         items=[{key:p.get(key,'') for key in ['mid','uname','face']} for p in self.state['profiles'] if p.get('mid')]
         self.send('acceptAccountState',{'items':items,'active':(self.current() or {}).get('mid',''),'busy':False,'event':event,'message':message})
@@ -87,6 +88,7 @@ class App(Gtk.Application):
         self.web.add_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.POINTER_MOTION_MASK)
         self.web.connect('button-press-event',self.resize_press);self.web.connect('motion-notify-event',self.resize_motion)
         self.web.connect('resource-load-started',self.resource_started)
+        self.web.get_back_forward_list().connect('changed',lambda *_:self.navigation_state())
         self.web.connect('decide-policy',self.policy);self.web.connect('create',self.popup);self.web.connect('load-changed',self.loaded)
         self.stack.add(self.web);self.web.show();self.web.load_html((self.resources/'assets/fixture.html').read_text(encoding='utf-8').replace('</head>','<link rel="stylesheet" href="bili-space://assets/cache-probe.css"><script src="bili-space://assets/cache-probe.js"></script></head>'),'https://www.bilibili.com/') if self.testing else self.web.load_uri('https://www.bilibili.com/')
     def resize_edge(self,event):
@@ -199,6 +201,9 @@ class App(Gtk.Application):
             if not trusted(self.web.get_uri()) and not(self.testing and urlparse(self.web.get_uri()).scheme=='bili-space'):return
             m=wrapper['message'];kind=m.get('type');action=m.get('action')
             if kind=='config' and isinstance(m.get('value'),dict):self.state['config'].update(m['value']);self.save()
+            elif kind=='navigation-state':
+                if action=='visibility':self.navigation_visible=int(m.get('visible',0))&3
+                else:self.navigation_state()
             elif kind=='header-brand':
                 if action=='read':self.js('window.__bsAcceptBrandState?.('+json.dumps(self.header_brand_shown)+')')
                 elif action=='write' and isinstance(m.get('shown'),bool):self.header_brand_shown=m['shown']
@@ -209,6 +214,7 @@ class App(Gtk.Application):
             elif kind=='open-external' and urlparse(m.get('url','')).scheme=='https':Gio.AppInfo.launch_default_for_uri(m['url'],None)
             elif kind=='window':
                 if action=='back':self.web.go_back()
+                elif action=='forward':self.web.go_forward()
                 elif action=='reload':self.web.reload()
                 elif action=='minimize':self.window.iconify()
                 elif action=='maximize':self.window.unmaximize() if self.window.is_maximized() else self.window.maximize()

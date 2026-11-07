@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {app}=require('./ui-harness.cjs');
 test('back invokes native history and personalization combines header and progress controls',()=>{
  const a=app();try{const s=a.w.document.querySelector('#bili-space-root').shadowRoot;
- s.querySelector('.history-back').click();assert(a.messages.some(m=>m.type==='window'&&m.action==='back'));
+ a.w.__bsAcceptNavigationState({back:true,forward:false,visible:0});s.querySelector('.history-back').click();assert(a.messages.some(m=>m.type==='window'&&m.action==='back'));
  a.w.BiliSpace.openSettings();assert(!s.querySelector('[data-tab=header]'));assert(!s.querySelector('[data-tab=progress]'));
  for(const key of ['headerUpload','logoAutoHide','feedColumns','progressHeight'])assert(s.querySelector(`[data-pref=${key}]`),key);
  assert.equal(s.querySelector('.upload').parentNode,s);
