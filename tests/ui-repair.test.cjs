@@ -7,7 +7,7 @@ test('back invokes native history and personalization combines header and progre
  for(const key of ['headerUpload','logoAutoHide','feedColumns','progressHeight'])assert(s.querySelector(`[data-pref=${key}]`),key);
  assert.equal(s.querySelector('.upload').parentNode,s);
  a.w.BiliSpace.update({headerUpload:false,feedColumns:6});assert(s.querySelector('.upload').hidden);
- assert.equal(a.w.document.documentElement.style.getPropertyValue('--bs-feed-columns'),'6');
+ assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:6}/);
  a.w.BiliSpace.update({feedColumns:0});assert.equal(a.w.document.documentElement.style.getPropertyValue('--bs-feed-columns'),'');
  }finally{a.close();}
 });

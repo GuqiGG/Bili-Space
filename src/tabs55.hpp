@@ -61,7 +61,8 @@ constexpr UINT_PTR pendingRevealTimer=7755;
 void revealPendingTab(Tab* t){
     if(!t||!t->pendingShow||t->closed||!t->controller)return;t->pendingShow=false;Tab* from=activeTab;
     if(from&&from!=t->opener&&from!=t)return;
-    activateTab(t);if(from&&from->view)cancelNavigationFeedback(from->view);
+    auto shown=callback<ICoreWebView2ExecuteScriptCompletedHandler,HRESULT,LPCWSTR>([t,from](HRESULT,LPCWSTR){if(std::find(tabs.begin(),tabs.end(),t)==tabs.end()||t->closed)return S_OK;activateTab(t);if(from&&from->view&&std::find(tabs.begin(),tabs.end(),from)!=tabs.end())cancelNavigationFeedback(from->view);return S_OK;});
+    t->view->ExecuteScript(L"window.BiliSpace?.revealFade?.()",shown);shown->Release();
 }
 void revealPendingTabs(){for(auto t:videoTabs())revealPendingTab(t);}
 void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nullptr){
@@ -83,6 +84,9 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
     });
     env->CreateCoreWebView2Controller(windowHandle,created);created->Release();
 }
+std::wstring currentSource(Tab* t){if(!t||!t->view)return {};LPWSTR source{};t->view->get_Source(&source);std::wstring s=source?source:L"";CoTaskMemFree(source);return s;}
+// Compares pages by host and path, ignoring the locale prefix, a trailing slash, the query and the fragment.
+std::wstring normalisedPage(std::wstring uri){uri=uri.substr(0,uri.find_first_of(L"?#"));auto scheme=uri.find(L"://");if(scheme==std::wstring::npos)return uri;auto slash=uri.find(L'/',scheme+3);std::wstring host=uri.substr(0,slash),path=slash==std::wstring::npos?L"/":uri.substr(slash);if(path.rfind(L"/zh-Hans",0)==0)path=path.substr(8);if(path.empty())path=L"/";if(path.size()>1&&path.back()==L'/')path.pop_back();return host+path;}
 // Videos opened from home (or from another video) get their own view; site pages opened from a video return to home.
 bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
     if(updateRequired||pip||!homeTab||!homeTab->view)return false;
@@ -93,7 +97,7 @@ bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
         if(from==homeTab){LPWSTR source{};homeTab->view->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"https://",0)!=0)return false;}
         sender->ExecuteScript(wide("window.BiliSpace?.beginVideoLoading?.("+json(utf8(uri)).dump()+")").c_str(),nullptr);openVideoTab(uri,key,from);return true;
     }
-    if(from->video&&homeDestination(uri)){cancelNavigationFeedback(sender);homeTab->view->Navigate(uri.c_str());activateTab(homeTab);return true;}
+    if(from->video&&homeDestination(uri)){cancelNavigationFeedback(sender);if(normalisedPage(uri)!=normalisedPage(currentSource(homeTab)))homeTab->view->Navigate(uri.c_str());activateTab(homeTab);return true;}
     return false;
 }
 bool tabAccelerator(UINT key,COREWEBVIEW2_KEY_EVENT_KIND kind){

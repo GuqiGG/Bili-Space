@@ -16,9 +16,9 @@ test('the original website channel row can be toggled from personalization indep
  api.update({showChannels:true});assert.equal(a.w.document.documentElement.dataset.bsChannels,'true');
  }finally{a.close();}
 });
-test('home frost extends only the banner background and resets when disabled or leaving home',()=>{
+test('frost no longer slides the home banner under a frosted header',()=>{
  const html=require('node:fs').readFileSync('tests/fixtures/home-nested.html','utf8'),a=app({html});try{
- const api=a.w.BiliSpace,d=a.w.document;api.update({experimentalFrost:true});assert.equal(d.documentElement.dataset.bsBannerUnderlap,'true');
+ const api=a.w.BiliSpace,d=a.w.document;api.update({experimentalFrost:true});assert.equal(d.documentElement.dataset.bsBannerUnderlap,'false');
  api.update({experimentalFrost:false});assert.equal(d.documentElement.dataset.bsBannerUnderlap,'false');
  api.update({experimentalFrost:true});a.w.history.pushState({},'','/video/BV1cjHK6GEJE');api.syncRoute();assert.equal(d.documentElement.dataset.bsBannerUnderlap,'false');
  }finally{a.close();}
