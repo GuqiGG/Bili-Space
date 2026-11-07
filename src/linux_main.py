@@ -25,7 +25,7 @@ class App(Gtk.Application):
         self.directory.mkdir(parents=True,exist_ok=True,mode=0o700);self.directory.chmod(0o700)
         self.state=self.read(self.directory/'state.json');defaults=self.read(self.resources/'defaults.json');defaults.update(self.state.get('config',{}));self.state['config']=defaults
         self.state.setdefault('gm',{});self.state.setdefault('profiles',[])
-        self.navigation_visible=0;self.header_brand_shown=False;self.pending_add=None
+        self.category_visible=False;self.navigation_visible=0;self.header_brand_shown=False;self.pending_add=None
         if self.state.get('pendingAccountID'):self.state['activeID']=self.state.pop('pendingAccountID')
         self.renderer=(self.resources/'renderer.js').read_text(encoding='utf-8');self.web=None;self.pending='';self.popups=[]
         self.frame_policy_seen=False;self.last_clipboard='';self.connect('activate',self.activate)
@@ -42,7 +42,7 @@ class App(Gtk.Application):
     def send(self,method,value):self.js('window.BiliSpace?.'+method+'('+json.dumps(value,ensure_ascii=False)+')')
     def js(self,source):
         if self.web:self.web.run_javascript(source,None,None,None)
-    def navigation_state(self):self.js('window.__bsAcceptNavigationState?.('+json.dumps({'back':self.web.can_go_back(),'forward':self.web.can_go_forward(),'visible':self.navigation_visible})+')')
+    def navigation_state(self):self.js('window.__bsAcceptNavigationState?.('+json.dumps({'back':self.web.can_go_back(),'forward':self.web.can_go_forward(),'visible':self.navigation_visible,'categoryVisible':self.category_visible})+')')
     def account_state(self,event='',message=''):
         items=[{key:p.get(key,'') for key in ['mid','uname','face']} for p in self.state['profiles'] if p.get('mid')]
         self.send('acceptAccountState',{'items':items,'active':(self.current() or {}).get('mid',''),'busy':False,'event':event,'message':message})
@@ -203,6 +203,7 @@ class App(Gtk.Application):
             if kind=='config' and isinstance(m.get('value'),dict):self.state['config'].update(m['value']);self.save()
             elif kind=='navigation-state':
                 if action=='visibility':self.navigation_visible=int(m.get('visible',0))&3
+                elif action=='category-visibility':self.category_visible=bool(m.get('visible'))
                 else:self.navigation_state()
             elif kind=='header-brand':
                 if action=='read':self.js('window.__bsAcceptBrandState?.('+json.dumps(self.header_brand_shown)+')')

@@ -16,6 +16,7 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
 @property(nonatomic) BOOL selfTest;
 @property(nonatomic) BOOL headerBrandShown;
 @property(nonatomic) NSUInteger navigationVisible;
+@property(nonatomic) BOOL categoryVisible;
 @property(nonatomic,copy) NSString *pendingEvent;
 @property(nonatomic) NSInteger clipboardChange;
 @property(nonatomic,strong) NSURLSession *cacheSession;
@@ -30,7 +31,7 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
 - (void)runJS:(NSString *)s {[self.web evaluateJavaScript:s completionHandler:nil];}
 - (void)send:(NSString *)method value:(id)value {[self runJS:[NSString stringWithFormat:@"window.BiliSpace?.%@(%@)",method,JSONString(value)]];}
 - (NSMutableDictionary *)currentProfile {for(NSMutableDictionary *p in self.state[@"profiles"])if([p[@"id"] isEqual:self.state[@"activeID"]])return p;return nil;}
-- (void)navigationState {[self runJS:[NSString stringWithFormat:@"window.__bsAcceptNavigationState?.(%@)",JSONString(@{@"back":@(self.web.canGoBack),@"forward":@(self.web.canGoForward),@"visible":@(self.navigationVisible)})]];}
+- (void)navigationState {[self runJS:[NSString stringWithFormat:@"window.__bsAcceptNavigationState?.(%@)",JSONString(@{@"back":@(self.web.canGoBack),@"forward":@(self.web.canGoForward),@"visible":@(self.navigationVisible),@"categoryVisible":@(self.categoryVisible)})]];}
 - (void)accountState:(NSString *)event message:(NSString *)message {NSMutableArray *items=NSMutableArray.array;for(NSDictionary *p in self.state[@"profiles"])if([p[@"mid"] length])[items addObject:@{@"mid":p[@"mid"],@"uname":p[@"uname"]?:@"B站账号",@"face":p[@"face"]?:@""}];[self send:@"acceptAccountState" value:@{@"items":items,@"active":[self currentProfile][@"mid"]?:@"",@"busy":@NO,@"event":event?:@"",@"message":message?:@""}];}
 - (void)appearance {NSString *theme=self.state[@"config"][@"theme"];self.window.appearance=[theme isEqualToString:@"dark"]?[NSAppearance appearanceNamed:NSAppearanceNameDarkAqua]:[theme isEqualToString:@"light"]?[NSAppearance appearanceNamed:NSAppearanceNameAqua]:nil;}
 - (void)openProfile:(NSString *)identifier event:(NSString *)event {
@@ -80,7 +81,7 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
  NSDictionary *m=message.body;NSString *type=m[@"type"],*action=m[@"action"];
  if(self.selfTest&&[type isEqualToString:@"media-probe-result"]){fprintf(stdout,"macOS media decode self-test: %s\n",[JSONString(m) UTF8String]);exit([m[@"ok"] boolValue]?0:1);}
  if([type isEqualToString:@"config"]&&[m[@"value"] isKindOfClass:NSDictionary.class]){[self.state[@"config"] addEntriesFromDictionary:m[@"value"]];[self save];[self appearance];}
- else if([type isEqualToString:@"navigation-state"]){if([action isEqualToString:@"visibility"])self.navigationVisible=[m[@"visible"] unsignedIntegerValue]&3;else [self navigationState];}
+ else if([type isEqualToString:@"navigation-state"]){if([action isEqualToString:@"visibility"])self.navigationVisible=[m[@"visible"] unsignedIntegerValue]&3;else if([action isEqualToString:@"category-visibility"])self.categoryVisible=[m[@"visible"] boolValue];else [self navigationState];}
  else if([type isEqualToString:@"header-brand"]){if([action isEqualToString:@"read"])[self runJS:[NSString stringWithFormat:@"window.__bsAcceptBrandState?.(%@)",self.headerBrandShown?@"true":@"false"]];else if([action isEqualToString:@"write"]&&[m[@"shown"] isKindOfClass:NSNumber.class])self.headerBrandShown=[m[@"shown"] boolValue];}
  else if([type isEqualToString:@"gm-set"]&&[m[@"key"] isKindOfClass:NSString.class]){self.state[@"gm"][m[@"key"]]=m[@"value"]?:NSNull.null;[self save];}
  else if([type isEqualToString:@"navigate"]){NSURL *url=[NSURL URLWithString:m[@"url"]];if(BiliURL(url))[self.web loadRequest:[NSURLRequest requestWithURL:url]];}

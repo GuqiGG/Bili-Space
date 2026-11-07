@@ -37,3 +37,15 @@ test('forward uses native history availability and enters when returning to home
   button.click();assert(a.messages.some(m=>m.type==='window'&&m.action==='forward'));
  }finally{a.close();}
 });
+
+test('category arrow slides out before hiding and slides in independently of its rotation',()=>{
+ const a=app({reduceMotion:false});try{
+  const s=a.w.document.querySelector('#bili-space-root').shadowRoot,b=s.querySelector('.back'),motions=[];
+  a.w.Element.prototype.animate=function(frames,options){const m={frames,options,onfinish:null,cancel(){}};motions.push(m);return m;};
+  a.w.BiliSpace.update({headerBack:false});assert(!b.hidden);assert.equal(motions[1].frames.at(-1).translate,'-8px 0px');
+  motions[0].onfinish();assert(b.hidden);
+  a.w.BiliSpace.update({headerBack:true});assert(!b.hidden);
+  assert.equal(motions[3].frames[0].opacity,0);assert.equal(motions[3].frames.at(-1).opacity,1);
+  assert.equal(motions[3].options.duration,360);assert(!('transform' in motions[3].frames[0]));
+ }finally{a.close();}
+});
