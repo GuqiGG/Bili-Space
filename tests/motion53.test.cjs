@@ -34,7 +34,7 @@ test('pages open from the local copy for 30 days and are refetched quietly after
  const shell=fs.readFileSync('src/local_shell.hpp','utf8'),mac=fs.readFileSync('src/macos_main.mm','utf8'),linux=fs.readFileSync('src/web_cache.py','utf8'),js=fs.readFileSync('assets/enhance.js','utf8');
  assert.match(shell,/age<std::chrono::hours\(24\*30\)/);assert.match(linux,/MAX_AGE=30\*86400/);assert.match(mac,/timeIntervalSinceNow\]>30\*86400/);
  assert.match(mac,/isEqualToString:@"page-warm"/);assert.match(mac,/if\(!self\.selfTest\)\[self storePage:webView\.URL\]/);
- const source=js.match(/const LOCAL_PAGES=(\/.+?\/);\n/)[1],pages=eval(source);
+ const source=js.match(/const LOCAL_PAGES=(\/.+?\/);\r?\n/)[1],pages=eval(source);
  for(const url of ['https://www.bilibili.com/','https://t.bilibili.com/','https://www.bilibili.com/history','https://message.bilibili.com/','https://space.bilibili.com/42'])assert(pages.test(url),url);
  for(const url of ['https://search.bilibili.com/all','https://www.bilibili.com/video/BV1','https://space.bilibili.com/42/favlist'])assert(!pages.test(url),url);
  assert.match(js,/mode:'no-cors',cache:'no-store'/);
