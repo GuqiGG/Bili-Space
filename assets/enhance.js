@@ -1462,7 +1462,12 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
   });
   const accountWrap=$('.account-wrap',shadow);accountWrap.addEventListener('pointerenter',e=>{if(e.pointerType&&e.pointerType!=='mouse')return;clearTimeout(accountHideTimer);if(accountProfile)accountShowTimer=setTimeout(showAccountCard,150);});accountWrap.addEventListener('pointerleave',()=>{clearTimeout(accountShowTimer);accountHideTimer=setTimeout(hideAccountCard,160);});accountWrap.addEventListener('focusin',()=>{clearTimeout(accountHideTimer);const card=$('#account-card',shadow);if(accountProfile&&(card.hidden||card.dataset.open!=='true'))showAccountCard(false);});accountWrap.addEventListener('focusout',e=>{if(!accountWrap.contains(e.relatedTarget))hideAccountCard();});
   const trigger=$('.back',shadow),left=$('.header-left',shadow),lane=$('.nav-lane',shadow);
-  $('#header-categories',shadow).addEventListener('wheel',e=>{const links=e.currentTarget;if(innerWidth>1050&&links.scrollWidth>links.clientWidth&&!e.ctrlKey){links.scrollLeft+=e.deltaY||e.deltaX;e.preventDefault();}},{passive:false});
+  // Mouse wheel notches glide the channel strip toward an accumulated target each frame; touchpads already scroll smoothly and pass straight through.
+  {let target=null,frame=0;const links=$('#header-categories',shadow);
+   const glide=()=>{const left=links.scrollLeft,step=(target-left)*.2;if(Math.abs(target-left)<.5){links.scrollLeft=target;target=null;frame=0;return;}links.scrollLeft=left+step;frame=requestAnimationFrame(glide);};
+   links.addEventListener('wheel',e=>{if(innerWidth<=1050||links.scrollWidth<=links.clientWidth||e.ctrlKey)return;e.preventDefault();const delta=(e.deltaY||e.deltaX)*(e.deltaMode===1?40:1),max=links.scrollWidth-links.clientWidth;
+     if(e.deltaMode===0&&Math.abs(delta)<40&&!frame){links.scrollLeft+=delta;return;}
+     target=Math.max(0,Math.min(max,(target??links.scrollLeft)+delta*1.2));if(!frame)frame=requestAnimationFrame(glide);},{passive:false});}
   left.addEventListener('focusout',()=>setTimeout(()=>{if(!left.contains(shadow.activeElement))setCategories(false);},0));
   left.addEventListener('keydown',e=>{if(e.key==='Escape'){setCategories(false,true);trigger.focus();e.stopPropagation();}if(e.target===trigger&&e.key==='ArrowDown'){e.preventDefault();setCategories(true,true);$('#header-categories a:not([hidden])',shadow)?.focus();}});
   document.addEventListener('pointerdown',e=>{if(!e.composedPath().includes(left))setCategories(false);},{passive:true});
