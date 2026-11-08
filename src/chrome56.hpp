@@ -6,7 +6,7 @@
 // site's cookies.
 namespace chromeHost{
 const std::wstring address=L"https://www.bilibili.com/__bili_space_chrome__";
-ICoreWebView2Controller* ctl{};ICoreWebView2* view{};bool ready=false;std::wstring pending;
+ICoreWebView2Controller* ctl{};ICoreWebView2* view{};bool ready=false;std::wstring pending,injection;
 bool active(){return comp::ready;}
 void place(){if(!ctl)return;RECT rc{};GetClientRect(windowHandle,&rc);ctl->put_Bounds(rc);}
 void show(bool on){comp::chromeVisible=on&&ready;if(ctl)ctl->put_IsVisible(on?TRUE:FALSE);}
@@ -71,12 +71,18 @@ void create(ICoreWebView2Environment* env){
             ICoreWebView2WebResourceResponse* response{};if(SUCCEEDED(env->CreateWebResourceResponse(stream,200,L"OK",L"Content-Type: text/html; charset=utf-8\r\nCache-Control: no-store",&response))){args->put_Response(response);response->Release();}stream->Release();return S_OK;});
         view->add_WebResourceRequested(local,&token);local->Release();
         auto loaded=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2*,auto args){BOOL ok{};args->get_IsSuccess(&ok);if(!ok){log("header view failed to load");return S_OK;}ready=true;show(!full&&!pip);applyZoom();push();log("header view ready");return S_OK;});view->add_NavigationCompleted(loaded,&token);loaded->Release();
-        auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([](HRESULT,LPCWSTR){if(view)view->Navigate(address.c_str());return S_OK;});
+        auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)&&id)injection=id;if(view)view->Navigate(address.c_str());return S_OK;});
         view->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();
         return S_OK;
     });
     comp::createController(env,done,true);done->Release();
 }
 void refreshInjection(){if(view){view->Reload();}}
+// Keeps the header's document script current (settings, plugins) for its next load without reloading it now.
+void rescript(){
+    if(!view||injection.empty())return;view->RemoveScriptToExecuteOnDocumentCreated(injection.c_str());injection.clear();
+    auto h=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)&&id)injection=id;return S_OK;});
+    view->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),h);h->Release();
+}
 void close(){comp::chromeController=nullptr;comp::chromeVisible=false;if(ctl){comp::forget(ctl);ctl->Close();ctl->Release();ctl=nullptr;}if(view){view->Release();view=nullptr;}ready=false;}
 }

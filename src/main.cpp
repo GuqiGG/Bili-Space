@@ -51,7 +51,7 @@ bool headerBrandShown=false,categoryVisible=false;int navigationVisible=0;std::s
 bool surfaceWaiting=false,surfaceCommitted=false,surfaceDark=true;ULONGLONG surfaceStart{};
 RECT savedRect{},closeRect{};ULONGLONG closeStarted{};
 // The window's restored size and position (workspace coordinates, as GetWindowPlacement reports them) and whether it was maximized.
-json windowState=json::object(),localeRoutes=json::array();bool windowRemembered=false;
+json windowState=json::object(),localeRoutes=json::array(),pluginData=json::object();bool windowRemembered=false;
 constexpr UINT trayMessage=WM_APP+71;
 NOTIFYICONDATAW trayIcon{};bool trayReady=false;
 UINT taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
@@ -338,7 +338,7 @@ json cleanSearchHistory(const json& values){
 }
 void save(){
     auto tmp=dataPath/L"settings.tmp";
-    {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm},{"searchHistory",searchHistory},{"window",windowState},{"localeRoutes",localeRoutes}}).dump(2);if(!f){log("settings write failed");return;}}
+    {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm},{"searchHistory",searchHistory},{"window",windowState},{"localeRoutes",localeRoutes},{"pluginData",pluginData}}).dump(2);if(!f){log("settings write failed");return;}}
     if(!MoveFileExW(tmp.c_str(),(dataPath/L"settings.json").c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))log("settings atomic rename failed");
 }
 bool color(const json& v){ if(!v.is_string())return false;auto s=v.get<std::string>();return s.size()==7&&s[0]=='#'&&s.find_first_not_of("0123456789abcdefABCDEF",1)==std::string::npos; }
@@ -421,8 +421,9 @@ if(INITIAL.btr&&(location.pathname==='/__bili_space_chrome__'||host==='live.bili
     s+=read(root/L"assets/enhance.js");s+="\n";s+=read(root/L"assets/media-probe.js");return s+"\n})();";
 }
 #include "tabs55.hpp"
+void chromeRescript();
 void refreshInjection(){
-    refreshTabInjections();ViewScope homeScope(homeTab&&homeTab->view?homeTab->view:webview);
+    refreshTabInjections();chromeRescript();ViewScope homeScope(homeTab&&homeTab->view?homeTab->view:webview);
     if(!webview)return;
     if(injectionPending){injectionDirty=true;return;}
     injectionPending=true;injectionDirty=false;
@@ -572,7 +573,10 @@ void restoreWebFocus(){
 
 #include "chrome56.hpp"
 bool chromeHostEnabled(){return chromeHost::active();}void chromePush(const std::wstring& target){chromeHost::push(target);}void chromePlace(){chromeHost::place();}
-void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}
+void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}void chromeRescript(){chromeHost::rescript();}
+// Plugin changes reach every open view at once: the header, home and each video.
+void pluginsBroadcast(const std::string& js){auto w=wide(js);for(auto t:tabs)if(t->view&&!t->closed)t->view->ExecuteScript(w.c_str(),nullptr);if(chromeHost::view)chromeHost::view->ExecuteScript(w.c_str(),nullptr);}
+void pluginsReloadViews(){if(activeTab&&activeTab->view)activeTab->view->Reload();if(chromeHost::view)chromeHost::view->Reload();}
 void chromeStep(int direction){if(chromeHost::view&&chromeHost::ready)chromeHost::view->ExecuteScript(direction<0?L"window.BiliSpace?.chromeStep?.('back')":L"window.BiliSpace?.chromeStep?.('forward')",nullptr);}
 void chromeAcceptConfig(){if(chromeHost::view&&webview!=chromeHost::view)chromeHost::view->ExecuteScript(wide("window.BiliSpace?.acceptConfig?.("+config.dump()+",0)").c_str(),nullptr);}
 void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Environment* env){
@@ -686,7 +690,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     try{if(!prepareAppData()){MessageBoxW(nullptr,L"应用数据目录不可写。请将完整程序目录放到可写位置后重试，原登录数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}}catch(const std::exception&){MessageBoxW(nullptr,L"无法准备应用数据目录，原数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}
     config=defaults();gm=json::object();
     log(std::string("startup ")+appVersion+(testing?" test":" normal"));
-    try{auto stored=json::parse(read(dataPath/L"settings.json"));mergeConfig(stored.value("config",json::object()));if(stored.contains("window")&&stored["window"].is_object())windowState=stored["window"];if(stored.contains("localeRoutes")&&stored["localeRoutes"].is_array())localeRoutes=stored["localeRoutes"];if(stored.contains("gm")&&stored["gm"].is_object())gm=stored["gm"];searchHistory=cleanSearchHistory(stored.value("searchHistory",json::array()));}catch(...){}
+    try{auto stored=json::parse(read(dataPath/L"settings.json"));mergeConfig(stored.value("config",json::object()));if(stored.contains("window")&&stored["window"].is_object())windowState=stored["window"];if(stored.contains("localeRoutes")&&stored["localeRoutes"].is_array())localeRoutes=stored["localeRoutes"];if(stored.contains("pluginData")&&stored["pluginData"].is_object())pluginData=stored["pluginData"];if(stored.contains("gm")&&stored["gm"].is_object())gm=stored["gm"];searchHistory=cleanSearchHistory(stored.value("searchHistory",json::array()));}catch(...){}
     log("startup: settings loaded");
     proxyEnabled=config.value("proxy",false);
     if(!proxyEnabled&&fs::exists(dataPath/L"proxy-enabled")){proxyEnabled=true;config["proxy"]=true;}

@@ -1,80 +1,83 @@
 # 插件接口
 
-Bili-Space 支持把本地 JS 插件注入页面，用来加样式、加交互、监听播放状态。插件只跑在网页上下文里，**不会拿到 native 桥**（下载、更新、窗口、代理等能力都不暴露）。
+Bili-Space 的插件是一段 JS，可以改主题、改客户端界面（顶栏、菜单、设置页）、改 B 站页面，还能包装客户端在页面里的逻辑。插件里的错误会被隔离：出错的插件只会失去它自己的效果，不会让客户端、其他插件或原生程序崩溃。
 
-## 目录与清单
+## 安装
 
-插件放在用户数据目录下：
+设置 → 扩展插件 → **导入插件…**，选择下面任意一种：
 
-```
-%LOCALAPPDATA%\BetterBiliSpace\plugins\<插件id>\
-  plugin.json
-  main.js
-```
+- **单个 `.js` 文件**：文件开头用注释写清单（`@id` 可省略，会用文件名）：
 
-`plugin.json`：
+  ```js
+  // @id        blue-theme
+  // @name      蓝色主题
+  // @version   1.0.0
+  // @description 把强调色换成蓝色
+  api.theme({ '--accent': '#00aeec' });
+  ```
 
-```json
-{
-  "id": "hello-world",
-  "name": "Hello World",
-  "version": "1.0.0",
-  "description": "示例：给播放器加一条边框",
-  "main": "main.js"
-}
-```
+- **插件文件夹里的 `plugin.json`**：整个文件夹会被复制进插件目录。
 
-- `id` 只能用小写字母、数字与 `.` `_` `-`，最长 40 字符，同时用作存储命名空间。
-- `main` 只能是文件名，不能带路径；默认 `main.js`。
-- 单个入口文件上限 512 KB，`plugin.json` 上限 16 KB，最多加载 32 个插件。
+  ```json
+  { "id": "blue-theme", "name": "蓝色主题", "version": "1.0.0", "description": "…", "main": "main.js" }
+  ```
 
-## 入口代码
+导入后立即启用，不用刷新。每个插件都有开关和“删除插件”，开关同样即时生效。插件也可以手动放进插件目录（`%LOCALAPPDATA%\BetterBiliSpace\plugins\<id>\`），然后点“重新加载页面”。
 
-`main.js` 的内容会被当作函数体执行，签名等价于：
+限制：`id` 只能用小写字母、数字和 `.` `_` `-`（最长 40）；入口文件最大 512 KB；最多 32 个插件。
 
-```js
-function main(api) {
-  // 你的代码
-}
-```
+## 插件在哪里运行
 
-示例：
+客户端有两种视图，插件在每一个里都会运行一次：
 
-```js
-api.css('.bpx-player-video-wrap{outline:2px solid #fb7299;outline-offset:-2px}');
+- `api.view === 'header'`：常驻的顶栏层（顶栏、菜单、设置页都在这里）。
+- `api.view === 'page'`：每个 B 站页面（主页、动态、每个视频页……）。
 
-const seen = api.storage.get('runs') || 0;
-api.storage.set('runs', seen + 1);
-api.log('loaded', seen + 1, 'times');
-
-api.on('tick', () => {
-  const video = api.getVideo();
-  if (video) document.title = '插件在听 · ' + Math.floor(video.currentTime) + 's';
-});
-```
+只想改其中一种时，先判断 `api.view`。插件声明的设置项要在 `header` 里声明，设置页才能显示出来。
 
 ## API
 
 | 成员 | 说明 |
 | --- | --- |
-| `api.id` / `api.manifest` | 当前插件身份与清单（只读） |
-| `api.version` | 客户端版本号 |
-| `api.log(...)` | 带插件前缀的 console 输出 |
-| `api.storage.get/set/remove(key)` | 每插件独立命名空间（`bs-plugin:<id>:`），值上限 64 KB |
-| `api.css(text)` | 注入/替换一段 `<style data-bs-plugin="id">` |
-| `api.on(event, handler)` | 事件：`tick`（每秒）、`route`（URL 变化）、`video`（video 元素变化）、`destroy`。返回取消函数 |
-| `api.getVideo()` | 当前 `<video>` 元素或 null |
-| `api.route()` | 当前页面 URL |
-| `api.prefs()` | 客户端设置快照（只读副本） |
+| `api.id` / `api.manifest` / `api.version` | 插件身份、清单、客户端版本 |
+| `api.view` | `'header'` 或 `'page'` |
+| `api.theme({ '--accent': '#00aeec', ... })` | 设置主题变量，同时作用于客户端界面和页面。常用：`--accent`、`--bg`、`--ink`、`--muted`、`--field`、`--line` |
+| `api.shellCss(css)` | 给客户端界面（顶栏、菜单、设置页）加样式 |
+| `api.css(css)` | 给 B 站页面加样式 |
+| `api.shell()` | 客户端界面的 shadow root，可以直接改 DOM |
+| `api.on(event, fn)` | 事件：`tick`（每秒）、`route`（地址变化）、`video`（视频元素变化）、`settings`（本插件设置变化）、`destroy`（停用前，用来清理）。返回取消函数 |
+| `api.settings.define([...])` | 声明设置项，显示在设置页插件卡片里。字段：`key`、`label`、`hint`、`type`（`toggle` / `text` / `number` / `color` / `select`）、`options`、`default` |
+| `api.settings.get(key)` / `set(key, value)` / `all()` | 读写设置值；值由客户端保存，所有视图同步 |
+| `api.storage.get/set/remove(key)` | 插件私有的本地存储（按网站分开，值最大 64 KB） |
+| `api.prefs()` / `api.setPrefs(patch)` | 读取 / 修改客户端设置（和设置页一样经过校验） |
+| `api.client()` | 客户端页面逻辑函数的只读列表 |
+| `api.wrap(name, (original, ...args) => …)` | 包装客户端页面逻辑函数，比如 `homeBubble`、`acceptConfig`、`chromeActive`。包装函数出错时自动改用原函数 |
+| `api.unwrap(name)` | 取消包装 |
+| `api.toast(text)` | 显示客户端提示 |
+| `api.navigate(url)` | 在当前页面打开地址 |
+| `api.getVideo()` / `api.route()` / `api.log(...)` | 当前视频元素、当前地址、带前缀的日志 |
 
-限制：每个事件最多 20 个监听；`storage` 键最长 80 字符；插件抛出的异常会被隔离并记录，不会影响其他插件或客户端本身。
+## 示例：可以选颜色的主题
 
-## 启用、禁用与排错
+```js
+// @id accent-picker
+// @name 自选强调色
+api.settings.define([{ key: 'color', type: 'color', label: '强调色', default: '#00aeec' }]);
+const apply = () => api.theme({ '--accent': api.settings.get('color') });
+apply();
+api.on('settings', apply);
+```
 
-设置 → 扩展插件 → 插件：可以看到已加载插件、开关、插件目录入口和"重新加载页面"。开关保存到客户端设置（`pluginsDisabled`），刷新页面后生效。
+## 示例：改客户端逻辑
 
-加载失败的插件会显示"加载失败"，具体报错在开发者工具控制台；`plugin.json` 不合法的插件会被跳过并在面板里说明原因。
+```js
+// 在主页按 Ctrl+T 时换一句提示
+api.wrap('homeBubble', (original) => original('已经在首页了'));
+```
 
-## 安全边界
+## 稳定性与安全
 
-插件是**本机可信代码**，与直接修改 `assets/` 等价：它能操作页面 DOM、发网页请求、读页面 localStorage。它**拿不到**客户端 native 能力，但也不构成安全沙箱——不要安装来源不明的插件。
+- 插件的入口、事件和包装函数都运行在错误边界里；同一个插件在一个页面里连续出错 20 次会在该页面自动停用。
+- 停用插件时，客户端会撤销它的样式、事件和包装，并先发送 `destroy` 事件，让插件清理自己做的其他改动。
+- 插件 API 不提供原生能力（下载、更新、窗口、文件系统）；客户端收到的每条页面消息都会校验。
+- 插件是本机代码，能读写页面内容和你的 B 站页面数据。**不要安装来源不明的插件。**
