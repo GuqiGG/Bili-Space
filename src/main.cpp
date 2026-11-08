@@ -395,7 +395,7 @@ bool trusted(const std::wstring& uri){
 #include "accounts50.hpp"
 #include "local_shell.hpp"
 #include "auth_popup50.hpp"
-bool chromeHostEnabled();void chromePush(const std::wstring& target=L"");void chromePlace();void chromeZoom(double z);void chromeShow(bool on);void chromeAcceptConfig();void chromeClose();
+bool chromeHostEnabled();bool chromeOpenSettings(const std::string& call);void chromePush(const std::wstring& target=L"");void chromePlace();void chromeZoom(double z);void chromeShow(bool on);void chromeAcceptConfig();void chromeClose();
 // The page script is rebuilt for every view (home, header, each video); its asset files are read from disk once.
 const std::string& assetText(const std::wstring& relative){static std::map<std::wstring,std::string> cache;auto it=cache.find(relative);if(it==cache.end())it=cache.emplace(relative,read(root/relative)).first;return it->second;}
 std::string script(){
@@ -488,6 +488,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         if(type=="navigation-state"){if(m.value("action",std::string{})=="visibility")navigationVisible=m.value("visible",0)&3;else if(m.value("action",std::string{})=="category-visibility")categoryVisible=m.value("visible",false);else if(m.value("action",std::string{})=="route"){auto route=m.value("route",std::string{});if(route=="home"||route=="dynamic"||route=="history"||route=="video"||route=="other")headerRoute=route;}else pushNavigationState();
         }else if(type=="header-brand"){auto action=m.value("action",std::string{});if(action=="read")execute(std::string("window.__bsAcceptBrandState?.(")+(headerBrandShown?"true":"false")+")");else if(action=="write"&&m.contains("shown")&&m["shown"].is_boolean())headerBrandShown=m["shown"].get<bool>();
         }else if(type=="community"){communityAction(m);
+        }else if(type=="open-settings"){const auto tab=m.value("tab",std::string{});const auto call="window.BiliSpace?.openSettings?.("+json(tab).dump()+",true)";if(!chromeOpenSettings(call))execute(call);
         }else if(type=="plugins"){pluginsAction(m);
         }else if(type=="media-state"){windowsMediaAccept(m);
         }else if(type=="updates"){updateAction(m.value("action",std::string{}),m.value("version",std::string{}));
@@ -583,6 +584,7 @@ void restoreWebFocus(){
 #include "chrome56.hpp"
 bool chromeHostEnabled(){return chromeHost::active();}void chromePush(const std::wstring& target){chromeHost::push(target);}void chromePlace(){chromeHost::place();}
 void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}
+bool chromeOpenSettings(const std::string& call){if(!chromeHost::view||!chromeHost::ready)return false;chromeHost::view->ExecuteScript(wide(call).c_str(),nullptr);if(chromeHost::ctl){chromeHost::ctl->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);comp::focusTarget=chromeHost::ctl;}return true;}
 void executeEverywhere(const std::string& js){auto w=wide(js);ICoreWebView2* page=activeTab&&activeTab->view?activeTab->view:webview;if(page)page->ExecuteScript(w.c_str(),nullptr);if(chromeHost::view&&chromeHost::view!=page)chromeHost::view->ExecuteScript(w.c_str(),nullptr);if(webview&&webview!=page&&webview!=chromeHost::view)webview->ExecuteScript(w.c_str(),nullptr);}
 void chromeRescript(){chromeHost::rescript();}
 // Plugin changes reach every open view at once: the header, home and each video.

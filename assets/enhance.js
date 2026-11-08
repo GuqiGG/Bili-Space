@@ -98,7 +98,7 @@ function applyHeaderPreferences(){
   if(!PREFS.headerBack)setCategories(false);
   updateHeaderClock();requestAnimationFrame(layoutHeaderLeading);syncPipPresentation();
   $$('#header-categories a',shadow).forEach((a,i)=>a.hidden=!PREFS.categorySelection.includes(i));
-  let empty=$('.category-empty',shadow);if(!empty){empty=document.createElement('button');empty.type='button';empty.className='category-empty';empty.textContent='未选择分区 · 前往设置';empty.onclick=()=>{openSettings();currentTab='categories';renderSettings();};$('#header-categories',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;
+  let empty=$('.category-empty',shadow);if(!empty){empty=document.createElement('button');empty.type='button';empty.className='category-empty';empty.textContent='未选择分区 · 前往设置';empty.onclick=()=>{openSettings('categories');currentTab='categories';renderSettings();};$('#header-categories',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;
 }
 let brandMotion=[],brandShown,brandStateRequested=false;
 /* Header motion is compositor-only: the layout change applies at once, elements that moved slide from their previous
@@ -1349,7 +1349,8 @@ function clearSettingsSearch(){const query=$('#settings-query',shadow);query.val
 function closeSettings(){
   if(!shadow)return;$('#settings',shadow).hidden=true;lastFocus?.focus();
 }
-function openSettings(){accountsController?.closeLogin();
+// Settings belong to the header layer: a page (Ctrl+, or a link inside it) asks the native host to open them there.
+function openSettings(tab,local=false){if(CONTENT_VIEW&&!local){native('open-settings',{tab:typeof tab==='string'?tab:''});return;}if(typeof tab==='string'&&tab)currentTab=tab;accountsController?.closeLogin();
   lastFocus=shadow.activeElement||document.activeElement;$('#settings',shadow).hidden=false;settingsIndex=null;clearSettingsSearch();renderSettings();$('#dismiss',shadow).focus();
 }
 function mountShell(){
