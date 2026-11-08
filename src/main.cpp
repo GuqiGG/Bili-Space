@@ -56,7 +56,8 @@ constexpr UINT trayMessage=WM_APP+71;
 NOTIFYICONDATAW trayIcon{};bool trayReady=false;
 UINT taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
 void execute(const std::string&);
-void restoreFromTray(){if(closePending)SetWindowPos(windowHandle,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);closePending=false;KillTimer(windowHandle,72);KillTimer(windowHandle,74);execute("document.querySelector('#bs-close-animation')?.remove();window.BiliSpace?.restoreFromTray()");ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
+void trayMemory(bool hidden);
+void restoreFromTray(){trayMemory(false);if(closePending)SetWindowPos(windowHandle,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);closePending=false;KillTimer(windowHandle,72);KillTimer(windowHandle,74);execute("document.querySelector('#bs-close-animation')?.remove();window.BiliSpace?.restoreFromTray()");ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
 void installTray(){
     trayIcon={};trayIcon.cbSize=sizeof(trayIcon);trayIcon.hWnd=windowHandle;trayIcon.uID=1;
     trayIcon.uFlags=NIF_MESSAGE|NIF_ICON|NIF_TIP;trayIcon.uCallbackMessage=trayMessage;
@@ -84,7 +85,8 @@ std::string utf8(const std::wstring& s) {
     std::string v(n,0); if(n) WideCharToMultiByte(CP_UTF8,0,s.data(),int(s.size()),v.data(),n,nullptr,nullptr); return v;
 }
 std::string read(const fs::path& path) {std::ifstream f(path,std::ios::binary); return {std::istreambuf_iterator<char>(f),{}};}
-void log(const std::string& line) { std::ofstream f(dataPath/L"runtime.log",std::ios::app);if(f)f<<line<<'\n';else{std::ofstream fallback(root/L"runtime-fallback.log",std::ios::app);fallback<<line<<'\n';} }
+// Lines in the first minute carry the time since launch, which is what startup work is measured by.
+void log(const std::string& line) { static const ULONGLONG launched=GetTickCount64();const auto since=GetTickCount64()-launched;std::ofstream f(dataPath/L"runtime.log",std::ios::app);if(f)f<<(since<60000?"[+"+std::to_string(since)+"ms] ":std::string{})<<line<<'\n';else{std::ofstream fallback(root/L"runtime-fallback.log",std::ios::app);fallback<<line<<'\n';} }
 void execute(const std::string& s) {if(webview) webview->ExecuteScript(wide(s).c_str(),nullptr);}
 void pushNavigationState(){if(!webview)return;BOOL back{},forward{};webview->get_CanGoBack(&back);webview->get_CanGoForward(&forward);execute("window.__bsAcceptNavigationState?.("+json{{"back",bool(back)},{"forward",bool(forward)},{"visible",navigationVisible},{"categoryVisible",categoryVisible},{"route",headerRoute}}.dump()+")");}
 
@@ -343,7 +345,7 @@ void save(){
 }
 bool color(const json& v){ if(!v.is_string())return false;auto s=v.get<std::string>();return s.size()==7&&s[0]=='#'&&s.find_first_not_of("0123456789abcdefABCDEF",1)==std::string::npos; }
 void rememberWindow(){
-    if(!windowHandle)return;WINDOWPLACEMENT p{sizeof(p)};if(!GetWindowPlacement(windowHandle,&p))return;
+    if(!windowHandle||!IsWindowVisible(windowHandle))return;WINDOWPLACEMENT p{sizeof(p)};if(!GetWindowPlacement(windowHandle,&p))return;
     RECT r=p.rcNormalPosition;bool maximized=p.showCmd==SW_SHOWMAXIMIZED||(p.showCmd==SW_SHOWMINIMIZED&&(p.flags&WPF_RESTORETOMAXIMIZED));
     // Fullscreen and picture-in-picture move the window itself; what to restore is the rectangle saved before them.
     if(full||pip){MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromRect(&savedRect,MONITOR_DEFAULTTONEAREST),&mi);r=savedRect;OffsetRect(&r,mi.rcMonitor.left-mi.rcWork.left,mi.rcMonitor.top-mi.rcWork.top);maximized=false;}
@@ -392,6 +394,8 @@ bool trusted(const std::wstring& uri){
 #include "local_shell.hpp"
 #include "auth_popup50.hpp"
 bool chromeHostEnabled();void chromePush(const std::wstring& target=L"");void chromePlace();void chromeZoom(double z);void chromeShow(bool on);void chromeAcceptConfig();void chromeClose();
+// The page script is rebuilt for every view (home, header, each video); its asset files are read from disk once.
+const std::string& assetText(const std::wstring& relative){static std::map<std::wstring,std::string> cache;auto it=cache.find(relative);if(it==cache.end())it=cache.emplace(relative,read(root/relative)).first;return it->second;}
 std::string script(){
     std::string s="(()=>{if(window.top!==window)return; const host=location.hostname;if(!(['www.bilibili.com','search.bilibili.com','space.bilibili.com','live.bilibili.com','t.bilibili.com','passport.bilibili.com','account.bilibili.com','message.bilibili.com','manga.bilibili.com'].includes(host)";
     if(testing)s+="||host==='bili-space.local'";
@@ -403,26 +407,27 @@ std::string script(){
 #endif
     s+="RUNTIME.testing="+std::string(testing?"true":"false")+";\n";
     s+=R"JS((()=>{const dark=INITIAL.theme==='dark'||(INITIAL.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);const paint=()=>{if(location.pathname==='/__bili_space_chrome__')return true;if(!document.documentElement)return false;document.documentElement.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const style=document.createElement('style');style.id='bs-navigation-surface';style.textContent='html,body'+(location.hostname==='space.bilibili.com'?'':',#app')+'{background-color:'+(dark?'#161618':'#fafafa')+'!important}';document.documentElement.append(style);return true;};if(!paint()){const observer=new MutationObserver(()=>{if(paint())observer.disconnect();});observer.observe(document,{childList:true,subtree:true});}window.__bsPaintReady=()=>setTimeout(()=>{if(document.documentElement&&chrome?.webview){getComputedStyle(document.documentElement).backgroundColor;chrome.webview.postMessage({type:'surface-ready'});}},32);if(RUNTIME.testing){window.__bsSurfaceSamples=[];const sample=()=>{if(document.documentElement)window.__bsSurfaceSamples.push(getComputedStyle(document.documentElement).backgroundColor);if(window.__bsSurfaceSamples.length<12)requestAnimationFrame(sample);};requestAnimationFrame(sample);}})();)JS";
-    auto settings=read(root/L"assets/settings.svg"), sparkles=read(root/L"assets/sparkles.svg");
-    s+="const ICON_SETTINGS="+json(settings).dump()+", ICON_SPARKLES="+json(sparkles).dump()+", ICON_MESSAGE="+json(read(root/L"assets/message-square-more.svg")).dump()+";\n";
-    s+="const ICON_FRAMES="+json(read(root/L"assets/frame-interpolation.svg")).dump()+";\n";
-    s+=read(root/L"assets/bridge.js");
+    auto settings=assetText(L"assets/settings.svg"), sparkles=assetText(L"assets/sparkles.svg");
+    s+="const ICON_SETTINGS="+json(settings).dump()+", ICON_SPARKLES="+json(sparkles).dump()+", ICON_MESSAGE="+json(assetText(L"assets/message-square-more.svg")).dump()+";\n";
+    s+="const ICON_FRAMES="+json(assetText(L"assets/frame-interpolation.svg")).dump()+";\n";
+    s+=assetText(L"assets/bridge.js");
     // The thread ripper only works where a player lives (its settings dialog opens from the header view); other pages
     // skip its document-start hooks on every request.
     s+=R"JS(
 if(INITIAL.btr&&(location.pathname==='/__bili_space_chrome__'||host==='live.bilibili.com'||/^\/(?:zh-Hans\/)?(?:video|bangumi\/play|list|medialist|festival|cheese|watchlater)(?:\/|$)/i.test(location.pathname))){(()=>{
-)JS"+read(root/L"assets/btr.user.js")+"\n})();}\n";
+)JS"+assetText(L"assets/btr.user.js")+"\n})();}\n";
     // Upstream only executes on bilibili.com; fixture policy tests load it separately.
-    s+="if(host==='www.bilibili.com'){(()=>{\n"+read(root/L"assets/blocker.home.user.js")+"\n})();}\n";
-    s+=read(root/L"assets/desktop44.js");s+="\n";
-    s+=read(root/L"assets/community44.js");s+="\n";
+    s+="if(host==='www.bilibili.com'){(()=>{\n"+assetText(L"assets/blocker.home.user.js")+"\n})();}\n";
+    s+=assetText(L"assets/desktop44.js");s+="\n";
+    s+=assetText(L"assets/community44.js");s+="\n";
     s+="const PLUGINS="+pluginsRegistry().dump()+";\n";
-    s+=read(root/L"assets/plugins.js");s+="\n";
-    s+=read(root/L"assets/accounts50.js");s+="\n";
-    s+=read(root/L"assets/favorites49.js");s+="\n";
-    s+=read(root/L"assets/enhance.js");s+="\n";s+=read(root/L"assets/media-probe.js");return s+"\n})();";
+    s+=assetText(L"assets/plugins.js");s+="\n";
+    s+=assetText(L"assets/accounts50.js");s+="\n";
+    s+=assetText(L"assets/favorites49.js");s+="\n";
+    s+=assetText(L"assets/enhance.js");s+="\n";s+=assetText(L"assets/media-probe.js");return s+"\n})();";
 }
 #include "tabs55.hpp"
+#include "splash57.hpp"
 void chromeRescript();
 void refreshInjection(){
     refreshTabInjections();chromeRescript();ViewScope homeScope(homeTab&&homeTab->view?homeTab->view:webview);
@@ -504,11 +509,11 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="load-ai"){
 #ifndef BILI_LEGACY_WIN7
             // Only pages that start super-resolution or interpolation receive the WebGPU libraries.
-            webview->ExecuteScript(wide(read(root/L"assets/ai/ort.webgpu.min.js")+"\n;"+read(root/L"assets/ai/anime4k-webgpu.js")).c_str(),nullptr);
+            webview->ExecuteScript(wide(assetText(L"assets/ai/anime4k-webgpu.js")).c_str(),nullptr);
 #endif
         }else if(type=="tab-info"){acceptTabInfo(m);
         }else if(type=="app-visibility"){if(!IsWindowVisible(windowHandle))execute("window.BiliSpace?.pauseForTray()");
-        }else if(type=="surface-ready"){if(!viewScopeActive)revealPendingTab(tabForView(webview));if(surfaceCommitted&&viewScopeActive){surfaceWaiting=false;if(testing)log("surface visible: document style ready");KillTimer(windowHandle,75);KillTimer(windowHandle,76);if(controller)controller->put_IsVisible(TRUE);InvalidateRect(windowHandle,nullptr,FALSE);execute("window.BiliSpace?.surfaceRevealed?.()");}
+        }else if(type=="surface-ready"){if(!viewScopeActive)revealPendingTab(tabForView(webview));if(surfaceCommitted&&viewScopeActive){surfaceWaiting=false;splash::finish(windowHandle);if(testing)log("surface visible: document style ready");KillTimer(windowHandle,75);KillTimer(windowHandle,76);if(controller)controller->put_IsVisible(TRUE);InvalidateRect(windowHandle,nullptr,FALSE);execute("window.BiliSpace?.surfaceRevealed?.()");}
         }else if(type=="surface"){if(m.contains("dark")&&m["dark"].is_boolean())setSurface(m["dark"].get<bool>());
         }else if(type=="copy-video-link"){copyVideoLink(m.value("url",std::string{}));
         }else if(type=="open-external"){auto uri=wide(m.value("url",std::string{}));if(externalWebUrl(uri))ShellExecuteW(windowHandle,L"open",uri.c_str(),nullptr,nullptr,SW_SHOWNORMAL);
@@ -575,7 +580,15 @@ void restoreWebFocus(){
 
 #include "chrome56.hpp"
 bool chromeHostEnabled(){return chromeHost::active();}void chromePush(const std::wstring& target){chromeHost::push(target);}void chromePlace(){chromeHost::place();}
-void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}void chromeRescript(){chromeHost::rescript();}
+void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}
+// In the tray nothing is on screen: every view is hidden and suspended at low memory; coming back wakes the visible
+// page and the header only (other videos wake when switched to, as before).
+void chromeMemory(bool low){ICoreWebView2_19* v19{};if(chromeHost::view&&SUCCEEDED(chromeHost::view->QueryInterface(__uuidof(ICoreWebView2_19),reinterpret_cast<void**>(&v19)))){v19->put_MemoryUsageTargetLevel(low?COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW:COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL);v19->Release();}}
+void trayMemory(bool hidden){
+    if(hidden){for(auto t:tabs)if(t->controller&&!t->closed){t->controller->put_IsVisible(FALSE);tabMemory(t,true);}if(chromeHost::ctl){chromeHost::ctl->put_IsVisible(FALSE);chromeMemory(true);}return;}
+    if(activeTab&&activeTab->controller){tabMemory(activeTab,false);activeTab->controller->put_IsVisible(TRUE);}
+    if(chromeHost::ctl){chromeMemory(false);chromeHost::show(!full&&!pip);}
+}void chromeRescript(){chromeHost::rescript();}
 // Plugin changes reach every open view at once: the header, home and each video.
 void pluginsBroadcast(const std::string& js){auto w=wide(js);for(auto t:tabs)if(t->view&&!t->closed)t->view->ExecuteScript(w.c_str(),nullptr);if(chromeHost::view)chromeHost::view->ExecuteScript(w.c_str(),nullptr);}
 void pluginsReloadViews(){if(activeTab&&activeTab->view)activeTab->view->Reload();if(chromeHost::view)chromeHost::view->Reload();}
@@ -597,7 +610,7 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
                 LPWSTR u{};args->get_Uri(&u);std::wstring uri=u?u:L"";CoTaskMemFree(u);if(routeTabNavigation(sender,uri)){args->put_Cancel(TRUE);return S_OK;}
                 {BOOL redirected{};args->get_IsRedirected(&redirected);bool history=false;ICoreWebView2NavigationStartingEventArgs3* a3{};if(SUCCEEDED(args->QueryInterface(IID_ICoreWebView2NavigationStartingEventArgs3,reinterpret_cast<void**>(&a3)))&&a3){COREWEBVIEW2_NAVIGATION_KIND k{};a3->get_NavigationKind(&k);history=k!=COREWEBVIEW2_NAVIGATION_KIND_NEW_DOCUMENT;a3->Release();}
                  auto direct=localeRedirect(sender,uri,redirected,history);if(!direct.empty()){args->put_Cancel(TRUE);sender->Navigate(direct.c_str());return S_OK;}}if(scope.active&&uri.rfind(L"https://",0)==0)chromePush(uri);
-                if(testing)log("test navigation starting: "+utf8(uri.substr(0,60)));
+                log((testing?"test navigation starting: ":"navigation starting: ")+utf8(uri.substr(0,60)));
                 const bool gateDocument=updateRequired&&updateGateNavigationPending&&uri.rfind(L"data:text/html;charset=utf-8;base64,",0)==0;
                 if(updateRequired&&uri!=L"about:blank"){if(gateDocument)updateGateNavigationPending=false;else{args->put_Cancel(TRUE);return S_OK;}}
                 bool local=gateDocument||(updateRequired&&uri==L"about:blank")||(!startupTarget.empty()&&(uri.rfind(L"about:blank",0)==0||uri.rfind(L"data:text/html",0)==0))||uri.rfind(L"https://bili-space.local/",0)==0;
@@ -671,9 +684,9 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_DPICHANGED:{comp::applyScaleToAll();auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){rememberWindow();if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
-    case WM_TIMER:if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
-    case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");windowRemembered=false;return 0;}DestroyWindow(hwnd);return 0;
-    case WM_DESTROY:if(!windowRemembered)rememberWindow();{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
+    case WM_TIMER:if(wp==splash::fallbackTimer){splash::finish(hwnd);return 0;}if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
+    case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");windowRemembered=false;trayMemory(true);return 0;}DestroyWindow(hwnd);return 0;
+    case WM_DESTROY:splash::close();if(!windowRemembered)rememberWindow();{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
     }
     return DefWindowProcW(hwnd,msg,wp,lp);
 }
@@ -717,20 +730,21 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     log("startup: window created");
     windowsMediaInit(windowHandle,[](const std::string& command){execute("window.BiliSpace?.mediaCommand("+json(command).dump()+")");});
     log("startup: media initialized");
-    ShowWindow(windowHandle,restoreWindow()?SW_SHOWMAXIMIZED:SW_SHOW);UpdateWindow(windowHandle);
+    // The window opens once the first page is ready; until then only the turning television shows.
+    splash::begin(windowHandle,restoreWindow()?SW_SHOWMAXIMIZED:SW_SHOW);if(!splash::window){splash::finish(windowHandle);}
     auto dll=LoadLibraryW((root/L"WebView2Loader.dll").c_str());
     using Create=HRESULT(STDAPICALLTYPE*)(PCWSTR,PCWSTR,ICoreWebView2EnvironmentOptions*,ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler*);
     auto create=dll?reinterpret_cast<Create>(GetProcAddress(dll,"CreateCoreWebView2EnvironmentWithOptions")):nullptr;
     if(!create){MessageBoxW(windowHandle,L"WebView2Loader.dll 缺失，请使用完整 dist 目录。",L"启动失败",MB_OK|MB_ICONERROR);return 1;}
     auto envHandler=callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler,HRESULT,ICoreWebView2Environment*>([resumeUrl](HRESULT hr,ICoreWebView2Environment* env){
         if(FAILED(hr)||!env){log("WebView2 environment failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"请安装 Microsoft Edge WebView2 Evergreen Runtime 后重试。",L"启动失败",MB_OK);DestroyWindow(windowHandle);return S_OK;}
-        authEnvironment50=env;authEnvironment50->AddRef();
+        log("startup: browser environment ready");authEnvironment50=env;authEnvironment50->AddRef();
         auto h=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([resumeUrl,env](HRESULT hr,ICoreWebView2Controller* c){
-            if(FAILED(hr)||!c){log("controller creation failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"浏览器数据目录暂时无法打开。请关闭其他 Bili-Space 窗口后重试；登录数据不会被清除。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);DestroyWindow(windowHandle);return S_OK;}
+            if(SUCCEEDED(hr)&&c)log("startup: home view created");if(FAILED(hr)||!c){log("controller creation failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"浏览器数据目录暂时无法打开。请关闭其他 Bili-Space 窗口后重试；登录数据不会被清除。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);DestroyWindow(windowHandle);return S_OK;}
             controller=c;controller->AddRef();setSurface(config.value("theme",std::string("dark"))!="light");controller->get_CoreWebView2(&webview);fit();applyZoom();PostMessageW(windowHandle,restoreWebFocusMessage,0,0);
             homeTab=new Tab;homeTab->controller=controller;homeTab->view=webview;homeTab->used=++tabClock;tabs.push_back(homeTab);activeTab=homeTab;
             wireView(controller,webview,env);chromeHost::create(env);EventRegistrationToken token;
-            auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;if(loadRequiredUpdate()){showRequiredUpdate();return S_OK;}std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));if(testing&&!lifecyclePreview)webview->Navigate(target.c_str());else{startupTarget=target;auto splash=read(root/L"assets/startup.html");if(config.value("theme",std::string("dark"))!="system")splash+=config.value("theme",std::string("dark"))=="light"?"<style>body{background:#fafafa}p{color:#202024}</style>":"<style>body{background:#161618}p{color:#eeeef0}</style>";webview->NavigateToString(wide(splash).c_str());SetTimer(windowHandle,73,2500,nullptr);}if(!testing)AddClipboardFormatListener(windowHandle);}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
+            auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;if(loadRequiredUpdate()){showRequiredUpdate();return S_OK;}std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));if(!lifecyclePreview)webview->Navigate(target.c_str());else{startupTarget=target;auto splash=read(root/L"assets/startup.html");if(config.value("theme",std::string("dark"))!="system")splash+=config.value("theme",std::string("dark"))=="light"?"<style>body{background:#fafafa}p{color:#202024}</style>":"<style>body{background:#161618}p{color:#eeeef0}</style>";webview->NavigateToString(wide(splash).c_str());SetTimer(windowHandle,73,2500,nullptr);}if(!testing)AddClipboardFormatListener(windowHandle);}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
             webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();return S_OK;
         });comp::createController(env,h);h->Release();return S_OK;
     });
