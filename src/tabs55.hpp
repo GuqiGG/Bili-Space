@@ -110,10 +110,13 @@ void historyStep(ICoreWebView2* view,int direction){
     done->Release();
 }
 // Videos opened from home (or from another video) get their own view; site pages opened from a video return to home.
+bool officialVideoStyle(){return config.value("officialVideoStyle",false);}
 bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
     if(updateRequired||pip||!homeTab||!homeTab->view)return false;
     Tab* from=tabForView(sender);if(!from)return false;
     auto key=videoTabKey(uri);
+    // The official style plays a video as an ordinary page in the view it was clicked in, with no video dock.
+    if(!key.empty()&&officialVideoStyle())return false;
     if(!key.empty()){
         if(from->video&&from->key==key)return false;
         if(from==homeTab){LPWSTR source{};homeTab->view->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"https://",0)!=0)return false;}

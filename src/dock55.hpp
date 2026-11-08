@@ -245,7 +245,7 @@ void shutdown(){if(HWND h=window)PostMessageW(h,quitMessage,0,0);if(worker.joina
 void dockSync(){
     dock::State state;auto list=videoTabs();
     if(list.empty()&&!dock::running)return;
-    state.show=!list.empty()&&IsWindowVisible(windowHandle)&&!IsIconic(windowHandle)&&!pip&&!closePending;state.full=full;
+    state.show=!list.empty()&&!officialVideoStyle()&&IsWindowVisible(windowHandle)&&!IsIconic(windowHandle)&&!pip&&!closePending;state.full=full;
     state.video=activeTab&&activeTab->video;state.zoomed=IsZoomed(windowHandle)||full;state.dark=surfaceDark;GetWindowRect(windowHandle,&state.main);
     using Dpi=UINT(WINAPI*)(HWND);static auto dpi=reinterpret_cast<Dpi>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetDpiForWindow"));state.dpi=dpi?dpi(windowHandle):96;
     for(auto t:list)state.entries.push_back({reinterpret_cast<uintptr_t>(t),t->title,t->cover,t==activeTab});
