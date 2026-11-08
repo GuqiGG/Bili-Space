@@ -57,7 +57,7 @@ void create(ICoreWebView2Environment* env){
         ctl=c;ctl->AddRef();ctl->get_CoreWebView2(&view);comp::chromeController=ctl;
         ICoreWebView2Controller2* c2{};if(SUCCEEDED(ctl->QueryInterface(__uuidof(ICoreWebView2Controller2),reinterpret_cast<void**>(&c2)))){c2->put_DefaultBackgroundColor({0,0,0,0});c2->Release();}
         place();ctl->put_IsVisible(FALSE);
-        ICoreWebView2Settings* settings{};view->get_Settings(&settings);settings->put_AreDefaultContextMenusEnabled(FALSE);settings->put_IsStatusBarEnabled(FALSE);settings->put_AreDevToolsEnabled(testing);settings->put_IsZoomControlEnabled(FALSE);settings->Release();
+        ICoreWebView2Settings* settings{};view->get_Settings(&settings);settings->put_AreDefaultContextMenusEnabled(FALSE);settings->put_IsStatusBarEnabled(FALSE);settings->put_AreDevToolsEnabled(testing);settings->put_IsZoomControlEnabled(FALSE);lightenSettings(settings);settings->Release();
         EventRegistrationToken token;
         auto message=callback<ICoreWebView2WebMessageReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebMessageReceivedEventArgs*>([](ICoreWebView2*,auto args){receiveFromHeader(args);return S_OK;});view->add_WebMessageReceived(message,&token);message->Release();
         auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller*,auto args){UINT key{};COREWEBVIEW2_KEY_EVENT_KIND kind{};args->get_VirtualKey(&key);args->get_KeyEventKind(&kind);if(tabAccelerator(key,kind))args->put_Handled(TRUE);return S_OK;});ctl->add_AcceleratorKeyPressed(accelerator,&token);accelerator->Release();

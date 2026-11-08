@@ -836,9 +836,28 @@ function linkifyDescriptions(){
   }
 }
 
+/* Endless page animations (skeleton shimmers, spinners) keep the page redrawing every frame even where nobody can see
+   them, such as the load-more placeholders below the fold; a shimmer that moves a background even restyles on the main
+   thread each frame. They are paused while off screen and resume as soon as they come near the viewport, so what is
+   visible never changes. */
+const loopObserver=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(entries=>{for(const e of entries)for(const a of e.target.getAnimations?e.target.getAnimations({subtree:true}):[]){if(a.effect?.getTiming?.().iterations!==Infinity)continue;if(e.isIntersecting){if(a.__bsPaused){a.__bsPaused=false;a.play();}}else if(a.playState==='running'){a.__bsPaused=true;a.pause();}}},{rootMargin:'200px'}):null;
+const loopTargets=new WeakSet();
+function watchLoop(t){
+  if(!loopObserver||!t?.getAnimations||!t.isConnected||loopTargets.has(t)||t.closest?.('#bili-space-root'))return;
+  // Shimmers usually run on ::before/::after, which an element's own animation list leaves out without subtree.
+  if(!t.getAnimations({subtree:true}).some(a=>a.effect?.getTiming?.().iterations===Infinity))return;
+  loopTargets.add(t);loopObserver.observe(t);
+}
+function pauseOffscreenLoops(){
+  if(!loopObserver||!document.getAnimations)return;
+  for(const a of document.getAnimations())if(a.effect?.getTiming?.().iterations===Infinity)watchLoop(a.effect.target);
+}
+// Every CSS animation announces its start, including ones that began before this script looked.
+document.addEventListener('animationstart',e=>watchLoop(e.target),true);
+window.addEventListener('load',()=>setTimeout(pauseOffscreenLoops,500),{once:true});
 function scheduleScan(){
   if(scanTimer)return;
-  scanTimer=setTimeout(()=>{scanTimer=0;syncRoute();markAds();linkifyDescriptions();cacheSpaceBackgrounds();applyAudioBoost();watchVideoLoading();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==playbackVideo()))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==playbackVideo()))startGpu();},180);
+  scanTimer=setTimeout(()=>{scanTimer=0;pauseOffscreenLoops();syncRoute();markAds();linkifyDescriptions();cacheSpaceBackgrounds();applyAudioBoost();watchVideoLoading();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==playbackVideo()))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==playbackVideo()))startGpu();},180);
 }
 
 // Short wheel easing only: precision gestures retain the OS's own momentum.

@@ -6,7 +6,8 @@ version=json.loads((ROOT/'package.json').read_text())['version']
 target=out/f'Bili-Space-{version}-win64.zip'
 files=[ROOT/'dist/Bili-Space.exe',ROOT/'dist/WebView2Loader.dll']
 # Package current source assets; stale files from earlier incremental builds must not return.
-files+=list((ROOT/'assets').rglob('*'))
+# Windows needs neither the WebKit/portable stylesheet copies (macOS and Linux) nor the large PNG used to make their icons.
+files+=[f for f in (ROOT/'assets').rglob('*') if not f.name.endswith(('.portable.css','.webkit.css')) and f!=ROOT/'assets/branding/bili-space.png']
 files+=list((ROOT/'dist/runtime').rglob('*'))
 files+=[ROOT/'vendor/mihomo.LICENSE',ROOT/'vendor/anime4k.LICENSE',ROOT/'vendor/anime4k-source.json',ROOT/'vendor/runtime.lock.json',ROOT/'vendor/free-nodes-sources.json']
 files+=[ROOT/'vendor/iana-tlds.txt',ROOT/'vendor/iana-tlds-source.json']

@@ -58,6 +58,7 @@ UINT taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
 void execute(const std::string&);
 // Results the client's own interface waits for (settings, account menu) go to the header layer as well as the page.
 void executeEverywhere(const std::string&);
+void lightenSettings(ICoreWebView2Settings* settings);
 void trayMemory(bool hidden);
 void restoreFromTray(){trayMemory(false);if(closePending)SetWindowPos(windowHandle,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);closePending=false;KillTimer(windowHandle,72);KillTimer(windowHandle,74);execute("document.querySelector('#bs-close-animation')?.remove();window.BiliSpace?.restoreFromTray()");ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
 void installTray(){
@@ -592,13 +593,19 @@ void pluginsBroadcast(const std::string& js){auto w=wide(js);for(auto t:tabs)if(
 void pluginsReloadViews(){if(activeTab&&activeTab->view)activeTab->view->Reload();if(chromeHost::view)chromeHost::view->Reload();}
 void chromeStep(int direction){if(chromeHost::view&&chromeHost::ready)chromeHost::view->ExecuteScript(direction<0?L"window.BiliSpace?.chromeStep?.('back')":L"window.BiliSpace?.chromeStep?.('forward')",nullptr);}
 void chromeAcceptConfig(){if(chromeHost::view&&webview!=chromeHost::view)chromeHost::view->ExecuteScript(wide("window.BiliSpace?.acceptConfig?.("+config.dump()+",0)").c_str(),nullptr);}
+// Work no page here needs: SmartScreen reputation lookups (an extra request on every navigation, for a client that only
+// opens Bilibili) and address/card form autofill parsing on every page. Saved passwords are left as they are.
+void lightenSettings(ICoreWebView2Settings* settings){
+    ICoreWebView2Settings8* s8{};if(SUCCEEDED(settings->QueryInterface(__uuidof(ICoreWebView2Settings8),reinterpret_cast<void**>(&s8)))&&s8){s8->put_IsReputationCheckingRequired(FALSE);s8->Release();}
+    ICoreWebView2Settings4* s4{};if(SUCCEEDED(settings->QueryInterface(__uuidof(ICoreWebView2Settings4),reinterpret_cast<void**>(&s4)))&&s4){s4->put_IsGeneralAutofillEnabled(FALSE);s4->Release();}
+}
 void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Environment* env){
             EventRegistrationToken acceleratorToken;
             auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller* sender,auto args){ViewScope scope(sender);
                 UINT key{};COREWEBVIEW2_KEY_EVENT_KIND kind{};args->get_VirtualKey(&key);args->get_KeyEventKind(&kind);if(tabAccelerator(key,kind)){args->put_Handled(TRUE);return S_OK;}
                 if(key=='W'&&(GetKeyState(VK_CONTROL)&0x8000)&&!(GetKeyState(VK_MENU)&0x8000)&&(kind==COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN||kind==COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN)){args->put_Handled(TRUE);PostMessageW(windowHandle,WM_CLOSE,0,0);}return S_OK;
             });c->add_AcceleratorKeyPressed(accelerator,&acceleratorToken);accelerator->Release();
-            ICoreWebView2Settings* settings{};view->get_Settings(&settings);settings->put_AreDefaultContextMenusEnabled(TRUE);settings->put_IsStatusBarEnabled(FALSE);settings->put_AreDevToolsEnabled(testing);settings->Release();
+            ICoreWebView2Settings* settings{};view->get_Settings(&settings);settings->put_AreDefaultContextMenusEnabled(TRUE);settings->put_IsStatusBarEnabled(FALSE);settings->put_AreDevToolsEnabled(testing);lightenSettings(settings);settings->Release();
             ICoreWebView2_3* v3{};
             if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_3),reinterpret_cast<void**>(&v3)))){v3->SetVirtualHostNameToFolderMapping(L"bili-space.local",(root/L"assets").c_str(),COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);v3->Release();}
             EventRegistrationToken token;
