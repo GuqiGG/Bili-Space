@@ -1381,7 +1381,7 @@ function mountShell(){
 header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(--bs-ui-scale,1))}/* Fixed layers inside the zoomed header are positioned in its zoomed coordinates. */.search[aria-busy=true]:after{top:calc((var(--bs-header-height,58px) - 1px) / var(--bs-ui-scale,1))}@media(max-width:1050px){.category-links{top:calc(var(--bs-header-height,58px) / var(--bs-ui-scale,1))!important;left:calc(16px / var(--bs-ui-scale,1))!important;width:calc((100vw - 32px) / var(--bs-ui-scale,1))!important}}@media(max-width:800px){.favorites-panel{top:calc((var(--bs-header-height,58px) + 8px) / var(--bs-ui-scale,1))!important;right:calc(12px / var(--bs-ui-scale,1))!important;width:calc(min(540px,100vw - 24px) / var(--bs-ui-scale,1))!important}}
 /* Channel links read exactly like the main nav items they replace. */.category-links{gap:0}.header-left .category-links a{display:inline-flex;align-items:center;justify-content:center;height:32px;min-width:48px;padding:0 10px;border-radius:10px;font-size:14px;line-height:20px;color:var(--muted);background:none;box-sizing:border-box;transition:color 160ms ease}.header-left .category-links a:hover,.header-left .category-links a:focus-visible{color:var(--accent);background:none}.brand-leading{transition:opacity 180ms ease}header:has(.header-left[data-categories=true]) .brand-leading{opacity:0;pointer-events:none}
 .history-controls:not([hidden])+.back{margin-left:-10px}.history-controls{gap:0}:host([data-frost=true]) #chrome{background:var(--bg)!important;box-shadow:0 5px 16px #00000010!important}:host([data-frost=true]) #chrome::before{display:none!important}:host([data-frost=true]) :is(#settings-trigger,.upload){border-color:transparent!important;background:var(--frost-tint)!important;background-image:linear-gradient(140deg,#ffffff10,transparent 70%)!important;box-shadow:var(--frost-shadow)!important;backdrop-filter:var(--frost-filter)!important;-webkit-backdrop-filter:var(--frost-filter)!important}/* Experimental: every client control bounces once on hover. *//* A damped spring (damping 0.35): about two visible swings, sampled into linear() so it stays smooth and interruptible. */:host([data-bounce=true]) :is(button,a,.search,.account){transition:scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) :is(button,a,.search,.account):not(:disabled):hover{scale:1.16}
-/* Nav items bounce their label and refresh glyph, not the link box, so the current-page underline stays put. */:host([data-bounce=true]) .primary-nav a[data-route]{scale:none!important}:host([data-bounce=true]) .primary-nav a[data-route] .route-text{transition:opacity 160ms ease,transform 260ms cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) .primary-nav a[data-route] .route-refresh{transition:opacity 160ms ease,transform 360ms cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) .primary-nav a[data-route]:hover :is(.route-text,.route-refresh){scale:1.16}:host([data-bounce=true]) .primary-nav a[data-route]:has(+ a[data-route]:hover) .route-text,:host([data-bounce=true]) .primary-nav a[data-route]:hover+a[data-route] .route-text{scale:1.03}
+/* Rows in dropdowns, panels and settings are lists, not buttons: scaling a full-width row overflows its panel and is clipped. */:host([data-bounce=true]) :is(#search-panel,#messages-menu,#favorites-panel,#account-card,#settings,.account-manager) :is(button,a,.search-choice){scale:none!important}/* Nav items bounce their label and refresh glyph, not the link box, so the current-page underline stays put. */:host([data-bounce=true]) .primary-nav a[data-route]{scale:none!important}:host([data-bounce=true]) .primary-nav a[data-route] .route-text{transition:opacity 160ms ease,transform 260ms cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) .primary-nav a[data-route] .route-refresh{transition:opacity 160ms ease,transform 360ms cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) .primary-nav a[data-route]:hover :is(.route-text,.route-refresh){scale:1.16}:host([data-bounce=true]) .primary-nav a[data-route]:has(+ a[data-route]:hover) .route-text,:host([data-bounce=true]) .primary-nav a[data-route]:hover+a[data-route] .route-text{scale:1.03}
 /* The search field is several times wider than a button, so the same scale would look enormous on it. */:host([data-bounce=true]) .search:not(:disabled):hover{scale:1.03}:host([data-bounce=true]) :is(button,a):not(:hover):has(+ :is(button,a):hover),:host([data-bounce=true]) :is(button,a):hover+:is(button,a):not(:hover){scale:1.03}:host([data-bounce=true]) :is(.messages-item,.favorites-video,.favorites-folder,.search-choice):hover{animation:none}@media(prefers-reduced-motion:reduce){:host([data-bounce=true]) *{animation:none!important}}
 .settings-group{margin:0 0 14px;padding:0 18px;border:0;border-radius:14px;background:color-mix(in srgb,var(--panel) 82%,var(--bg));box-shadow:0 1px 2px #0000000c,0 6px 20px #00000014;interpolate-size:allow-keywords}.settings-group>summary{padding:15px 0;gap:10px;font-size:15px;letter-spacing:-.1px}.settings-group>summary small{padding:2px 8px;border-radius:999px;background:var(--field);font-variant-numeric:tabular-nums}.settings-group>summary::after{content:'';width:8px;height:8px;border:solid var(--muted);border-width:0 1.8px 1.8px 0;transform:translateY(-2px) rotate(45deg);transition:transform 240ms cubic-bezier(.32,.72,0,1)}.settings-group[open]>summary::after{transform:translateY(2px) rotate(-135deg)}.settings-group>summary:hover{color:var(--accent)}.settings-group::details-content{block-size:0;overflow:hidden;transition:block-size 320ms cubic-bezier(.32,.72,0,1),content-visibility 320ms allow-discrete}.settings-group[open]::details-content{block-size:auto}.settings-group .row+.row{border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent)}.settings-group .row{border-bottom:0!important}.settings-match{border-radius:10px;transition:background 140ms ease}@media(prefers-reduced-motion:reduce){.settings-group::details-content,.settings-group>summary::after{transition:none}}
 #page-pending{animation:bs-pending-in 220ms ease-out 800ms both}#page-pending .page-placeholder{display:none}@keyframes bs-pending-in{from{opacity:0}}
@@ -1579,7 +1579,7 @@ const ENHANCE_SHADERS={
       let e=textureSampleLevel(src,samp,uv+vec2f(px.x,0.),0.).rgb;let w=textureSampleLevel(src,samp,uv+vec2f(-px.x,0.),0.).rgb;
       let lo=min(min(min(n,s),min(e,w)),c);let hi=max(max(max(n,s),max(e,w)),c);
       let amount=u.z*sqrt(clamp(min(lo,1.-hi)/max(hi,vec3f(.001)),vec3f(0.),vec3f(1.)));
-      let sharp=c+(c-(n+s+e+w)*.25)*amount;
+      let sharp=c+(c-(n+s+e+w)*.25)*amount*2.;
       return vec4f(clamp(sharp,lo,hi),1.);}`,
   // Block motion: for each block of the newest frame, the offset d with  newest(x) ≈ previous(x + d), in source pixels.
   // A coarse pass searches widely on 32 px blocks; the fine pass refines 16 px blocks from the coarse neighbours.
@@ -1598,10 +1598,11 @@ const ENHANCE_SHADERS={
     @compute @workgroup_size(8,8) fn fine(@builtin(global_invocation_id) id:vec3u){
       let dims=textureDimensions(outField);if(id.x>=dims.x||id.y>=dims.y){return;}
       let center=(vec2f(id.xy)+.5)*16.;let cdims=vec2i(textureDimensions(coarseIn));let cid=vec2i(id.xy/2u);
-      var best=vec2f(0.);var bestCost=cost(center,16.,best);
-      for(var y=-1;y<=1;y++){for(var x=-1;x<=1;x++){let q=clamp(cid+vec2i(x,y),vec2i(0),cdims-1);let d=textureLoad(coarseIn,q,0).xy;let c=cost(center,16.,d);if(c<bestCost){bestCost=c;best=d;}}}
+      var mean=vec2f(0.);for(var y=-1;y<=1;y++){for(var x=-1;x<=1;x++){mean+=textureLoad(coarseIn,clamp(cid+vec2i(x,y),vec2i(0),cdims-1),0).xy;}}mean/=9.;
+      var best=vec2f(0.);var bestCost=cost(center,16.,best)+length(mean)*.004;
+      for(var y=-1;y<=1;y++){for(var x=-1;x<=1;x++){let q=clamp(cid+vec2i(x,y),vec2i(0),cdims-1);let d=textureLoad(coarseIn,q,0).xy;let c=cost(center,16.,d)+length(d-mean)*.004;if(c<bestCost){bestCost=c;best=d;}}}
       for(var r=0;r<2;r++){let stepSize=select(1.,4.,r==0);let around=best;
-        for(var y=-2;y<=2;y++){for(var x=-2;x<=2;x++){let d=around+vec2f(f32(x),f32(y))*stepSize;let c=cost(center,16.,d);if(c<bestCost){bestCost=c;best=d;}}}}
+        for(var y=-2;y<=2;y++){for(var x=-2;x<=2;x++){let d=around+vec2f(f32(x),f32(y))*stepSize;let c=cost(center,16.,d)+length(d-mean)*.004;if(c<bestCost){bestCost=c;best=d;}}}}
       let still=cost(center,16.,vec2f(0.));if(bestCost>still-.003){best=vec2f(0.);bestCost=still;}
       textureStore(outField,id.xy,vec4f(best,bestCost,1.));}`,
   // Frame generation: both frames move along the motion to the shown moment and are blended; where the match is poor
@@ -1656,41 +1657,44 @@ class VideoEnhancer {
     const w=this.video.videoWidth,h=this.video.videoHeight;if(!w||!h)return null;
     let factor=1;
     if(this.sr){const box=this.video.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),shown=Math.max(box.width*dpr/w,box.height*dpr/h);
-      factor=Math.min(Number(PREFS.srScale)||2,Math.max(1,shown),Math.sqrt(4.2e6/(w*h)));if(factor<1.05||w*h>1920*1080)factor=1;
-      if(this.anime&&factor>1)factor=2;}
-    return {w,h,outW:Math.round(w*factor),outH:Math.round(h*factor),upscale:factor>1,key:w+'x'+h+'@'+factor.toFixed(2)};
+      factor=Math.min(Number(PREFS.srScale)||2,Math.max(1,shown),Math.sqrt(4.2e6/(w*h)));if(factor<1.05)factor=1;
+      if(w*h>1920*1080)return {w,h,outW:w,outH:h,upscale:false,key:w+'x'+h+'@native'};
+      if(this.anime)factor=2;}
+    return {w,h,outW:Math.round(w*factor),outH:Math.round(h*factor),upscale:this.sr,key:w+'x'+h+'@'+factor.toFixed(2)};
   }
   build(plan){
     this.releaseSlots();const d=this.device,{w,h,outW,outH}=plan;this.plan_=plan;
     const usage=GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.RENDER_ATTACHMENT;
-    for(let i=0;i<2;i++){
+    for(let i=0;i<3;i++){
       const src=d.createTexture({size:[w,h],format:'rgba16float',usage});let up=src,anime=null;
       if(plan.upscale&&this.anime){const lib=window['anime4k-webgpu'];anime=new (PREFS.srMode==='quality'?lib.CNNx2UL:lib.CNNx2M)({device:d,inputTexture:src});up=anime.getOutputTexture();}
       else if(plan.upscale)up=d.createTexture({size:[outW,outH],format:'rgba16float',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.RENDER_ATTACHMENT});
       this.slots.push({src,up,anime,time:0,media:0});
     }
-    if(plan.upscale&&!this.anime){d.queue.writeBuffer(this.uniform,0,new Float32Array([w,h,PREFS.srMode==='quality'?.55:.35,0]));
+    if(plan.upscale&&!this.anime){d.queue.writeBuffer(this.uniform,0,new Float32Array([w,h,PREFS.srMode==='quality'?1.:.7,0]));
       for(const slot of this.slots)slot.general=d.createBindGroup({layout:this.generalPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:slot.src.createView()},{binding:1,resource:this.sampler},{binding:2,resource:{buffer:this.uniform}}]});}
     const fieldUsage=GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.STORAGE_BINDING;
     this.coarse=d.createTexture({size:[Math.ceil(w/32),Math.ceil(h/32)],format:'rgba16float',usage:fieldUsage});
-    this.field=d.createTexture({size:[Math.ceil(w/16),Math.ceil(h/16)],format:'rgba16float',usage:fieldUsage});
+    // Three frames and the motion into each: the display runs 1.5 source frames behind, so an early or late frame still
+    // falls inside a pair that can be interpolated.
+    this.fields=[0,1,2].map(()=>d.createTexture({size:[Math.ceil(w/16),Math.ceil(h/16)],format:'rgba16float',usage:fieldUsage}));this.field=this.fields[0];
     this.motionUniform=this.motionUniform||d.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});d.queue.writeBuffer(this.motionUniform,0,new Float32Array([w,h,0,0]));
     // Motion is always measured from the slot just written (b) back to the other one (a).
-    this.motionGroups=[0,1].map(i=>{const b=this.slots[i].src.createView(),a=this.slots[1-i].src.createView();const entries=(pipeline,coarseIn,out)=>d.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:a},{binding:1,resource:b},{binding:2,resource:this.sampler},...(coarseIn?[{binding:3,resource:coarseIn.createView()}]:[]),{binding:4,resource:out.createView()},{binding:5,resource:{buffer:this.motionUniform}}]});
-      return {coarse:entries(this.coarsePipeline,null,this.coarse),fine:entries(this.finePipeline,this.coarse,this.field)};});
-    this.presentGroups=[0,1].map(i=>d.createBindGroup({layout:this.presentPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:this.slots[1-i].up.createView()},{binding:1,resource:this.slots[i].up.createView()},{binding:2,resource:this.field.createView()},{binding:3,resource:this.sampler},{binding:4,resource:{buffer:this.presentUniform}}]}));
+    this.motionGroups=[0,1,2].map(i=>{const b=this.slots[i].src.createView(),a=this.slots[(i+2)%3].src.createView();const entries=(pipeline,coarseIn,out)=>d.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:a},{binding:1,resource:b},{binding:2,resource:this.sampler},...(coarseIn?[{binding:3,resource:coarseIn.createView()}]:[]),{binding:4,resource:out.createView()},{binding:5,resource:{buffer:this.motionUniform}}]});
+      return {coarse:entries(this.coarsePipeline,null,this.coarse),fine:entries(this.finePipeline,this.coarse,this.fields[i])};});
+    this.presentGroups=[0,1,2].map(i=>d.createBindGroup({layout:this.presentPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:this.slots[(i+2)%3].up.createView()},{binding:1,resource:this.slots[i].up.createView()},{binding:2,resource:this.fields[i].createView()},{binding:3,resource:this.sampler},{binding:4,resource:{buffer:this.presentUniform}}]}));
     this.canvas.width=outW;this.canvas.height=outH;this.current=-1;this.history=0;
   }
   releaseSlots(){
     for(const slot of this.slots){if(slot.anime){const seen=new Set(),visit=o=>{if(!o||typeof o!=='object'||seen.has(o))return;seen.add(o);if(typeof o.destroy==='function'&&typeof o.createView==='function'){if(o!==slot.src)o.destroy();return;}if(Array.isArray(o))o.forEach(visit);else for(const [k,v] of Object.entries(o))if(k!=='device')visit(v);};visit(slot.anime);}else if(slot.up!==slot.src)slot.up.destroy();slot.src.destroy();}
-    this.slots=[];this.coarse?.destroy();this.field?.destroy();this.coarse=this.field=null;
+    this.slots=[];this.coarse?.destroy();this.fields?.forEach(f=>f.destroy());this.coarse=this.field=this.fields=null;
   }
   onFrame(now,meta){
     if(this.stopped)return;this.frameHandle=this.video.requestVideoFrameCallback(this.onFrame);
     if(!this.video.isConnected){this.stop();scheduleScan();return;}
     try{
       const plan=this.plan();if(!plan)return;const rebuilt=!this.plan_||plan.key!==this.plan_.key;if(rebuilt)this.build(plan);
-      const d=this.device,next=this.current<0?0:1-this.current,slot=this.slots[next],media=meta?.mediaTime??this.video.currentTime,shown=meta?.expectedDisplayTime??now;
+      const d=this.device,next=this.current<0?0:(this.current+1)%3,slot=this.slots[next],media=meta?.mediaTime??this.video.currentTime,shown=meta?.expectedDisplayTime??now;
       // Seeking, a stall or a backwards jump starts a fresh pair instead of generating frames across the gap.
       const previous=this.current<0?null:this.slots[this.current],gap=previous?media-previous.media:0;
       if(!previous||gap<=0||gap>.25||this.video.seeking)this.history=0;
@@ -1701,7 +1705,10 @@ class VideoEnhancer {
         const c=encoder.beginComputePass();c.setPipeline(this.coarsePipeline);c.setBindGroup(0,groups.coarse);c.dispatchWorkgroups(Math.ceil(this.coarse.width/8),Math.ceil(this.coarse.height/8));
         c.setPipeline(this.finePipeline);c.setBindGroup(0,groups.fine);c.dispatchWorkgroups(Math.ceil(this.field.width/8),Math.ceil(this.field.height/8));c.end();}
       d.queue.submit([encoder.finish()]);
-      slot.time=shown;slot.media=media;this.current=next;this.history=Math.min(2,this.history+1);this.sourceFrames++;
+      // Display times are snapped to the screen's refresh; media times are exact. Map one to the other with a slowly
+      // corrected offset so generated frames advance evenly.
+      const offset=media-shown*(this.video.playbackRate||1)/1000;this.clockOffset=this.history===0||this.clockOffset==null?offset:this.clockOffset+(offset-this.clockOffset)*.08;
+      slot.time=shown;slot.media=media;this.current=next;this.history=Math.min(3,this.history+1);this.sourceFrames++;
       // Without frame generation (or while paused) each source frame is shown as it arrives.
       if(!this.fi||this.video.paused||rebuilt)this.present(1);
     }catch(e){this.fail(e.message);}
@@ -1711,15 +1718,21 @@ class VideoEnhancer {
     if(this.current<0||this.video.paused||document.hidden)return;
     // Cap at the chosen rate: on a fast display some refreshes are skipped evenly.
     const cap=1000/(Number(PREFS.fiFps)||60);if(now-(this.lastPresent||0)<cap*.8)return;this.lastPresent=now;
-    const b=this.slots[this.current],a=this.slots[1-this.current];
-    this.present(this.history>1?enhancePhase(now,a.time,b.time):1);
+    if(this.history<2){this.present(1,this.current);return;}
+    const newest=this.current,b=this.slots[newest],a=this.slots[(newest+2)%3],dur=b.media-a.media;
+    if(!(dur>.002&&dur<.12)){this.present(1,newest);return;}
+    const target=now*(this.video.playbackRate||1)/1000+(this.clockOffset||0)-1.5*dur;
+    let pair=newest;if(target<a.media&&this.history>=3)pair=(newest+2)%3;
+    const nb=this.slots[pair],na=this.slots[(pair+2)%3];
+    this.present(Math.max(0,Math.min(1,(target-na.media)/Math.max(.001,nb.media-na.media))),pair);
   }
-  present(phase){
+  present(phase,pair=this.current){
     const d=this.device,plan=this.plan_;if(!plan||this.current<0)return;
     d.queue.writeBuffer(this.presentUniform,0,new Float32Array([plan.w,plan.h,phase,this.fi&&this.history>1?1:0]));
     const encoder=d.createCommandEncoder(),pass=encoder.beginRenderPass({colorAttachments:[{view:this.context.getCurrentTexture().createView(),loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});
-    pass.setPipeline(this.presentPipeline);pass.setBindGroup(0,this.presentGroups[this.current]);pass.draw(3);pass.end();d.queue.submit([encoder.finish()]);
+    pass.setPipeline(this.presentPipeline);pass.setBindGroup(0,this.presentGroups[pair]);pass.draw(3);pass.end();d.queue.submit([encoder.finish()]);
     this.frames++;if(phase>.001&&phase<.999)this.generated++;
+    if(typeof RUNTIME!=='undefined'&&RUNTIME.testing){{const b=this.slots[pair],o=this.slots[(pair+2)%3];(this.trace||(this.trace=[])).push([performance.now(),o.media+phase*(b.media-o.media),b.media-o.media,phase]);}if(this.trace.length>240)this.trace.shift();}
     if(!this.shown){this.shown=true;this.canvas.style.visibility='visible';}
     // The player resets the element's inline style now and then; keep the raw video from compositing under the canvas.
     if(this.video.style.opacity!=='0')this.video.style.opacity='0';
@@ -2027,7 +2040,7 @@ function boot(){
   window.BiliCommunity44?.install({native,getVideo:playbackVideo,getRoute:route44,getAccountId:()=>String(accountProfile?.mid||''),parseDanmaku:parsePipDanmaku,wbiQuery:downloadWbiQuery,disableDanmaku:true});
   window.addEventListener('pagehide',()=>{window.BiliDesktop44?.stop();window.BiliCommunity44?.stop();});
   window.addEventListener('pageshow',e=>{if(e.persisted){brandMotion.forEach(a=>{a.onfinish=null;a.cancel();});brandMotion=[];brandShown=undefined;brandStateRequested=false;syncHeaderBrand();categoryMotion.forEach(a=>{a.onfinish=null;a.cancel();});categoryMotion=[];categoryShown=undefined;syncCategoryVisibility();navigationMotion.forEach(a=>{a.onfinish=null;a.cancel();});navigationMotion=[];navigationState=undefined;navigationMask=undefined;navigationRequested=false;syncNavigationControls();}native('navigation-state',{action:'read'});window.BiliDesktop44?.start();window.BiliCommunity44?.start();});
-  if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.enhancer=()=>gpu&&{frames:gpu.frames,generated:gpu.generated,sourceFrames:gpu.sourceFrames,anime:gpu.anime,plan:gpu.plan_,shown:gpu.shown,stopped:gpu.stopped,status:gpu.status};
+  if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.enhancer=()=>gpu&&{trace:gpu.trace,frames:gpu.frames,generated:gpu.generated,sourceFrames:gpu.sourceFrames,anime:gpu.anime,plan:gpu.plan_,shown:gpu.shown,stopped:gpu.stopped,status:gpu.status};
   native('updates',{action:'status'});
   loadOfficialSearchHistory();
   if(document.readyState==='complete')window.__bsPaintReady?.();
