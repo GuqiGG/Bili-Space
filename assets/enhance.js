@@ -263,14 +263,16 @@ function scheduleVideoAlign(){
     videoAlignTimer=setTimeout(()=>{alignVideoToolbar();setTimeout(()=>{alignVideoToolbar();setTimeout(alignVideoToolbar,900);},420);},120);
   });
 }
-function pageKind(){
-  const path=location.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'')||'/';
-  if(location.hostname==='space.bilibili.com')return 'space';
-  if(location.hostname==='search.bilibili.com')return 'search';
-  if(location.hostname==='t.bilibili.com'||/^\/opus(?:\/|$)/.test(path))return 'dynamic';
+// While a navigation is being previewed, the header is laid out for the destination instead of the current page.
+let routePreview=null;
+function pageKind(at=routePreview||location){
+  const path=at.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'')||'/';
+  if(at.hostname==='space.bilibili.com')return 'space';
+  if(at.hostname==='search.bilibili.com')return 'search';
+  if(at.hostname==='t.bilibili.com'||/^\/opus(?:\/|$)/.test(path))return 'dynamic';
   if(/\/(?:account\/)?history(?:\/|$)/.test(path))return 'history';
   if(/^\/(?:video|bangumi|list)(?:\/|$)/.test(path))return 'video';
-  if(location.hostname==='message.bilibili.com')return 'messages';
+  if(at.hostname==='message.bilibili.com')return 'messages';
   return /^\/(?:index\.html)?$/.test(path)?'home':'other';
 }
 /* Brand, history and category changes are decided before the native host shows a freshly loaded page; hold them on their first frame until it is visible. */
@@ -444,7 +446,20 @@ function beginVideoLoading(target=location.href){
   let layer=$('#bs-video-loading');if(layer?.dataset.key===key)return;if(layer)cancelVideoLoading();
   recordVideoLoading('enter');layer=document.createElement('div');layer.id='bs-video-loading';layer.dataset.key=key;layer.setAttribute('role','status');layer.setAttribute('aria-live','polite');layer.innerHTML='<div>'+ICON_TV+'<p>正在打开视频…</p></div>';document.documentElement.append(layer);setTimeout(()=>settleVideoLoading(),0);
 }
-function beginNavigation(target){const url=new URL(target,location.href);if(videoLoadingKey(url.href)){setLoading(false);beginVideoLoading(url.href);}else{cancelVideoLoading();setLoading(url.hostname==='search.bilibili.com');}}
+/* The header moves the moment a navigation starts, in the page that is still fully loaded, and records the
+   destination's state with the native host so the new page opens already settled instead of replaying it. */
+function previewHeaderRoute(target){
+  if(!shadow)return;let url;try{url=new URL(target,location.href);}catch{return;}
+  if(!/(^|\.)bilibili\.com$/i.test(url.hostname))return;const kind=pageKind(url);if(kind===pageKind())return;
+  const former=$('nav a[aria-current=page]',shadow);routePreview=url;
+  try{
+    syncHeaderBrand();syncNavigationControls();
+    $$('nav a[data-route]',shadow).forEach(a=>{if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+    const link=routeLink(kind);if(link&&link!==former)slideRouteIndicator(former,link);syncRouteRefreshLabels();
+    reportedRoute=kind;native('navigation-state',{action:'route',route:kind});
+  }finally{routePreview=null;}
+}
+function beginNavigation(target){previewHeaderRoute(target);const url=new URL(target,location.href);if(videoLoadingKey(url.href)){setLoading(false);beginVideoLoading(url.href);}else{cancelVideoLoading();setLoading(url.hostname==='search.bilibili.com');}}
 function finishVideoLoading(){
   const layer=$('#bs-video-loading');if(!layer||layer.classList.contains('leaving'))return;completedVideoKey=layer.dataset.key;clearTimeout(videoWaitTimer);cancelLoadingFrame();clearTimeout(videoLoadTimer);if(!layer.classList.contains('leaving'))recordVideoLoading('exit');layer.classList.add('leaving');layer.style.background='transparent';const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;videoLoadTimer=setTimeout(()=>{layer.remove();recordVideoLoading('removed');},reduced?0:120);
 }

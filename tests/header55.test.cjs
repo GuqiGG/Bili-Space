@@ -21,3 +21,18 @@ test('header motion decided before the page is revealed waits on its first frame
  assert.match(js,/const held=revealMotion\.splice\(0\);held\.forEach\(m=>\{try\{m\.play\(\);\}catch\{\}\}\);/);
  assert(js.includes('headerFlipMotion.push(holdForReveal('));
 });
+
+test('the header moves to the destination as soon as navigation starts and records it for the next page',()=>{
+ const a=app({reduceMotion:false});try{const s=a.w.document.querySelector('#bili-space-root').shadowRoot,motions=[];
+  a.w.Element.prototype.animate=function(frames,options){const m={target:this,frames,options,onfinish:null,cancel(){}};motions.push(m);return m;};
+  a.w.Element.prototype.getBoundingClientRect=function(){return {left:10,top:0,right:50,bottom:32,width:40,height:32};};
+  assert.equal(s.querySelector('.brand-slot').hidden,false);
+  a.w.BiliSpace.beginNavigation('https://www.bilibili.com/history');
+  assert.equal(s.querySelector('.brand-slot').hidden,true);
+  assert.equal(s.querySelector('[data-route=history]').getAttribute('aria-current'),'page');
+  assert.equal(s.querySelector('[data-route=home]').getAttribute('aria-current'),null);
+  assert(a.messages.some(m=>m.type==='navigation-state'&&m.action==='route'&&m.route==='history'));
+  assert(a.messages.some(m=>m.type==='header-brand'&&m.action==='write'&&m.shown===false));
+  assert.equal(a.w.document.documentElement.dataset.bsPage,'home');
+ }finally{a.close();}
+});
