@@ -37,7 +37,7 @@ test('the header moves to the destination as soon as navigation starts and recor
  }finally{a.close();}
 });
 
-test('refresh stays hidden for 3s after the header moves or a page loads',async()=>{
+test('refresh stays hidden for 1.5s after the header moves or a page loads',async()=>{
  const a=app();try{const s=a.w.document.querySelector('#bili-space-root').shadowRoot,left=s.querySelector('.header-left');
   assert.equal(left.dataset.settling,'true');
   a.w.BiliSpace.beginNavigation('https://www.bilibili.com/history');assert.equal(left.dataset.settling,'true');

@@ -422,8 +422,8 @@ function setPrimaryNavHidden(nav,hide,instant){
   else{nav.hidden=false;const m=primaryNavMotion=nav.animate([from||{opacity:0,translate:'12px 0px'},{opacity:1,translate:'0px 0px'}],{duration:320,easing:'cubic-bezier(.32,.72,0,1)'});m.onfinish=()=>{if(primaryNavMotion===m)primaryNavMotion=null;};}
 }
 let headerSettleTimer;
-// The current nav item only offers refresh 3s after the header last moved, and only once the pointer moves again.
-function settleHeader(ms=3000){const left=shadow&&$('.header-left',shadow);if(!left)return;left.dataset.settling='true';clearTimeout(headerSettleTimer);headerSettleTimer=setTimeout(()=>{const release=()=>{delete left.dataset.settling;};left.addEventListener('pointermove',release,{once:true});},ms);}
+// The current nav item only offers refresh 1.5s after the header last moved, and only once the pointer moves again.
+function settleHeader(ms=1500){const left=shadow&&$('.header-left',shadow);if(!left)return;left.dataset.settling='true';clearTimeout(headerSettleTimer);headerSettleTimer=setTimeout(()=>{const release=()=>{delete left.dataset.settling;};left.addEventListener('pointermove',release,{once:true});},ms);}
 function setCategories(open,keyboard=false){
   if(!shadow)return;
   const trigger=$('.back',shadow),links=$('#header-categories',shadow),lane=$('.nav-lane',shadow),nav=$('.primary-nav',shadow);
