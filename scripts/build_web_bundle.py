@@ -22,7 +22,8 @@ window.__bsPaintReady=()=>window.chrome.webview.postMessage({type:'surface-ready
 ''']
     chunks += ['const '+key+'='+json.dumps(value, ensure_ascii=False)+';' for key,value in icons.items()]
     chunks += [(assets / 'bridge.js').read_text(encoding='utf-8')]
-    chunks += ["if(INITIAL.btr){(()=>{"+(assets/'btr.user.js').read_text(encoding='utf-8')+'})();}']
+    # Same as Windows: the thread ripper is always on and only runs where a player lives.
+    chunks += [r"if(location.hostname==='live.bilibili.com'||/^\/(?:zh-Hans\/)?(?:video|bangumi\/play|list|medialist|festival|cheese|watchlater)(?:\/|$)/i.test(location.pathname)){(()=>{"+(assets/'btr.user.js').read_text(encoding='utf-8')+'})();}']
     chunks += ["if(location.hostname==='www.bilibili.com'){(()=>{"+(assets/'blocker.home.user.js').read_text(encoding='utf-8')+'})();}']
     chunks += [(assets/name).read_text(encoding='utf-8') for name in ['desktop44.js','community44.js','plugins.js','accounts50.js','favorites49.js','enhance.js','media-probe.js']]
     chunks += ['})();']
