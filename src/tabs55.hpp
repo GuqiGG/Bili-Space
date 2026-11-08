@@ -88,6 +88,27 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
 std::wstring currentSource(Tab* t){if(!t||!t->view)return {};LPWSTR source{};t->view->get_Source(&source);std::wstring s=source?source:L"";CoTaskMemFree(source);return s;}
 // Compares pages by host and path, ignoring the locale prefix, a trailing slash, the query and the fragment.
 std::wstring normalisedPage(std::wstring uri){uri=uri.substr(0,uri.find_first_of(L"?#"));auto scheme=uri.find(L"://");if(scheme==std::wstring::npos)return uri;auto slash=uri.find(L'/',scheme+3);std::wstring host=uri.substr(0,slash),path=slash==std::wstring::npos?L"/":uri.substr(slash);if(path.rfind(L"/zh-Hans",0)==0)path=path.substr(8);if(path.empty())path=L"/";if(path.size()>1&&path.back()==L'/')path.pop_back();return host+path;}
+// Overseas accounts are sent from www/t.bilibili.com pages to their /zh-Hans copies, costing a round trip (or a
+// whole extra page load) on every switch. Once a host and first path segment are seen doing that, they open there
+// directly. Learned routes are kept in settings ("localeRoutes": ["www.bilibili.com/", "www.bilibili.com/video", ...]).
+std::map<ICoreWebView2*,std::wstring> navigationStarts;
+std::wstring localeRouteKey(const std::wstring& uri,bool* localized=nullptr){
+    const std::wstring scheme=L"https://";if(uri.rfind(scheme,0)!=0)return L"";auto slash=uri.find(L'/',scheme.size());if(slash==std::wstring::npos)return L"";
+    auto host=uri.substr(scheme.size(),slash-scheme.size());if(host!=L"www.bilibili.com"&&host!=L"t.bilibili.com")return L"";
+    auto path=uri.substr(slash,uri.find_first_of(L"?#",slash)-slash);bool zh=path==L"/zh-Hans"||path.rfind(L"/zh-Hans/",0)==0;if(localized)*localized=zh;if(zh)path=path.size()>8?path.substr(8):L"/";
+    auto end=path.find(L'/',1);return host+L"/"+(path.size()>1?path.substr(1,end==std::wstring::npos?std::wstring::npos:end-1):L"");
+}
+bool localeKnown(const std::wstring& key){for(auto& v:localeRoutes)if(v.is_string()&&wide(v.get<std::string>())==key)return true;return false;}
+// Called for each top-level navigation start; returns the address to open instead, or an empty string.
+std::wstring localeRedirect(ICoreWebView2* view,const std::wstring& uri,bool redirected,bool history){
+    bool zh=false;auto key=localeRouteKey(uri,&zh);auto& previous=navigationStarts[view];
+    if(!key.empty()&&zh){bool fromPlain=false;auto before=localeRouteKey(previous,&fromPlain);
+        // Learn only from the site moving a plain address to its own /zh-Hans copy (server redirect or page script).
+        if(!fromPlain&&before==key&&!localeKnown(key)&&localeRoutes.size()<32){localeRoutes.push_back(utf8(key));save();}}
+    if(!redirected)previous=uri;
+    if(key.empty()||zh||redirected||history||!localeKnown(key))return L"";
+    auto slash=uri.find(L'/',8);auto rest=uri.substr(slash);return uri.substr(0,slash)+L"/zh-Hans"+(rest==L"/"?L"":rest);
+}
 // Back and forward skip history entries of the same page: Bilibili adds a /zh-Hans copy of the page it opens, and a
 // plain GoBack lands on the original address, which forwards to the copy again and the button seems to do nothing.
 void historyStep(ICoreWebView2* view,int direction){

@@ -51,7 +51,7 @@ bool headerBrandShown=false,categoryVisible=false;int navigationVisible=0;std::s
 bool surfaceWaiting=false,surfaceCommitted=false,surfaceDark=true;ULONGLONG surfaceStart{};
 RECT savedRect{},closeRect{};ULONGLONG closeStarted{};
 // The window's restored size and position (workspace coordinates, as GetWindowPlacement reports them) and whether it was maximized.
-json windowState=json::object();bool windowRemembered=false;
+json windowState=json::object(),localeRoutes=json::array();bool windowRemembered=false;
 constexpr UINT trayMessage=WM_APP+71;
 NOTIFYICONDATAW trayIcon{};bool trayReady=false;
 UINT taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
@@ -338,7 +338,7 @@ json cleanSearchHistory(const json& values){
 }
 void save(){
     auto tmp=dataPath/L"settings.tmp";
-    {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm},{"searchHistory",searchHistory},{"window",windowState}}).dump(2);if(!f){log("settings write failed");return;}}
+    {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm},{"searchHistory",searchHistory},{"window",windowState},{"localeRoutes",localeRoutes}}).dump(2);if(!f){log("settings write failed");return;}}
     if(!MoveFileExW(tmp.c_str(),(dataPath/L"settings.json").c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))log("settings atomic rename failed");
 }
 bool color(const json& v){ if(!v.is_string())return false;auto s=v.get<std::string>();return s.size()==7&&s[0]=='#'&&s.find_first_not_of("0123456789abcdefABCDEF",1)==std::string::npos; }
@@ -584,7 +584,9 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
             auto mh=callback<ICoreWebView2WebMessageReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebMessageReceivedEventArgs*>([](ICoreWebView2* sender,auto args){ViewScope scope(sender);receive(args);return S_OK;});view->add_WebMessageReceived(mh,&token);mh->Release();
             auto historyChanged=callback<ICoreWebView2HistoryChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2* sender,IUnknown*){ViewScope scope(sender);pushNavigationState();if(scope.active)chromePush();return S_OK;});view->add_HistoryChanged(historyChanged,&token);historyChanged->Release();
             auto nh=callback<ICoreWebView2NavigationStartingEventHandler,ICoreWebView2*,ICoreWebView2NavigationStartingEventArgs*>([](ICoreWebView2* sender,auto args){ViewScope scope(sender);
-                LPWSTR u{};args->get_Uri(&u);std::wstring uri=u?u:L"";CoTaskMemFree(u);if(routeTabNavigation(sender,uri)){args->put_Cancel(TRUE);return S_OK;}if(scope.active&&uri.rfind(L"https://",0)==0)chromePush(uri);
+                LPWSTR u{};args->get_Uri(&u);std::wstring uri=u?u:L"";CoTaskMemFree(u);if(routeTabNavigation(sender,uri)){args->put_Cancel(TRUE);return S_OK;}
+                {BOOL redirected{};args->get_IsRedirected(&redirected);bool history=false;ICoreWebView2NavigationStartingEventArgs3* a3{};if(SUCCEEDED(args->QueryInterface(IID_ICoreWebView2NavigationStartingEventArgs3,reinterpret_cast<void**>(&a3)))&&a3){COREWEBVIEW2_NAVIGATION_KIND k{};a3->get_NavigationKind(&k);history=k!=COREWEBVIEW2_NAVIGATION_KIND_NEW_DOCUMENT;a3->Release();}
+                 auto direct=localeRedirect(sender,uri,redirected,history);if(!direct.empty()){args->put_Cancel(TRUE);sender->Navigate(direct.c_str());return S_OK;}}if(scope.active&&uri.rfind(L"https://",0)==0)chromePush(uri);
                 if(testing)log("test navigation starting: "+utf8(uri.substr(0,60)));
                 const bool gateDocument=updateRequired&&updateGateNavigationPending&&uri.rfind(L"data:text/html;charset=utf-8;base64,",0)==0;
                 if(updateRequired&&uri!=L"about:blank"){if(gateDocument)updateGateNavigationPending=false;else{args->put_Cancel(TRUE);return S_OK;}}
@@ -680,7 +682,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     try{if(!prepareAppData()){MessageBoxW(nullptr,L"应用数据目录不可写。请将完整程序目录放到可写位置后重试，原登录数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}}catch(const std::exception&){MessageBoxW(nullptr,L"无法准备应用数据目录，原数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}
     config=defaults();gm=json::object();
     log(std::string("startup ")+appVersion+(testing?" test":" normal"));
-    try{auto stored=json::parse(read(dataPath/L"settings.json"));mergeConfig(stored.value("config",json::object()));if(stored.contains("window")&&stored["window"].is_object())windowState=stored["window"];if(stored.contains("gm")&&stored["gm"].is_object())gm=stored["gm"];searchHistory=cleanSearchHistory(stored.value("searchHistory",json::array()));}catch(...){}
+    try{auto stored=json::parse(read(dataPath/L"settings.json"));mergeConfig(stored.value("config",json::object()));if(stored.contains("window")&&stored["window"].is_object())windowState=stored["window"];if(stored.contains("localeRoutes")&&stored["localeRoutes"].is_array())localeRoutes=stored["localeRoutes"];if(stored.contains("gm")&&stored["gm"].is_object())gm=stored["gm"];searchHistory=cleanSearchHistory(stored.value("searchHistory",json::array()));}catch(...){}
     log("startup: settings loaded");
     proxyEnabled=config.value("proxy",false);
     if(!proxyEnabled&&fs::exists(dataPath/L"proxy-enabled")){proxyEnabled=true;config["proxy"]=true;}
