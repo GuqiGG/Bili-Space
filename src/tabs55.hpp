@@ -104,7 +104,7 @@ bool tabAccelerator(UINT key,COREWEBVIEW2_KEY_EVENT_KIND kind){
     if(!(GetKeyState(VK_CONTROL)&0x8000)||(GetKeyState(VK_MENU)&0x8000)||(GetKeyState(VK_SHIFT)&0x8000))return false;
     if(kind!=COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN&&kind!=COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN)return false;
     // Ctrl+1-9 are the videos in dock order; Ctrl+T returns home.
-    if(key=='T'){if(homeTab)activateTab(homeTab);return true;}
+    if(key=='T'){if(!homeTab)return true;if(activeTab==homeTab&&homeTab->view)homeTab->view->ExecuteScript(L"window.BiliSpace?.ctrlHome?.()",nullptr);else activateTab(homeTab);return true;}
     if(key>='1'&&key<='9'){auto list=videoTabs();size_t i=key-'1';if(i<list.size()&&list[i]->controller)activateTab(list[i]);return true;}
     if(key=='W'&&activeTab&&activeTab->video){closeTab(activeTab);return true;}
     return false;

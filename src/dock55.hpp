@@ -21,11 +21,12 @@ struct CoverReply{uintptr_t id;std::string cover,bytes;};
 ULONG_PTR gdiplusToken{};State view;std::vector<std::unique_ptr<Item>> items;Spring pill,homeScale{1,0};float shown=0,homeShown=0,tipAlpha=0,pillHeight=PAD*2+ITEM;
 // island: maximized or fullscreen windows get a horizontal dock at the bottom edge that folds into a thin bar while a video plays.
 Spring collapse;bool island=false,inside=false;ULONGLONG lastInside=0;
-int hovered=-2,pressed=-2;bool closeHovered=false,tracking=false,animating=false,outside=true;ULONGLONG lastFrame=0;std::string tipText;std::unique_ptr<GraphicsPath> homeGlyph;
+int hovered=-2,pressed=-2;bool closeHovered=false,tracking=false,animating=false,outside=true;LONGLONG lastFrame=0;std::string tipText;std::unique_ptr<GraphicsPath> homeGlyph;
 HDC canvasDc{};HBITMAP canvasBitmap{};HGDIOBJ canvasPrevious{};void* canvasBits{};int canvasW=0,canvasH=0;
 
 bool reduceMotion(){BOOL on=TRUE;SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&on,0);return !on;}
-float scale(){return view.dpi/96.f;}
+// The dock follows the window: 860 DIP of window height is the reference size, clamped to 0.85-1.3.
+float scale(){float dpi=view.dpi/96.f,height=float(view.main.bottom-view.main.top)/std::max(.5f,dpi);return dpi*std::clamp(height/860.f,.85f,1.3f);}
 void rounded(GraphicsPath& p,float x,float y,float w,float h,float r){r=std::min(r,std::min(w,h)/2);float d=r*2;p.AddArc(x,y,d,d,180,90);p.AddArc(x+w-d,y,d,d,270,90);p.AddArc(x+w-d,y+h-d,d,d,0,90);p.AddArc(x,y+h-d,d,d,90,90);p.CloseFigure();}
 void softShadow(Graphics& g,float x,float y,float w,float h,float r,float strength,float spread){
     strength=std::max(0.f,strength);spread=std::max(0.f,spread);
@@ -154,15 +155,16 @@ void paint(){
     if(shown>.01f&&!IsWindowVisible(h))ShowWindow(h,SW_SHOWNOACTIVATE);else if(shown<=.01f&&!view.show&&IsWindowVisible(h))ShowWindow(h,SW_HIDE);
 }
 void step(){
-    ULONGLONG now=GetTickCount64();float dt=std::min(.032f,lastFrame?float(now-lastFrame)/1000.f:.016f);lastFrame=now;bool moving=false;const bool calm=reduceMotion();
+    // Frame time comes from the performance counter: the tick count is too coarse for a 200 Hz display.
+    LARGE_INTEGER counter,frequency;QueryPerformanceCounter(&counter);QueryPerformanceFrequency(&frequency);float dt=std::clamp(lastFrame?float(double(counter.QuadPart-lastFrame)/double(frequency.QuadPart)):.008f,.001f,.032f);lastFrame=counter.QuadPart;bool moving=false;const bool calm=reduceMotion();
     auto move=[&](float& v,float target,float tau){float n=approach(v,target,dt,tau);if(std::fabs(n-target)<.002f)n=target;if(n!=v)moving=true;v=n;};
-    auto bounce=[&](Spring& sp,float target){float k=calm?300.f:560.f,d=calm?2*std::sqrt(k):21.f;for(int i=0;i<2;++i)moving|=sp.step(target,dt/2,k,d);};
+    auto bounce=[&](Spring& sp,float target){float k=calm?300.f:560.f,d=calm?2*std::sqrt(k):27.f;for(int i=0;i<2;++i)moving|=sp.step(target,dt/2,k,d);};
     auto glide=[&](Spring& sp,float target){float k=calm?320.f:420.f,d=calm?2*std::sqrt(k):31.f;for(int i=0;i<2;++i)moving|=sp.step(target,dt/2,k,d);};
     move(shown,view.show?1.f:0.f,.06f);move(homeShown,view.video?1.f:0.f,.07f);bounce(homeScale,hovered==-1?(pressed==-1?.94f:1.12f):1.f);
     float y=PAD+homeShown*(ITEM+GAP);
     for(size_t i=0;i<items.size();++i){auto& it=*items[i];if(!it.placed){it.y.value=y;it.placed=true;}
         // Dock-style magnification: the hovered tile swells and its neighbours lean in a little.
-        float lift=0;if(hovered>=0){int d=std::abs(int(i)-hovered);lift=d==0?.16f:d==1?.05f:0.f;}
+        float lift=0;if(hovered>=0){int d=std::abs(int(i)-hovered);lift=d==0?.16f:d==1?.03f:0.f;}
         float target=(it.entry.active?1.08f:1.f)+lift;if(int(i)==pressed)target=.94f;
         if(it.leaving){bounce(it.scale,.55f);move(it.alpha,0.f,.06f);move(it.hover,0.f,.05f);move(it.white,0.f,.06f);continue;}
         glide(it.y,y);bounce(it.scale,target);move(it.alpha,1.f,.07f);move(it.white,0.f,.08f);move(it.hover,int(i)==hovered?1.f:0.f,.06f);y+=ITEM+GAP;}
@@ -171,9 +173,9 @@ void step(){
     if(island&&view.video&&!inside&&!fold)SetTimer(window,2,UINT(2600-std::min<ULONGLONG>(2500,nowMs-lastInside)),nullptr);
     glide(collapse,fold?1.f:0.f);
     glide(pill,contentHeight());pillHeight=std::max(PAD*2+ITEM*.5f,pill.value);move(tipAlpha,hovered>=0?1.f:0.f,.05f);
-    paint();if(!moving){animating=false;KillTimer(window,1);lastFrame=0;}
+    paint();if(!moving){animating=false;lastFrame=0;}
 }
-void kick(){HWND h=window;if(!h)return;if(!animating){animating=true;lastFrame=0;SetTimer(h,1,8,nullptr);}step();}
+void kick(){HWND h=window;if(!h)return;if(!animating){animating=true;lastFrame=0;}step();}
 void acceptState(){
     {std::lock_guard<std::mutex> guard(stateLock);view=latest;}
     std::vector<std::unique_ptr<Item>> next;
@@ -222,7 +224,13 @@ void run(HWND owner){
     WNDCLASSEXW wc{sizeof(wc)};wc.lpfnWndProc=proc;wc.hInstance=GetModuleHandleW(nullptr);wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.lpszClassName=L"BiliSpaceVideoDock";RegisterClassExW(&wc);
     HWND h=CreateWindowExW(WS_EX_LAYERED|WS_EX_TOOLWINDOW|WS_EX_NOACTIVATE,wc.lpszClassName,L"",WS_POPUP,0,0,1,1,owner,nullptr,wc.hInstance,nullptr);
     pill.value=pillHeight;window=h;if(h)acceptState();
-    MSG m;while(h&&GetMessageW(&m,nullptr,0,0)>0){TranslateMessage(&m);DispatchMessageW(&m);}
+    MSG m;bool quit=false;
+    // While anything moves, frames are paced by the compositor (DwmFlush waits for the next vblank), so the dock
+    // animates at the display's own refresh rate rather than the 64 Hz system timer.
+    while(h&&!quit){
+        if(animating){while(PeekMessageW(&m,nullptr,0,0,PM_REMOVE)){if(m.message==WM_QUIT){quit=true;break;}TranslateMessage(&m);DispatchMessageW(&m);}if(quit)break;if(animating){step();if(FAILED(DwmFlush()))Sleep(4);}}
+        else{if(GetMessageW(&m,nullptr,0,0)<=0)break;TranslateMessage(&m);DispatchMessageW(&m);}
+    }
     window=nullptr;items.clear();homeGlyph.reset();if(canvasDc){SelectObject(canvasDc,canvasPrevious);DeleteObject(canvasBitmap);DeleteDC(canvasDc);canvasDc=nullptr;}
     GdiplusShutdown(gdiplusToken);running=false;
 }
