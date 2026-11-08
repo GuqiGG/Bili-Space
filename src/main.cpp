@@ -370,16 +370,18 @@ bool trusted(const std::wstring& uri){
 #include "accounts50.hpp"
 #include "local_shell.hpp"
 #include "auth_popup50.hpp"
+bool chromeHostEnabled();void chromePush(const std::wstring& target=L"");void chromePlace();void chromeZoom(double z);void chromeShow(bool on);void chromeAcceptConfig();void chromeClose();
 std::string script(){
     std::string s="(()=>{if(window.top!==window)return; const host=location.hostname;if(!(['www.bilibili.com','search.bilibili.com','space.bilibili.com','live.bilibili.com','t.bilibili.com','passport.bilibili.com','account.bilibili.com','message.bilibili.com','manga.bilibili.com'].includes(host)";
     if(testing)s+="||host==='bili-space.local'";
     s+="))return;\nconst APP_INFO="+appInfo().dump()+";const INITIAL="+config.dump()+";const GM_INITIAL="+gm.dump()+";const RUNTIME="+proxyState().dump()+";\n";
     s+="RUNTIME.platform='windows';\n";
+    s+="RUNTIME.chromeHost="+std::string(chromeHostEnabled()?"true":"false")+";\n";
 #ifdef BILI_LEGACY_WIN7
     s+="RUNTIME.legacyWin7=true;\n";
 #endif
     s+="RUNTIME.testing="+std::string(testing?"true":"false")+";\n";
-    s+=R"JS((()=>{const dark=INITIAL.theme==='dark'||(INITIAL.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);const paint=()=>{if(!document.documentElement)return false;document.documentElement.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const style=document.createElement('style');style.id='bs-navigation-surface';style.textContent='html,body'+(location.hostname==='space.bilibili.com'?'':',#app')+'{background-color:'+(dark?'#161618':'#fafafa')+'!important}';document.documentElement.append(style);return true;};if(!paint()){const observer=new MutationObserver(()=>{if(paint())observer.disconnect();});observer.observe(document,{childList:true,subtree:true});}window.__bsPaintReady=()=>setTimeout(()=>{if(document.documentElement&&chrome?.webview){getComputedStyle(document.documentElement).backgroundColor;chrome.webview.postMessage({type:'surface-ready'});}},32);if(RUNTIME.testing){window.__bsSurfaceSamples=[];const sample=()=>{if(document.documentElement)window.__bsSurfaceSamples.push(getComputedStyle(document.documentElement).backgroundColor);if(window.__bsSurfaceSamples.length<12)requestAnimationFrame(sample);};requestAnimationFrame(sample);}})();)JS";
+    s+=R"JS((()=>{const dark=INITIAL.theme==='dark'||(INITIAL.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);const paint=()=>{if(location.pathname==='/__bili_space_chrome__')return true;if(!document.documentElement)return false;document.documentElement.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const style=document.createElement('style');style.id='bs-navigation-surface';style.textContent='html,body'+(location.hostname==='space.bilibili.com'?'':',#app')+'{background-color:'+(dark?'#161618':'#fafafa')+'!important}';document.documentElement.append(style);return true;};if(!paint()){const observer=new MutationObserver(()=>{if(paint())observer.disconnect();});observer.observe(document,{childList:true,subtree:true});}window.__bsPaintReady=()=>setTimeout(()=>{if(document.documentElement&&chrome?.webview){getComputedStyle(document.documentElement).backgroundColor;chrome.webview.postMessage({type:'surface-ready'});}},32);if(RUNTIME.testing){window.__bsSurfaceSamples=[];const sample=()=>{if(document.documentElement)window.__bsSurfaceSamples.push(getComputedStyle(document.documentElement).backgroundColor);if(window.__bsSurfaceSamples.length<12)requestAnimationFrame(sample);};requestAnimationFrame(sample);}})();)JS";
     auto settings=read(root/L"assets/settings.svg"), sparkles=read(root/L"assets/sparkles.svg");
     s+="const ICON_SETTINGS="+json(settings).dump()+", ICON_SPARKLES="+json(sparkles).dump()+", ICON_MESSAGE="+json(read(root/L"assets/message-square-more.svg")).dump()+";\n";
     s+="const ICON_FRAMES="+json(read(root/L"assets/frame-interpolation.svg")).dump()+";\n";
@@ -423,9 +425,9 @@ void applyZoom(){
         if(target<800)target=1280;
         z=std::max(z,std::min(2.5,dip/target));
     }
-    controller->put_ZoomFactor(z);
+    controller->put_ZoomFactor(z);chromeZoom(z);
 }
-void fit(){if(controller){RECT rc;GetClientRect(windowHandle,&rc);controller->put_Bounds(rc);applyZoom();}}
+void fit(){chromePlace();if(controller){RECT rc;GetClientRect(windowHandle,&rc);controller->put_Bounds(rc);applyZoom();}}
 void toggleFull(bool on);
 void togglePip(bool on){
     if(on==pip)return;
@@ -433,14 +435,14 @@ void togglePip(bool on){
         SetWindowLongPtrW(windowHandle,GWL_STYLE,(GetWindowLongPtrW(windowHandle,GWL_STYLE)&~LONG_PTR(WS_CAPTION|WS_SYSMENU))|WS_POPUP);
         SetWindowPos(windowHandle,HWND_TOPMOST,GetSystemMetrics(SM_CXSCREEN)-520,GetSystemMetrics(SM_CYSCREEN)-340,480,270,SWP_FRAMECHANGED|SWP_SHOWWINDOW);
     }else{pip=false;SetWindowLongPtrW(windowHandle,GWL_STYLE,(GetWindowLongPtrW(windowHandle,GWL_STYLE)&~LONG_PTR(WS_POPUP))|WS_OVERLAPPEDWINDOW);SetWindowPos(windowHandle,HWND_NOTOPMOST,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_SHOWWINDOW);}
-    fit();dockLayout();execute(std::string("window.BiliSpace?.setPip(")+(pip?"true":"false")+")");log(pip?"PIP entered: borderless, topmost":"PIP restored");
+    fit();dockLayout();chromeShow(!full&&!pip);execute(std::string("window.BiliSpace?.setPip(")+(pip?"true":"false")+")");log(pip?"PIP entered: borderless, topmost":"PIP restored");
 }
 void toggleFull(bool on){
     if(on==full||pip)return;
     if(on){GetWindowRect(windowHandle,&savedRect);MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi);full=true;
         SetWindowPos(windowHandle,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right-mi.rcMonitor.left,mi.rcMonitor.bottom-mi.rcMonitor.top,SWP_FRAMECHANGED);
     }else{full=false;SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_NOZORDER);}
-    fit();dockLayout();execute(std::string("window.BiliSpace?.setFullscreen(")+(full?"true":"false")+")");
+    fit();dockLayout();chromeShow(!full&&!pip);execute(std::string("window.BiliSpace?.setFullscreen(")+(full?"true":"false")+")");
 }
 void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
     LPWSTR origin{},body{};args->get_Source(&origin);args->get_WebMessageAsJson(&body);
@@ -496,7 +498,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             mergeConfig(m.at("value"));save();applyZoom();refreshInjection();
             if(m.at("value").contains("proxyAll"))proxyAction("reload","","");
             log("config saved: "+m.at("value").dump());
-            execute("window.BiliSpace?.acceptConfig("+config.dump()+","+std::to_string(m.value("revision",0))+")");
+            chromeAcceptConfig();execute("window.BiliSpace?.acceptConfig("+config.dump()+","+std::to_string(m.value("revision",0))+")");
         }else if(type=="gm-set"){
             auto key=m.value("key",std::string{});
             if((key=="sync"||key=="local")&&m.contains("value")){gm[key]=m["value"];save();refreshInjection();}
@@ -545,6 +547,10 @@ void restoreWebFocus(){
     if(testing)log("web keyboard focus restore: "+std::to_string(hr));
 }
 
+#include "chrome56.hpp"
+bool chromeHostEnabled(){return chromeHost::active();}void chromePush(const std::wstring& target){chromeHost::push(target);}void chromePlace(){chromeHost::place();}
+void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}
+void chromeAcceptConfig(){if(chromeHost::view&&webview!=chromeHost::view)chromeHost::view->ExecuteScript(wide("window.BiliSpace?.acceptConfig?.("+config.dump()+",0)").c_str(),nullptr);}
 void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Environment* env){
             EventRegistrationToken acceleratorToken;
             auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller* sender,auto args){ViewScope scope(sender);
@@ -556,9 +562,9 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
             if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_3),reinterpret_cast<void**>(&v3)))){v3->SetVirtualHostNameToFolderMapping(L"bili-space.local",(root/L"assets").c_str(),COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);v3->Release();}
             EventRegistrationToken token;
             auto mh=callback<ICoreWebView2WebMessageReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebMessageReceivedEventArgs*>([](ICoreWebView2* sender,auto args){ViewScope scope(sender);receive(args);return S_OK;});view->add_WebMessageReceived(mh,&token);mh->Release();
-            auto historyChanged=callback<ICoreWebView2HistoryChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2* sender,IUnknown*){ViewScope scope(sender);pushNavigationState();return S_OK;});view->add_HistoryChanged(historyChanged,&token);historyChanged->Release();
+            auto historyChanged=callback<ICoreWebView2HistoryChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2* sender,IUnknown*){ViewScope scope(sender);pushNavigationState();if(scope.active)chromePush();return S_OK;});view->add_HistoryChanged(historyChanged,&token);historyChanged->Release();
             auto nh=callback<ICoreWebView2NavigationStartingEventHandler,ICoreWebView2*,ICoreWebView2NavigationStartingEventArgs*>([](ICoreWebView2* sender,auto args){ViewScope scope(sender);
-                LPWSTR u{};args->get_Uri(&u);std::wstring uri=u?u:L"";CoTaskMemFree(u);if(routeTabNavigation(sender,uri)){args->put_Cancel(TRUE);return S_OK;}
+                LPWSTR u{};args->get_Uri(&u);std::wstring uri=u?u:L"";CoTaskMemFree(u);if(routeTabNavigation(sender,uri)){args->put_Cancel(TRUE);return S_OK;}if(scope.active&&uri.rfind(L"https://",0)==0)chromePush(uri);
                 if(testing)log("test navigation starting: "+utf8(uri.substr(0,60)));
                 const bool gateDocument=updateRequired&&updateGateNavigationPending&&uri.rfind(L"data:text/html;charset=utf-8;base64,",0)==0;
                 if(updateRequired&&uri!=L"about:blank"){if(gateDocument)updateGateNavigationPending=false;else{args->put_Cancel(TRUE);return S_OK;}}
@@ -572,7 +578,7 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
             auto cacheResponse=callback<ICoreWebView2WebResourceResponseReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebResourceResponseReceivedEventArgs*>([](ICoreWebView2*,auto args){localShell::observe(args);return S_OK;});ICoreWebView2_2* responseEvents{};if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_2),reinterpret_cast<void**>(&responseEvents)))){responseEvents->add_WebResourceResponseReceived(cacheResponse,&token);responseEvents->Release();}cacheResponse->Release();
             auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([env](ICoreWebView2* sender,auto args){ViewScope scope(sender);LPWSTR uri{};args->get_Uri(&uri);if(uri){if(authProvider50(uri))authPopup50(env,args);else{args->put_Handled(TRUE);webview->Navigate(uri);}CoTaskMemFree(uri);}return S_OK;});view->add_NewWindowRequested(ph,&token);ph->Release();
             auto fh=callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2* sender,IUnknown*){ViewScope scope(sender);if(!scope.active)return S_OK;BOOL on{};webview->get_ContainsFullScreenElement(&on);toggleFull(on);return S_OK;});view->add_ContainsFullScreenElementChanged(fh,&token);fh->Release();
-            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2* sender,auto args){ViewScope scope(sender);if(!scope.active)revealPendingTab(tabForView(sender));BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(!IsWindowVisible(windowHandle))execute("window.BiliSpace?.pauseForTray()");if(success){if(scope.active)surfaceCommitted=true;execute("window.__bsPaintReady?.()");}else if(scope.active){surfaceWaiting=false;KillTimer(windowHandle,75);KillTimer(windowHandle,76);controller->put_IsVisible(TRUE);}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});view->add_NavigationCompleted(ready,&token);ready->Release();
+            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2* sender,auto args){ViewScope scope(sender);if(!scope.active)revealPendingTab(tabForView(sender));else chromePush();BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(!IsWindowVisible(windowHandle))execute("window.BiliSpace?.pauseForTray()");if(success){if(scope.active)surfaceCommitted=true;execute("window.__bsPaintReady?.()");}else if(scope.active){surfaceWaiting=false;KillTimer(windowHandle,75);KillTimer(windowHandle,76);controller->put_IsVisible(TRUE);}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});view->add_NavigationCompleted(ready,&token);ready->Release();
 }
 #include "startup49.hpp"
 
@@ -630,12 +636,12 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case dockActionMessage:dockAction(wp,lp);return 0;
     case WM_SIZE:fit();dockLayout();return 0;
     case WM_MOVE:case WM_SHOWWINDOW:case WM_WINDOWPOSCHANGED:dockLayout();break;
-    case WM_DPICHANGED:{auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
+    case WM_DPICHANGED:{comp::applyScaleToAll();auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
     case WM_TIMER:if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
     case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");return 0;}DestroyWindow(hwnd);return 0;
-    case WM_DESTROY:{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
+    case WM_DESTROY:{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
     }
     return DefWindowProcW(hwnd,msg,wp,lp);
 }
@@ -691,7 +697,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
             if(FAILED(hr)||!c){log("controller creation failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"浏览器数据目录暂时无法打开。请关闭其他 Bili-Space 窗口后重试；登录数据不会被清除。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);DestroyWindow(windowHandle);return S_OK;}
             controller=c;controller->AddRef();setSurface(config.value("theme",std::string("dark"))!="light");controller->get_CoreWebView2(&webview);fit();applyZoom();PostMessageW(windowHandle,restoreWebFocusMessage,0,0);
             homeTab=new Tab;homeTab->controller=controller;homeTab->view=webview;homeTab->used=++tabClock;tabs.push_back(homeTab);activeTab=homeTab;
-            wireView(controller,webview,env);EventRegistrationToken token;
+            wireView(controller,webview,env);chromeHost::create(env);EventRegistrationToken token;
             auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([resumeUrl](HRESULT hr,LPCWSTR id){if(SUCCEEDED(hr)){injectionId=id;if(loadRequiredUpdate()){showRequiredUpdate();return S_OK;}std::wstring target=testing?L"https://bili-space.local/fixture.html":L"https://www.bilibili.com/";if(!testing&&trusted(resumeUrl))target=resumeUrl;log("initial navigate: "+utf8(target));if(testing&&!lifecyclePreview)webview->Navigate(target.c_str());else{startupTarget=target;auto splash=read(root/L"assets/startup.html");if(config.value("theme",std::string("dark"))!="system")splash+=config.value("theme",std::string("dark"))=="light"?"<style>body{background:#fafafa}p{color:#202024}</style>":"<style>body{background:#161618}p{color:#eeeef0}</style>";webview->NavigateToString(wide(splash).c_str());SetTimer(windowHandle,73,2500,nullptr);}if(!testing)AddClipboardFormatListener(windowHandle);}else{log("initial injection failed");DestroyWindow(windowHandle);}return S_OK;});
             webview->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();return S_OK;
         });comp::createController(env,h);h->Release();return S_OK;

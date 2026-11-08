@@ -45,7 +45,7 @@ void activateTab(Tab* t){
         old->view->ExecuteScript(L"window.BiliSpace?.tabHidden?window.BiliSpace.tabHidden():document.querySelectorAll('video,audio').forEach(m=>{try{m.pause()}catch{}})",nullptr);
         old->controller->put_IsVisible(FALSE);tabMemory(old,true);
     }
-    pushNavigationState();execute("window.BiliSpace?.tabShown?.()");
+    comp::focusTarget=t->controller;pushNavigationState();chromePush();execute("window.BiliSpace?.tabShown?.()");
     if(GetForegroundWindow()==windowHandle)t->controller->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
     dockSync();
 }

@@ -5,6 +5,10 @@ const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
 const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:8,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:false,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
+/* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
+   keep their header space but hide their own copy (content mode). */
+const CHROME_HOST=typeof RUNTIME!=='undefined'&&!!RUNTIME.chromeHost,CHROME_VIEW=CHROME_HOST&&location.pathname==='/__bili_space_chrome__';
+let chromeLocation=null;
 const NATIVE_PLATFORM=typeof RUNTIME!=='undefined'?RUNTIME.platform||'windows':'windows';
 if(NATIVE_PLATFORM!=='windows'){PREFS.srMode='off';PREFS.fiMode='off';PREFS.downloader=false;}else if(typeof RUNTIME!=='undefined'&&RUNTIME.legacyWin7){PREFS.srMode='off';PREFS.fiMode='off';}
 /* PiP-only renderer. Protocol fields are independently parsed; no third-party parser code. */
@@ -156,7 +160,7 @@ function layoutHeaderLeading(){if(!shadow)return;const brand=$('.brand',shadow),
 let favoritesController,accountsController;
 let copiedVideoLinkTimer;
 function currentVideoLink(){
-  if(pageKind()!=='video')return '';const path=location.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'').replace(/\/$/,'');
+  const location=chromeLocation||window.location;if(pageKind()!=='video')return '';const path=location.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'').replace(/\/$/,'');
   const url=new URL('https://www.bilibili.com'+path);for(const key of ['p','t']){const value=new URLSearchParams(location.search).get(key);if(value&&/^\d+(?:\.\d+)?$/.test(value))url.searchParams.set(key,value);}return url.href;
 }
 function syncVideoLink(){
@@ -265,7 +269,7 @@ function scheduleVideoAlign(){
 }
 // While a navigation is being previewed, the header is laid out for the destination instead of the current page.
 let routePreview=null;
-function pageKind(at=routePreview||location){
+function pageKind(at=routePreview||chromeLocation||location){
   const path=at.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'')||'/';
   if(at.hostname==='space.bilibili.com')return 'space';
   if(at.hostname==='search.bilibili.com')return 'search';
@@ -315,7 +319,7 @@ function syncVideoHome(show,animate){
   headerFlip(()=>{top.hidden=!show;left.dataset.video=String(show);},[...$$('.primary-nav a',shadow)]);
 }
 function syncRoute(){
-  const key=location.href,kind=pageKind();
+  const key=(chromeLocation||location).href,kind=pageKind();
   document.documentElement.dataset.bsPage=kind;
   if(kind!=='home')document.documentElement.dataset.bsBannerUnderlap='false';
   if(shadow){syncNavigationControls();syncHeaderBrand();$('.upload',shadow).hidden=!PREFS.headerUpload||kind!=='home';}
@@ -626,7 +630,7 @@ function hideMessageMenu(instant=false){
 const ICON_REFRESH='<svg class="route-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5A8 8 0 1 1 17.7 6"/><path d="M20 4.5V9h-4.5"/></svg>';
 function installRouteRefresh(){
   for(const link of $$('.primary-nav a[data-route]',shadow)){if($('.route-text',link))continue;const text=document.createElement('span');text.className='route-text';text.append(...link.childNodes);link.append(text);link.insertAdjacentHTML('beforeend',ICON_REFRESH);
-    link.addEventListener('click',e=>{if(link.getAttribute('aria-current')!=='page'||e.button||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();e.stopImmediatePropagation();const icon=$('.route-refresh',link);icon.removeAttribute('data-spin');void icon.getBoundingClientRect();icon.dataset.spin='true';beginNavigation?.(location.href);setTimeout(()=>location.reload(),140);},true);}
+    link.addEventListener('click',e=>{if(link.getAttribute('aria-current')!=='page'||e.button||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();e.stopImmediatePropagation();const icon=$('.route-refresh',link);icon.removeAttribute('data-spin');void icon.getBoundingClientRect();icon.dataset.spin='true';beginNavigation?.(location.href);setTimeout(()=>CHROME_VIEW?native('window',{action:'reload'}):location.reload(),140);},true);}
   syncRouteRefreshLabels();settleHeader();
 }
 function syncRouteRefreshLabels(){if(!shadow)return;for(const link of $$('.primary-nav a[data-route]',shadow)){const label=$('.route-text',link)?.textContent||link.textContent;if(link.getAttribute('aria-current')==='page'){link.title='刷新'+label;link.setAttribute('aria-label','刷新'+label);}else{link.removeAttribute('title');link.removeAttribute('aria-label');}}}
@@ -707,7 +711,7 @@ function applyPreferences() {
   syncRoute();
   const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);
   html.dataset.bsTheme=dark?'dark':'light';html.dataset.bsFrost=String(!!PREFS.experimentalFrost);html.dataset.bsBannerUnderlap='false';
-  html.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const early=$('#bs-navigation-surface');if(early)early.textContent=`html,body${location.hostname==='space.bilibili.com'?'':',#app'}{background-color:${dark?'#161618':'#fafafa'}!important}`;native('surface',{dark});applyAudioBoost();watchVideoLoading();
+  if(CHROME_VIEW)html.style.setProperty('background-color','transparent','important');else html.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const early=$('#bs-navigation-surface');if(early)early.textContent=`html,body${location.hostname==='space.bilibili.com'?'':',#app'}{background-color:${dark?'#161618':'#fafafa'}!important}`;native('surface',{dark});applyAudioBoost();watchVideoLoading();
   html.classList.toggle('night-mode',dark);
   html.classList.toggle('bili_dark',dark);
   html.dataset.bsFont=String(PREFS.font);
@@ -721,7 +725,7 @@ function applyPreferences() {
   html.style.setProperty('--bs-progress',PREFS.progressColor);
   html.style.setProperty('--bs-progress-height',`${PREFS.progressHeight}px`);
   html.style.setProperty('--bs-progress-radius',`${PREFS.progressRadius}px`);
-  if(root){root.dataset.frost=String(!!PREFS.experimentalFrost);root.dataset.bounce=String(!!PREFS.experimentalBounce);root.style.setProperty('--accent',PREFS.accent);root.style.setProperty('--font',PREFS.font?'BiliDouyin,"Microsoft YaHei UI",sans-serif':'"Microsoft YaHei UI",sans-serif');root.dataset.theme=dark?'dark':'light';}
+  if(root){root.dataset.mode=CHROME_VIEW?'chrome':CHROME_HOST?'content':'page';root.dataset.frost=String(!!PREFS.experimentalFrost);root.dataset.bounce=String(!!PREFS.experimentalBounce);root.style.setProperty('--accent',PREFS.accent);root.style.setProperty('--font',PREFS.font?'BiliDouyin,"Microsoft YaHei UI",sans-serif':'"Microsoft YaHei UI",sans-serif');root.dataset.theme=dark?'dark':'light';}
   if(!PREFS.clipboardAutoOpen)shadow?.querySelector('#clipboard-video-prompt')?.remove();
   applyHeaderPreferences();accountsController?.applyTheme();
   if(shadow)renderSettings();
@@ -1371,6 +1375,7 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
 #page-pending{animation:bs-pending-in 220ms ease-out 800ms both}#page-pending .page-placeholder{display:none}@keyframes bs-pending-in{from{opacity:0}}
 #home-bubble{position:fixed;left:50%;top:calc(var(--bs-header-height,58px) + 14px);transform:translate(-50%,0);z-index:30;padding:11px 18px;border-radius:18px;background:#fff;color:#1d1d22;font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;box-shadow:0 2px 6px #00000014,0 12px 32px #0000002b;pointer-events:none}#home-bubble::before{content:'';position:absolute;left:50%;top:-6px;width:14px;height:14px;margin-left:-7px;border-radius:3px;background:#fff;transform:rotate(45deg)}#home-bubble[hidden]{display:none}
 /* Right-hand header controls read as one set: same icon family, 22px glyphs, 1.8 stroke, 28px avatar. */.header-right :is(.favorites,.messages)>svg{width:22px!important;height:22px!important;stroke-width:1.8!important}.header-right .account .account-face{width:28px;height:28px;border:0;box-shadow:0 0 0 .5px #0000001f,0 1px 3px #00000033}.header-right .account .account-pendant{display:none!important}.header-right .account .account-vip-badge{width:12px;height:12px;right:2px;bottom:2px}.header-right .account-wrap:not(:has(.account-face)){flex:0 0 auto}.header-right .account:not(:has(.account-face)){width:auto;max-width:none;min-width:0;height:28px;padding:0 11px;border-radius:14px;background:var(--field);color:var(--ink);font-size:12px;font-weight:600;line-height:28px;display:inline-flex;align-items:center;box-shadow:0 1px 2px #0000000f,0 2px 8px #00000014;transition:background 160ms ease,color 160ms ease}.header-right .account:not(:has(.account-face)):hover{color:var(--accent)}
+:host([data-mode=content]) :is(#chrome,#settings-trigger,.upload,#messages-menu,#home-bubble){visibility:hidden!important;pointer-events:none!important}:host([data-mode=chrome]) :is(#page-pending){display:none!important}
 @keyframes bs-symbol-bounce{0%{transform:scale(1)}35%{transform:scale(.84)}70%{transform:scale(1.06)}100%{transform:scale(1)}}@keyframes bs-breathe{0%,100%{opacity:.5}50%{opacity:1}}@keyframes bs-fade{from{opacity:0}}@keyframes bs-rise{from{opacity:0;transform:translateY(8px)}}
 @media(prefers-reduced-motion:reduce){.favorites-video,.favorites-skeleton,.favorites-empty,.favorites[aria-expanded=true] svg{animation:none!important}.favorites-ghost i,.favorites-folder-ghost{animation:none!important;opacity:.7}.history-controls button:active,.header-left>.back:active,.video-home-top:active,.primary-nav a:active,.favorites:active,.header-right .messages:active,.favorites-folder:active,.favorites-video:active .favorites-cover,.favorites-heading button:active,.favorites-retry:active,.favorites-more:active{scale:none}.favorites-cover img{transition:opacity 200ms ease}}
 </style><header id="chrome"><div class="header-left" data-video="false"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><div class="history-controls" role="group" aria-label="页面历史导航"><button class="history-back" type="button" data-window="back" aria-label="返回上一页" title="返回 · Alt+←"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button><button class="history-forward" type="button" data-window="forward" aria-label="前进下一页" title="前进"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="展开频道分区"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/history">历史</a></nav></div></div><div class="brand"><div class="brand-leading"><button type="button" class="video-link" aria-label="复制视频链接" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 .1l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7-.1l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span class="video-link-text"></span></button><time class="header-clock" aria-label="当前时间" hidden></time></div><span class="brand-label">Bili-<b>Space</b></span></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span><section id="search-panel" class="search-panel" aria-label="搜索历史和官方联想" hidden></section></form><div class="favorites-wrap"><button class="favorites" type="button" aria-label="收藏夹" title="我的收藏夹" aria-expanded="false" aria-controls="favorites-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></button><section id="favorites-panel" class="favorites-panel" aria-label="我的收藏夹" hidden><div class="favorites-heading"><div><span>YOUR COLLECTION</span><h2>我的收藏夹</h2></div><button type="button" class="favorites-official" title="打开完整收藏夹">全部收藏 ↗</button><button type="button" class="favorites-close" aria-label="关闭收藏夹">×</button></div><div class="favorites-layout"><nav class="favorites-folders" aria-label="收藏夹列表"></nav><div class="favorites-body" aria-live="polite"></div></div></section></div><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><div id="messages-menu" class="messages-menu" role="navigation" aria-label="消息分类" hidden><a class="messages-item" data-kind="reply" href="https://message.bilibili.com/#/reply"><span>回复我的</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="at" href="https://message.bilibili.com/#/at"><span>@我的</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="love" href="https://message.bilibili.com/#/love"><span>收到的赞</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="system" href="https://message.bilibili.com/#/system"><span>系统消息</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="whisper" href="https://message.bilibili.com/#/whisper"><span>我的消息</span><b class="messages-count" hidden></b></a></div><a class="upload" href="https://member.bilibili.com/platform/upload/video/frame" aria-label="投稿" title="投稿到B站"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a><div class="account-wrap"><a class="account" aria-controls="account-card" aria-expanded="false" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a><section id="account-card" class="account-card" role="region" aria-label="我的账户信息" hidden><div class="account-banner" hidden></div><div class="account-identity"><div class="account-portrait" hidden></div><div class="account-card-head"><strong class="account-name"></strong><span class="account-level"></span><span class="account-vip-label" hidden></span></div></div><div class="account-stats"><div><b data-stat="follower">—</b><span>粉丝</span></div><div><b data-stat="following">—</b><span>关注</span></div><div><b data-stat="likes">—</b><span>获赞</span></div></div><p class="account-status"></p></section></div><div class="window-actions" aria-label="窗口控制" hidden><button type="button" data-window="minimize" aria-label="最小化"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button><button type="button" data-window="maximize" aria-label="最大化或还原"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1"/></svg></button><button type="button" data-window="close" aria-label="关闭"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></button></div></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><h1 id="settings-title">客户端设置</h1><input id="settings-query" type="search" aria-label="搜索客户端设置" placeholder="搜索设置" maxlength="80" autocomplete="off"><p id="settings-search-status" role="status" aria-live="polite"></p><div id="settings-matches" class="settings-matches" aria-label="匹配的设置" hidden></div><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Bili-Space</b>${APP_META.version}</div></aside><main><button id="dismiss" aria-label="关闭设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><div id="tab-content" role="tabpanel" tabindex="-1"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
@@ -1430,7 +1435,7 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
     if(key==='proxyAll')toast('重启后生效');
   });
   accountsController=window.installBiliAccounts?.({shadow,native,refreshAccount,hideAccountCard,toast});
-  installSearchPanel();favoritesController=window.installBiliFavorites?.({shadow,native,closeSearch:closeSearchPanel});installMessagesMenu();installRouteRefresh();installVideoLinkDrag();
+  installSearchPanel();favoritesController=window.installBiliFavorites?.({shadow,native,closeSearch:closeSearchPanel});installMessagesMenu();installRouteRefresh();installVideoLinkDrag();installChromeView();
   $('.search',shadow).addEventListener('submit',e=>{e.preventDefault();submitSearch();});
   $('#chrome',shadow).addEventListener('mousedown',e=>{if(e.button===0&&!e.target.closest('button,a,input,form'))native('window',{action:'drag',screenX:e.screenX,screenY:e.screenY});});
   $('#chrome',shadow).addEventListener('dblclick',e=>{if(!e.target.closest('button,a,input'))native('window',{action:'maximize'});});
@@ -1930,6 +1935,30 @@ function homeBubble(text='你已经在主页啦！'){
   homeBubble.timer=setTimeout(()=>{const done=()=>{if(bubble.dataset.leaving==='true')bubble.hidden=true;};bubble.dataset.leaving='true';if(bubble.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches)bubble.animate([{opacity:1,transform:'translate(-50%,0) scale(1)'},{opacity:0,transform:'translate(-50%,-6px) scale(.94)'}],{duration:200,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'}).onfinish=done;else done();},1700);
 }
 function ctrlHome(){if(pageKind()==='home')homeBubble();else location.href='https://www.bilibili.com/';}
+/* Header view: the native host reports the visible page's address (also the moment a navigation starts), so the
+   header moves on click instead of waiting for the next page to load. */
+function chromeActive(state){
+  if(!CHROME_VIEW||!state?.url)return;let next;try{next=new URL(state.url);}catch{return;}
+  navigationState={back:!!state.back,forward:!!state.forward};chromeLocation=next;syncRoute();syncNavigationControls();reportChromeLayout();
+}
+let chromeLayoutKey='',chromeLayoutFrame;
+function reportChromeLayout(){
+  if(!CHROME_VIEW||!shadow)return;cancelAnimationFrame(chromeLayoutFrame);chromeLayoutFrame=requestAnimationFrame(()=>{
+    const rects=[],scale=devicePixelRatio||1;
+    const add=el=>{if(!el||el.hidden||!el.isConnected)return;const look=getComputedStyle(el);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)return;const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)rects.push([Math.floor(r.left*scale),Math.floor(r.top*scale),Math.ceil(r.right*scale),Math.ceil(r.bottom*scale)]);};
+    add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories','#settings-trigger','.upload','#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));
+    const modal=!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow);
+    const key=JSON.stringify([rects,modal]);if(key===chromeLayoutKey)return;chromeLayoutKey=key;native('chrome-layout',{rects,modal});
+  });
+}
+function installChromeView(){
+  if(!CHROME_VIEW||!shadow)return;
+  // Links in the header open on the visible page, never inside the header view.
+  shadow.addEventListener('click',e=>{if(e.defaultPrevented||e.button)return;const a=e.composedPath().find(n=>n.tagName==='A'&&n.href);if(a&&/^https?:/i.test(a.href)){e.preventDefault();native('navigate',{url:a.href});}});
+  new MutationObserver(reportChromeLayout).observe(shadow,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','style','data-open','aria-expanded','data-categories']});
+  addEventListener('resize',reportChromeLayout);setInterval(reportChromeLayout,400);
+  surfaceRevealed();acceptRouteOrigin('');native('navigation-state',{action:'read'});reportChromeLayout();
+}
 let resumeMedia=[];
 function tabShown(){reportTabInfo();refreshMessageUnread?.(true);const media=resumeMedia.filter(m=>m.isConnected);resumeMedia=[];for(const m of media)m.play?.().catch(()=>{});}
 function tabHidden(){resumeMedia=[...document.querySelectorAll('video,audio')].filter(m=>!m.paused&&!m.ended);for(const m of resumeMedia)m.pause();closeSearchPanel?.();favoritesController?.close();hideMessageMenu?.(true);}
@@ -1980,7 +2009,7 @@ function boot(){
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
+  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};
