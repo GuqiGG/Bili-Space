@@ -8,10 +8,10 @@ constexpr UINT dockActionMessage=WM_APP+93;
 namespace dock{
 using namespace Gdiplus;
 struct Entry{uintptr_t id=0;std::string title,cover;bool active=false;};
-struct State{bool show=false,video=false,zoomed=false,dark=true;RECT main{};UINT dpi=96;std::vector<Entry> entries;};
+struct State{bool show=false,video=false,zoomed=false,full=false,dark=true;RECT main{};UINT dpi=96;std::vector<Entry> entries;};
 std::mutex stateLock;State latest;std::thread worker;std::atomic<HWND> window{nullptr};std::atomic<bool> running{false};
 constexpr UINT stateMessage=WM_APP+90,coverMessage=WM_APP+91,quitMessage=WM_APP+92;
-constexpr float ITEM=44,PAD=8,GAP=8,RADIUS=20,INNER=12,MARGIN=26,TIP=300,OFFSET=12,CLOSE=10;
+constexpr float ITEM=44,PAD=8,GAP=8,RADIUS=20,INNER=12,MARGIN=26,TIP=300,TIPH=52,OFFSET=12,CLOSE=10,BAR=72,BARH=6,ISLAND_GAP=14;
 
 // ---- everything below runs on the dock thread ----
 // A damped spring: interruptible because it carries velocity; under-damped values give the small bounce.
@@ -19,6 +19,8 @@ struct Spring{float value=0,velocity=0;bool step(float target,float dt,float sti
 struct Item{Entry entry;Spring y,scale{.5f,0};float alpha=0,white=0,hover=0;bool placed=false,fetching=false,leaving=false;std::unique_ptr<Bitmap> image;std::string imageFor;};
 struct CoverReply{uintptr_t id;std::string cover,bytes;};
 ULONG_PTR gdiplusToken{};State view;std::vector<std::unique_ptr<Item>> items;Spring pill,homeScale{1,0};float shown=0,homeShown=0,tipAlpha=0,pillHeight=PAD*2+ITEM;
+// island: maximized or fullscreen windows get a horizontal dock at the bottom edge that folds into a thin bar while a video plays.
+Spring collapse;bool island=false,inside=false;ULONGLONG lastInside=0;
 int hovered=-2,pressed=-2;bool closeHovered=false,tracking=false,animating=false,outside=true;ULONGLONG lastFrame=0;std::string tipText;std::unique_ptr<GraphicsPath> homeGlyph;
 HDC canvasDc{};HBITMAP canvasBitmap{};HGDIOBJ canvasPrevious{};void* canvasBits{};int canvasW=0,canvasH=0;
 
@@ -81,24 +83,35 @@ void ensureCanvas(int w,int h){
     HDC screen=GetDC(nullptr);canvasDc=CreateCompatibleDC(screen);BITMAPINFO bi{};bi.bmiHeader={sizeof(BITMAPINFOHEADER),w,-h,1,32,BI_RGB};
     canvasBitmap=CreateDIBSection(screen,&bi,DIB_RGB_COLORS,&canvasBits,nullptr,0);canvasPrevious=SelectObject(canvasDc,canvasBitmap);ReleaseDC(nullptr,screen);canvasW=w;canvasH=h;
 }
-struct Geometry{float px,py,pw;int x,y,w,h;};
+struct Geometry{float px,py,pw,ph;int x,y,w,h;};
 Geometry geometry(){
     float s=scale();HMONITOR monitor=MonitorFromRect(&view.main,MONITOR_DEFAULTTONEAREST);MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(monitor,&mi);const RECT& main=view.main;
-    const int pillW=int((ITEM+PAD*2)*s),margin=int(MARGIN*s),tip=int(TIP*s),gap=int(OFFSET*s);
-    outside=!view.zoomed&&main.right+gap+pillW+margin<=mi.rcWork.right;
-    Geometry g{};g.w=margin*2+pillW+tip;g.h=int(std::ceil(pillHeight*s))+margin*2;g.x=outside?main.right+gap-margin:main.right-gap-pillW-margin-tip;
+    const float thick=(ITEM+PAD*2)*s,length=pillHeight*s;const int margin=int(MARGIN*s),tip=int(TIP*s),gap=int(OFFSET*s);
+    island=view.zoomed;Geometry g{};
+    if(island){
+        const int tipH=int(TIPH*s);const RECT& edge=view.full?mi.rcMonitor:mi.rcWork;
+        g.w=int(std::ceil(length))+margin*2;g.h=margin*2+int(std::ceil(thick))+tipH;
+        int centre=(std::max(main.left,edge.left)+std::min(main.right,edge.right))/2;g.x=centre-g.w/2;g.y=std::min(main.bottom,edge.bottom)-int(ISLAND_GAP*s)+margin-g.h;
+        g.px=float(margin);g.py=float(margin+tipH);g.pw=length;g.ph=thick;outside=false;return g;
+    }
+    outside=main.right+gap+int(thick)+margin<=mi.rcWork.right;
+    g.w=margin*2+int(std::ceil(thick))+tip;g.h=int(std::ceil(length))+margin*2;g.x=outside?main.right+gap-margin:main.right-gap-int(thick)-margin-tip;
     int centre=(std::max(main.top,mi.rcWork.top)+std::min(main.bottom,mi.rcWork.bottom))/2;g.y=std::max(int(mi.rcWork.top),std::min(centre-g.h/2,int(mi.rcWork.bottom)-g.h));
-    g.px=float(outside?margin:margin+tip);g.py=float(margin);g.pw=float(pillW);return g;
+    g.px=float(outside?margin:margin+tip);g.py=float(margin);g.pw=thick;g.ph=length;return g;
 }
 void paint(){
     HWND h=window;if(!h)return;float s=scale();auto geo=geometry();ensureCanvas(geo.w,geo.h);if(!canvasBits)return;const bool dark=view.dark;const float a=shown;
     {Bitmap canvas(geo.w,geo.h,geo.w*4,PixelFormat32bppPARGB,static_cast<BYTE*>(canvasBits));Graphics g(&canvas);g.SetSmoothingMode(SmoothingModeAntiAlias);g.SetPixelOffsetMode(PixelOffsetModeHalf);g.SetInterpolationMode(InterpolationModeHighQualityBilinear);g.SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);g.Clear(Color(0,0,0,0));
-        const float px=geo.px,py=geo.py,pw=geo.pw,ph=pillHeight*s;
+        const float px=geo.px,py=geo.py,pw=geo.pw,ph=geo.ph,c=collapse.value,ia=a*(1-std::min(1.f,c*1.6f));
+        // Along-axis positions map to x on the island and to y on the side dock.
+        auto place=[&](float along,float size)->PointF{return island?PointF(px+along*s+(ITEM*s-size)/2,py+(ph-size)/2):PointF(px+(pw-size)/2,py+along*s+(ITEM*s-size)/2);};
+        const float dw=island?pw+(BAR*s-pw)*c:pw,dh=island?ph+(BARH*s-ph)*c:ph,dx=px+(pw-dw)/2,dy=py+ph-dh,dr=std::min(RADIUS*s,dh/2);
         if(a>.01f){
-            softShadow(g,px,py,pw,ph,RADIUS*s,a,16*s);
-            GraphicsPath shape;rounded(shape,px,py,pw,ph,RADIUS*s);SolidBrush fill(dark?Color(BYTE(236*a),32,32,36):Color(BYTE(240*a),252,252,253));g.FillPath(&fill,&shape);
+            softShadow(g,dx,dy,dw,dh,dr,a,16*s*(1-c*.6f));
+            if(c>.3f){SolidBrush catcher(Color(1,0,0,0));g.FillRectangle(&catcher,px,py,pw,ph);}
+            GraphicsPath shape;rounded(shape,dx,dy,dw,dh,dr);SolidBrush fill(dark?Color(BYTE(236*a),32,32,36):Color(BYTE(240*a),252,252,253));g.FillPath(&fill,&shape);
             auto tile=[&](float cy,float tileScale,float alpha,float white,Bitmap* image,bool isHome,bool active)->RectF{
-                float size=ITEM*s*tileScale,cx=px+pw/2,x=cx-size/2,y=py+cy*s+(ITEM*s-size)/2;RectF box(x,y,size,size);if(alpha<.01f)return box;
+                float size=ITEM*s*tileScale;PointF o=place(cy,size);float x=o.X,y=o.Y;RectF box(x,y,size,size);if(alpha<.01f)return box;
                 softShadow(g,x,y,size,size,INNER*s*tileScale,alpha*(active?1.5f:.75f),(active?9:5)*s);
                 GraphicsPath tilePath;rounded(tilePath,x,y,size,size,INNER*s*tileScale);
                 if(isHome){const Color pink(BYTE(alpha*255),251,114,153);SolidBrush b(pink);g.FillPath(&b,&tilePath);
@@ -117,18 +130,19 @@ void paint(){
                 if(!isHome&&white>.01f){SolidBrush w(Color(BYTE(std::min(1.f,white)*alpha*40),255,255,255));g.FillPath(&w,&tilePath);}
                 return box;
             };
-            tile(PAD,homeScale.value*(.6f+.4f*homeShown),homeShown*a,0,nullptr,true,false);
-            if(homeShown>.01f&&!items.empty()){SolidBrush line(dark?Color(BYTE(34*a*homeShown),255,255,255):Color(BYTE(26*a*homeShown),0,0,0));g.FillRectangle(&line,px+pw/2-10*s,py+(PAD+ITEM+GAP/2)*s-.5f*s,20*s,1*s);}
-            for(size_t i=0;i<items.size();++i){auto& it=*items[i];auto box=tile(it.y.value,it.scale.value,it.alpha*a,it.white,it.image.get(),false,it.entry.active);
+            tile(PAD,homeScale.value*(.6f+.4f*homeShown),homeShown*ia,0,nullptr,true,false);
+            if(homeShown>.01f&&!items.empty()){SolidBrush line(dark?Color(BYTE(34*ia*homeShown),255,255,255):Color(BYTE(26*ia*homeShown),0,0,0));float m=(PAD+ITEM+GAP/2)*s;if(island)g.FillRectangle(&line,px+m-.5f*s,py+ph/2-10*s,1*s,20*s);else g.FillRectangle(&line,px+pw/2-10*s,py+m-.5f*s,20*s,1*s);}
+            for(size_t i=0;i<items.size();++i){auto& it=*items[i];auto box=tile(it.y.value,it.scale.value,it.alpha*ia,it.white,it.image.get(),false,it.entry.active);
                 // The close button sits on the tile's top-right corner and may overhang it.
                 if(it.hover>.01f){float r=CLOSE*s*(.75f+.25f*it.hover),cx=box.X+box.Width-r*.3f,cy=box.Y+r*.3f;softShadow(g,cx-r,cy-r,r*2,r*2,r,it.hover*a,4*s);
                     GraphicsPath dot;dot.AddEllipse(cx-r,cy-r,r*2,r*2);SolidBrush b(closeHovered&&int(i)==hovered?Color(BYTE(a*it.hover*245),232,72,84):(dark?Color(BYTE(a*it.hover*245),62,62,68):Color(BYTE(a*it.hover*245),255,255,255)));g.FillPath(&b,&dot);
                     Pen x1(closeHovered&&int(i)==hovered?Color(BYTE(a*it.hover*255),255,255,255):(dark?Color(BYTE(a*it.hover*255),240,240,244):Color(BYTE(a*it.hover*255),40,40,46)),1.7f*s);x1.SetStartCap(LineCapRound);x1.SetEndCap(LineCapRound);float k=r*.38f;g.DrawLine(&x1,cx-k,cy-k,cx+k,cy+k);g.DrawLine(&x1,cx+k,cy-k,cx-k,cy+k);}
             }
-            if(tipAlpha>.01f&&!tipText.empty()&&hovered>=0&&hovered<int(items.size())){
+            if(tipAlpha>.01f&&c<.5f&&!tipText.empty()&&hovered>=0&&hovered<int(items.size())){
                 auto title=wide(tipText);FontFamily family(L"Microsoft YaHei UI");Font font(&family,13*s,FontStyleBold,UnitPixel);StringFormat fmt;fmt.SetTrimming(StringTrimmingEllipsisCharacter);fmt.SetFormatFlags(StringFormatFlagsNoWrap);fmt.SetLineAlignment(StringAlignmentCenter);
-                RectF bounds;g.MeasureString(title.c_str(),-1,&font,PointF(0,0),&fmt,&bounds);float tw=std::min(bounds.Width+24*s,TIP*s-20*s),th=34*s,cy=py+(items[hovered]->y.value+ITEM/2)*s-th/2,slide=(1-tipAlpha)*6*s;
-                float tx=outside?px+pw+12*s-slide:px-12*s-tw+slide;softShadow(g,tx,cy,tw,th,10*s,tipAlpha,9*s);
+                RectF bounds;g.MeasureString(title.c_str(),-1,&font,PointF(0,0),&fmt,&bounds);float tw=std::min(bounds.Width+24*s,TIP*s-20*s),th=34*s,slide=(1-tipAlpha)*6*s,cy,tx;
+                // The title sits above the island tile, or beside the side dock.
+                if(island){float mid=px+(items[hovered]->y.value+ITEM/2)*s;tx=std::max(2.f,std::min(float(geo.w)-tw-2,mid-tw/2));cy=py-th-10*s+slide;}else{cy=py+(items[hovered]->y.value+ITEM/2)*s-th/2;tx=outside?px+pw+12*s-slide:px-12*s-tw+slide;}softShadow(g,tx,cy,tw,th,10*s,tipAlpha,9*s);
                 GraphicsPath bubble;rounded(bubble,tx,cy,tw,th,10*s);SolidBrush bg(dark?Color(BYTE(244*tipAlpha),40,40,46):Color(BYTE(248*tipAlpha),255,255,255));g.FillPath(&bg,&bubble);
                 SolidBrush ink(dark?Color(BYTE(255*tipAlpha),242,242,246):Color(BYTE(255*tipAlpha),28,28,32));g.DrawString(title.c_str(),-1,&font,RectF(tx+12*s,cy,tw-24*s,th),&fmt,&ink);
             }
@@ -150,8 +164,11 @@ void step(){
         float lift=0;if(hovered>=0){int d=std::abs(int(i)-hovered);lift=d==0?.16f:d==1?.05f:0.f;}
         float target=(it.entry.active?1.08f:1.f)+lift;if(int(i)==pressed)target=.94f;
         if(it.leaving){bounce(it.scale,.55f);move(it.alpha,0.f,.06f);move(it.hover,0.f,.05f);move(it.white,0.f,.06f);continue;}
-        glide(it.y,y);bounce(it.scale,target);move(it.alpha,1.f,.07f);move(it.white,it.entry.active?1.f:0.f,.08f);move(it.hover,int(i)==hovered?1.f:0.f,.06f);y+=ITEM+GAP;}
+        glide(it.y,y);bounce(it.scale,target);move(it.alpha,1.f,.07f);move(it.white,0.f,.08f);move(it.hover,int(i)==hovered?1.f:0.f,.06f);y+=ITEM+GAP;}
     for(size_t i=items.size();i-->0;)if(items[i]->leaving&&items[i]->alpha<.02f){items.erase(items.begin()+i);if(hovered>=int(i))hovered=hovered==int(i)?-2:hovered-1;}
+    const ULONGLONG nowMs=GetTickCount64();const bool fold=island&&view.video&&!inside&&nowMs-lastInside>2500;
+    if(island&&view.video&&!inside&&!fold)SetTimer(window,2,UINT(2600-std::min<ULONGLONG>(2500,nowMs-lastInside)),nullptr);
+    glide(collapse,fold?1.f:0.f);
     glide(pill,contentHeight());pillHeight=std::max(PAD*2+ITEM*.5f,pill.value);move(tipAlpha,hovered>=0?1.f:0.f,.05f);
     paint();if(!moving){animating=false;KillTimer(window,1);lastFrame=0;}
 }
@@ -167,24 +184,27 @@ void acceptState(){
 }
 int hit(POINT p,bool* onClose){
     float s=scale();RECT r{};GetWindowRect(window,&r);auto geo=geometry();float lx=p.x-r.left-geo.px,ly=p.y-r.top-geo.py;if(onClose)*onClose=false;
+    const float along=island?lx:ly,cross=island?ly:lx,thick=island?geo.ph:geo.pw,length=island?geo.pw:geo.ph;
     // The close button overhangs the tile, so it is tested before the pill bounds.
-    if(onClose&&hovered>=0&&hovered<int(items.size())){auto& it=*items[hovered];float size=ITEM*s*it.scale.value,top=it.y.value*s+(ITEM*s-size)/2,rad=CLOSE*s,cx=geo.pw/2+size/2-rad*.3f,cy=top+rad*.3f;if((lx-cx)*(lx-cx)+(ly-cy)*(ly-cy)<=rad*rad*1.3f){*onClose=true;return hovered;}}
-    if(lx<0||lx>geo.pw||ly<0||ly>pillHeight*s)return -3;
-    if(homeShown>.5f&&ly>=PAD*s&&ly<=(PAD+ITEM)*s)return -1;
-    for(size_t i=0;i<items.size();++i){if(items[i]->leaving)continue;float top=items[i]->y.value*s;if(ly>=top-GAP*s/2&&ly<=top+ITEM*s+GAP*s/2)return int(i);}
+    if(onClose&&collapse.value<.5f&&hovered>=0&&hovered<int(items.size())&&!items[hovered]->leaving){auto& it=*items[hovered];float size=ITEM*s*it.scale.value,start=it.y.value*s+(ITEM*s-size)/2,rad=CLOSE*s,side=(thick-size)/2;
+        float ca=island?start+size-rad*.3f:start+rad*.3f,cc=island?side+rad*.3f:side+size-rad*.3f;if((along-ca)*(along-ca)+(cross-cc)*(cross-cc)<=rad*rad*1.3f){*onClose=true;return hovered;}}
+    if(cross<0||cross>thick||along<0||along>length)return -3;
+    if(collapse.value>.5f)return -2;
+    if(homeShown>.5f&&along>=PAD*s&&along<=(PAD+ITEM)*s)return -1;
+    for(size_t i=0;i<items.size();++i){if(items[i]->leaving)continue;float top=items[i]->y.value*s;if(along>=top-GAP*s/2&&along<=top+ITEM*s+GAP*s/2)return int(i);}
     return -2;
 }
 void act(WPARAM action,uintptr_t id){PostMessageW(windowHandle,dockActionMessage,action,LPARAM(id));}
 LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     switch(msg){
     case WM_MOUSEACTIVATE:return MA_NOACTIVATE;
-    case WM_TIMER:step();return 0;
+    case WM_TIMER:if(wp==2){KillTimer(h,2);kick();return 0;}step();return 0;
     case stateMessage:acceptState();return 0;
     case coverMessage:acceptCover(reinterpret_cast<CoverReply*>(lp));return 0;
     case WM_SETCURSOR:{POINT p;GetCursorPos(&p);bool c=false;if(hit(p,&c)>=-1){SetCursor(LoadCursorW(nullptr,IDC_HAND));return TRUE;}break;}
-    case WM_MOUSEMOVE:{if(!tracking){TRACKMOUSEEVENT t{sizeof(t),TME_LEAVE,h,0};TrackMouseEvent(&t);tracking=true;}POINT p;GetCursorPos(&p);bool onClose=false;int now=hit(p,&onClose);if(now<-1)now=-2;
+    case WM_MOUSEMOVE:{inside=true;lastInside=GetTickCount64();if(collapse.value>.01f)kick();if(!tracking){TRACKMOUSEEVENT t{sizeof(t),TME_LEAVE,h,0};TrackMouseEvent(&t);tracking=true;}POINT p;GetCursorPos(&p);bool onClose=false;int now=hit(p,&onClose);if(now<-1)now=-2;
         if(now!=hovered||onClose!=closeHovered){hovered=now;closeHovered=onClose;if(now>=0)tipText=items[now]->entry.title;kick();}return 0;}
-    case WM_MOUSELEAVE:tracking=false;hovered=-2;pressed=-2;closeHovered=false;kick();return 0;
+    case WM_MOUSELEAVE:inside=false;lastInside=GetTickCount64();tracking=false;hovered=-2;pressed=-2;closeHovered=false;kick();return 0;
     case WM_LBUTTONDOWN:{POINT p;GetCursorPos(&p);bool c=false;pressed=hit(p,&c);if(c)pressed=-4;kick();return 0;}
     case WM_LBUTTONUP:{POINT p;GetCursorPos(&p);bool onClose=false;int target=hit(p,&onClose);int was=pressed;pressed=-2;kick();
         if(onClose&&was==-4&&target>=0&&target<int(items.size()))act(2,items[target]->entry.id);
@@ -216,8 +236,8 @@ void shutdown(){if(HWND h=window)PostMessageW(h,quitMessage,0,0);if(worker.joina
 void dockSync(){
     dock::State state;auto list=videoTabs();
     if(list.empty()&&!dock::running)return;
-    state.show=!list.empty()&&IsWindowVisible(windowHandle)&&!IsIconic(windowHandle)&&!full&&!pip&&!closePending;
-    state.video=activeTab&&activeTab->video;state.zoomed=IsZoomed(windowHandle);state.dark=surfaceDark;GetWindowRect(windowHandle,&state.main);
+    state.show=!list.empty()&&IsWindowVisible(windowHandle)&&!IsIconic(windowHandle)&&!pip&&!closePending;state.full=full;
+    state.video=activeTab&&activeTab->video;state.zoomed=IsZoomed(windowHandle)||full;state.dark=surfaceDark;GetWindowRect(windowHandle,&state.main);
     using Dpi=UINT(WINAPI*)(HWND);static auto dpi=reinterpret_cast<Dpi>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetDpiForWindow"));state.dpi=dpi?dpi(windowHandle):96;
     for(auto t:list)state.entries.push_back({reinterpret_cast<uintptr_t>(t),t->title,t->cover,t==activeTab});
     dock::publish(std::move(state));
