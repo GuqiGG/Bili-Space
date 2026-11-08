@@ -108,7 +108,7 @@ function headerFlip(apply,extra=[]){
   const visible=el=>!el.hidden&&el.isConnected&&getComputedStyle(el).display!=='none';
   const before=new Map(tracked.map(el=>[el,visible(el)?el.getBoundingClientRect():null])),origin=left.getBoundingClientRect();
   headerFlipMotion.forEach(m=>{m.onfinish=null;m.cancel();});headerFlipMotion=[];$$('[data-ghost]',left).forEach(g=>g.remove());
-  apply();
+  apply();settleHeader();
   if(!left.animate||headerMotionReduced())return;
   const zoom=headerZoom(),slide={duration:380,easing:'cubic-bezier(.32,.72,0,1)'};
   for(const el of tracked){
@@ -422,7 +422,8 @@ function setPrimaryNavHidden(nav,hide,instant){
   else{nav.hidden=false;const m=primaryNavMotion=nav.animate([from||{opacity:0,translate:'12px 0px'},{opacity:1,translate:'0px 0px'}],{duration:320,easing:'cubic-bezier(.32,.72,0,1)'});m.onfinish=()=>{if(primaryNavMotion===m)primaryNavMotion=null;};}
 }
 let headerSettleTimer;
-function settleHeader(ms=480){const left=shadow&&$('.header-left',shadow);if(!left)return;left.dataset.settling='true';clearTimeout(headerSettleTimer);headerSettleTimer=setTimeout(()=>{const release=()=>{delete left.dataset.settling;};left.addEventListener('pointermove',release,{once:true});},ms);}
+// The current nav item only offers refresh 3s after the header last moved, and only once the pointer moves again.
+function settleHeader(ms=3000){const left=shadow&&$('.header-left',shadow);if(!left)return;left.dataset.settling='true';clearTimeout(headerSettleTimer);headerSettleTimer=setTimeout(()=>{const release=()=>{delete left.dataset.settling;};left.addEventListener('pointermove',release,{once:true});},ms);}
 function setCategories(open,keyboard=false){
   if(!shadow)return;
   const trigger=$('.back',shadow),links=$('#header-categories',shadow),lane=$('.nav-lane',shadow),nav=$('.primary-nav',shadow);
@@ -451,7 +452,7 @@ function beginVideoLoading(target=location.href){
 function previewHeaderRoute(target){
   if(!shadow)return;let url;try{url=new URL(target,location.href);}catch{return;}
   if(!/(^|\.)bilibili\.com$/i.test(url.hostname))return;const kind=pageKind(url);if(kind===pageKind())return;
-  const former=$('nav a[aria-current=page]',shadow);routePreview=url;
+  const former=$('nav a[aria-current=page]',shadow);routePreview=url;settleHeader();
   try{
     syncHeaderBrand();syncNavigationControls();
     $$('nav a[data-route]',shadow).forEach(a=>{if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -626,7 +627,7 @@ const ICON_REFRESH='<svg class="route-refresh" viewBox="0 0 24 24" fill="none" s
 function installRouteRefresh(){
   for(const link of $$('.primary-nav a[data-route]',shadow)){if($('.route-text',link))continue;const text=document.createElement('span');text.className='route-text';text.append(...link.childNodes);link.append(text);link.insertAdjacentHTML('beforeend',ICON_REFRESH);
     link.addEventListener('click',e=>{if(link.getAttribute('aria-current')!=='page'||e.button||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();e.stopImmediatePropagation();const icon=$('.route-refresh',link);icon.removeAttribute('data-spin');void icon.getBoundingClientRect();icon.dataset.spin='true';beginNavigation?.(location.href);setTimeout(()=>location.reload(),140);},true);}
-  syncRouteRefreshLabels();
+  syncRouteRefreshLabels();settleHeader();
 }
 function syncRouteRefreshLabels(){if(!shadow)return;for(const link of $$('.primary-nav a[data-route]',shadow)){const label=$('.route-text',link)?.textContent||link.textContent;if(link.getAttribute('aria-current')==='page'){link.title='刷新'+label;link.setAttribute('aria-label','刷新'+label);}else{link.removeAttribute('title');link.removeAttribute('aria-label');}}}
 function installVideoLinkDrag(){
