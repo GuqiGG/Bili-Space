@@ -456,7 +456,7 @@ function beginVideoLoading(target=location.href){
 function previewHeaderRoute(target){
   if(!shadow)return;let url;try{url=new URL(target,location.href);}catch{return;}
   if(!/(^|\.)bilibili\.com$/i.test(url.hostname))return;const kind=pageKind(url);if(kind===pageKind())return;
-  const former=$('nav a[aria-current=page]',shadow);routePreview=url;settleHeader();
+  const former=$('nav a[aria-current=page]',shadow);routePreview=url;settleHeader();if(CHROME_VIEW)navigationState={...navigationState,back:true};
   try{
     syncHeaderBrand();syncNavigationControls();
     $$('nav a[data-route]',shadow).forEach(a=>{if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -633,7 +633,7 @@ function hideMessageMenu(instant=false){
 const ICON_REFRESH='<svg class="route-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5A8 8 0 1 1 17.7 6"/><path d="M20 4.5V9h-4.5"/></svg>';
 function installRouteRefresh(){
   for(const link of $$('.primary-nav a[data-route]',shadow)){if($('.route-text',link))continue;const text=document.createElement('span');text.className='route-text';text.append(...link.childNodes);link.append(text);link.insertAdjacentHTML('beforeend',ICON_REFRESH);
-    link.addEventListener('click',e=>{if(link.getAttribute('aria-current')!=='page'||e.button||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();e.stopImmediatePropagation();const icon=$('.route-refresh',link);icon.removeAttribute('data-spin');void icon.getBoundingClientRect();icon.dataset.spin='true';beginNavigation?.(location.href);setTimeout(()=>CHROME_VIEW?native('window',{action:'reload'}):location.reload(),140);},true);}
+    link.addEventListener('click',e=>{if(link.getAttribute('aria-current')!=='page'||e.button||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();e.stopImmediatePropagation();const icon=$('.route-refresh',link);icon.removeAttribute('data-spin');void icon.getBoundingClientRect();icon.dataset.spin='true';if(CHROME_VIEW)icon.addEventListener('animationend',()=>icon.removeAttribute('data-spin'),{once:true});beginNavigation?.((chromeLocation||location).href);setTimeout(()=>CHROME_VIEW?native('window',{action:'reload'}):location.reload(),140);},true);}
   syncRouteRefreshLabels();settleHeader();
 }
 function syncRouteRefreshLabels(){if(!shadow)return;for(const link of $$('.primary-nav a[data-route]',shadow)){const label=$('.route-text',link)?.textContent||link.textContent;if(link.getAttribute('aria-current')==='page'){link.title='刷新'+label;link.setAttribute('aria-label','刷新'+label);}else{link.removeAttribute('title');link.removeAttribute('aria-label');}}}
