@@ -4,6 +4,7 @@
 // the header where it draws (its reported regions) and to the visible page everywhere else.
 // Win7, a failed DirectComposition start or the windowedWebView setting fall back to windowed hosting.
 #include <dcomp.h>
+void stepActive(int direction);
 namespace comp{
 // IID_IDCompositionDevice; the MinGW header declares the interface without its GUID.
 constexpr GUID deviceIid{0xC37EA93A,0xE7AA,0x450D,{0xB1,0x6F,0x97,0x46,0xCB,0x04,0x07,0xF3}};
@@ -80,7 +81,9 @@ bool forwardMouse(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     POINT point{GET_X_LPARAM(lp),GET_Y_LPARAM(lp)};UINT32 data=0;COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS keys=COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS(GET_KEYSTATE_WPARAM(wp));
     switch(msg){
     case WM_MOUSEWHEEL:case WM_MOUSEHWHEEL:data=UINT32(GET_WHEEL_DELTA_WPARAM(wp));ScreenToClient(hwnd,&point);break;
-    case WM_XBUTTONDOWN:case WM_XBUTTONUP:case WM_XBUTTONDBLCLK:data=GET_XBUTTON_WPARAM(wp);break;
+    // Mouse side buttons step history through the host instead of the page's own back/forward.
+    case WM_XBUTTONDOWN:case WM_XBUTTONDBLCLK:return true;
+    case WM_XBUTTONUP:stepActive(GET_XBUTTON_WPARAM(wp)==XBUTTON1?-1:1);return true;
     case WM_MOUSELEAVE:tracking=false;if(pointerTarget&&!capturedTarget)send(pointerTarget,COREWEBVIEW2_MOUSE_EVENT_KIND_LEAVE,COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS(0),0,{0,0});pointerTarget=nullptr;return true;
     case WM_MOUSEMOVE:if(!tracking){TRACKMOUSEEVENT t{sizeof(t),TME_LEAVE,hwnd,0};TrackMouseEvent(&t);tracking=true;}break;
     }

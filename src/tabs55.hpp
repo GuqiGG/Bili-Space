@@ -125,7 +125,13 @@ bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
     if(from->video&&homeDestination(uri)){cancelNavigationFeedback(sender);if(normalisedPage(uri)!=normalisedPage(currentSource(homeTab)))homeTab->view->Navigate(uri.c_str());activateTab(homeTab);return true;}
     return false;
 }
+void chromeStep(int direction);
+// Back/forward from anywhere (header buttons, mouse side buttons, Alt+arrows) take the same route: the header learns the
+// direction first so it moves once, then the page steps past duplicate entries.
+void stepActive(int direction){if(!activeTab||!activeTab->view)return;chromeStep(direction);historyStep(activeTab->view,direction);}
 bool tabAccelerator(UINT key,COREWEBVIEW2_KEY_EVENT_KIND kind){
+    if((key==VK_LEFT||key==VK_RIGHT)&&(GetKeyState(VK_MENU)&0x8000)&&!(GetKeyState(VK_CONTROL)&0x8000)&&!(GetKeyState(VK_SHIFT)&0x8000)){if(kind==COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN||kind==COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN)stepActive(key==VK_LEFT?-1:1);return true;}
+    if(key==VK_BROWSER_BACK||key==VK_BROWSER_FORWARD){if(kind==COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN)stepActive(key==VK_BROWSER_BACK?-1:1);return true;}
     if(!(GetKeyState(VK_CONTROL)&0x8000)||(GetKeyState(VK_MENU)&0x8000)||(GetKeyState(VK_SHIFT)&0x8000))return false;
     if(kind!=COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN&&kind!=COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN)return false;
     // Ctrl+1-9 are the videos in dock order; Ctrl+T returns home.

@@ -486,8 +486,8 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             else if(action=="minimize")PostMessageW(windowHandle,WM_SYSCOMMAND,SC_MINIMIZE,0);
             else if(action=="maximize"){if(pip)togglePip(false);else ShowWindow(windowHandle,IsZoomed(windowHandle)?SW_RESTORE:SW_MAXIMIZE);}
             else if(action=="drag"){ReleaseCapture();SendMessageW(windowHandle,WM_NCLBUTTONDOWN,HTCAPTION,0);}
-            else if(action=="back")historyStep(webview,-1);
-            else if(action=="forward")historyStep(webview,1);
+            else if(action=="back")stepActive(-1);
+            else if(action=="forward")stepActive(1);
             else if(action=="reload")webview->Reload();
             else if(action=="pip")togglePip(!pip);
             else if(action=="fullscreen")toggleFull(!full);
@@ -569,6 +569,7 @@ void restoreWebFocus(){
 #include "chrome56.hpp"
 bool chromeHostEnabled(){return chromeHost::active();}void chromePush(const std::wstring& target){chromeHost::push(target);}void chromePlace(){chromeHost::place();}
 void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}
+void chromeStep(int direction){if(chromeHost::view&&chromeHost::ready)chromeHost::view->ExecuteScript(direction<0?L"window.BiliSpace?.chromeStep?.('back')":L"window.BiliSpace?.chromeStep?.('forward')",nullptr);}
 void chromeAcceptConfig(){if(chromeHost::view&&webview!=chromeHost::view)chromeHost::view->ExecuteScript(wide("window.BiliSpace?.acceptConfig?.("+config.dump()+",0)").c_str(),nullptr);}
 void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Environment* env){
             EventRegistrationToken acceleratorToken;

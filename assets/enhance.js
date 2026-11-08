@@ -1952,6 +1952,8 @@ function ctrlHome(){if(pageKind()==='home')homeBubble();else location.href='http
 /* Header view: the native host reports the visible page's address (also the moment a navigation starts), so the
    header moves on click instead of waiting for the next page to load. */
 let chromePending=null,chromeDirection=null,chromeHoldControls=false,chromeAssume={};
+// Back/forward started outside the header (mouse side buttons, Alt+arrows) announce their direction the same way a header click does.
+function chromeStep(d){if(!CHROME_VIEW||(d!=='back'&&d!=='forward'))return;chromeDirection=d;setTimeout(()=>{if(chromeDirection===d)chromeDirection=null;},1500);}
 function chromeActive(state){
   if(!CHROME_VIEW||!state?.url)return;let next;try{next=new URL(state.url);}catch{return;}
   // While a navigation is under way the page still reports its old address (history updates, state reads); those
@@ -2038,7 +2040,7 @@ function boot(){
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
+  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};

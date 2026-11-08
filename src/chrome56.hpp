@@ -42,7 +42,7 @@ void receiveFromHeader(ICoreWebView2WebMessageReceivedEventArgs* args){
     // The header also needs the saved visibility of the back/forward buttons and the channel arrow, or it keeps them hidden.
     if(type=="navigation-state"&&action=="read"){view->ExecuteScript(wide("window.__bsAcceptNavigationState?.("+json{{"back",false},{"forward",false},{"visible",navigationVisible},{"categoryVisible",categoryVisible},{"route",""}}.dump()+")").c_str(),nullptr);push();return;}
     if(type=="window"&&activeTab&&activeTab->view&&(action=="back"||action=="forward"||action=="reload")){
-        if(action=="back")historyStep(activeTab->view,-1);else if(action=="forward")historyStep(activeTab->view,1);else activeTab->view->Reload();return;
+        if(action=="back")stepActive(-1);else if(action=="forward")stepActive(1);else activeTab->view->Reload();return;
     }
     if(type=="surface-ready"||type=="surface"||type=="tab-info"||type=="app-visibility"||type=="load-ai")return;
     // Everything else is the ordinary header protocol, answered in the header view.
