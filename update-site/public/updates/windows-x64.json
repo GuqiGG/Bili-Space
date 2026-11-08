@@ -2,16 +2,21 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.59",
+  "version": "0.1.60",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.59-win64.zip",
-  "sha256": "cabf331d65c9ff525a209cc037288a99d452e6b433f3ded7e2b42bb22ec6f99f",
-  "size": 70760079,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.59/Bili-Space-0.1.59-Setup.exe",
-  "setupSha256": "e57bb91294337b346e1b37c24fae3595c548873316bda2dc398ff155538cc2c7",
-  "setupSize": 58194494,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.60-win64.zip",
+  "sha256": "fa041649169d42dc02cba04c0bf8f78263965186983d7adc2c96523e97a77a27",
+  "size": 34997945,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.60/Bili-Space-0.1.60-Setup.exe",
+  "setupSha256": "43a17b83b1e7f45816c6cb291336dd99d3c8e88e9aaf8a73fc2195d33f4633ad",
+  "setupSize": 26679179,
   "changelog": [
-    "**设置只在一个地方打开**：无论是点齿轮、按 Ctrl+,，还是点页面里的「前往设置」，客户端设置都会在顶栏层打开，焦点也随之移入设置窗口，避免出现两份行为不一致的设置窗口（例如滚轮无法滚动设置内容）。"
+    "安装包和程序更小：移除了用不到的推理运行库和模型文件，Windows 包不再附带 macOS/Linux 专用文件，程序文件去掉了调试符号。",
+    "更省 CPU 和内存：顶栏布局和时钟只在有变化时更新，插件计时只在有插件运行时工作，屏幕外一直循环的加载动画会暂停，弹幕和直播聊天不再触发整页扫描。",
+    "顶栏和首页显示得更快；关闭了 B 站页面用不到的 SmartScreen 信誉查询和表单自动填充分析。",
+    "首次启动的默认窗口更大，并按屏幕缩放自动调整；退出时会记住窗口大小和位置。",
+    "移动窗口后，下拉菜单和输入法候选框的位置保持正确。",
+    "顶栏头像位置微调。"
   ]
 }
