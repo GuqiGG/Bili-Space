@@ -463,6 +463,9 @@ function previewHeaderRoute(target){
     const link=routeLink(kind);if(link&&link!==former)slideRouteIndicator(former,link);syncRouteRefreshLabels();
     reportedRoute=kind;native('navigation-state',{action:'route',route:kind});
   }finally{routePreview=null;}
+  // The header view has no page of its own to load, so it adopts the destination now; otherwise the next route sync
+  // would still read the old address, slide back, and slide forward again once the native host reports the move.
+  if(CHROME_VIEW){chromeLocation=url;chromePending={kind,until:Date.now()+8000};}
 }
 function beginNavigation(target){previewHeaderRoute(target);const url=new URL(target,location.href);if(videoLoadingKey(url.href)){setLoading(false);beginVideoLoading(url.href);}else{cancelVideoLoading();setLoading(url.hostname==='search.bilibili.com');}}
 function finishVideoLoading(){
@@ -1938,8 +1941,14 @@ function homeBubble(text='你已经在主页啦！'){
 function ctrlHome(){if(pageKind()==='home')homeBubble();else location.href='https://www.bilibili.com/';}
 /* Header view: the native host reports the visible page's address (also the moment a navigation starts), so the
    header moves on click instead of waiting for the next page to load. */
+let chromePending=null;
 function chromeActive(state){
   if(!CHROME_VIEW||!state?.url)return;let next;try{next=new URL(state.url);}catch{return;}
+  // While a navigation is under way the page still reports its old address (history updates, state reads); those
+  // reports must not pull the header back. The destination's own report, or 8s without one, ends the wait.
+  const kind=pageKind(next);
+  if(state.starting)chromePending={kind,until:Date.now()+8000};
+  else if(chromePending){if(kind!==chromePending.kind&&Date.now()<chromePending.until)return;chromePending=null;}
   navigationState={back:!!state.back,forward:!!state.forward};chromeLocation=next;syncRoute();syncNavigationControls();reportChromeLayout();
 }
 let chromeLayoutKey='',chromeLayoutFrame;
