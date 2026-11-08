@@ -581,14 +581,7 @@ void restoreWebFocus(){
 #include "chrome56.hpp"
 bool chromeHostEnabled(){return chromeHost::active();}void chromePush(const std::wstring& target){chromeHost::push(target);}void chromePlace(){chromeHost::place();}
 void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}
-// In the tray nothing is on screen: every view is hidden and suspended at low memory; coming back wakes the visible
-// page and the header only (other videos wake when switched to, as before).
-void chromeMemory(bool low){ICoreWebView2_19* v19{};if(chromeHost::view&&SUCCEEDED(chromeHost::view->QueryInterface(__uuidof(ICoreWebView2_19),reinterpret_cast<void**>(&v19)))){v19->put_MemoryUsageTargetLevel(low?COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW:COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL);v19->Release();}}
-void trayMemory(bool hidden){
-    if(hidden){for(auto t:tabs)if(t->controller&&!t->closed){t->controller->put_IsVisible(FALSE);tabMemory(t,true);}if(chromeHost::ctl){chromeHost::ctl->put_IsVisible(FALSE);chromeMemory(true);}return;}
-    if(activeTab&&activeTab->controller){tabMemory(activeTab,false);activeTab->controller->put_IsVisible(TRUE);}
-    if(chromeHost::ctl){chromeMemory(false);chromeHost::show(!full&&!pip);}
-}void chromeRescript(){chromeHost::rescript();}
+void chromeRescript(){chromeHost::rescript();}
 // Plugin changes reach every open view at once: the header, home and each video.
 void pluginsBroadcast(const std::string& js){auto w=wide(js);for(auto t:tabs)if(t->view&&!t->closed)t->view->ExecuteScript(w.c_str(),nullptr);if(chromeHost::view)chromeHost::view->ExecuteScript(w.c_str(),nullptr);}
 void pluginsReloadViews(){if(activeTab&&activeTab->view)activeTab->view->Reload();if(chromeHost::view)chromeHost::view->Reload();}
