@@ -711,7 +711,8 @@ function applyPreferences() {
   syncRoute();
   const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);
   html.dataset.bsTheme=dark?'dark':'light';html.dataset.bsFrost=String(!!PREFS.experimentalFrost);html.dataset.bsBannerUnderlap='false';
-  if(CHROME_VIEW)html.style.setProperty('background-color','transparent','important');else html.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const early=$('#bs-navigation-surface');if(early)early.textContent=`html,body${location.hostname==='space.bilibili.com'?'':',#app'}{background-color:${dark?'#161618':'#fafafa'}!important}`;native('surface',{dark});applyAudioBoost();watchVideoLoading();
+  // The header view only draws the header; its page must stay see-through in either theme or it hides the page below.
+  if(CHROME_VIEW){html.style.setProperty('background-color','transparent','important');if(!$('#bs-chrome-clear'))document.head?.append(Object.assign(document.createElement('style'),{id:'bs-chrome-clear',textContent:'html:root:root,html:root:root body{background:transparent!important}'}));}else html.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const early=$('#bs-navigation-surface');if(early)early.textContent=`html,body${location.hostname==='space.bilibili.com'?'':',#app'}{background-color:${dark?'#161618':'#fafafa'}!important}`;native('surface',{dark});applyAudioBoost();watchVideoLoading();
   html.classList.toggle('night-mode',dark);
   html.classList.toggle('bili_dark',dark);
   html.dataset.bsFont=String(PREFS.font);
