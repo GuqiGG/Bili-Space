@@ -121,7 +121,8 @@ function headerFlip(apply,extra=[]){
   for(const el of tracked){
     const was=before.get(el),now=visible(el)?el.getBoundingClientRect():null;
     if(was&&now){const dx=(was.left-now.left)/zoom;if(Math.abs(dx)>.5)headerFlipMotion.push(holdForReveal(el.animate([{translate:dx+'px 0px'},{translate:'0px 0px'}],slide)));}
-    else if(!was&&now)headerFlipMotion.push(holdForReveal(el.animate([{opacity:0,clipPath:hidden},{opacity:getComputedStyle(el).opacity,offset:.35},{opacity:getComputedStyle(el).opacity,clipPath:'inset(-4px 0 -4px 0)'}],slide)));
+    // Arrivals take exactly as long as departures (200ms), so the logo comes in while back/forward go out.
+    else if(!was&&now)headerFlipMotion.push(holdForReveal(el.animate([{opacity:0,clipPath:hidden},{opacity:getComputedStyle(el).opacity,clipPath:'inset(-4px 0 -4px 0)'}],{duration:200,easing:'cubic-bezier(0,0,.2,1)'})));
     else if(was&&!now&&was.width>0){
       const wasHidden=el.hidden;el.hidden=false;const look=getComputedStyle(el),keep={display:look.display==='none'?'inline-flex':look.display,alignItems:'center',justifyContent:look.justifyContent,fontSize:look.fontSize,fontWeight:look.fontWeight,fontFamily:look.fontFamily,lineHeight:look.lineHeight,color:look.color,padding:look.padding,boxSizing:'border-box'};el.hidden=wasHidden;
       const ghost=el.cloneNode(true);ghost.hidden=false;Object.assign(ghost.style,keep);ghost.removeAttribute('id');ghost.dataset.ghost='true';ghost.inert=true;ghost.setAttribute('aria-hidden','true');
