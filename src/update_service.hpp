@@ -17,7 +17,7 @@ void updateLog(const std::string& message){
 }
 void saveUpdateJson(const fs::path& file,const json& value){auto tmp=file;tmp+=L".tmp";{std::ofstream f(tmp,std::ios::binary);f<<value.dump(2);if(!f)throw std::runtime_error("无法保存更新状态");}if(!MoveFileExW(tmp.c_str(),file.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("无法写入更新状态");}
 json updatePayload(){auto payload=updateState;payload["prompt"]=payload.value("available",false)&&!payload.value("required",false)&&!payload.value("ignored",false)&&payload.value("version",std::string{})!=updateNoticeShownVersion;return payload;}
-void pushUpdateState(){const auto payload=updatePayload();execute("window.BiliSpace?.acceptUpdateStatus("+payload.dump()+");window.renderUpdate?.("+payload.dump()+")");}
+void pushUpdateState(){const auto payload=updatePayload();executeEverywhere("window.BiliSpace?.acceptUpdateStatus("+payload.dump()+");window.renderUpdate?.("+payload.dump()+")");}
 void showRequiredUpdate(){
     if(!webview||updateGateShown)return;updateGateShown=true;startupTarget.clear();KillTimer(windowHandle,73);cancelDownload();execute("document.querySelectorAll('video,audio').forEach(v=>v.pause())");
     auto html=read(root/L"assets/update-required.html"),payload=updateState.dump();size_t pos=0;while((pos=payload.find('<',pos))!=std::string::npos){payload.replace(pos,1,"\\u003c");pos+=6;}

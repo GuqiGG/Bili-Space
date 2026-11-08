@@ -56,6 +56,8 @@ constexpr UINT trayMessage=WM_APP+71;
 NOTIFYICONDATAW trayIcon{};bool trayReady=false;
 UINT taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
 void execute(const std::string&);
+// Results the client's own interface waits for (settings, account menu) go to the header layer as well as the page.
+void executeEverywhere(const std::string&);
 void trayMemory(bool hidden);
 void restoreFromTray(){trayMemory(false);if(closePending)SetWindowPos(windowHandle,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);closePending=false;KillTimer(windowHandle,72);KillTimer(windowHandle,74);execute("document.querySelector('#bs-close-animation')?.remove();window.BiliSpace?.restoreFromTray()");ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
 void installTray(){
@@ -127,7 +129,7 @@ json proxyState(){
     }
     return {{"enabled",proxyEnabled},{"running",proxyRunning},{"message",proxyStatus},{"port",proxyPort},{"node",current},{"nodes",nodes}};
 }
-void pushProxy(){execute("window.BiliSpace?.proxyState("+proxyState().dump()+")");}
+void pushProxy(){executeEverywhere("window.BiliSpace?.proxyState("+proxyState().dump()+")");}
 
 json proxyConfig(){
     auto source=dataPath/L"mihomo/proxy-source.yaml";
@@ -196,7 +198,7 @@ void proxyAction(const std::string& action,const std::string& value,const std::s
     }
     if(action=="free"){
         auto bundled=root/L"runtime/free-candidates.yaml";
-        if(!fs::exists(bundled)){proxyStatus="内置免费节点缺失";execute("window.BiliSpace?.proxyToast("+json(proxyStatus).dump()+")");return;}
+        if(!fs::exists(bundled)){proxyStatus="内置免费节点缺失";executeEverywhere("window.BiliSpace?.proxyToast("+json(proxyStatus).dump()+")");return;}
         fs::copy_file(bundled,source,fs::copy_options::overwrite_existing);
         config["proxy"]=true;config["proxyNode"]=std::string{};save();
         proxyStatus="已切换到内置免费节点，正在重启…";pushProxy();relaunch(resume);return;
@@ -308,15 +310,15 @@ void launchDownloadWorker(const std::wstring& url,const std::wstring& audio,cons
 
 void runDownload(std::wstring url,fs::path target){runDownloadPlan(url,{},target);}
 void saveDownload(const std::string& url,const std::string& title,const std::string& audio){
-    if(!downloadMediaUrl(wide(url))||(!audio.empty()&&!downloadMediaUrl(wide(audio)))){execute("window.BiliSpace?.downloadResult({ok:false,message:'下载地址不是受支持的 B站媒体地址'})");return;}
-    if(downloadBusy.exchange(true)){execute("window.BiliSpace?.downloadResult({ok:false,message:'已有下载正在进行'})");return;}
+    if(!downloadMediaUrl(wide(url))||(!audio.empty()&&!downloadMediaUrl(wide(audio)))){executeEverywhere("window.BiliSpace?.downloadResult({ok:false,message:'下载地址不是受支持的 B站媒体地址'})");return;}
+    if(downloadBusy.exchange(true)){executeEverywhere("window.BiliSpace?.downloadResult({ok:false,message:'已有下载正在进行'})");return;}
     auto name=wide(title);for(auto& ch:name)if(ch<32||std::wstring(L"<>:\"/\\|?*").find(ch)!=std::wstring::npos)ch=L'_';if(name.size()>100)name.resize(100);if(name.empty())name=L"Bili-video";name+=L".mp4";
     wchar_t file[32768]{};lstrcpynW(file,name.c_str(),32768);OPENFILENAMEW dialog{sizeof(dialog)};dialog.hwndOwner=windowHandle;dialog.lpstrFile=file;dialog.nMaxFile=32768;dialog.lpstrFilter=L"MP4 视频\0*.mp4\0\0";dialog.lpstrDefExt=L"mp4";dialog.lpstrTitle=L"保存视频 · 内置下载器";dialog.Flags=OFN_OVERWRITEPROMPT|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;
-    if(!GetSaveFileNameW(&dialog)){downloadBusy=false;execute("window.BiliSpace?.downloadResult({ok:false,message:'已取消保存'})");return;}
-    {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCancelRequested=false;downloadCommitted=false;}execute("window.BiliSpace?.downloadStarted();window.BiliSpace?.downloaderNotice('下载已开始')");launchDownloadWorker(wide(url),wide(audio),fs::path(file));
+    if(!GetSaveFileNameW(&dialog)){downloadBusy=false;executeEverywhere("window.BiliSpace?.downloadResult({ok:false,message:'已取消保存'})");return;}
+    {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCancelRequested=false;downloadCommitted=false;}executeEverywhere("window.BiliSpace?.downloadStarted();window.BiliSpace?.downloaderNotice('下载已开始')");launchDownloadWorker(wide(url),wide(audio),fs::path(file));
 }
 void cancelDownload(){std::lock_guard<std::mutex> lock(downloadCommitMutex);if(downloadBusy&&!downloadCommitted)downloadCancelRequested=true;}
-void pushDownloaderState(){execute("window.BiliSpace?.downloaderStatus({installed:true,mcp:false,running:false,message:'下载器就绪'})");}
+void pushDownloaderState(){executeEverywhere("window.BiliSpace?.downloaderStatus({installed:true,mcp:false,running:false,message:'下载器就绪'})");}
 
 #include "download_queue.hpp"
 
@@ -581,6 +583,7 @@ void restoreWebFocus(){
 #include "chrome56.hpp"
 bool chromeHostEnabled(){return chromeHost::active();}void chromePush(const std::wstring& target){chromeHost::push(target);}void chromePlace(){chromeHost::place();}
 void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}
+void executeEverywhere(const std::string& js){auto w=wide(js);ICoreWebView2* page=activeTab&&activeTab->view?activeTab->view:webview;if(page)page->ExecuteScript(w.c_str(),nullptr);if(chromeHost::view&&chromeHost::view!=page)chromeHost::view->ExecuteScript(w.c_str(),nullptr);if(webview&&webview!=page&&webview!=chromeHost::view)webview->ExecuteScript(w.c_str(),nullptr);}
 void chromeRescript(){chromeHost::rescript();}
 // Plugin changes reach every open view at once: the header, home and each video.
 void pluginsBroadcast(const std::string& js){auto w=wide(js);for(auto t:tabs)if(t->view&&!t->closed)t->view->ExecuteScript(w.c_str(),nullptr);if(chromeHost::view)chromeHost::view->ExecuteScript(w.c_str(),nullptr);}
@@ -642,10 +645,10 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case updateReplyMessage:{std::unique_ptr<json> result(reinterpret_cast<json*>(lp));if(result)acceptUpdate(*result);return 0;}
     case downloadReplyMessage:{
         std::unique_ptr<DownloadReply> reply(reinterpret_cast<DownloadReply*>(lp));
-        if(reply&&wp==2){if(queueDownloadProgress(json::parse(reply->message)))return 0;execute("window.BiliSpace?.downloadProgress("+reply->message+")");return 0;}
-        if(reply&&wp==1){if(queueDownloadPhase(reply->message))return 0;execute("window.BiliSpace?.downloadPhase("+json(reply->message).dump()+")");return 0;}
+        if(reply&&wp==2){if(queueDownloadProgress(json::parse(reply->message)))return 0;executeEverywhere("window.BiliSpace?.downloadProgress("+reply->message+")");return 0;}
+        if(reply&&wp==1){if(queueDownloadPhase(reply->message))return 0;executeEverywhere("window.BiliSpace?.downloadPhase("+json(reply->message).dump()+")");return 0;}
         if(reply&&finishQueuedDownload(reply->ok,reply->message))return 0;
-        if(reply)execute("window.BiliSpace?.downloadResult("+json({{"ok",reply->ok},{"message",reply->message}}).dump()+")");
+        if(reply)executeEverywhere("window.BiliSpace?.downloadResult("+json({{"ok",reply->ok},{"message",reply->message}}).dump()+")");
         return 0;
     }
     case WM_ACTIVATE:

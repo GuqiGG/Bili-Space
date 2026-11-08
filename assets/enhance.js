@@ -1224,7 +1224,8 @@ function showResetConfirmation(){
   shadow.append(layer);$('#reset-confirm-cancel',layer).focus();
 }
 function showUpdateNotice(value){
-  if(!shadow||!value.prompt||!value.available||value.ignored||value.required||value.version===updateNoticeVersion||$('#update-notice',shadow))return;
+  // Under the header layer the notice opens there, once; the page's hidden copy of the client stays quiet.
+  if(CONTENT_VIEW||!shadow||!value.prompt||!value.available||value.ignored||value.required||value.version===updateNoticeVersion||$('#update-notice',shadow))return;
   updateNoticeVersion=value.version;const previous=shadow.activeElement,layer=document.createElement('div');layer.className='update-notice-layer';layer.id='update-notice';
   const dialog=document.createElement('section');dialog.className='update-notice';dialog.setAttribute('role','alertdialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','update-notice-title');
   const title=document.createElement('h2');title.id='update-notice-title';title.textContent='发现新版本 '+String(value.version||'');
@@ -1938,7 +1939,7 @@ function reportChromeLayout(){
     const rects=[],scale=devicePixelRatio||1;
     const add=el=>{if(!el||el.hidden||!el.isConnected)return;const look=getComputedStyle(el);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)return;const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)rects.push([Math.floor(r.left*scale),Math.floor(r.top*scale),Math.ceil(r.right*scale),Math.ceil(r.bottom*scale)]);};
     add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories','#settings-trigger','.upload','#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));
-    const modal=!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow);
+    const modal=!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow);
     const key=JSON.stringify([rects,modal]);if(key===chromeLayoutKey)return;chromeLayoutKey=key;native('chrome-layout',{rects,modal});
   });
 }
@@ -2001,7 +2002,7 @@ function boot(){
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
+  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};
