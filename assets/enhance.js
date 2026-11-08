@@ -2060,9 +2060,11 @@ function boot(){
   }
   window.addEventListener('popstate',()=>{syncRoute();scheduleScan();});
   window.addEventListener('hashchange',syncRoute);
+  // Danmaku and live-chat lines arrive many times a second and never need a page scan (ads, links, player tools).
+  const SCAN_QUIET='#bili-space-root,.bs-player-tool,.bs-gpu-canvas,.bili-danmaku-x-dm,.b-danmaku,#chat-items';
   const observer=new MutationObserver(records=>{
     const home=document.documentElement.dataset.bsPage==='home';
-    if(records.some(r=>(r.type==='attributes'&&home&&r.target.matches?.('.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card')&&r.target.closest?.('.bili-feed4-layout'))||((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info,.bili-video-card__stats--text,.bili-video-card__info--text-ad,[data-ad-label]'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.('#bili-space-root,.bs-player-tool,.bs-gpu-canvas')))){scheduleScan();}
+    if(records.some(r=>(r.type==='attributes'&&home&&r.target.matches?.('.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card')&&r.target.closest?.('.bili-feed4-layout'))||((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info,.bili-video-card__stats--text,.bili-video-card__info--text-ad,[data-ad-label]'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.(SCAN_QUIET)))){scheduleScan();}
   });observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','style']});
   mediaTheme.addEventListener('change',applyPreferences);
   document.addEventListener('pointerdown',applyAudioBoost,{passive:true});document.addEventListener('keydown',applyAudioBoost);document.addEventListener('loadedmetadata',applyAudioBoost,true);window.addEventListener('pagehide',stopSoundBalance);window.addEventListener('pageshow',applyAudioBoost);
