@@ -13,10 +13,17 @@ std::string entry(const std::string& url){
  else if(clean=="https://www.bilibili.com/history"||clean=="https://www.bilibili.com/account/history"||clean=="https://www.bilibili.com/zh-Hans/history")route="history";
  if(!route.empty()&&manifest.contains("pages"))return manifest["pages"].value(route,std::string{});return {};
 }
+// Bundled assets are read from disk once and then served from memory, so page loads do not block the UI thread on file reads.
+std::map<std::string,std::string> assetCache;size_t assetCacheBytes=0;
+const std::string& cachedAsset(const std::string& relative){
+ auto hit=assetCache.find(relative);if(hit!=assetCache.end())return hit->second;
+ auto bytes=read(root/L"assets/web-copy"/wide(relative));if(assetCacheBytes+bytes.size()>96u*1024*1024){static std::string scratch;scratch=std::move(bytes);return scratch;}
+ assetCacheBytes+=bytes.size();return assetCache.emplace(relative,std::move(bytes)).first->second;
+}
 bool serve(ICoreWebView2WebResourceRequestedEventArgs* args,ICoreWebView2Environment* env){
  ICoreWebView2WebResourceRequest* request{};args->get_Request(&request);if(!request)return false;LPWSTR raw{};request->get_Uri(&raw);std::string uri=raw?utf8(raw):"";CoTaskMemFree(raw);request->Release();auto key=entry(uri);if(key.empty())return false;const auto& record=manifest["resources"][key];auto relative=record.value("file",std::string{});if(relative.empty()||relative.find("..")!=std::string::npos||fs::path(relative).is_absolute())return false;
  COREWEBVIEW2_WEB_RESOURCE_CONTEXT context{};args->get_ResourceContext(&context);if(record.value("type",std::string{})=="Document")return false;
- auto bytes=read(root/L"assets/web-copy"/wide(relative));if(bytes.empty())return false;IStream* stream{};if(FAILED(CreateStreamOnHGlobal(nullptr,TRUE,&stream)))return false;ULONG written{};stream->Write(bytes.data(),ULONG(bytes.size()),&written);LARGE_INTEGER zero{};stream->Seek(zero,STREAM_SEEK_SET,nullptr);ICoreWebView2WebResourceResponse* response{};auto headers=wide("Content-Type: "+record.value("mime",std::string("application/octet-stream"))+"\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-cache\r\n");auto hr=env->CreateWebResourceResponse(stream,200,L"OK",headers.c_str(),&response);stream->Release();if(SUCCEEDED(hr)){args->put_Response(response);response->Release();return true;}return false;
+ const std::string& bytes=cachedAsset(relative);if(bytes.empty())return false;IStream* stream{};if(FAILED(CreateStreamOnHGlobal(nullptr,TRUE,&stream)))return false;ULONG written{};stream->Write(bytes.data(),ULONG(bytes.size()),&written);LARGE_INTEGER zero{};stream->Seek(zero,STREAM_SEEK_SET,nullptr);ICoreWebView2WebResourceResponse* response{};auto headers=wide("Content-Type: "+record.value("mime",std::string("application/octet-stream"))+"\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-cache\r\n");auto hr=env->CreateWebResourceResponse(stream,200,L"OK",headers.c_str(),&response);stream->Release();if(SUCCEEDED(hr)){args->put_Response(response);response->Release();return true;}return false;
 }
 // Pages open from the account's local copy (up to 30 days) and the page refetches it in the background, so the next visit is current.
 // Personal space shells and the message centre are private per account, so they share the scoped document cache.

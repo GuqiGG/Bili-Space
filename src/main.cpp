@@ -387,10 +387,6 @@ std::string script(){
     s+="\nif(INITIAL.btr){(()=>{\n"+read(root/L"assets/btr.user.js")+"\n})();}\n";
     // Upstream only executes on bilibili.com; fixture policy tests load it separately.
     s+="if(host==='www.bilibili.com'){(()=>{\n"+read(root/L"assets/blocker.home.user.js")+"\n})();}\n";
-#ifndef BILI_LEGACY_WIN7
-    s+=read(root/L"assets/ai/ort.webgpu.min.js");s+="\n";
-    s+=read(root/L"assets/ai/anime4k-webgpu.js");s+="\n";
-#endif
     s+=read(root/L"assets/desktop44.js");s+="\n";
     s+=read(root/L"assets/community44.js");s+="\n";
     s+="const PLUGINS="+pluginsRegistry().dump()+";\n";
@@ -477,6 +473,11 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="navigate"){
             auto uri=wide(m.value("url",std::string{}));
             if(uri.size()<=4096&&uri.rfind(L"https://search.bilibili.com/all?keyword=",0)==0)webview->Navigate(uri.c_str());
+        }else if(type=="load-ai"){
+#ifndef BILI_LEGACY_WIN7
+            // Only pages that start super-resolution or interpolation receive the WebGPU libraries.
+            webview->ExecuteScript(wide(read(root/L"assets/ai/ort.webgpu.min.js")+"\n;"+read(root/L"assets/ai/anime4k-webgpu.js")).c_str(),nullptr);
+#endif
         }else if(type=="tab-info"){acceptTabInfo(m);
         }else if(type=="app-visibility"){if(!IsWindowVisible(windowHandle))execute("window.BiliSpace?.pauseForTray()");
         }else if(type=="surface-ready"){if(!viewScopeActive)revealPendingTab(tabForView(webview));if(surfaceCommitted&&viewScopeActive){surfaceWaiting=false;if(testing)log("surface visible: document style ready");KillTimer(windowHandle,75);KillTimer(windowHandle,76);if(controller)controller->put_IsVisible(TRUE);InvalidateRect(windowHandle,nullptr,FALSE);execute("window.BiliSpace?.surfaceRevealed?.()");}

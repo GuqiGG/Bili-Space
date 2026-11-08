@@ -158,7 +158,7 @@ void step(){
     // Frame time comes from the performance counter: the tick count is too coarse for a 200 Hz display.
     LARGE_INTEGER counter,frequency;QueryPerformanceCounter(&counter);QueryPerformanceFrequency(&frequency);float dt=std::clamp(lastFrame?float(double(counter.QuadPart-lastFrame)/double(frequency.QuadPart)):.008f,.001f,.032f);lastFrame=counter.QuadPart;bool moving=false;const bool calm=reduceMotion();
     auto move=[&](float& v,float target,float tau){float n=approach(v,target,dt,tau);if(std::fabs(n-target)<.002f)n=target;if(n!=v)moving=true;v=n;};
-    auto bounce=[&](Spring& sp,float target){float k=calm?300.f:560.f,d=calm?2*std::sqrt(k):27.f;for(int i=0;i<2;++i)moving|=sp.step(target,dt/2,k,d);};
+    auto bounce=[&](Spring& sp,float target){float k=calm?300.f:560.f,d=calm?2*std::sqrt(k):23.f;for(int i=0;i<2;++i)moving|=sp.step(target,dt/2,k,d);};
     auto glide=[&](Spring& sp,float target){float k=calm?320.f:420.f,d=calm?2*std::sqrt(k):31.f;for(int i=0;i<2;++i)moving|=sp.step(target,dt/2,k,d);};
     move(shown,view.show?1.f:0.f,.06f);move(homeShown,view.video?1.f:0.f,.07f);bounce(homeScale,hovered==-1?(pressed==-1?.94f:1.12f):1.f);
     float y=PAD+homeShown*(ITEM+GAP);
