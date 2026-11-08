@@ -137,9 +137,9 @@ function syncHeaderBrand(){
   headerFlip(()=>{slot.hidden=!show;label.hidden=!show;});
 }
 let navigationState,navigationMask,navigationRequested=false,navigationMotion=[];
-window.__bsAcceptNavigationState=value=>{navigationState={back:!!value.back,forward:!!value.forward};acceptRouteOrigin(value.route);if(navigationMask===undefined)navigationMask=Number(value.visible)&3;if(categoryShown===undefined)categoryShown=!!value.categoryVisible;syncNavigationControls();syncCategoryVisibility();};
+window.__bsAcceptNavigationState=value=>{/* the header view learns history from chromeActive; this only seeds it */if(!(CHROME_VIEW&&navigationState))navigationState={back:!!value.back,forward:!!value.forward};acceptRouteOrigin(value.route);if(navigationMask===undefined)navigationMask=Number(value.visible)&3;if(categoryShown===undefined)categoryShown=!!value.categoryVisible;syncNavigationControls();syncCategoryVisibility();};
 function syncNavigationControls(){
-  const group=$('.history-controls',shadow);if(!group)return;
+  if(CHROME_VIEW&&chromeHoldControls)return;const group=$('.history-controls',shadow);if(!group)return;
   if(!navigationState){if(typeof RUNTIME!=='undefined'){group.hidden=true;if(!navigationRequested){navigationRequested=true;native('navigation-state',{action:'read'});}return;}navigationState={back:history.length>1,forward:false};navigationMask=0;}
   const home=pageKind()==='home',mask=(home?0:1)|(!home||navigationState.forward?2:0),previous=navigationMask;
   const buttons=[$('.history-back',shadow),$('.history-forward',shadow)];buttons[0].disabled=!navigationState.back;buttons[1].disabled=!navigationState.forward;
@@ -456,7 +456,7 @@ function beginVideoLoading(target=location.href){
 function previewHeaderRoute(target){
   if(!shadow)return;let url;try{url=new URL(target,location.href);}catch{return;}
   if(!/(^|\.)bilibili\.com$/i.test(url.hostname))return;const kind=pageKind(url);if(kind===pageKind())return;
-  const former=$('nav a[aria-current=page]',shadow);routePreview=url;settleHeader();if(CHROME_VIEW)navigationState={...navigationState,back:true};
+  const former=$('nav a[aria-current=page]',shadow);routePreview=url;settleHeader();if(CHROME_VIEW)navigationState={back:true,forward:false};
   try{
     syncHeaderBrand();syncNavigationControls();
     $$('nav a[data-route]',shadow).forEach(a=>{if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -1947,7 +1947,7 @@ function homeBubble(text='你已经在主页啦！'){
 function ctrlHome(){if(pageKind()==='home')homeBubble();else location.href='https://www.bilibili.com/';}
 /* Header view: the native host reports the visible page's address (also the moment a navigation starts), so the
    header moves on click instead of waiting for the next page to load. */
-let chromePending=null;
+let chromePending=null,chromeDirection=null,chromeHoldControls=false,chromeAssume={};
 function chromeActive(state){
   if(!CHROME_VIEW||!state?.url)return;let next;try{next=new URL(state.url);}catch{return;}
   // While a navigation is under way the page still reports its old address (history updates, state reads); those
@@ -1955,7 +1955,15 @@ function chromeActive(state){
   const kind=pageKind(next);
   if(state.starting)chromePending={kind,until:Date.now()+8000};
   else if(chromePending){if(kind!==chromePending.kind&&Date.now()<chromePending.until)return;chromePending=null;}
-  navigationState={back:!!state.back,forward:!!state.forward};chromeLocation=next;syncRoute();syncNavigationControls();reportChromeLayout();
+  /* A starting navigation does not know the history it will end with. After the header's own back/forward buttons the
+     result is predictable, so the buttons move once, now; otherwise they wait for the page's report instead of moving
+     twice (hide, then show again). */
+  if(state.starting){
+    chromeAssume=chromeDirection==='back'?{forward:true}:chromeDirection==='forward'?{back:true}:{};
+    if(chromeDirection){const was=navigationState||{back:false,forward:false};navigationState={back:was.back||!!chromeAssume.back,forward:was.forward||!!chromeAssume.forward};chromeHoldControls=false;}
+    else chromeHoldControls=true;
+    chromeDirection=null;
+  }else{navigationState={back:!!state.back||!!chromeAssume.back,forward:!!state.forward||!!chromeAssume.forward};chromeHoldControls=false;}chromeLocation=next;syncRoute();syncNavigationControls();reportChromeLayout();
 }
 let chromeLayoutKey='',chromeLayoutFrame;
 function reportChromeLayout(){
@@ -1970,6 +1978,7 @@ function reportChromeLayout(){
 function installChromeView(){
   if(!CHROME_VIEW||!shadow)return;
   // Links in the header open on the visible page, never inside the header view.
+  shadow.addEventListener('click',e=>{const step=e.composedPath().find(n=>n.dataset?.window==='back'||n.dataset?.window==='forward');if(step&&!step.disabled){const d=chromeDirection=step.dataset.window;setTimeout(()=>{if(chromeDirection===d)chromeDirection=null;},1500);}},true);
   shadow.addEventListener('click',e=>{if(e.defaultPrevented||e.button)return;const a=e.composedPath().find(n=>n.tagName==='A'&&n.href);if(a&&/^https?:/i.test(a.href)){e.preventDefault();native('navigate',{url:a.href});}});
   new MutationObserver(reportChromeLayout).observe(shadow,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','style','data-open','aria-expanded','data-categories']});
   addEventListener('resize',reportChromeLayout);setInterval(reportChromeLayout,400);

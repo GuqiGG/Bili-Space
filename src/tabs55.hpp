@@ -88,6 +88,23 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
 std::wstring currentSource(Tab* t){if(!t||!t->view)return {};LPWSTR source{};t->view->get_Source(&source);std::wstring s=source?source:L"";CoTaskMemFree(source);return s;}
 // Compares pages by host and path, ignoring the locale prefix, a trailing slash, the query and the fragment.
 std::wstring normalisedPage(std::wstring uri){uri=uri.substr(0,uri.find_first_of(L"?#"));auto scheme=uri.find(L"://");if(scheme==std::wstring::npos)return uri;auto slash=uri.find(L'/',scheme+3);std::wstring host=uri.substr(0,slash),path=slash==std::wstring::npos?L"/":uri.substr(slash);if(path.rfind(L"/zh-Hans",0)==0)path=path.substr(8);if(path.empty())path=L"/";if(path.size()>1&&path.back()==L'/')path.pop_back();return host+path;}
+// Back and forward skip history entries of the same page: Bilibili adds a /zh-Hans copy of the page it opens, and a
+// plain GoBack lands on the original address, which forwards to the copy again and the button seems to do nothing.
+void historyStep(ICoreWebView2* view,int direction){
+    if(!view)return;view->AddRef();
+    auto done=callback<ICoreWebView2CallDevToolsProtocolMethodCompletedHandler,HRESULT,LPCWSTR>([view,direction](HRESULT hr,LPCWSTR result){
+        long long entry=-1;
+        if(SUCCEEDED(hr)&&result){auto history=json::parse(utf8(result),nullptr,false);
+            if(history.is_object()&&history["entries"].is_array()){auto& entries=history["entries"];int current=history.value("currentIndex",-1),count=int(entries.size());
+                if(current>=0&&current<count){auto here=normalisedPage(wide(entries[current].value("url",std::string{})));int i=current+direction;
+                    while(i>=0&&i<count&&normalisedPage(wide(entries[i].value("url",std::string{})))==here)i+=direction;
+                    if(i>=0&&i<count)entry=entries[i].value("id",-1LL);}}}
+        if(entry>=0)view->CallDevToolsProtocolMethod(L"Page.navigateToHistoryEntry",wide(json{{"entryId",entry}}.dump()).c_str(),nullptr);
+        else if(FAILED(hr)){if(direction<0)view->GoBack();else view->GoForward();}
+        view->Release();return S_OK;});
+    if(FAILED(view->CallDevToolsProtocolMethod(L"Page.getNavigationHistory",L"{}",done))){view->Release();if(direction<0)view->GoBack();else view->GoForward();}
+    done->Release();
+}
 // Videos opened from home (or from another video) get their own view; site pages opened from a video return to home.
 bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
     if(updateRequired||pip||!homeTab||!homeTab->view)return false;

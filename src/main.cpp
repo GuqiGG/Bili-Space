@@ -467,8 +467,8 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             else if(action=="minimize")PostMessageW(windowHandle,WM_SYSCOMMAND,SC_MINIMIZE,0);
             else if(action=="maximize"){if(pip)togglePip(false);else ShowWindow(windowHandle,IsZoomed(windowHandle)?SW_RESTORE:SW_MAXIMIZE);}
             else if(action=="drag"){ReleaseCapture();SendMessageW(windowHandle,WM_NCLBUTTONDOWN,HTCAPTION,0);}
-            else if(action=="back")webview->GoBack();
-            else if(action=="forward")webview->GoForward();
+            else if(action=="back")historyStep(webview,-1);
+            else if(action=="forward")historyStep(webview,1);
             else if(action=="reload")webview->Reload();
             else if(action=="pip")togglePip(!pip);
             else if(action=="fullscreen")toggleFull(!full);
