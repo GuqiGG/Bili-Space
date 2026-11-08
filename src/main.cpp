@@ -669,6 +669,9 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_CLIPBOARDUPDATE:if(!testing)checkClipboardVideo();return 0;
     case WM_NCCALCSIZE:
         if(full&&wp)return 0;
+        // While the startup television shows, the window has no frame style; the page keeps exactly the client area it
+        // will have once the frame returns (the sizing border on the left, right and bottom).
+        if(wp&&splash::frameless){auto bounds=reinterpret_cast<NCCALCSIZE_PARAMS*>(lp);bounds->rgrc[0].left+=splash::borderPx;bounds->rgrc[0].right-=splash::borderPx;bounds->rgrc[0].bottom-=splash::borderPx;return 0;}
         if(wp){
             auto bounds=reinterpret_cast<NCCALCSIZE_PARAMS*>(lp);const LONG top=bounds->rgrc[0].top;
             auto result=DefWindowProcW(hwnd,msg,wp,lp);

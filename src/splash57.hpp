@@ -3,7 +3,10 @@
 // hidden until the first page is ready, then opens at its remembered size with the system's open animation (fast,
 // then settling).
 namespace splash{
-HWND window{};ULONGLONG started{},revealStart{};RECT revealFrom{},revealTo{},parked{};bool isParked=false;BYTE opacity=255;int corner=16;ULONG_PTR token{};int showCommand=SW_SHOW;bool waiting=false;
+HWND window{};ULONGLONG started{},revealStart{};RECT revealFrom{},revealTo{},parked{};bool isParked=false;
+// While the window waits and opens it has no caption or sizing frame style (Windows 11 shadows such windows even through
+// a window region); the client area keeps the same insets meanwhile (see WM_NCCALCSIZE), so the page never moves.
+bool frameless=false;int borderPx=0;BYTE opacity=255;int corner=16;ULONG_PTR token{};int showCommand=SW_SHOW;bool waiting=false;
 HDC canvasDc{};HBITMAP canvasBitmap{};HGDIOBJ previous{};void* bits{};int side=0;
 constexpr UINT_PTR frameTimer=57,fallbackTimer=58,revealTimer=59;constexpr double revealMs=460;
 void rounded(Gdiplus::GraphicsPath& p,float x,float y,float w,float h,float r){float d=r*2;p.AddArc(x,y,d,d,180,90);p.AddArc(x+w-d,y,d,d,270,90);p.AddArc(x+w-d,y+h-d,d,d,0,90);p.AddArc(x,y+h-d,d,d,90,90);p.CloseFigure();}
@@ -61,7 +64,12 @@ void begin(HWND main,int command){
     // Window-opening animation tools leave tool windows alone; the window takes its taskbar button when it opens.
     SetWindowLongPtrW(main,GWL_EXSTYLE,GetWindowLongPtrW(main,GWL_EXSTYLE)|WS_EX_TOOLWINDOW);
     if(showCommand==SW_SHOWMAXIMIZED)ShowWindow(main,SW_SHOWMAXIMIZED);
-    else{GetWindowRect(main,&parked);const int vx=GetSystemMetrics(SM_XVIRTUALSCREEN)+GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    else{
+        using Metric=int(WINAPI*)(int,UINT);static auto metricFor=reinterpret_cast<Metric>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetSystemMetricsForDpi"));
+        const UINT dpiNow=dpiFor?dpiFor(main):96;borderPx=metricFor?metricFor(SM_CXSIZEFRAME,dpiNow)+metricFor(SM_CXPADDEDBORDER,dpiNow):GetSystemMetrics(SM_CXSIZEFRAME)+GetSystemMetrics(SM_CXPADDEDBORDER);
+        frameless=true;SetWindowLongPtrW(main,GWL_STYLE,(GetWindowLongPtrW(main,GWL_STYLE)&~LONG_PTR(WS_CAPTION|WS_THICKFRAME))|WS_POPUP);
+        SetWindowPos(main,nullptr,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED);
+        GetWindowRect(main,&parked);const int vx=GetSystemMetrics(SM_XVIRTUALSCREEN)+GetSystemMetrics(SM_CXVIRTUALSCREEN);
         SetWindowPos(main,nullptr,vx+64,parked.top,0,0,SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);isParked=true;ShowWindow(main,SW_SHOWNOACTIVATE);}
     // Never keep the window hidden for long, whatever the page does.
     SetTimer(main,fallbackTimer,9000,nullptr);
@@ -82,7 +90,9 @@ void reveal(HWND main){
     double t=std::min(1.,elapsed/revealMs),e=1-std::pow(1-t,4);
     auto lerp=[&](double a,double b){return int(std::lround(a+(b-a)*e));};
     if(window){const double f=std::min(1.,elapsed/300.);opacity=BYTE(std::lround(255*(1-f)*(1-f)));if(f>=1)close();else draw();}
-    if(t>=1){KillTimer(main,revealTimer);close();SetWindowRgn(main,nullptr,TRUE);DWMNCRENDERINGPOLICY normal=DWMNCRP_USEWINDOWSTYLE;DwmSetWindowAttribute(main,DWMWA_NCRENDERING_POLICY,&normal,sizeof(normal));BOOL off=FALSE;DwmSetWindowAttribute(main,DWMWA_TRANSITIONS_FORCEDISABLED,&off,sizeof(off));return;}
+    if(t>=1){KillTimer(main,revealTimer);close();
+        if(frameless){frameless=false;SetWindowLongPtrW(main,GWL_STYLE,(GetWindowLongPtrW(main,GWL_STYLE)&~LONG_PTR(WS_POPUP))|WS_CAPTION|WS_THICKFRAME);SetWindowPos(main,nullptr,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED);}
+        SetWindowRgn(main,nullptr,TRUE);DWMNCRENDERINGPOLICY normal=DWMNCRP_USEWINDOWSTYLE;DwmSetWindowAttribute(main,DWMWA_NCRENDERING_POLICY,&normal,sizeof(normal));BOOL off=FALSE;DwmSetWindowAttribute(main,DWMWA_TRANSITIONS_FORCEDISABLED,&off,sizeof(off));return;}
     const int l=lerp(revealFrom.left,revealTo.left),tp=lerp(revealFrom.top,revealTo.top),r=lerp(revealFrom.right,revealTo.right),b=lerp(revealFrom.bottom,revealTo.bottom);
     const int round=lerp(revealFrom.right-revealFrom.left,corner);
     SetWindowRgn(main,CreateRoundRectRgn(l,tp,r+1,b+1,round,round),TRUE);
