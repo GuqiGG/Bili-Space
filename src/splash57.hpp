@@ -3,7 +3,7 @@
 // hidden until the first page is ready, then opens at its remembered size with the system's open animation (fast,
 // then settling).
 namespace splash{
-HWND window{};ULONGLONG started{},revealStart{};RECT revealFrom{};ULONG_PTR token{};int showCommand=SW_SHOW;bool waiting=false;
+HWND window{};ULONGLONG started{},revealStart{};RECT revealFrom{},revealTo{};BYTE opacity=255;int corner=16;ULONG_PTR token{};int showCommand=SW_SHOW;bool waiting=false;
 HDC canvasDc{};HBITMAP canvasBitmap{};HGDIOBJ previous{};void* bits{};int side=0;
 constexpr UINT_PTR frameTimer=57,fallbackTimer=58,revealTimer=59;constexpr double revealMs=460;
 void rounded(Gdiplus::GraphicsPath& p,float x,float y,float w,float h,float r){float d=r*2;p.AddArc(x,y,d,d,180,90);p.AddArc(x+w-d,y,d,d,270,90);p.AddArc(x+w-d,y+h-d,d,d,0,90);p.AddArc(x,y+h-d,d,d,90,90);p.CloseFigure();}
@@ -28,7 +28,7 @@ void draw(){
     GraphicsPath body;rounded(body,3.f,8.f,26.f,21.f,6.f);SolidBrush fill(pink);g.FillPath(&fill,&body);
     Pen eye(Color(255,255,255,255),3.f);eye.SetStartCap(LineCapRound);eye.SetEndCap(LineCapRound);
     g.DrawLine(&eye,10.f,16.f,10.f,21.f);g.DrawLine(&eye,22.f,16.f,22.f,21.f);
-    HDC screenDc=GetDC(nullptr);RECT r{};GetWindowRect(window,&r);POINT origin{r.left,r.top},zero{0,0};SIZE size{side,side};BLENDFUNCTION blend{AC_SRC_OVER,0,255,AC_SRC_ALPHA};
+    HDC screenDc=GetDC(nullptr);RECT r{};GetWindowRect(window,&r);POINT origin{r.left,r.top},zero{0,0};SIZE size{side,side};BLENDFUNCTION blend{AC_SRC_OVER,0,opacity,AC_SRC_ALPHA};
     UpdateLayeredWindow(window,screenDc,&origin,&size,canvasDc,&zero,0,&blend,ULW_ALPHA);ReleaseDC(nullptr,screenDc);
 }
 LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
@@ -51,7 +51,9 @@ void begin(HWND main,int command){
     draw();ShowWindow(window,SW_SHOWNOACTIVATE);SetTimer(window,frameTimer,16,nullptr);
     // The window is shown now with nothing visible (an empty window region), so the page renders while the television
     // turns; the reveal then uncovers a finished page instead of a blank one.
+    // An invisible window still gets the system's shadow and frame; non-client rendering stays off until it has opened.
     BOOL off=TRUE;DwmSetWindowAttribute(main,DWMWA_TRANSITIONS_FORCEDISABLED,&off,sizeof(off));
+    DWMNCRENDERINGPOLICY none=DWMNCRP_DISABLED;DwmSetWindowAttribute(main,DWMWA_NCRENDERING_POLICY,&none,sizeof(none));
     SetWindowRgn(main,CreateRectRgn(0,0,0,0),FALSE);ShowWindow(main,showCommand==SW_SHOWMAXIMIZED?SW_SHOWMAXIMIZED:SW_SHOWNOACTIVATE);
     // Never keep the window hidden for long, whatever the page does.
     SetTimer(main,fallbackTimer,9000,nullptr);
@@ -61,27 +63,46 @@ void close(){
     if(canvasDc){SelectObject(canvasDc,previous);DeleteObject(canvasBitmap);DeleteDC(canvasDc);canvasDc=nullptr;canvasBitmap=nullptr;bits=nullptr;}
     if(token){Gdiplus::GdiplusShutdown(token);token=0;}
 }
-// The first page is ready (or the fallback fired): drop the television and open the window.
-// The window opens out of the television: it is shown at full size, but only a television-sized rounded square at the
-// television's place is visible, and that window region grows to the whole window on an ease-out curve (fast, then
-// settling). The page is laid out once at full size, so nothing reflows during the opening.
+// The first page is ready (or the fallback fired): the window opens out of the television. It is shown at full size,
+// but only a small circle under the television is visible at first; that window region grows to the window's visible
+// frame on an ease-out curve (fast, then settling) while the television fades out above it, so no square or edge
+// replaces the television. The region never covers the invisible resize border, which would otherwise show as a light
+// edge, and the system frame returns when the region is removed. The page is laid out once at full size, so nothing
+// reflows during the opening.
 void reveal(HWND main){
-    double t=std::min(1.,(GetTickCount64()-revealStart)/revealMs),e=1-std::pow(1-t,4);
-    RECT full{};GetWindowRect(main,&full);const int w=full.right-full.left,h=full.bottom-full.top;
+    const ULONGLONG elapsed=GetTickCount64()-revealStart;
+    double t=std::min(1.,elapsed/revealMs),e=1-std::pow(1-t,4);
     auto lerp=[&](double a,double b){return int(std::lround(a+(b-a)*e));};
-    const int l=lerp(revealFrom.left,0),tp=lerp(revealFrom.top,0),r=lerp(revealFrom.right,w),b=lerp(revealFrom.bottom,h),radius=lerp(side*.5,16);
-    if(t>=1){KillTimer(main,revealTimer);SetWindowRgn(main,nullptr,TRUE);BOOL off=FALSE;DwmSetWindowAttribute(main,DWMWA_TRANSITIONS_FORCEDISABLED,&off,sizeof(off));return;}
-    SetWindowRgn(main,CreateRoundRectRgn(l,tp,r+1,b+1,radius,radius),TRUE);
+    if(window){const double f=std::min(1.,elapsed/300.);opacity=BYTE(std::lround(255*(1-f)*(1-f)));if(f>=1)close();else draw();}
+    if(t>=1){KillTimer(main,revealTimer);close();SetWindowRgn(main,nullptr,TRUE);DWMNCRENDERINGPOLICY normal=DWMNCRP_USEWINDOWSTYLE;DwmSetWindowAttribute(main,DWMWA_NCRENDERING_POLICY,&normal,sizeof(normal));BOOL off=FALSE;DwmSetWindowAttribute(main,DWMWA_TRANSITIONS_FORCEDISABLED,&off,sizeof(off));return;}
+    const int l=lerp(revealFrom.left,revealTo.left),tp=lerp(revealFrom.top,revealTo.top),r=lerp(revealFrom.right,revealTo.right),b=lerp(revealFrom.bottom,revealTo.bottom);
+    const int round=lerp(revealFrom.right-revealFrom.left,corner);
+    SetWindowRgn(main,CreateRoundRectRgn(l,tp,r+1,b+1,round,round),TRUE);
 }
 void finish(HWND main){
     if(!waiting)return;waiting=false;KillTimer(main,fallbackTimer);
     RECT tv{};if(window)GetWindowRect(window,&tv);
-    if(!IsWindowVisible(main)){BOOL off=TRUE;DwmSetWindowAttribute(main,DWMWA_TRANSITIONS_FORCEDISABLED,&off,sizeof(off));SetWindowRgn(main,CreateRectRgn(0,0,0,0),FALSE);ShowWindow(main,showCommand==SW_SHOWMAXIMIZED?SW_SHOWMAXIMIZED:SW_SHOWNOACTIVATE);}
+    if(!IsWindowVisible(main)){BOOL off=TRUE;DwmSetWindowAttribute(main,DWMWA_TRANSITIONS_FORCEDISABLED,&off,sizeof(off));DWMNCRENDERINGPOLICY none=DWMNCRP_DISABLED;DwmSetWindowAttribute(main,DWMWA_NCRENDERING_POLICY,&none,sizeof(none));SetWindowRgn(main,CreateRectRgn(0,0,0,0),FALSE);ShowWindow(main,showCommand==SW_SHOWMAXIMIZED?SW_SHOWMAXIMIZED:SW_SHOWNOACTIVATE);}
     RECT full{};GetWindowRect(main,&full);
+    // The visible frame, without the invisible resize border around it. (While a window region is set the system reports
+    // the whole window as its frame, so the border is computed: the work area when maximized, otherwise the sizing
+    // border on the left, right and bottom, as the caption is drawn by the page.)
+    using Metric=int(WINAPI*)(int,UINT);static auto metricFor=reinterpret_cast<Metric>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetSystemMetricsForDpi"));
+    using DpiOf=UINT(WINAPI*)(HWND);static auto dpiOf=reinterpret_cast<DpiOf>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetDpiForWindow"));
+    const UINT dpiNow=dpiOf?dpiOf(main):96;auto metric=[&](int m){return metricFor?metricFor(m,dpiNow):GetSystemMetrics(m);};
+    if(showCommand==SW_SHOWMAXIMIZED||IsZoomed(main)){MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(main,MONITOR_DEFAULTTONEAREST),&mi);revealTo={mi.rcWork.left-full.left,mi.rcWork.top-full.top,mi.rcWork.right-full.left,mi.rcWork.bottom-full.top};}
+    else{const int border=metric(SM_CXSIZEFRAME)+metric(SM_CXPADDEDBORDER);revealTo={border,0,(full.right-full.left)-border,(full.bottom-full.top)-border};}
     if(!tv.right){tv={(full.left+full.right-side)/2,(full.top+full.bottom-side)/2,(full.left+full.right+side)/2,(full.top+full.bottom+side)/2};}
-    revealFrom={tv.left-full.left,tv.top-full.top,tv.right-full.left,tv.bottom-full.top};revealStart=GetTickCount64();
-    SetWindowRgn(main,CreateRoundRectRgn(revealFrom.left,revealFrom.top,revealFrom.right+1,revealFrom.bottom+1,side/2,side/2),FALSE);
-    SetForegroundWindow(main);UpdateWindow(main);close();log("startup: window shown");
+    const int cx=(tv.left+tv.right)/2-full.left,cy=(tv.top+tv.bottom)/2-full.top,start=std::max(4,side/5);
+    revealFrom={cx-start,cy-start,cx+start,cy+start};
+    using Dpi=UINT(WINAPI*)(HWND);static auto dpiFor=reinterpret_cast<Dpi>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetDpiForWindow"));
+    corner=showCommand==SW_SHOWMAXIMIZED?0:MulDiv(16,dpiFor?dpiFor(main):96,96);
+    revealStart=GetTickCount64();opacity=255;
+    SetWindowRgn(main,CreateEllipticRgn(revealFrom.left,revealFrom.top,revealFrom.right+1,revealFrom.bottom+1),FALSE);
+    SetForegroundWindow(main);UpdateWindow(main);
+    // The television stays on top and fades during the opening (its own timer keeps it turning until then).
+    if(window){SetWindowPos(window,HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);}
+    log("startup: window shown");
     SetTimer(main,revealTimer,8,nullptr);
 }
 }

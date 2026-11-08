@@ -512,7 +512,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="load-ai"){
 #ifndef BILI_LEGACY_WIN7
             // Only pages that start super-resolution or interpolation receive the WebGPU libraries.
-            webview->ExecuteScript(wide(assetText(L"assets/ai/anime4k-webgpu.js")).c_str(),nullptr);
+            webview->ExecuteScript(wide(read(root/L"assets/ai/anime4k-webgpu.js")).c_str(),nullptr);
 #endif
         }else if(type=="tab-info"){acceptTabInfo(m);
         }else if(type=="app-visibility"){if(!IsWindowVisible(windowHandle))execute("window.BiliSpace?.pauseForTray()");
@@ -720,7 +720,11 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);
     WNDCLASSW wc{};wc.hIcon=LoadIconW(instance,MAKEINTRESOURCEW(1));wc.lpfnWndProc=proc;wc.hInstance=instance;wc.lpszClassName=L"BetterBiliSpace";wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hbrBackground=CreateSolidBrush(RGB(20,20,22));RegisterClassW(&wc);
     // Keep DWM's standard taskbar transitions; WM_NCCALCSIZE hides only the title bar.
-    windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Bili-Space [test]":L"Bili-Space",WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,std::min(1600,GetSystemMetrics(SM_CXSCREEN)),std::min(1000,GetSystemMetrics(SM_CYSCREEN)-40),nullptr,nullptr,instance,nullptr);
+    // First launch (no remembered placement): 1440×900 at the system scale, at most 88% of the work area, centred.
+    RECT work{};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);
+    using SystemDpi=UINT(WINAPI*)();static auto systemDpi=reinterpret_cast<SystemDpi>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetDpiForSystem"));const int dpiNow=systemDpi?int(systemDpi()):96;
+    const int workW=work.right-work.left,workH=work.bottom-work.top,initialW=std::min(MulDiv(1440,dpiNow,96),workW*88/100),initialH=std::min(MulDiv(900,dpiNow,96),workH*88/100);
+    windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Bili-Space [test]":L"Bili-Space",WS_OVERLAPPEDWINDOW,work.left+(workW-initialW)/2,work.top+(workH-initialH)/2,initialW,initialH,nullptr,nullptr,instance,nullptr);
     SetWindowPos(windowHandle,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
     DWORD borderColor=0xFFFFFFFE;DwmSetWindowAttribute(windowHandle,34,&borderColor,sizeof(borderColor));
     BOOL dark=TRUE;DwmSetWindowAttribute(windowHandle,20,&dark,sizeof(dark));int corner=2;DwmSetWindowAttribute(windowHandle,33,&corner,sizeof(corner));

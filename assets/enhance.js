@@ -159,6 +159,8 @@ function syncCategoryVisibility(){
   categoryShown=show;native('navigation-state',{action:'category-visibility',visible:show});
   headerFlip(()=>{button.hidden=!show;});
 }
+// The clock shows minutes, so it wakes once a minute, on the minute, and only while it is switched on.
+let headerClockTimer;function scheduleHeaderClock(){clearTimeout(headerClockTimer);updateHeaderClock();if(CONTENT_VIEW||!PREFS.showClock)return;const now=new Date();headerClockTimer=setTimeout(scheduleHeaderClock,(60-now.getSeconds())*1000-now.getMilliseconds()+30);}
 function updateHeaderClock(){if(!shadow)return;const clock=$('.header-clock',shadow);if(!clock)return;clock.hidden=!PREFS.showClock;if(clock.hidden){clock.textContent='';return;}const now=new Date();clock.textContent=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:false});clock.dateTime=now.toISOString();clock.title=now.toLocaleString();}
 function layoutHeaderLeading(){if(!shadow)return;const brand=$('.brand',shadow),dock=$('.brand-leading',shadow),nav=$('.primary-nav',shadow),left=$('.header-left',shadow);if(!dock||brand.hidden)return;const stop=nav&&!nav.hidden?nav.getBoundingClientRect().right:left.getBoundingClientRect().left+110;const available=Math.max(36,brand.getBoundingClientRect().left-stop-16);dock.style.maxWidth=available+'px';dock.dataset.compact=String(available<(PREFS.showClock?150:100));}
 let favoritesController,accountsController;
@@ -297,7 +299,7 @@ function surfaceRevealed(){const first=!headerSurfaceReady;headerSurfaceReady=tr
    current page and the other header destinations is refetched quietly and saved for the next switch. */
 const LOCAL_PAGES=/^https:\/\/(?:www\.bilibili\.com\/(?:zh-Hans\/?)?(?:history|account\/history)?|t\.bilibili\.com\/(?:zh-Hans)?|message\.bilibili\.com\/|space\.bilibili\.com\/(?:zh-Hans\/)?\d{1,20}\/?)$/;
 function warmLocalPages(){
-  if(typeof RUNTIME==='undefined'||navigator.connection?.saveData)return;const mid=(document.cookie.match(/(?:^|;\s*)DedeUserID=(\d{1,20})(?:;|$)/)||[])[1];
+  if(CHROME_VIEW||typeof RUNTIME==='undefined'||navigator.connection?.saveData)return;const mid=(document.cookie.match(/(?:^|;\s*)DedeUserID=(\d{1,20})(?:;|$)/)||[])[1];
   const now=Date.now(),urls=[...new Set([location.href.split(/[?#]/)[0],'https://www.bilibili.com/','https://t.bilibili.com/','https://www.bilibili.com/history','https://message.bilibili.com/',mid&&'https://space.bilibili.com/'+mid].filter(u=>u&&LOCAL_PAGES.test(u)))].filter(u=>{try{const key='bs-warm:'+u,last=Number(localStorage.getItem(key))||0;if(now-last<600000)return false;localStorage.setItem(key,String(now));}catch{}return true;});
   if(!urls.length)return;if(NATIVE_PLATFORM==='macos'){native('page-warm',{urls});return;}
   urls.forEach((url,i)=>setTimeout(()=>fetch(url,{credentials:'include',mode:'no-cors',cache:'no-store',priority:'low'}).catch(()=>{}),i*1500));
@@ -747,6 +749,7 @@ function update(patch) {
   Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision});
   if(before!==PREFS.srMode+PREFS.srScale+PREFS.srModel||'fiMode' in patch)startEnhancer();
   if('downloader' in patch)mountVideoHome();
+  if('showClock' in patch)scheduleHeaderClock();
   if('headerMessages' in patch){if(patch.headerMessages)refreshMessageUnread(true);else{messageRequest?.abort();messageRequest=null;}}
   if((patch.srMode&&patch.srMode!=='off')||(patch.fiMode&&patch.fiMode!=='off'))toast('警告：超分与补帧是测试功能，可能卡顿、闪烁或抖动；不保证画质提升，异常时请关闭。');
 }
@@ -1949,8 +1952,12 @@ function installChromeView(){
   // Links in the header open on the visible page, never inside the header view.
   shadow.addEventListener('click',e=>{const step=e.composedPath().find(n=>n.dataset?.window==='back'||n.dataset?.window==='forward');if(step&&!step.disabled){const d=chromeDirection=step.dataset.window;setTimeout(()=>{if(chromeDirection===d)chromeDirection=null;},1500);}},true);
   shadow.addEventListener('click',e=>{if(e.defaultPrevented||e.button)return;const a=e.composedPath().find(n=>n.tagName==='A'&&n.href);if(a&&/^https?:/i.test(a.href)){e.preventDefault();native('navigate',{url:a.href});}});
-  new MutationObserver(reportChromeLayout).observe(shadow,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','style','data-open','aria-expanded','data-categories']});
-  addEventListener('resize',reportChromeLayout);setInterval(reportChromeLayout,400);
+  // Reported when something can have changed, not on a timer: DOM changes (plus one late check for the motion that
+  // follows them), finished transitions and animations, and window resizes.
+  let settle;const changed=()=>{reportChromeLayout();clearTimeout(settle);settle=setTimeout(reportChromeLayout,450);};
+  new MutationObserver(changed).observe(shadow,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','style','data-open','aria-expanded','data-categories']});
+  for(const type of ['transitionend','animationend','animationcancel'])shadow.addEventListener(type,reportChromeLayout,true);
+  addEventListener('resize',changed);
   surfaceRevealed();acceptRouteOrigin('');native('navigation-state',{action:'read'});reportChromeLayout();
 }
 let resumeMedia=[];
@@ -1981,7 +1988,8 @@ function boot(){
   window.addEventListener('popstate',()=>{syncRoute();scheduleScan();});
   window.addEventListener('hashchange',syncRoute);
   const observer=new MutationObserver(records=>{
-    if(records.some(r=>(r.type==='attributes'&&r.target.closest?.('.bili-feed4-layout')&&r.target.matches?.('.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card'))||((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info,.bili-video-card__stats--text,.bili-video-card__info--text-ad,[data-ad-label]'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.('#bili-space-root,.bs-player-tool,.bs-gpu-canvas')))){scheduleScan();}
+    const home=document.documentElement.dataset.bsPage==='home';
+    if(records.some(r=>(r.type==='attributes'&&home&&r.target.matches?.('.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card')&&r.target.closest?.('.bili-feed4-layout'))||((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info,.bili-video-card__stats--text,.bili-video-card__info--text-ad,[data-ad-label]'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.('#bili-space-root,.bs-player-tool,.bs-gpu-canvas')))){scheduleScan();}
   });observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','style']});
   mediaTheme.addEventListener('change',applyPreferences);
   document.addEventListener('pointerdown',applyAudioBoost,{passive:true});document.addEventListener('keydown',applyAudioBoost);document.addEventListener('loadedmetadata',applyAudioBoost,true);window.addEventListener('pagehide',stopSoundBalance);window.addEventListener('pageshow',applyAudioBoost);
@@ -1989,7 +1997,7 @@ function boot(){
   document.body.append(controls);$('button',controls).onclick=()=>native('window',{action:'pip'});$('.bs-pip-play',controls).onclick=()=>{const v=playbackVideo();if(v){if(v.paused)v.play().catch(()=>{});else v.pause();}syncPipPlayback();};
   for(const type of ['play','pause','ended','emptied'])document.addEventListener(type,()=>{syncPipPlayback();if(pipDanmaku.timer)pipDanmaku.tick();},true);document.addEventListener('loadedmetadata',()=>{if(pipActive)syncPipPresentation();},true);
   window.addEventListener('resize',()=>{layoutHeaderLeading();syncPipPresentation();});
-  if(!CONTENT_VIEW){updateHeaderClock();setInterval(updateHeaderClock,1000);}syncPipPlayback();
+  scheduleHeaderClock();syncPipPlayback();
   document.addEventListener('keydown',e=>{
     if(e.ctrlKey&&e.key.toLowerCase()==='w'){e.preventDefault();e.stopImmediatePropagation();native('window',{action:'close'});return;}
     if(e.ctrlKey&&e.key===','){e.preventDefault();openSettings();}

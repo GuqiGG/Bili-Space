@@ -256,6 +256,12 @@
     }
     instances.set(id, { id, state: state || 'disabled', own: [], schema: instance ? instance.schema : [] });
   }
+  // The per-second tick only runs while at least one plugin is running.
+  function syncTick() {
+    const running = [...instances.values()].some((i) => i.state === 'running');
+    if (running && !timer && started) timer = setInterval(tick, 1000);
+    else if (!running && timer) { clearInterval(timer); timer = null; }
+  }
   function tick() {
     if (location.href !== route) { route = location.href; emit('route', route); }
     const now = options.getVideo ? options.getVideo() : null;
@@ -268,7 +274,7 @@
     route = location.href;
     video = options.getVideo ? options.getVideo() : null;
     for (const def of defs) if (def && typeof def.id === 'string' && typeof def.code === 'string' && !disabled.has(def.id)) run(def);
-    if (!timer) timer = setInterval(tick, 1000);
+    syncTick();
     return snapshot();
   }
   function stop() {
@@ -291,6 +297,7 @@
       disabled.add(id);
       unload(id, 'disabled');
     }
+    syncTick();
   }
   function remove(id) {
     setEnabled(id, false);

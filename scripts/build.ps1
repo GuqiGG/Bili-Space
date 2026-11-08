@@ -20,4 +20,5 @@ Copy-Item runtime dist -Recurse -Force
 Copy-Item vendor dist -Recurse -Force
 Copy-Item README.md dist -Force
 Copy-Item docs dist -Recurse -Force
+Remove-Item dist/docs/website,dist/docs/images -Recurse -Force -ErrorAction SilentlyContinue
 Write-Output "Built: $root\dist\Bili-Space.exe"
