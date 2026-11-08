@@ -61,7 +61,7 @@ constexpr UINT_PTR pendingRevealTimer=7755;
 void revealPendingTab(Tab* t){
     if(!t||!t->pendingShow||t->closed||!t->controller)return;t->pendingShow=false;Tab* from=activeTab;
     if(from&&from!=t->opener&&from!=t)return;
-    auto shown=callback<ICoreWebView2ExecuteScriptCompletedHandler,HRESULT,LPCWSTR>([t,from](HRESULT,LPCWSTR){if(std::find(tabs.begin(),tabs.end(),t)==tabs.end()||t->closed)return S_OK;activateTab(t);if(from&&from->view&&std::find(tabs.begin(),tabs.end(),from)!=tabs.end())cancelNavigationFeedback(from->view);return S_OK;});
+    auto shown=callback<ICoreWebView2ExecuteScriptCompletedHandler,HRESULT,LPCWSTR>([t,from](HRESULT,LPCWSTR){if(std::find(tabs.begin(),tabs.end(),t)==tabs.end()||t->closed)return S_OK;activateTab(t);t->view->ExecuteScript(L"window.BiliSpace?.surfaceRevealed?.()",nullptr);if(from&&from->view&&std::find(tabs.begin(),tabs.end(),from)!=tabs.end())cancelNavigationFeedback(from->view);return S_OK;});
     t->view->ExecuteScript(L"window.BiliSpace?.revealFade?.()",shown);shown->Release();
 }
 void revealPendingTabs(){for(auto t:videoTabs())revealPendingTab(t);}

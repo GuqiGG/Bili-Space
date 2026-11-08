@@ -17,7 +17,7 @@ test('a restored brand state that already matches keeps the logo visible',()=>{
 test('header motion decided before the page is revealed waits on its first frame, never longer than 1.2s',()=>{
  const fs=require('node:fs'),js=fs.readFileSync('assets/enhance.js','utf8');
  assert.match(js,/function holdForReveal\(m\)\{if\(typeof RUNTIME!=='undefined'&&!headerSurfaceReady&&m\?\.pause\)\{m\.pause\(\);revealMotion\.push\(m\);/);
- assert.match(js,/revealFallback=setTimeout\(\(\)=>revealMotion\.splice\(0\)\.forEach/);
+ assert.match(js,/revealFallback=setTimeout\(releaseHeldMotion,1200\)/);assert.match(js,/function releaseHeldMotion\(\)\{if\(document\.visibilityState==='hidden'\)/);
  assert.match(js,/const held=revealMotion\.splice\(0\);held\.forEach\(m=>\{try\{m\.play\(\);\}catch\{\}\}\);/);
  assert(js.includes('headerFlipMotion.push(holdForReveal('));
 });

@@ -274,7 +274,9 @@ function pageKind(){
   return /^\/(?:index\.html)?$/.test(path)?'home':'other';
 }
 /* Brand, history and category changes are decided before the native host shows a freshly loaded page; hold them on their first frame until it is visible. */
-const revealMotion=[];let revealFallback;function holdForReveal(m){if(typeof RUNTIME!=='undefined'&&!headerSurfaceReady&&m?.pause){m.pause();revealMotion.push(m);clearTimeout(revealFallback);revealFallback=setTimeout(()=>revealMotion.splice(0).forEach(x=>{try{x.play();}catch{}}),1200);}return m;}
+const revealMotion=[];let revealFallback;function holdForReveal(m){if(typeof RUNTIME!=='undefined'&&!headerSurfaceReady&&m?.pause){m.pause();revealMotion.push(m);clearTimeout(revealFallback);revealFallback=setTimeout(releaseHeldMotion,1200);}return m;}
+// The fallback never plays held motion in a page that is still hidden (a video view loading behind the opener).
+function releaseHeldMotion(){if(document.visibilityState==='hidden'){document.addEventListener('visibilitychange',releaseHeldMotion,{once:true});return;}revealMotion.splice(0).forEach(x=>{try{x.play();}catch{}});}
 let headerSurfaceReady=false,headerRouteFrame,routeOrigin=typeof RUNTIME!=='undefined'?undefined:'',routeArrived=false,reportedRoute,videoHomeShown,videoHomeMotion=[],videoHomeTimer;
 const headerMotionReduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* The previous page's route comes back from the native host, so a full page load can continue the header motion it started. */
