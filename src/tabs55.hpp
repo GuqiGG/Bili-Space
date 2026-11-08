@@ -1,4 +1,5 @@
 #pragma once
+#include "composition56.hpp"
 // Video pages open as their own native WebView next to the single home view. Only the active view is
 // visible; a view that is switched away from pauses its media, is suspended and asks for low memory.
 struct Tab{ICoreWebView2Controller* controller{};ICoreWebView2* view{};Tab* opener{};bool video=false,closed=false,suspended=false,pendingShow=false;std::wstring url,key,injectionId;std::string title,cover;unsigned long long used=0,order=0;};
@@ -52,7 +53,7 @@ void closeTab(Tab* t){
     if(!t||!t->video||t->closed)return;t->closed=true;
     // Closing the visible video returns to the video watched before it; home only when no other video is open.
     if(t==activeTab){Tab* next=nullptr;for(auto o:videoTabs())if(o!=t&&o->controller&&(!next||o->used>next->used))next=o;activateTab(next?next:homeTab);}
-    if(t->controller){t->controller->Close();t->controller->Release();t->controller=nullptr;}
+    if(t->controller){comp::forget(t->controller);t->controller->Close();t->controller->Release();t->controller=nullptr;}
     if(t->view){t->view->Release();t->view=nullptr;}
     tabs.erase(std::remove(tabs.begin(),tabs.end(),t),tabs.end());delete t;dockSync();
 }
@@ -82,7 +83,7 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
         t->view->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();
         RECT rc{};GetClientRect(windowHandle,&rc);c->put_Bounds(rc);t->pendingShow=true;SetTimer(windowHandle,pendingRevealTimer,8000,nullptr);log("video view opened");return S_OK;
     });
-    env->CreateCoreWebView2Controller(windowHandle,created);created->Release();
+    comp::createController(env,created);created->Release();
 }
 std::wstring currentSource(Tab* t){if(!t||!t->view)return {};LPWSTR source{};t->view->get_Source(&source);std::wstring s=source?source:L"";CoTaskMemFree(source);return s;}
 // Compares pages by host and path, ignoring the locale prefix, a trailing slash, the query and the fragment.
@@ -120,5 +121,5 @@ void acceptTabInfo(const json& m){
     auto cover=m.value("cover",std::string{});if(cover.size()>2048)cover.clear();
     if(title!=t->title||cover!=t->cover){t->title=title;t->cover=cover;dockSync();}
 }
-void closeAllTabs(){if(homeTab){webview=homeTab->view;controller=homeTab->controller;}activeTab=homeTab;auto list=videoTabs();for(auto t:list){t->closed=true;if(t->controller){t->controller->Close();t->controller->Release();}if(t->view)t->view->Release();delete t;}for(auto t:tabs)if(!t->video)delete t;tabs.clear();homeTab=activeTab=nullptr;}
+void closeAllTabs(){if(homeTab){webview=homeTab->view;controller=homeTab->controller;}activeTab=homeTab;auto list=videoTabs();for(auto t:list){t->closed=true;if(t->controller){comp::forget(t->controller);t->controller->Close();t->controller->Release();}if(t->view)t->view->Release();delete t;}for(auto t:tabs)if(!t->video)delete t;tabs.clear();homeTab=activeTab=nullptr;}
 #include "dock55.hpp"
