@@ -28,6 +28,7 @@ bool reduceMotion(){BOOL on=TRUE;SystemParametersInfoW(SPI_GETCLIENTAREAANIMATIO
 float scale(){return view.dpi/96.f;}
 void rounded(GraphicsPath& p,float x,float y,float w,float h,float r){r=std::min(r,std::min(w,h)/2);float d=r*2;p.AddArc(x,y,d,d,180,90);p.AddArc(x+w-d,y,d,d,270,90);p.AddArc(x+w-d,y+h-d,d,d,0,90);p.AddArc(x,y+h-d,d,d,90,90);p.CloseFigure();}
 void softShadow(Graphics& g,float x,float y,float w,float h,float r,float strength,float spread){
+    strength=std::max(0.f,strength);spread=std::max(0.f,spread);
     for(int i=12;i>=1;--i){float t=i/12.f,grow=spread*t;GraphicsPath p;rounded(p,x-grow,y-grow+spread*.45f,w+grow*2,h+grow*2,r+grow);SolidBrush b(Color(BYTE(std::min(255.f,strength*(1-t)*(1-t)*9.f)),0,0,0));g.FillPath(&b,&p);}
 }
 // The home glyph is the supplied SVG path (viewBox -4.5 0 32 32), parsed once into a GDI+ path.
@@ -102,7 +103,7 @@ Geometry geometry(){
 void paint(){
     HWND h=window;if(!h)return;float s=scale();auto geo=geometry();ensureCanvas(geo.w,geo.h);if(!canvasBits)return;const bool dark=view.dark;const float a=shown;
     {Bitmap canvas(geo.w,geo.h,geo.w*4,PixelFormat32bppPARGB,static_cast<BYTE*>(canvasBits));Graphics g(&canvas);g.SetSmoothingMode(SmoothingModeAntiAlias);g.SetPixelOffsetMode(PixelOffsetModeHalf);g.SetInterpolationMode(InterpolationModeHighQualityBilinear);g.SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);g.Clear(Color(0,0,0,0));
-        const float px=geo.px,py=geo.py,pw=geo.pw,ph=geo.ph,c=collapse.value,ia=a*(1-std::min(1.f,c*1.6f));
+        const float px=geo.px,py=geo.py,pw=geo.pw,ph=geo.ph,c=std::clamp(collapse.value,0.f,1.f),ia=std::clamp(a*(1-std::min(1.f,c*1.6f)),0.f,1.f);
         // Along-axis positions map to x on the island and to y on the side dock.
         auto place=[&](float along,float size)->PointF{return island?PointF(px+along*s+(ITEM*s-size)/2,py+(ph-size)/2):PointF(px+(pw-size)/2,py+along*s+(ITEM*s-size)/2);};
         const float dw=island?pw+(BAR*s-pw)*c:pw,dh=island?ph+(BARH*s-ph)*c:ph,dx=px+(pw-dw)/2,dy=py+ph-dh,dr=std::min(RADIUS*s,dh/2);
@@ -111,7 +112,7 @@ void paint(){
             if(c>.3f){SolidBrush catcher(Color(1,0,0,0));g.FillRectangle(&catcher,px,py,pw,ph);}
             GraphicsPath shape;rounded(shape,dx,dy,dw,dh,dr);SolidBrush fill(dark?Color(BYTE(236*a),32,32,36):Color(BYTE(240*a),252,252,253));g.FillPath(&fill,&shape);
             auto tile=[&](float cy,float tileScale,float alpha,float white,Bitmap* image,bool isHome,bool active)->RectF{
-                float size=ITEM*s*tileScale;PointF o=place(cy,size);float x=o.X,y=o.Y;RectF box(x,y,size,size);if(alpha<.01f)return box;
+                alpha=std::clamp(alpha,0.f,1.f);white=std::clamp(white,0.f,1.f);float size=ITEM*s*tileScale;PointF o=place(cy,size);float x=o.X,y=o.Y;RectF box(x,y,size,size);if(alpha<.01f)return box;
                 softShadow(g,x,y,size,size,INNER*s*tileScale,alpha*(active?1.5f:.75f),(active?9:5)*s);
                 GraphicsPath tilePath;rounded(tilePath,x,y,size,size,INNER*s*tileScale);
                 if(isHome){const Color pink(BYTE(alpha*255),251,114,153);SolidBrush b(pink);g.FillPath(&b,&tilePath);
