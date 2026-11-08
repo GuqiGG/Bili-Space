@@ -34,7 +34,7 @@ inline json pluginsRegistry(){
             const auto version=pluginField(manifest,"version",32);
             const auto description=pluginField(manifest,"description",300);
             auto main=pluginField(manifest,"main",64);if(main.empty())main="main.js";
-            if(main.find_first_of(std::string("\/"))!=std::string::npos||main.find("..")!=std::string::npos)throw std::runtime_error("main 只能是文件名");
+            if(main.find_first_of("\\/")!=std::string::npos||main.find("..")!=std::string::npos)throw std::runtime_error("main 只能是文件名");
             const auto mainPath=folder/wide(main);
             if(!fs::is_regular_file(mainPath,ec))throw std::runtime_error("缺少入口文件 "+main);
             if(fs::file_size(mainPath,ec)>512*1024)throw std::runtime_error("入口文件超过 512 KB");
