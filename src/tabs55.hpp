@@ -93,13 +93,17 @@ std::wstring normalisedPage(std::wstring uri){uri=uri.substr(0,uri.find_first_of
 void historyStep(ICoreWebView2* view,int direction){
     if(!view)return;view->AddRef();
     auto done=callback<ICoreWebView2CallDevToolsProtocolMethodCompletedHandler,HRESULT,LPCWSTR>([view,direction](HRESULT hr,LPCWSTR result){
-        long long entry=-1;
+        int steps=0;std::wstring target;
         if(SUCCEEDED(hr)&&result){auto history=json::parse(utf8(result),nullptr,false);
             if(history.is_object()&&history["entries"].is_array()){auto& entries=history["entries"];int current=history.value("currentIndex",-1),count=int(entries.size());
                 if(current>=0&&current<count){auto here=normalisedPage(wide(entries[current].value("url",std::string{})));int i=current+direction;
                     while(i>=0&&i<count&&normalisedPage(wide(entries[i].value("url",std::string{})))==here)i+=direction;
-                    if(i>=0&&i<count)entry=entries[i].value("id",-1LL);}}}
-        if(entry>=0)view->CallDevToolsProtocolMethod(L"Page.navigateToHistoryEntry",wide(json{{"entryId",entry}}.dump()).c_str(),nullptr);
+                    if(i>=0&&i<count){steps=i-current;target=wide(entries[i].value("url",std::string{}));}}}}
+        // The page's own history.go is a normal history load; Page.navigateToHistoryEntry left the next page idle for about 2s.
+        // A history load of the home page sits idle about 2s before it starts parsing, while a fresh load takes ~0.4s;
+        // home never offers forward, so going back to it opens it fresh.
+        if(steps<0&&normalisedPage(target)==L"https://www.bilibili.com/")view->Navigate(target.c_str());
+        else if(steps)view->ExecuteScript((L"history.go("+std::to_wstring(steps)+L")").c_str(),nullptr);
         else if(FAILED(hr)){if(direction<0)view->GoBack();else view->GoForward();}
         view->Release();return S_OK;});
     if(FAILED(view->CallDevToolsProtocolMethod(L"Page.getNavigationHistory",L"{}",done))){view->Release();if(direction<0)view->GoBack();else view->GoForward();}
