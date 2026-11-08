@@ -2,18 +2,16 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.58",
+  "version": "0.1.59",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.58-win64.zip",
-  "sha256": "08047969113805a0c392648e08d1e977de017f8c599c2882d0cbe4c19faaf2f3",
-  "size": 70759119,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.58/Bili-Space-0.1.58-Setup.exe",
-  "setupSha256": "bf182485b2830e27047c893c386f73fcec677d7620631db28a198c056e4d8df4",
-  "setupSize": 58203594,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.59-win64.zip",
+  "sha256": "cabf331d65c9ff525a209cc037288a99d452e6b433f3ded7e2b42bb22ec6f99f",
+  "size": 70760079,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.59/Bili-Space-0.1.59-Setup.exe",
+  "setupSha256": "e57bb91294337b346e1b37c24fae3595c548873316bda2dc398ff155538cc2c7",
+  "setupSize": 58194494,
   "changelog": [
-    "**检查更新不再卡住**：检查结果会正确显示在设置里，不会一直停在「正在检查更新…」。",
-    "代理状态、下载器状态与下载进度、下载队列、账号状态、观看记录状态同样能正确更新到设置和头像菜单。",
-    "新版本提示框只弹出一次，并且可以正常点击；代理和插件的提示不再重复出现。"
+    "**设置只在一个地方打开**：无论是点齿轮、按 Ctrl+,，还是点页面里的「前往设置」，客户端设置都会在顶栏层打开，焦点也随之移入设置窗口，避免出现两份行为不一致的设置窗口（例如滚轮无法滚动设置内容）。"
   ]
 }
