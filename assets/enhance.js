@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:8,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:true,officialVideoStyle:false,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:8,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:true,officialVideoStyle:false,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
    keep their header space but hide their own copy (content mode). */
@@ -743,10 +743,9 @@ function applyPreferences() {
 }
 function update(patch) {
 
-  const before=PREFS.srMode+PREFS.srScale+PREFS.srFps;
+  const before=PREFS.srMode+PREFS.srScale+PREFS.srModel;
   Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision});
-  if(before!==PREFS.srMode+PREFS.srScale+PREFS.srFps)startGpu();
-  if('fiMode' in patch||'fiFps' in patch||'fiFlowScale' in patch)startInterpolation();
+  if(before!==PREFS.srMode+PREFS.srScale+PREFS.srModel||'fiMode' in patch)startEnhancer();
   if('downloader' in patch)mountVideoHome();
   if('headerMessages' in patch){if(patch.headerMessages)refreshMessageUnread(true);else{messageRequest?.abort();messageRequest=null;}}
   if((patch.srMode&&patch.srMode!=='off')||(patch.fiMode&&patch.fiMode!=='off'))toast('警告：超分与补帧是测试功能，可能卡顿、闪烁或抖动；不保证画质提升，异常时请关闭。');
@@ -1270,7 +1269,7 @@ function tabContent(tab=currentTab){
   if(tab==='appearance')return `<h2>个性化</h2><div class="section-label">顶部栏与投稿</div>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,'')).join('')}<div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>${toggle('showChannels','显示网页分区导航栏','网页原有的动态、热门、番剧等分区；开启磨砂后同步适配')}${toggle('logoAutoHide','自动隐藏 Logo','只在首页显示')}<div class="row"><label for="pref-feedColumns">首页每行最少视频数<span class="hint">窗口变宽时仍会自动增加</span></label><select id="pref-feedColumns" data-pref="feedColumns"><option value="0">自动适应窗口</option>${[2,3,4,5,6,7,8].map(n=>`<option value="${n}">至少 ${n} 个</option>`).join('')}</select></div>${toggle('trafficLights','使用红绿灯窗口按钮','')}${toggle('showClock','显示时间','Logo 左侧')}${toggle('officialVideoStyle','官方视频播放样式','不显示右侧视频栏，点开视频直接在当前页面播放，返回键回到上一页')}${toggle('pipDanmaku','画中画弹幕','')}${range('pipDanmakuMinWidth','弹幕显示最小宽度',320,1200,'px')}<div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W</label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="row"><label for="pref-videoLoadingMode">加载动画结束时机</label><select id="pref-videoLoadingMode" data-pref="videoLoadingMode"><option value="page">页面就绪</option><option value="video">视频画面就绪</option></select></div>${toggle('clipboardAutoOpen','剪贴板视频提示','检测新复制的 BV 号或视频链接，确认后跳转')}${toggle('experimentalFrost','测试版磨砂','按钮与主页卡片使用跟随主题和强调色的磨砂材质')}${toggle('experimentalBounce','弹性按钮','鼠标移到客户端按钮上时轻轻弹一下')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色</label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">数值越小，界面越大</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div>${tabContent('progress')}`;
   if(tab==='progress')return `<h2>进度条</h2><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','')}${toggle('progressAlways','始终显示播放控制条','')}`;
   if(tab==='clean')return `<h2>页面净化</h2>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}<div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
-  if(tab==='play')return `<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">Anime4K · WebGPU</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">调度上限，不增加源帧数</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-fiFlowScale">光流规模</label><select id="pref-fiFlowScale" data-pref="fiFlowScale"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`;
+  if(tab==='play')return `<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">WebGPU · 每个源帧只计算一次</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srModel">超分模型<span class="hint">自动：番剧、国创、动画区用动画模型，其余用通用模型</span></label><select id="pref-srModel" data-pref="srModel"><option value="auto">自动识别</option><option value="anime">动画（Anime4K）</option><option value="general">通用</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">画面补帧（Lossless Scaling 式）</option></select></div><div class="row"><label for="pref-fiFps">补帧上限<span class="hint">不超过屏幕刷新率</span></label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option><option value="144">144 fps</option><option value="240">240 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`;
   return `<div class="compact-tab"><h2>扩展</h2><div class="row"><label for="pref-btr">Bilibili 线程撕裂者<span class="hint">多线路并发加速视频缓冲 · 始终开启</span></label><input id="pref-btr" type="checkbox" checked disabled aria-describedby="btr-locked"></div><div class="actions"><button id="btr-settings" class="link">线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器</div>${toggle('downloader','视频页显示下载按钮','支持 AVC / AAC 单视频下载，暂不支持批量、多段与番剧')}<div class="section-label">插件</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本 主题"></div></div>`;
 }
 const settingsGroupsOpen=new Map();
@@ -1509,317 +1508,247 @@ function restoreVideo(video,exclude){
   video.style.opacity=active.some(p=>p.frames>0&&p.canvas.width>0&&p.canvas.style.visibility!=='hidden')?'0':originalVideoOpacity.get(video)||'';
   if(!active.length&&video.parentElement)video.parentElement.style.position=originalHostPosition.get(video.parentElement)||'';
 }
-class PresentationClock {
-  constructor(){this.queue=[];this.current=null;this.delay=null;this.presented=-Infinity;this.lastPhase=0;}
-  enqueue(pair){if(this.delay===null)this.delay=Math.min(100,Math.max(32,pair.interval*2.5));this.queue.push(pair);if(this.queue.length>6)this.queue.shift();}
-  sample(now){
-    const target=now-(this.delay||0);let next;
-    while(this.queue.length&&this.queue[0].time-this.queue[0].interval<=target){const pair=this.queue.shift();if(pair.time>=this.presented)next=pair;}
-    if(next)this.current=next;if(!this.current)return null;
-    const pair=this.current,start=pair.time-pair.interval,raw=Math.max(0,Math.min(1,(target-start)/pair.interval));
-    // RIFE predicts the midpoint: do not invent quarter-phase optical flow.
-    const phase=raw<.25?0:raw<.75?.5:1,time=start+phase*pair.interval;
-    if(time<this.presented)return null;this.presented=time;this.lastPhase=phase;return {pair,phase,time};
-  }
-}
+/* Video enhancement runs as one WebGPU pipeline on one canvas, so super-resolution and frame generation can never
+   fight over what is on screen:
 
-class FrameInterpolator {
-  constructor(video,fps,automatic=true){
-    if(!navigator.gpu||typeof ort==='undefined')throw Error('AI 光流补帧需要 WebGPU');
-    this.video=video;this.fps=fps;this.frames=0;this.generated=0;this.inferences=0;this.dropped=0;this.stopped=false;this.ready=false;this.status='加载本地 RIFE AI 光流模型…';this.clock=new PresentationClock();this.uploadedPair=null;this.clockHistory=[];this.lastDraw=-Infinity;this.epoch=0;
-    this.oldOpacity=rememberVideo(video);this.parent=video.parentElement;this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas bs-fi-canvas';this.canvas.style.visibility='hidden';
-    this.gl=this.canvas.getContext('webgl',{alpha:false,antialias:false,preserveDrawingBuffer:true});if(!this.gl)throw Error('WebGL 重投影不可用');
-    const gl=this.gl;if(!gl.getExtension('OES_texture_float'))throw Error('显卡不支持光流浮点纹理');
-    const shader=(type,code)=>{const sh=gl.createShader(type);gl.shaderSource(sh,code);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh));return sh;};
-    const vs=shader(gl.VERTEX_SHADER,'attribute vec2 p;varying vec2 uv;void main(){uv=(p+1.)*.5;gl_Position=vec4(p,0.,1.);}');
-    const fs=shader(gl.FRAGMENT_SHADER,`precision highp float;varying vec2 uv;uniform sampler2D a;uniform sampler2D b;uniform sampler2D motion;uniform sampler2D mask;uniform float phase;uniform vec2 flowSize;
-      vec4 field(sampler2D t,vec2 v){vec2 p=v*flowSize-.5;vec2 f=fract(p);vec2 q=(floor(p)+.5)/flowSize;vec2 d=1./flowSize;return mix(mix(texture2D(t,q),texture2D(t,q+vec2(d.x,0.)),f.x),mix(texture2D(t,q+vec2(0.,d.y)),texture2D(t,q+d),f.x),f.y);}
-      void main(){if(phase<=.001){gl_FragColor=texture2D(a,uv);return;}if(phase>=.999){gl_FragColor=texture2D(b,uv);return;}
-      vec2 fuv=vec2(uv.x,1.-uv.y);vec4 flow=field(motion,fuv);float m=field(mask,fuv).r;
-      vec2 pa=uv+vec2(flow.r,-flow.g)*(2.*phase)/flowSize;vec2 pb=uv+vec2(flow.b,-flow.a)*(2.*(1.-phase))/flowSize;
-      float weight=(1.-phase)*m/max(.00001,(1.-phase)*m+phase*(1.-m));gl_FragColor=mix(texture2D(b,pb),texture2D(a,pa),weight);}`);
-    this.program=gl.createProgram();gl.attachShader(this.program,vs);gl.attachShader(this.program,fs);gl.linkProgram(this.program);gl.deleteShader(vs);gl.deleteShader(fs);if(!gl.getProgramParameter(this.program,gl.LINK_STATUS))throw Error('光流着色器链接失败');gl.useProgram(this.program);
-    this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);const loc=gl.getAttribLocation(this.program,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    this.textures=[0,1,2,3].map(i=>{const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,i<2?gl.LINEAR:gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,i<2?gl.LINEAR:gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;});
-    ['a','b','motion','mask'].forEach((n,i)=>gl.uniform1i(gl.getUniformLocation(this.program,n),i));this.phase=gl.getUniformLocation(this.program,'phase');this.flowSize=gl.getUniformLocation(this.program,'flowSize');
-    this.work=document.createElement('canvas');this.workCtx=this.work.getContext('2d',{willReadFrequently:true});
-    if(getComputedStyle(this.parent).position==='static')this.parent.style.position='relative';this.parent.append(this.canvas);
-    this.lost=e=>{e.preventDefault();this.fail('AI 光流 GPU 上下文丢失，已恢复原始画面');};this.canvas.addEventListener('webglcontextlost',this.lost);
-    this.reset=()=>{this.epoch++;this.clock=new PresentationClock();this.uploadedPair=null;this.ready=false;this.lastFrame=null;this.pending=null;this.canvas.style.visibility='hidden';restoreVideo(this.video,this);};video.addEventListener('seeking',this.reset);video.addEventListener('ratechange',this.reset);
-    this.capture=this.capture.bind(this);this.render=this.render.bind(this);this.automatic=automatic;
-    if(automatic){this.queueCapture();this.raf=requestAnimationFrame(this.render);}
-    localRifeSession().then(()=>{if(!this.stopped&&this.inferences===0){this.status='RIFE 已就绪，等待相邻真实帧';this.showStatus();}}).catch(e=>this.fail('AI 光流不可用：'+e.message));
-  }
-  queueCapture(){if(this.stopped)return;this.captureHandle=this.video.requestVideoFrameCallback?this.video.requestVideoFrameCallback(this.capture):requestAnimationFrame(this.capture);}
-  capture(now){if(this.stopped)return;if(!this.video.isConnected){this.stop();scheduleScan();return;}if(!document.hidden&&!this.video.paused&&!this.video.seeking&&this.video.readyState>=2)this.push(this.video,now);this.queueCapture();}
-  push(source,now){
-    if(this.stopped||this.video.seeking)return;
-    try{
-      const w=source.videoWidth||source.width,h=source.videoHeight||source.height;if(!w||!h)return;if(w*h>4.2e6)throw Error('光流呈现支持至约 4MP');
-      const current=document.createElement('canvas');current.width=w;current.height=h;current.getContext('2d',{alpha:false}).drawImage(source,0,0);
-      const previous=this.lastFrame;this.lastFrame={canvas:current,time:now};if(!previous||previous.canvas.width!==w||previous.canvas.height!==h||now-previous.time>250||now<=previous.time)return;
-      if(this.pending)this.dropped++;this.pending={previous:previous.canvas,current,time:now,interval:now-previous.time,epoch:this.epoch};this.process();
-    }catch(e){this.fail('AI 光流未启用：'+e.message);}
-  }
-  async process(){
-    if(this.stopped||this.busy||!this.pending)return;this.busy=true;const pair=this.pending;this.pending=null;
-    try{await this.prepare(pair);}catch(e){if(!this.stopped)this.fail('AI 光流未启用：'+e.message);}
-    finally{this.busy=false;if(!this.stopped&&this.pending)this.process();}
-  }
-  async prepare(pair,force=false){
-    const w=pair.current.width,h=pair.current.height,scale=Math.min(PREFS.fiFlowScale/100,640/w,384/h);
-    const fw=Math.max(64,Math.min(640,Math.ceil(w*scale/64)*64)),fh=Math.max(64,Math.min(384,Math.ceil(h*scale/64)*64));
-    if(this.work.width!==fw||this.work.height!==fh){this.work.width=fw;this.work.height=fh;}
-    this.workCtx.drawImage(pair.previous,0,0,fw,fh);const first=this.workCtx.getImageData(0,0,fw,fh).data;
-    this.workCtx.drawImage(pair.current,0,0,fw,fh);const second=this.workCtx.getImageData(0,0,fw,fh).data;
-    const result=await inferRife(first,second,fw,fh);
-    if(this.stopped||pair.epoch!==this.epoch)return;
-    this.inferences++;this.inferenceMs=result.ms;this.estimate=[fw,fh];
-    if(!force&&performance.now()-pair.time>250){this.status='RIFE 模型预热完成，正在同步最新帧';this.showStatus();return;}
-    if(result.width!==fw||result.height!==fh)throw Error('RIFE 光流尺寸与输入不匹配');
-    const prepared={...pair,result,fw,fh};if(force)this.upload(prepared);else this.clock.enqueue(prepared);
-  }
-  upload(pair){
-    const {result,fw,fh}=pair,w=pair.current.width,h=pair.current.height;
-    const gl=this.gl;if(Math.max(w,h)>gl.getParameter(gl.MAX_TEXTURE_SIZE))throw Error('呈现尺寸超出显卡限制');
-    if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;gl.viewport(0,0,w,h);}
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
-    [pair.previous,pair.current].forEach((frame,i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,this.textures[i]);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,frame);});
-    const count=fw*fh,field=new Float32Array(count*4);for(let i=0,j=0;i<count;i++,j+=4){field[j]=result.flow[i];field[j+1]=result.flow[count+i];field[j+2]=result.flow[2*count+i];field[j+3]=result.flow[3*count+i];}
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,this.textures[2]);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,fw,fh,0,gl.RGBA,gl.FLOAT,field);
-    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,this.textures[3]);gl.texImage2D(gl.TEXTURE_2D,0,gl.LUMINANCE,fw,fh,0,gl.LUMINANCE,gl.FLOAT,result.mask);
-    if(gl.getError()!==gl.NO_ERROR)throw Error('光流 / 遮挡纹理上传失败');gl.useProgram(this.program);gl.uniform2f(this.flowSize,fw,fh);this.lastInput=pair.time-pair.interval;this.interval=pair.interval;this.ready=true;this.uploadedPair=pair;
-  }
-  draw(phase){const gl=this.gl;gl.useProgram(this.program);this.textures.forEach((t,i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,t);});gl.uniform1f(this.phase,phase);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);if(gl.getError()!==gl.NO_ERROR)throw Error('光流重投影失败');}
-  render(now){
-    if(this.stopped)return;if(this.video.paused||document.hidden){this.canvas.style.visibility='hidden';restoreVideo(this.video,this);}
-    if(!document.hidden&&!this.video.paused&&!this.video.seeking&&now-this.lastDraw>=1000/this.fps-2){
-      try{const sample=this.clock.sample(now);if(sample){if(sample.pair!==this.uploadedPair)this.upload(sample.pair);const phase=sample.phase;this.draw(phase);this.clockHistory.push(sample.time);if(this.clockHistory.length>120)this.clockHistory.shift();this.lastDraw=now;this.frames++;if(phase>.01&&phase<.99)this.generated++;this.canvas.style.visibility='visible';this.video.style.opacity='0';this.status=`RIFE AI 光流 · ${this.estimate.join('×')} 估计 · ${this.inferenceMs.toFixed(0)}ms · 中间帧 ${this.generated} · AI ×2 / 目标 ${this.fps}Hz`;this.showStatus();}}catch(e){this.fail(e.message);return;}
+     each decoded frame  → GPU copy (no CPU readback) → super-resolution once (Anime4K for anime, sharpened bicubic
+                           for everything else) → block motion between this frame and the previous one
+     each display frame  → warp the two upscaled frames along that motion to the moment being shown (frame
+                           generation in the manner of Lossless Scaling, one source frame behind) → canvas
+
+   The canvas stays up from its first frame until the enhancer stops; pausing and seeking only change what it draws. */
+// Where between the previous source frame (0) and the newest one (1) the display is, one source frame behind.
+function enhancePhase(now,previousTime,currentTime){
+  const interval=currentTime-previousTime;if(!(interval>2&&interval<120))return 1;
+  return Math.max(0,Math.min(1,(now-interval-previousTime)/interval));
+}
+/* Anime is told by the page's own data: bangumi seasons of type 番剧/国创, and videos filed under the animation,
+   bangumi and guochuang zones or tagged as hand-drawn, MAD/MMD or virtual-idol work. */
+const ANIME_ZONES=new Set([1,24,25,27,47,253,13,33,32,51,152,167,153,168,169,195,170]);
+function animeFromVideoInfo(info){
+  if(!info||typeof info!=='object')return false;
+  if(info.seasonType!=null)return [1,4].includes(Number(info.seasonType));
+  if(ANIME_ZONES.has(Number(info.tid))||ANIME_ZONES.has(Number(info.tidParent)))return true;
+  return /动画|番剧|国创|动漫|MAD|AMV|MMD|手书|虚拟UP|VUP|二次元/i.test(String(info.tname||'')+' '+String(info.tags||''));
+}
+const animeCache=new Map();
+async function videoIsAnime(){
+  const model=PREFS.srModel||'auto';if(model==='anime')return true;if(model==='general')return false;
+  const path=location.pathname,key=(path.match(/\/(?:video\/(BV[0-9A-Za-z]+|av\d+)|bangumi\/play\/((?:ep|ss)\d+))/)||[])[0]||path;
+  if(animeCache.has(key))return animeCache.get(key);
+  let anime=false;
+  try{
+    const state=window.__INITIAL_STATE__||{},nextData=window.__NEXT_DATA__?.props?.pageProps?.dehydratedState;
+    const season=state.mediaInfo?.season_type??state.mediaInfo?.ssType??state.epInfo?.season_type;
+    if(/\/bangumi\/play\//.test(path)){
+      let type=season;
+      if(type==null){const id=key.match(/(ep|ss)(\d+)/);if(id){const r=await fetch('https://api.bilibili.com/pgc/view/web/season?'+(id[1]==='ep'?'ep_id=':'season_id=')+id[2],{credentials:'include'});type=(await r.json())?.result?.type;}}
+      anime=animeFromVideoInfo({seasonType:type??(nextData?1:null)});
+    }else{
+      let video=state.videoData;
+      if(!video?.tid){const id=key.match(/BV[0-9A-Za-z]+|av\d+/)?.[0];if(id){const r=await fetch('https://api.bilibili.com/x/web-interface/view?'+(id.startsWith('BV')?'bvid=':'aid=')+id.replace(/^av/,''),{credentials:'include'});video=(await r.json())?.data;}}
+      anime=animeFromVideoInfo({tid:video?.tid,tidParent:video?.tid_v2_parent??video?.tidv2_parent,tname:video?.tname||video?.tname_v2,tags:(state.tags||[]).map(t=>t.tag_name).join(' ')});
     }
-    this.raf=requestAnimationFrame(this.render);
-  }
-  showStatus(){$$('.bs-fi-status').forEach(el=>el.textContent=this.status);const el=shadow&&$('#fi-status',shadow);if(el)el.textContent=this.status;}
-  fail(message){this.stop();this.status=message;this.showStatus();diagnostic(message);}
-  stop(){if(this.stopped)return;this.stopped=true;this.epoch++;this.pending=null;this.lastFrame=null;this.clock=new PresentationClock();this.uploadedPair=null;cancelAnimationFrame(this.raf);if(this.video.cancelVideoFrameCallback&&this.captureHandle!=null)this.video.cancelVideoFrameCallback(this.captureHandle);else cancelAnimationFrame(this.captureHandle);this.video.removeEventListener('seeking',this.reset);this.video.removeEventListener('ratechange',this.reset);this.canvas.removeEventListener('webglcontextlost',this.lost);this.canvas.remove();const gl=this.gl;this.textures.forEach(t=>gl.deleteTexture(t));gl.deleteBuffer(this.buffer);gl.deleteProgram(this.program);restoreVideo(this.video,this);}
+  }catch{}
+  animeCache.set(key,anime);return anime;
 }
-function startInterpolation(){
-  interpolator?.stop();interpolator=null;if(PREFS.fiMode==='off')return;const video=playbackVideo();if(!video)return;
-  try{interpolator=new FrameInterpolator(video,PREFS.fiFps);}catch(e){diagnostic(e.message);toast('AI 光流不可用：'+e.message);}
-}
-
-// ESPCN's learned luminance network runs locally; no frame or tensor leaves this process.
-let aiSessionPromise,rifeSessionPromise,gpuRuntimePromise;
-// ORT's Asyncify backend owns shared WASM state; SR and flow must never enter it concurrently.
-let inferenceQueue=Promise.resolve();
-function exclusiveGpu(task){const run=inferenceQueue.then(task,task);inferenceQueue=run.catch(()=>{});return run;}
-async function runLocalSession(session,feeds){return exclusiveGpu(async()=>{const tensors=await session.run(feeds);try{return Object.fromEntries(Object.entries(tensors).map(([name,t])=>[name,{dims:[...t.dims],data:t.data.slice()}]));}finally{Object.values(tensors).forEach(t=>t.dispose());}});}
-
-/* The 3.5 MB WebGPU libraries are injected by the native host only when super-resolution or interpolation starts,
-   instead of being parsed again on every page load. */
 let aiLibrariesPromise;
 function loadAiLibraries(){
-  if(window['anime4k-webgpu']&&typeof ort!=='undefined')return Promise.resolve();
-  if(!aiLibrariesPromise)aiLibrariesPromise=new Promise((resolve,reject)=>{native('load-ai');const start=performance.now();const check=()=>{if(window['anime4k-webgpu']&&typeof ort!=='undefined')resolve();else if(performance.now()-start>15000){aiLibrariesPromise=null;reject(Error('超分组件加载超时'));}else setTimeout(check,40);};check();});
+  if(window['anime4k-webgpu'])return Promise.resolve();
+  if(!aiLibrariesPromise)aiLibrariesPromise=new Promise((resolve,reject)=>{native('load-ai');const start=performance.now();const check=()=>{if(window['anime4k-webgpu'])resolve();else if(performance.now()-start>15000){aiLibrariesPromise=null;reject(Error('超分组件加载超时'));}else setTimeout(check,40);};check();});
   return aiLibrariesPromise;
 }
-async function ensureGpuRuntime(){
-  if(!navigator.gpu)throw Error('本地 AI 需要 WebGPU；已保留原生播放');await loadAiLibraries();
-  if(typeof ort==='undefined')throw Error('本地 AI 需要 WebGPU；已保留原生播放');
-  if(!gpuRuntimePromise)gpuRuntimePromise=(async()=>{
-    const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('找不到 WebGPU 显卡');
-    ort.env.webgpu.adapter=adapter;ort.env.wasm.wasmPaths='https://bili-space.local/ai/';ort.env.wasm.numThreads=1;ort.env.wasm.proxy=false;
-  })().catch(e=>{gpuRuntimePromise=null;throw e;});
-  return gpuRuntimePromise;
-}
-async function loadLocalModel(path){await ensureGpuRuntime();const r=await fetch('https://bili-space.local/ai/'+path);if(!r.ok)throw Error('本地模型读取失败 HTTP '+r.status);const bytes=await r.arrayBuffer();return exclusiveGpu(()=>ort.InferenceSession.create(bytes,{executionProviders:['webgpu'],graphOptimizationLevel:'all'}));}
-async function localAiSession(){if(!aiSessionPromise)aiSessionPromise=loadLocalModel('espcn-x3-dynamic.onnx').catch(e=>{aiSessionPromise=null;throw e;});return aiSessionPromise;}
-async function localRifeSession(){if(!rifeSessionPromise)rifeSessionPromise=loadLocalModel('rife49-flow.onnx').catch(e=>{rifeSessionPromise=null;throw e;});return rifeSessionPromise;}
-async function inferRife(frame0,frame1,w,h){
-  const session=await localRifeSession(),pixels=w*h;
-  const planar=rgba=>{const rgb=new Float32Array(pixels*3);for(let i=0,j=0;i<pixels;i++,j+=4){rgb[i]=rgba[j]/255;rgb[pixels+i]=rgba[j+1]/255;rgb[2*pixels+i]=rgba[j+2]/255;}return rgb;};
-  const input0=new ort.Tensor('float32',planar(frame0),[1,3,h,w]),input1=new ort.Tensor('float32',planar(frame1),[1,3,h,w]),time=new ort.Tensor('float32',Float32Array.of(.5),[1]);let result;
-  const begin=performance.now();
-  try{result=await runLocalSession(session,{img0:input0,img1:input1,timestep:time});const flow=result[session.outputNames[0]],mask=result[session.outputNames[1]];return {flow:flow.data.slice(),mask:mask.data.slice(),width:flow.dims[3],height:flow.dims[2],ms:performance.now()-begin};}
-  finally{input0.dispose();input1.dispose();time.dispose();}
-}
-const SR_MAX_IN_PX=1920*1080, SR_MAX_OUT_PX=4.2e6, SR_HARD_CAP=3;
-class AIScaler {
-  constructor(video,mode,scale){
-    if(!navigator.gpu||typeof ort==='undefined')throw Error('WebGPU 本地 AI 不可用；已保留原生播放');
-    this.video=video;this.mode=mode;this.scale=scale;this.frames=0;this.last=-Infinity;this.stopped=false;
-    this.interval=1000/(PREFS.srFps===120?120:60);this.stamps=[];this.epoch=0;
-    this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas';this.canvas.style.visibility='hidden';
-    this.ctx=this.canvas.getContext('2d',{alpha:false,desynchronized:true});
-    this.input=document.createElement('canvas');this.inputCtx=this.input.getContext('2d',{willReadFrequently:true,alpha:false});
-    this.output=document.createElement('canvas');this.outputCtx=this.output.getContext('2d',{alpha:false});
-    this.oldOpacity=rememberVideo(video);this.parent=video.parentElement;this.oldPosition=this.parent.style.position;
-    if(getComputedStyle(this.parent).position==='static'){this.parent.style.position='relative';this.changedPosition=true;}
-    this.parent.append(this.canvas);this.tick=this.tick.bind(this);
-    this.seekReset=()=>{this.epoch++;this.canvas.style.visibility='hidden';restoreVideo(this.video,this);};video.addEventListener('seeking',this.seekReset);
-    status='正在加载本地 ESPCN ×3 / WebGPU…';updateStatus();
-    localAiSession().then(session=>{if(this.stopped)return;this.session=session;this.schedule();}).catch(e=>this.fail(e.message));
+const ENHANCE_SHADERS={
+  // Full-screen triangle shared by the render passes.
+  vertex:`struct Out{@builtin(position) pos:vec4f,@location(0) uv:vec2f};
+    @vertex fn vs(@builtin(vertex_index) i:u32)->Out{var p=array<vec2f,3>(vec2f(-1.,-1.),vec2f(3.,-1.),vec2f(-1.,3.));var o:Out;o.pos=vec4f(p[i],0.,1.);o.uv=vec2f((p[i].x+1.)*.5,(1.-p[i].y)*.5);return o;}`,
+  // General upscaling: Catmull-Rom bicubic from nine bilinear taps, then contrast-adaptive sharpening that never
+  // overshoots the local range (no halos).
+  general:`@group(0) @binding(0) var src:texture_2d<f32>;@group(0) @binding(1) var samp:sampler;@group(0) @binding(2) var<uniform> u:vec4f;
+    fn bicubic(uv:vec2f)->vec3f{let size=u.xy;let p=uv*size-.5;let f=fract(p);let base=floor(p)+.5;
+      let w0=f*(-.5+f*(1.-.5*f));let w1=1.+f*f*(-2.5+1.5*f);let w2=f*(.5+f*(2.-1.5*f));let w3=f*f*(-.5+.5*f);
+      let w12=w1+w2;let t0=(base-1.)/size;let t3=(base+2.)/size;let t12=(base+w2/w12)/size;
+      var c=vec3f(0.);
+      c+=textureSampleLevel(src,samp,vec2f(t0.x,t0.y),0.).rgb*w0.x*w0.y;c+=textureSampleLevel(src,samp,vec2f(t12.x,t0.y),0.).rgb*w12.x*w0.y;c+=textureSampleLevel(src,samp,vec2f(t3.x,t0.y),0.).rgb*w3.x*w0.y;
+      c+=textureSampleLevel(src,samp,vec2f(t0.x,t12.y),0.).rgb*w0.x*w12.y;c+=textureSampleLevel(src,samp,vec2f(t12.x,t12.y),0.).rgb*w12.x*w12.y;c+=textureSampleLevel(src,samp,vec2f(t3.x,t12.y),0.).rgb*w3.x*w12.y;
+      c+=textureSampleLevel(src,samp,vec2f(t0.x,t3.y),0.).rgb*w0.x*w3.y;c+=textureSampleLevel(src,samp,vec2f(t12.x,t3.y),0.).rgb*w12.x*w3.y;c+=textureSampleLevel(src,samp,vec2f(t3.x,t3.y),0.).rgb*w3.x*w3.y;
+      return c;}
+    @fragment fn fs(@location(0) uv:vec2f)->@location(0) vec4f{
+      let px=1./u.xy;let c=bicubic(uv);
+      let n=textureSampleLevel(src,samp,uv+vec2f(0.,-px.y),0.).rgb;let s=textureSampleLevel(src,samp,uv+vec2f(0.,px.y),0.).rgb;
+      let e=textureSampleLevel(src,samp,uv+vec2f(px.x,0.),0.).rgb;let w=textureSampleLevel(src,samp,uv+vec2f(-px.x,0.),0.).rgb;
+      let lo=min(min(min(n,s),min(e,w)),c);let hi=max(max(max(n,s),max(e,w)),c);
+      let amount=u.z*sqrt(clamp(min(lo,1.-hi)/max(hi,vec3f(.001)),vec3f(0.),vec3f(1.)));
+      let sharp=c+(c-(n+s+e+w)*.25)*amount;
+      return vec4f(clamp(sharp,lo,hi),1.);}`,
+  // Block motion: for each block of the newest frame, the offset d with  newest(x) ≈ previous(x + d), in source pixels.
+  // A coarse pass searches widely on 32 px blocks; the fine pass refines 16 px blocks from the coarse neighbours.
+  motion:`@group(0) @binding(0) var a:texture_2d<f32>;@group(0) @binding(1) var b:texture_2d<f32>;@group(0) @binding(2) var samp:sampler;
+    @group(0) @binding(3) var coarseIn:texture_2d<f32>;@group(0) @binding(4) var outField:texture_storage_2d<rgba16float,write>;@group(0) @binding(5) var<uniform> u:vec4f;
+    fn luma(t:texture_2d<f32>,p:vec2f)->f32{return dot(textureSampleLevel(t,samp,p/u.xy,0.).rgb,vec3f(.299,.587,.114));}
+    fn cost(center:vec2f,size:f32,d:vec2f)->f32{var s=0.;let step=size/6.;
+      for(var y=0;y<6;y++){for(var x=0;x<6;x++){let o=center+(vec2f(f32(x),f32(y))-2.5)*step;s+=abs(luma(b,o)-luma(a,o+d));}}
+      return s/36.+length(d)*.0004;}
+    @compute @workgroup_size(8,8) fn coarse(@builtin(global_invocation_id) id:vec3u){
+      let dims=textureDimensions(outField);if(id.x>=dims.x||id.y>=dims.y){return;}
+      let center=(vec2f(id.xy)+.5)*32.;var best=vec2f(0.);var bestCost=cost(center,32.,best);
+      for(var y=-8;y<=8;y++){for(var x=-8;x<=8;x++){let d=vec2f(f32(x),f32(y))*8.;let c=cost(center,32.,d);if(c<bestCost){bestCost=c;best=d;}}}
+      let still=cost(center,32.,vec2f(0.));if(bestCost>still-.004){best=vec2f(0.);bestCost=still;}
+      textureStore(outField,id.xy,vec4f(best,bestCost,1.));}
+    @compute @workgroup_size(8,8) fn fine(@builtin(global_invocation_id) id:vec3u){
+      let dims=textureDimensions(outField);if(id.x>=dims.x||id.y>=dims.y){return;}
+      let center=(vec2f(id.xy)+.5)*16.;let cdims=vec2i(textureDimensions(coarseIn));let cid=vec2i(id.xy/2u);
+      var best=vec2f(0.);var bestCost=cost(center,16.,best);
+      for(var y=-1;y<=1;y++){for(var x=-1;x<=1;x++){let q=clamp(cid+vec2i(x,y),vec2i(0),cdims-1);let d=textureLoad(coarseIn,q,0).xy;let c=cost(center,16.,d);if(c<bestCost){bestCost=c;best=d;}}}
+      for(var r=0;r<2;r++){let stepSize=select(1.,4.,r==0);let around=best;
+        for(var y=-2;y<=2;y++){for(var x=-2;x<=2;x++){let d=around+vec2f(f32(x),f32(y))*stepSize;let c=cost(center,16.,d);if(c<bestCost){bestCost=c;best=d;}}}}
+      let still=cost(center,16.,vec2f(0.));if(bestCost>still-.003){best=vec2f(0.);bestCost=still;}
+      textureStore(outField,id.xy,vec4f(best,bestCost,1.));}`,
+  // Frame generation: both frames move along the motion to the shown moment and are blended; where the match is poor
+  // (occlusion, scene change) the nearer real frame is shown instead of a guess.
+  present:`@group(0) @binding(0) var ua:texture_2d<f32>;@group(0) @binding(1) var ub:texture_2d<f32>;@group(0) @binding(2) var field:texture_2d<f32>;
+    @group(0) @binding(3) var samp:sampler;@group(0) @binding(4) var<uniform> u:vec4f;
+    @fragment fn fs(@location(0) uv:vec2f)->@location(0) vec4f{
+      let t=u.z;let b=textureSampleLevel(ub,samp,uv,0.);
+      if(u.w<.5||t>=.999){return vec4f(b.rgb,1.);}
+      let a=textureSampleLevel(ua,samp,uv,0.);if(t<=.001){return vec4f(a.rgb,1.);}
+      let m=textureSampleLevel(field,samp,uv,0.);let d=m.xy/u.xy;
+      let wa=textureSampleLevel(ua,samp,uv+t*d,0.).rgb;let wb=textureSampleLevel(ub,samp,uv-(1.-t)*d,0.).rgb;
+      let warped=mix(wa,wb,t);let nearest=select(b.rgb,a.rgb,t<.5);
+      let trust=(1.-smoothstep(.03,.09,m.z))*(1.-smoothstep(.05,.16,length(wa-wb)));
+      return vec4f(mix(nearest,warped,trust),1.);}`
+};
+class VideoEnhancer {
+  constructor(video){
+    if(!navigator.gpu)throw Error('需要 WebGPU 显卡支持');
+    this.video=video;this.frames=0;this.generated=0;this.sourceFrames=0;this.stopped=false;this.shown=false;
+    this.sr=PREFS.srMode!=='off';this.fi=PREFS.fiMode!=='off';this.anime=null;this.slots=[];this.current=-1;this.history=0;
+    rememberVideo(video);this.parent=video.parentElement;
+    this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas bs-enhance-canvas';this.canvas.style.visibility='hidden';
+    if(getComputedStyle(this.parent).position==='static')this.parent.style.position='relative';this.parent.append(this.canvas);
+    this.onFrame=this.onFrame.bind(this);this.onDisplay=this.onDisplay.bind(this);
+    this.start().catch(e=>this.fail(e.message));
   }
-  schedule(){if(this.stopped)return;this.frame=this.video.requestVideoFrameCallback?this.video.requestVideoFrameCallback(this.tick):requestAnimationFrame(this.tick);}
-  // Output size follows what is actually on screen: a 1080p source in a small player is left
-  // alone, a 360p/480p/720p source gets real inference, and the pixel budget caps the rest.
-  plan(){
-    const w=this.video.videoWidth,h=this.video.videoHeight;
-    if(!w||!h)return null;
-    if(w*h>SR_MAX_IN_PX)return {reason:`源 ${w}×${h} 超出本地推理上限，已保留原生播放`};
-    const box=this.video.getBoundingClientRect();
-    const dpr=Math.min(devicePixelRatio||1,2);
-    const shown=Math.max((box.width||0)*dpr,(box.height||0)*dpr*(w/h||1),1);
-    let factor=Math.min(this.scale,SR_HARD_CAP,shown/w,Math.sqrt(SR_MAX_OUT_PX/(w*h)));
-    if(!Number.isFinite(factor)||factor<1.02)return {reason:'画面已经不比源更大，AI 推理不会带来可见提升'};
-    return {w,h,factor,outW:Math.round(w*factor),outH:Math.round(h*factor)};
-  }
-  async tick(now){
+  async start(){
+    if(this.sr){this.anime=await Promise.race([videoIsAnime(),new Promise(r=>setTimeout(()=>r(false),1500))]);if(this.anime)await loadAiLibraries();}
     if(this.stopped)return;
+    const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('找不到 WebGPU 显卡');
+    this.device=await adapter.requestDevice();if(this.stopped){this.device.destroy();return;}
+    this.device.addEventListener('uncapturederror',e=>{e.preventDefault();if(!this.stopped)this.fail(e.error.message);});
+    this.device.lost.then(info=>{if(!this.stopped)this.fail('显卡已重置：'+info.message);});
+    this.context=this.canvas.getContext('webgpu');if(!this.context)throw Error('WebGPU 画布不可用');
+    this.format=navigator.gpu.getPreferredCanvasFormat();this.context.configure({device:this.device,format:this.format,alphaMode:'opaque'});
+    const d=this.device,module=code=>d.createShaderModule({code:ENHANCE_SHADERS.vertex+code});
+    this.sampler=d.createSampler({magFilter:'linear',minFilter:'linear',addressModeU:'clamp-to-edge',addressModeV:'clamp-to-edge'});
+    this.uniform=d.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    this.presentUniform=d.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    this.presentPipeline=d.createRenderPipeline({layout:'auto',vertex:{module:module(ENHANCE_SHADERS.present),entryPoint:'vs'},fragment:{module:module(ENHANCE_SHADERS.present),entryPoint:'fs',targets:[{format:this.format}]},primitive:{topology:'triangle-list'}});
+    this.generalPipeline=d.createRenderPipeline({layout:'auto',vertex:{module:module(ENHANCE_SHADERS.general),entryPoint:'vs'},fragment:{module:module(ENHANCE_SHADERS.general),entryPoint:'fs',targets:[{format:'rgba16float'}]},primitive:{topology:'triangle-list'}});
+    const motion=d.createShaderModule({code:ENHANCE_SHADERS.motion});
+    this.coarsePipeline=d.createComputePipeline({layout:'auto',compute:{module:motion,entryPoint:'coarse'}});
+    this.finePipeline=d.createComputePipeline({layout:'auto',compute:{module:motion,entryPoint:'fine'}});
+    this.frameHandle=this.video.requestVideoFrameCallback(this.onFrame);
+    if(this.fi)this.raf=requestAnimationFrame(this.onDisplay);
+    this.setStatus(this.sr?(this.anime?'超分：动画模型（Anime4K）':'超分：通用模型')+' · 等待视频帧':'补帧已就绪，等待视频帧');
+  }
+  // Source size and output size; output follows what the player actually shows, capped near 4 megapixels.
+  plan(){
+    const w=this.video.videoWidth,h=this.video.videoHeight;if(!w||!h)return null;
+    let factor=1;
+    if(this.sr){const box=this.video.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),shown=Math.max(box.width*dpr/w,box.height*dpr/h);
+      factor=Math.min(Number(PREFS.srScale)||2,Math.max(1,shown),Math.sqrt(4.2e6/(w*h)));if(factor<1.05||w*h>1920*1080)factor=1;
+      if(this.anime&&factor>1)factor=2;}
+    return {w,h,outW:Math.round(w*factor),outH:Math.round(h*factor),upscale:factor>1,key:w+'x'+h+'@'+factor.toFixed(2)};
+  }
+  build(plan){
+    this.releaseSlots();const d=this.device,{w,h,outW,outH}=plan;this.plan_=plan;
+    const usage=GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.RENDER_ATTACHMENT;
+    for(let i=0;i<2;i++){
+      const src=d.createTexture({size:[w,h],format:'rgba16float',usage});let up=src,anime=null;
+      if(plan.upscale&&this.anime){const lib=window['anime4k-webgpu'];anime=new (PREFS.srMode==='quality'?lib.CNNx2UL:lib.CNNx2M)({device:d,inputTexture:src});up=anime.getOutputTexture();}
+      else if(plan.upscale)up=d.createTexture({size:[outW,outH],format:'rgba16float',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.RENDER_ATTACHMENT});
+      this.slots.push({src,up,anime,time:0,media:0});
+    }
+    if(plan.upscale&&!this.anime){d.queue.writeBuffer(this.uniform,0,new Float32Array([w,h,PREFS.srMode==='quality'?.55:.35,0]));
+      for(const slot of this.slots)slot.general=d.createBindGroup({layout:this.generalPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:slot.src.createView()},{binding:1,resource:this.sampler},{binding:2,resource:{buffer:this.uniform}}]});}
+    const fieldUsage=GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.STORAGE_BINDING;
+    this.coarse=d.createTexture({size:[Math.ceil(w/32),Math.ceil(h/32)],format:'rgba16float',usage:fieldUsage});
+    this.field=d.createTexture({size:[Math.ceil(w/16),Math.ceil(h/16)],format:'rgba16float',usage:fieldUsage});
+    this.motionUniform=this.motionUniform||d.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});d.queue.writeBuffer(this.motionUniform,0,new Float32Array([w,h,0,0]));
+    // Motion is always measured from the slot just written (b) back to the other one (a).
+    this.motionGroups=[0,1].map(i=>{const b=this.slots[i].src.createView(),a=this.slots[1-i].src.createView();const entries=(pipeline,coarseIn,out)=>d.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:a},{binding:1,resource:b},{binding:2,resource:this.sampler},...(coarseIn?[{binding:3,resource:coarseIn.createView()}]:[]),{binding:4,resource:out.createView()},{binding:5,resource:{buffer:this.motionUniform}}]});
+      return {coarse:entries(this.coarsePipeline,null,this.coarse),fine:entries(this.finePipeline,this.coarse,this.field)};});
+    this.presentGroups=[0,1].map(i=>d.createBindGroup({layout:this.presentPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:this.slots[1-i].up.createView()},{binding:1,resource:this.slots[i].up.createView()},{binding:2,resource:this.field.createView()},{binding:3,resource:this.sampler},{binding:4,resource:{buffer:this.presentUniform}}]}));
+    this.canvas.width=outW;this.canvas.height=outH;this.current=-1;this.history=0;
+  }
+  releaseSlots(){
+    for(const slot of this.slots){if(slot.anime){const seen=new Set(),visit=o=>{if(!o||typeof o!=='object'||seen.has(o))return;seen.add(o);if(typeof o.destroy==='function'&&typeof o.createView==='function'){if(o!==slot.src)o.destroy();return;}if(Array.isArray(o))o.forEach(visit);else for(const [k,v] of Object.entries(o))if(k!=='device')visit(v);};visit(slot.anime);}else if(slot.up!==slot.src)slot.up.destroy();slot.src.destroy();}
+    this.slots=[];this.coarse?.destroy();this.field?.destroy();this.coarse=this.field=null;
+  }
+  onFrame(now,meta){
+    if(this.stopped)return;this.frameHandle=this.video.requestVideoFrameCallback(this.onFrame);
     if(!this.video.isConnected){this.stop();scheduleScan();return;}
-    if(document.hidden||this.video.readyState<2){this.schedule();return;}
-    if(!this.session){this.schedule();return;}
-    if(now-this.last<this.interval-1){this.schedule();return;}
-    const plan=this.plan();
-    if(!plan){this.schedule();return;}
-    if(!plan.outW){this.idle(plan.reason);this.schedule();return;}
     try{
-      const {w,h,outW,outH,factor}=plan,begin=performance.now(),epoch=this.epoch;
-      if(this.input.width!==w||this.input.height!==h){this.input.width=w;this.input.height=h;this.luma=null;}
-      this.inputCtx.drawImage(this.video,0,0,w,h);
-      const rgba=this.inputCtx.getImageData(0,0,w,h).data,len=w*h;
-      if(!this.luma||this.luma.length!==len)this.luma=new Float32Array(len);
-      const y=this.luma;
-      for(let i=0,j=0;i<len;i++,j+=4)y[i]=(rgba[j]*0.299+rgba[j+1]*0.587+rgba[j+2]*0.114)*(1/255);
-      const input=new ort.Tensor('float32',y,[1,1,h,w]);let result;
-      try{result=await runLocalSession(this.session,{[this.session.inputNames[0]]:input});}finally{input.dispose();}
-      const tensor=result[this.session.outputNames[0]];
-      if(this.stopped||epoch!==this.epoch){if(!this.stopped)this.schedule();return;}
-      const oh=tensor.dims[2],ow=tensor.dims[3],values=tensor.data;
-      if(ow!==w*3||oh!==h*3){throw Error('AI 模型输出尺寸错误');}
-      const out=this.output;
-      if(out.width!==ow||out.height!==oh){out.width=ow;out.height=oh;this.pixels=null;}
-      if(!this.pixels)this.pixels=this.outputCtx.createImageData(ow,oh);
-      const pixels=this.pixels.data;
-      // Fill 3×3 blocks per source pixel: the learned luminance replaces Y and keeps the
-      // original chroma offsets, so colour is untouched and no per-output-pixel division runs.
-      for(let yy=0,row=0;yy<h;yy++,row+=w){
-        const baseY=yy*3;
-        for(let xx=0;xx<w;xx++){
-          const k=(row+xx)*4;
-          const oldY=rgba[k]*0.299+rgba[k+1]*0.587+rgba[k+2]*0.114;
-          const dr=rgba[k]-oldY,dg=rgba[k+1]-oldY,db=rgba[k+2]-oldY;
-          for(let dy=0;dy<3;dy++){
-            let p=((baseY+dy)*ow+xx*3)*4, s=(baseY+dy)*ow+xx*3;
-            for(let dx=0;dx<3;dx++){
-              const v=values[s+dx]*255;
-              pixels[p]=v+dr;pixels[p+1]=v+dg;pixels[p+2]=v+db;pixels[p+3]=255;p+=4;
-            }
-          }
-        }
-      }
-      this.outputCtx.putImageData(this.pixels,0,0);
-      if(this.canvas.width!==outW||this.canvas.height!==outH){this.canvas.width=outW;this.canvas.height=outH;}
-      this.ctx.imageSmoothingEnabled=true;this.ctx.imageSmoothingQuality='high';
-      this.ctx.drawImage(out,0,0,outW,outH);
-      this.canvas.style.visibility='visible';
-      this.video.style.opacity='0';this.frames++;this.last=now;this.inferenceMs=performance.now()-begin;
-      this.stamps.push(now);while(this.stamps.length&&now-this.stamps[0]>1500)this.stamps.shift();
-      const fps=this.stamps.length>1?Math.round((this.stamps.length-1)*1000/(now-this.stamps[0])):0;
-      status=`本地 AI ESPCN ×3 · ${w}×${h} → ${outW}×${outH}（${factor.toFixed(2)}×）· ${this.inferenceMs.toFixed(0)}ms/帧 · ${fps?fps+'fps':'统计中'}`;
-      updateStatus();if(this.frames===1)diagnostic(status);
-    }catch(e){this.fail('AI 未启用：'+e.message+'；已恢复原生播放');return;}
-    this.schedule();
+      const plan=this.plan();if(!plan)return;const rebuilt=!this.plan_||plan.key!==this.plan_.key;if(rebuilt)this.build(plan);
+      const d=this.device,next=this.current<0?0:1-this.current,slot=this.slots[next],media=meta?.mediaTime??this.video.currentTime,shown=meta?.expectedDisplayTime??now;
+      // Seeking, a stall or a backwards jump starts a fresh pair instead of generating frames across the gap.
+      const previous=this.current<0?null:this.slots[this.current],gap=previous?media-previous.media:0;
+      if(!previous||gap<=0||gap>.25||this.video.seeking)this.history=0;
+      d.queue.copyExternalImageToTexture({source:this.video},{texture:slot.src},[plan.w,plan.h]);
+      const encoder=d.createCommandEncoder();
+      if(plan.upscale){if(slot.anime)slot.anime.pass(encoder);else{const pass=encoder.beginRenderPass({colorAttachments:[{view:slot.up.createView(),loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});pass.setPipeline(this.generalPipeline);pass.setBindGroup(0,slot.general);pass.draw(3);pass.end();}}
+      if(this.fi&&this.history>0){const groups=this.motionGroups[next];
+        const c=encoder.beginComputePass();c.setPipeline(this.coarsePipeline);c.setBindGroup(0,groups.coarse);c.dispatchWorkgroups(Math.ceil(this.coarse.width/8),Math.ceil(this.coarse.height/8));
+        c.setPipeline(this.finePipeline);c.setBindGroup(0,groups.fine);c.dispatchWorkgroups(Math.ceil(this.field.width/8),Math.ceil(this.field.height/8));c.end();}
+      d.queue.submit([encoder.finish()]);
+      slot.time=shown;slot.media=media;this.current=next;this.history=Math.min(2,this.history+1);this.sourceFrames++;
+      // Without frame generation (or while paused) each source frame is shown as it arrives.
+      if(!this.fi||this.video.paused||rebuilt)this.present(1);
+    }catch(e){this.fail(e.message);}
   }
-  idle(reason){
-    this.canvas.style.visibility='hidden';restoreVideo(this.video,this);
-    if(this.canvas.width){this.canvas.width=0;this.canvas.height=0;}
-    if(status!==reason){status=reason;updateStatus();diagnostic(reason);}
+  onDisplay(now){
+    if(this.stopped)return;this.raf=requestAnimationFrame(this.onDisplay);
+    if(this.current<0||this.video.paused||document.hidden)return;
+    // Cap at the chosen rate: on a fast display some refreshes are skipped evenly.
+    const cap=1000/(Number(PREFS.fiFps)||60);if(now-(this.lastPresent||0)<cap*.8)return;this.lastPresent=now;
+    const b=this.slots[this.current],a=this.slots[1-this.current];
+    this.present(this.history>1?enhancePhase(now,a.time,b.time):1);
   }
-  fail(text){if(this.stopped)return;this.stop();status=text;updateStatus();toast(text);diagnostic(text);}
-  stop(){if(this.stopped)return;this.stopped=true;if(this.video.cancelVideoFrameCallback&&this.frame!=null)this.video.cancelVideoFrameCallback(this.frame);else cancelAnimationFrame(this.frame);this.video.removeEventListener('seeking',this.seekReset);restoreVideo(this.video,this);this.canvas.remove();this.pixels=null;this.luma=null;}
-}
-async function benchScale(w,h,runs=6){
-  const session=await localAiSession();
-  const data=new Float32Array(w*h);for(let i=0;i<data.length;i++)data[i]=((i*37)%255)/255;
-  const input=new ort.Tensor('float32',data,[1,1,h,w]);
-  let result;
-  const begin=performance.now();
-  for(let i=0;i<runs;i++){result=await runLocalSession(session,{[session.inputNames[0]]:input});}
-  const ms=(performance.now()-begin)/runs;
-  input.dispose();
-  return {w,h,ms:Math.round(ms*10)/10,fps:Math.round(10000/ms)/10};
+  present(phase){
+    const d=this.device,plan=this.plan_;if(!plan||this.current<0)return;
+    d.queue.writeBuffer(this.presentUniform,0,new Float32Array([plan.w,plan.h,phase,this.fi&&this.history>1?1:0]));
+    const encoder=d.createCommandEncoder(),pass=encoder.beginRenderPass({colorAttachments:[{view:this.context.getCurrentTexture().createView(),loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});
+    pass.setPipeline(this.presentPipeline);pass.setBindGroup(0,this.presentGroups[this.current]);pass.draw(3);pass.end();d.queue.submit([encoder.finish()]);
+    this.frames++;if(phase>.001&&phase<.999)this.generated++;
+    if(!this.shown){this.shown=true;this.canvas.style.visibility='visible';}
+    // The player resets the element's inline style now and then; keep the raw video from compositing under the canvas.
+    if(this.video.style.opacity!=='0')this.video.style.opacity='0';
+    if(this.frames%30===1){const parts=[];if(plan.upscale)parts.push((this.anime?'动画模型 Anime4K':'通用模型')+` ${plan.w}×${plan.h} → ${plan.outW}×${plan.outH}`);else if(this.sr)parts.push('超分待机（画面不比源大）');if(this.fi)parts.push(`补帧 ${this.generated} 帧 · 上限 ${PREFS.fiFps}fps`);this.setStatus(parts.join(' · '));}
+  }
+  setStatus(text){status=text;updateStatus();this.status=text;const el=shadow&&$('#fi-status',shadow);if(el)el.textContent=text;}
+  fail(message){if(this.stopped)return;this.stop();this.setStatus('画面增强已关闭：'+message+'；已恢复原生播放');toast('画面增强不可用，已恢复原生播放：'+message);diagnostic(status);}
+  stop(){
+    if(this.stopped)return;this.stopped=true;cancelAnimationFrame(this.raf);if(this.frameHandle!=null)this.video.cancelVideoFrameCallback?.(this.frameHandle);
+    try{this.releaseSlots();this.context?.unconfigure();this.device?.destroy();}catch{}
+    this.canvas.remove();restoreVideo(this.video,this);
+  }
 }
 function updateStatus(){
   const label=shadow&&$('#gpu-status',shadow);if(label)label.textContent=status;
   $$('.bs-player-tool[data-kind=sr] output').forEach(el=>el.textContent=status);
 }
-
-class Anime4KScaler {
-  constructor(video,mode,scale){
-    if(!navigator.gpu||!window['anime4k-webgpu'])throw Error('Anime4K WebGPU 不可用');
-    this.video=video;this.mode=mode;this.scale=scale;this.frames=0;this.stopped=false;this.last=-Infinity;
-    rememberVideo(video);this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas bs-anime4k-canvas';this.canvas.style.zIndex='4';this.canvas.style.visibility='hidden';
-    if(getComputedStyle(video.parentElement).position==='static')video.parentElement.style.position='relative';video.parentElement.append(this.canvas);
-    this.loop=this.loop.bind(this);this.init().then(()=>{if(!this.stopped)this.raf=requestAnimationFrame(this.loop);}).catch(e=>this.fail(e.message));
-  }
-  async init(){
-    const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('无 WebGPU 显卡');
-    this.device=await adapter.requestDevice();if(this.stopped){this.device.destroy();return;}
-    this.device.addEventListener('uncapturederror',e=>{e.preventDefault();if(!this.stopped)this.fail(e.error.message);});
-    this.device.lost.then(info=>{if(!this.stopped)this.fail('GPU 已丢失：'+info.message);});
-    this.context=this.canvas.getContext('webgpu');if(!this.context)throw Error('WebGPU 画布不可用');
-    this.format=navigator.gpu.getPreferredCanvasFormat();this.context.configure({device:this.device,format:this.format,alphaMode:'opaque'});
-    const code=`@group(0) @binding(0) var image:texture_2d<f32>; @group(0) @binding(1) var samp:sampler;
-      struct Out{@builtin(position) pos:vec4f,@location(0) uv:vec2f};
-      @vertex fn vs(@builtin(vertex_index) i:u32)->Out{var pts=array<vec2f,3>(vec2f(-1.,-1.),vec2f(3.,-1.),vec2f(-1.,3.));var o:Out;o.pos=vec4f(pts[i],0.,1.);o.uv=vec2f((pts[i].x+1.)*.5,(1.-pts[i].y)*.5);return o;}
-      @fragment fn fs(o:Out)->@location(0) vec4f{return vec4f(textureSample(image,samp,o.uv).rgb,1.);}`;
-    const module=this.device.createShaderModule({code});this.present=this.device.createRenderPipeline({layout:'auto',vertex:{module,entryPoint:'vs'},fragment:{module,entryPoint:'fs',targets:[{format:this.format}]},primitive:{topology:'triangle-list'}});
-    this.sampler=this.device.createSampler({magFilter:'linear',minFilter:'linear'});
-  }
-  setup(w,h){
-    if(this.w===w&&this.h===h)return;
-    // Input-size changes discard all intermediate textures instead of leaking them.
-    if(this.input)this.releaseTextures();this.w=w;this.h=h;
-    this.input=this.device.createTexture({size:[w,h],format:'rgba16float',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.RENDER_ATTACHMENT});
-    const lib=window['anime4k-webgpu'];this.pipeline=new (this.mode==='quality'?lib.CNNx2UL:lib.CNNx2M)({device:this.device,inputTexture:this.input});
-    this.bind=this.device.createBindGroup({layout:this.present.getBindGroupLayout(0),entries:[{binding:0,resource:this.pipeline.getOutputTexture().createView()},{binding:1,resource:this.sampler}]});
-  }
-  releaseTextures(){
-    const seen=new Set();const visit=o=>{if(!o||typeof o!=='object'||seen.has(o))return;seen.add(o);if(typeof o.destroy==='function'&&typeof o.createView==='function'){o.destroy();return;}if(Array.isArray(o))o.forEach(visit);else if(o!==this.device)for(const [key,v] of Object.entries(o))if(key!=='device')visit(v);};visit(this.pipeline);this.input?.destroy();this.input=null;this.pipeline=null;
-  }
-  async loop(now){
-    if(this.stopped)return;
-    try{
-      if(!this.video.isConnected){this.stop();return;}
-      const fi=interpolator&&!interpolator.stopped&&interpolator.ready&&interpolator.canvas.style.visibility==='visible'?interpolator:null;
-      const source=fi?fi.canvas:this.video,w=source.videoWidth||source.width,h=source.videoHeight||source.height;
-      const stamp=fi?fi.frames:this.video.currentTime;
-      if(this.video.readyState>=2&&!this.video.paused&&!document.hidden&&w&&h&&this.scale>1&&stamp!==this.lastStamp&&now-this.last>=1000/PREFS.srFps-1){
-        this.setup(w,h);const rect=this.video.getBoundingClientRect();const factor=Math.min(this.scale,Math.max(1,rect.width*devicePixelRatio/w,rect.height*devicePixelRatio/h),Math.sqrt(4.2e6/(w*h)));
-        this.canvas.width=Math.max(1,Math.round(w*factor));this.canvas.height=Math.max(1,Math.round(h*factor));
-        const begin=performance.now();this.device.queue.copyExternalImageToTexture({source},{texture:this.input},[w,h]);
-        const encoder=this.device.createCommandEncoder();this.pipeline.pass(encoder);
-        const pass=encoder.beginRenderPass({colorAttachments:[{view:this.context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:1},loadOp:'clear',storeOp:'store'}]});pass.setPipeline(this.present);pass.setBindGroup(0,this.bind);pass.draw(3);pass.end();this.device.queue.submit([encoder.finish()]);
-        await this.device.queue.onSubmittedWorkDone();if(this.stopped)return;
-        this.frames++;this.last=now;this.lastStamp=stamp;this.canvas.style.visibility='visible';this.video.style.opacity='0';
-        this.inferenceMs=performance.now()-begin;status=`Anime4K CNN ×2 · ${w}×${h} · ${this.inferenceMs.toFixed(1)}ms · 目标 ${PREFS.srFps}fps`;updateStatus();
-      }
-      if(this.scale<=1){this.canvas.style.visibility='hidden';restoreVideo(this.video,this);}
-    }catch(e){this.fail(e.message);return;}
-    this.raf=requestAnimationFrame(this.loop);
-  }
-  fail(message){this.stop();status='Anime4K 未启用：'+message+'；恢复原生播放';updateStatus();diagnostic(status);}
-  stop(){if(this.stopped)return;this.stopped=true;cancelAnimationFrame(this.raf);this.releaseTextures();this.context?.unconfigure();this.device?.destroy();this.canvas.remove();restoreVideo(this.video,this);}
-}
-
-function startGpu(){
-  gpu?.stop();gpu=null;
-  if(PREFS.srMode==='off'){status='未开启';updateStatus();return;}
+// One enhancer serves both settings; `gpu` and `interpolator` stay as names for the rest of the page script.
+function startEnhancer(){
+  gpu?.stop();gpu=interpolator=null;if(CHROME_VIEW)return;
+  if(PREFS.srMode==='off'&&PREFS.fiMode==='off'){status='未开启';updateStatus();return;}
   const video=playbackVideo();if(!video){status='等待视频';updateStatus();return;}
-  if(!window['anime4k-webgpu']&&navigator.gpu){status='正在加载超分组件';updateStatus();loadAiLibraries().then(()=>{if(!gpu&&PREFS.srMode!=='off')startGpu();},e=>{status=e.message;updateStatus();});return;}
-  try{status='等待可读取的视频帧';gpu=new Anime4KScaler(video,PREFS.srMode,PREFS.srScale);updateStatus();}
-  catch(e){status=e.message;updateStatus();toast('增强不可用，原生播放不受影响：'+e.message);diagnostic(status);}
+  if(!navigator.gpu){status='需要 WebGPU 显卡支持，已保留原生播放';updateStatus();return;}
+  if(!video.requestVideoFrameCallback){status='此系统不支持逐帧处理，已保留原生播放';updateStatus();return;}
+  try{gpu=interpolator=new VideoEnhancer(video);}
+  catch(e){status=e.message;updateStatus();toast('画面增强不可用，原生播放不受影响：'+e.message);diagnostic(status);}
 }
+function startGpu(){startEnhancer();}
+function startInterpolation(){if(!gpu||gpu.stopped||gpu.video!==playbackVideo()||gpu.fi!==(PREFS.fiMode!=='off'))startEnhancer();}
 
 let volumeDrag=null;const volumeWatched=new WeakSet(),volumeTracks=new WeakSet(),volumeIntents=new WeakMap(),volumeObserved=new WeakMap();
 function playerVolumePercent(){const video=playbackVideo();return video?Math.round((video.muted?0:video.volume)*Math.max(1,Math.min(2,Number(PREFS.volumeBoost||100)/100))*100):0;}
@@ -2059,7 +1988,7 @@ function boot(){
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},bench:benchScale,
+  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};
@@ -2090,7 +2019,7 @@ function boot(){
     },
     setFullscreen(on){fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
     emitPipDanmaku(items,time){for(const item of items)pipDanmaku.emit(item,time);},
-    get state(){return {headerBrand:{shown:brandShown,moving:brandMotion.length>0},pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
+    get state(){return {headerBrand:{shown:brandShown,moving:brandMotion.length>0},pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status}:null};}
   };
   const route44=()=>({url:currentVideoLink(),title:$('.video-title,h1')?.textContent||document.title});
   window.BiliDesktop44?.install({native,getVideo:playbackVideo,getRoute:route44,getAccountId:()=>String(accountProfile?.mid||''),wbiQuery:downloadWbiQuery,chooseStreams:chooseDownloadStreams});
@@ -2098,20 +2027,7 @@ function boot(){
   window.BiliCommunity44?.install({native,getVideo:playbackVideo,getRoute:route44,getAccountId:()=>String(accountProfile?.mid||''),parseDanmaku:parsePipDanmaku,wbiQuery:downloadWbiQuery,disableDanmaku:true});
   window.addEventListener('pagehide',()=>{window.BiliDesktop44?.stop();window.BiliCommunity44?.stop();});
   window.addEventListener('pageshow',e=>{if(e.persisted){brandMotion.forEach(a=>{a.onfinish=null;a.cancel();});brandMotion=[];brandShown=undefined;brandStateRequested=false;syncHeaderBrand();categoryMotion.forEach(a=>{a.onfinish=null;a.cancel();});categoryMotion=[];categoryShown=undefined;syncCategoryVisibility();navigationMotion.forEach(a=>{a.onfinish=null;a.cancel();});navigationMotion=[];navigationState=undefined;navigationMask=undefined;navigationRequested=false;syncNavigationControls();}native('navigation-state',{action:'read'});window.BiliDesktop44?.start();window.BiliCommunity44?.start();});
-  if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.testInterpolation=async()=>{
-    const stage=new FrameInterpolator(playbackVideo(),60,false),w=192,h=128;
-    const frame=(x,y=32)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.fillStyle='rgb(32,32,32)';ctx.fillRect(0,0,w,h);ctx.fillStyle='white';ctx.fillRect(x,y,48,64);return c;};
-    const previous=frame(48,24),current=frame(64,40);await stage.prepare({previous,current,time:performance.now(),interval:33,epoch:stage.epoch},true);stage.draw(.5);
-    const pixels=new Uint8Array(w*h*4);stage.gl.readPixels(0,0,w,h,stage.gl.RGBA,stage.gl.UNSIGNED_BYTE,pixels);
-    let aiError=0,blendError=0;
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const truth=x>=56&&x<104&&y>=32&&y<96?255:32;const blend=((x>=48&&x<96&&y>=32&&y<96?255:32)+(x>=64&&x<112&&y>=32&&y<96?255:32))/2;const v=pixels[(y*w+x)*4];aiError+=(v-truth)**2;blendError+=(blend-truth)**2;}
-    const result={aiMse:aiError/(w*h),blendMse:blendError/(w*h),oldEdge:pixels[(64*w+50)*4],newEdge:pixels[(64*w+100)*4],inferences:stage.inferences,estimate:stage.estimate,ms:stage.inferenceMs};stage.stop();return result;
-  };
-  if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.testRife=async(w=192,h=128)=>{
-    const a=document.createElement('canvas'),b=document.createElement('canvas');a.width=b.width=w;a.height=b.height=h;
-    const paint=(c,offset)=>{const x=c.getContext('2d');x.fillStyle='#202020';x.fillRect(0,0,w,h);x.fillStyle='white';x.fillRect(w/4+offset,h/4,w/4,h/2);return x.getImageData(0,0,w,h).data;};
-    const r=await inferRife(paint(a,0),paint(b,16),w,h);return {flow:[r.width,r.height],maxMotion:r.flow.reduce((v,n)=>Math.max(v,Math.abs(n)),0),maskRange:[r.mask.reduce((v,n)=>Math.min(v,n),1),r.mask.reduce((v,n)=>Math.max(v,n),0)],ms:r.ms};
-  };
+  if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.enhancer=()=>gpu&&{frames:gpu.frames,generated:gpu.generated,sourceFrames:gpu.sourceFrames,anime:gpu.anime,plan:gpu.plan_,shown:gpu.shown,stopped:gpu.stopped,status:gpu.status};
   native('updates',{action:'status'});
   loadOfficialSearchHistory();
   if(document.readyState==='complete')window.__bsPaintReady?.();
