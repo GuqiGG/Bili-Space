@@ -50,6 +50,8 @@ std::wstring lastClipboardVideo,startupTarget;bool closePending=false;
 bool headerBrandShown=false,categoryVisible=false;int navigationVisible=0;std::string headerRoute;
 bool surfaceWaiting=false,surfaceCommitted=false,surfaceDark=true;ULONGLONG surfaceStart{};
 RECT savedRect{},closeRect{};ULONGLONG closeStarted{};
+// The window's restored size and position (workspace coordinates, as GetWindowPlacement reports them) and whether it was maximized.
+json windowState=json::object();bool windowRemembered=false;
 constexpr UINT trayMessage=WM_APP+71;
 NOTIFYICONDATAW trayIcon{};bool trayReady=false;
 UINT taskbarCreated=RegisterWindowMessageW(L"TaskbarCreated");
@@ -336,10 +338,27 @@ json cleanSearchHistory(const json& values){
 }
 void save(){
     auto tmp=dataPath/L"settings.tmp";
-    {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm},{"searchHistory",searchHistory}}).dump(2);if(!f){log("settings write failed");return;}}
+    {std::ofstream f(tmp,std::ios::binary);f<<json({{"config",config},{"gm",gm},{"searchHistory",searchHistory},{"window",windowState}}).dump(2);if(!f){log("settings write failed");return;}}
     if(!MoveFileExW(tmp.c_str(),(dataPath/L"settings.json").c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))log("settings atomic rename failed");
 }
 bool color(const json& v){ if(!v.is_string())return false;auto s=v.get<std::string>();return s.size()==7&&s[0]=='#'&&s.find_first_not_of("0123456789abcdefABCDEF",1)==std::string::npos; }
+void rememberWindow(){
+    if(!windowHandle)return;WINDOWPLACEMENT p{sizeof(p)};if(!GetWindowPlacement(windowHandle,&p))return;
+    RECT r=p.rcNormalPosition;bool maximized=p.showCmd==SW_SHOWMAXIMIZED||(p.showCmd==SW_SHOWMINIMIZED&&(p.flags&WPF_RESTORETOMAXIMIZED));
+    // Fullscreen and picture-in-picture move the window itself; what to restore is the rectangle saved before them.
+    if(full||pip){MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromRect(&savedRect,MONITOR_DEFAULTTONEAREST),&mi);r=savedRect;OffsetRect(&r,mi.rcMonitor.left-mi.rcWork.left,mi.rcMonitor.top-mi.rcWork.top);maximized=false;}
+    if(r.right-r.left<320||r.bottom-r.top<240)return;
+    windowState={{"rect",{r.left,r.top,r.right,r.bottom}},{"maximized",maximized}};windowRemembered=true;save();
+}
+// Returns whether the last session's window should open maximized; places the hidden window at its last restored rectangle.
+bool restoreWindow(){
+    auto& r=windowState["rect"];if(!r.is_array()||r.size()!=4)return false;for(auto& v:r)if(!v.is_number_integer())return false;
+    RECT rect{r[0].get<LONG>(),r[1].get<LONG>(),r[2].get<LONG>(),r[3].get<LONG>()};if(rect.right-rect.left<320||rect.bottom-rect.top<240)return false;
+    // A monitor that is gone (or a rectangle mostly off screen) falls back to the default placement.
+    RECT probe{rect.left+40,rect.top+10,rect.right-40,rect.top+60};if(!MonitorFromRect(&probe,MONITOR_DEFAULTTONULL))return false;
+    WINDOWPLACEMENT p{sizeof(p)};GetWindowPlacement(windowHandle,&p);p.flags=0;p.showCmd=SW_HIDE;p.rcNormalPosition=rect;SetWindowPlacement(windowHandle,&p);
+    return windowState.value("maximized",false);
+}
 void mergeConfig(const json& next){
     if(!next.is_object())return;
     for(auto& [key,value]:next.items()){
@@ -638,10 +657,10 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_MOVE:case WM_SHOWWINDOW:case WM_WINDOWPOSCHANGED:dockLayout();break;
     case WM_DPICHANGED:{comp::applyScaleToAll();auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
-    case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
+    case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){rememberWindow();if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
     case WM_TIMER:if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
-    case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");return 0;}DestroyWindow(hwnd);return 0;
-    case WM_DESTROY:{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
+    case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");windowRemembered=false;return 0;}DestroyWindow(hwnd);return 0;
+    case WM_DESTROY:if(!windowRemembered)rememberWindow();{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
     }
     return DefWindowProcW(hwnd,msg,wp,lp);
 }
@@ -660,7 +679,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     try{if(!prepareAppData()){MessageBoxW(nullptr,L"应用数据目录不可写。请将完整程序目录放到可写位置后重试，原登录数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}}catch(const std::exception&){MessageBoxW(nullptr,L"无法准备应用数据目录，原数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}
     config=defaults();gm=json::object();
     log(std::string("startup ")+appVersion+(testing?" test":" normal"));
-    try{auto stored=json::parse(read(dataPath/L"settings.json"));mergeConfig(stored.value("config",json::object()));if(stored.contains("gm")&&stored["gm"].is_object())gm=stored["gm"];searchHistory=cleanSearchHistory(stored.value("searchHistory",json::array()));}catch(...){}
+    try{auto stored=json::parse(read(dataPath/L"settings.json"));mergeConfig(stored.value("config",json::object()));if(stored.contains("window")&&stored["window"].is_object())windowState=stored["window"];if(stored.contains("gm")&&stored["gm"].is_object())gm=stored["gm"];searchHistory=cleanSearchHistory(stored.value("searchHistory",json::array()));}catch(...){}
     log("startup: settings loaded");
     proxyEnabled=config.value("proxy",false);
     if(!proxyEnabled&&fs::exists(dataPath/L"proxy-enabled")){proxyEnabled=true;config["proxy"]=true;}
@@ -685,7 +704,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     log("startup: window created");
     windowsMediaInit(windowHandle,[](const std::string& command){execute("window.BiliSpace?.mediaCommand("+json(command).dump()+")");});
     log("startup: media initialized");
-    ShowWindow(windowHandle,SW_SHOW);UpdateWindow(windowHandle);
+    ShowWindow(windowHandle,restoreWindow()?SW_SHOWMAXIMIZED:SW_SHOW);UpdateWindow(windowHandle);
     auto dll=LoadLibraryW((root/L"WebView2Loader.dll").c_str());
     using Create=HRESULT(STDAPICALLTYPE*)(PCWSTR,PCWSTR,ICoreWebView2EnvironmentOptions*,ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler*);
     auto create=dll?reinterpret_cast<Create>(GetProcAddress(dll,"CreateCoreWebView2EnvironmentWithOptions")):nullptr;
