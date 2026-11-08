@@ -24,15 +24,11 @@ test('blank documents show loading feedback, expose retry on failure and clear w
  }finally{a.close();}
 });
 
-test('forward uses native history availability and enters when returning to home with a forward destination',()=>{
+test('home shows the logo in place of back and forward, even with a forward destination',()=>{
  const a=app({reduceMotion:false});try{
-  const s=a.w.document.querySelector('#bili-space-root').shadowRoot,button=s.querySelector('.history-forward'),motions=[];const layoutKeys=m=>m.frames.some(f=>['width','marginRight','marginLeft','flexBasis','paddingLeft','paddingRight'].some(k=>k in f));
-  a.w.Element.prototype.animate=function(frames,options){const m={frames,options,onfinish:null,cancel(){}};motions.push(m);return m;};
-  assert(button.disabled);button.click();assert(!a.messages.some(m=>m.type==='window'&&m.action==='forward'));
+  const s=a.w.document.querySelector('#bili-space-root').shadowRoot,button=s.querySelector('.history-forward');
   a.w.__bsAcceptNavigationState({back:true,forward:true,visible:0});
-  assert(!button.hidden&&!button.disabled);assert(s.querySelector('.history-back').hidden);
-  assert(motions.some(m=>m.frames[0].opacity===0));assert(!motions.some(layoutKeys));
-  button.click();assert(a.messages.some(m=>m.type==='window'&&m.action==='forward'));
+  assert(button.hidden);assert(s.querySelector('.history-back').hidden);assert(s.querySelector('.history-controls').hidden);
  }finally{a.close();}
 });
 
