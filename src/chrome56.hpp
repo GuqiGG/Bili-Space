@@ -39,7 +39,8 @@ void receiveFromHeader(ICoreWebView2WebMessageReceivedEventArgs* args){
         return;
     }
     if(type=="navigate"){navigate(wide(m.value("url",std::string{})));return;}
-    if(type=="navigation-state"&&action=="read"){push();return;}
+    // The header also needs the saved visibility of the back/forward buttons and the channel arrow, or it keeps them hidden.
+    if(type=="navigation-state"&&action=="read"){view->ExecuteScript(wide("window.__bsAcceptNavigationState?.("+json{{"back",false},{"forward",false},{"visible",navigationVisible},{"categoryVisible",categoryVisible},{"route",""}}.dump()+")").c_str(),nullptr);push();return;}
     if(type=="window"&&activeTab&&activeTab->view&&(action=="back"||action=="forward"||action=="reload")){
         if(action=="back")activeTab->view->GoBack();else if(action=="forward")activeTab->view->GoForward();else activeTab->view->Reload();return;
     }
