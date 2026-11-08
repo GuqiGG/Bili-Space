@@ -460,7 +460,7 @@ function beginVideoLoading(target=location.href){
 function previewHeaderRoute(target){
   if(!shadow)return;let url;try{url=new URL(target,location.href);}catch{return;}
   if(!/(^|\.)bilibili\.com$/i.test(url.hostname))return;const kind=pageKind(url);if(kind===pageKind())return;
-  const former=$('nav a[aria-current=page]',shadow);routePreview=url;settleHeader();if(CHROME_VIEW)navigationState={back:true,forward:false};
+  const former=$('nav a[aria-current=page]',shadow);routePreview=url;settleHeader();if(CHROME_VIEW){navigationState={back:true,forward:false};chromeHoldControls=false;chromeAssume={};}
   try{
     syncHeaderBrand();syncNavigationControls();
     $$('nav a[data-route]',shadow).forEach(a=>{if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -469,7 +469,7 @@ function previewHeaderRoute(target){
   }finally{routePreview=null;}
   // The header view has no page of its own to load, so it adopts the destination now; otherwise the next route sync
   // would still read the old address, slide back, and slide forward again once the native host reports the move.
-  if(CHROME_VIEW){chromeLocation=url;chromePending={kind,until:Date.now()+8000};}
+  if(CHROME_VIEW){chromeLocation=url;chromePending={kind,until:Date.now()+8000,previewed:Date.now()};}
 }
 function beginNavigation(target){previewHeaderRoute(target);const url=new URL(target,location.href);if(videoLoadingKey(url.href)){setLoading(false);beginVideoLoading(url.href);}else{cancelVideoLoading();setLoading(url.hostname==='search.bilibili.com');}}
 function finishVideoLoading(){
@@ -1959,15 +1959,16 @@ function chromeActive(state){
   // While a navigation is under way the page still reports its old address (history updates, state reads); those
   // reports must not pull the header back. The destination's own report, or 8s without one, ends the wait.
   const kind=pageKind(next);
-  if(state.starting)chromePending={kind,until:Date.now()+8000};
+  const previewed=chromePending?.kind===kind?chromePending.previewed:0;
+  if(state.starting)chromePending={kind,until:Date.now()+8000,previewed};
   else if(chromePending){if(kind!==chromePending.kind&&Date.now()<chromePending.until)return;chromePending=null;}
-  /* A starting navigation does not know the history it will end with. After the header's own back/forward buttons the
-     result is predictable, so the buttons move once, now; otherwise they wait for the page's report instead of moving
-     twice (hide, then show again). */
+  /* A starting navigation already tells what history it ends with, so back/forward move once, with the logo and the
+     underline, instead of waiting for the page to load and moving again. */
   if(state.starting){
     chromeAssume=chromeDirection==='back'?{forward:true}:chromeDirection==='forward'?{back:true}:{};
-    if(chromeDirection){const was=navigationState||{back:false,forward:false};navigationState={back:was.back||!!chromeAssume.back,forward:was.forward||!!chromeAssume.forward};chromeHoldControls=false;}
-    else chromeHoldControls=true;
+    // Anything that is not a back/forward step is a new page: it can go back and has nothing ahead.
+    const was=navigationState||{back:false,forward:false};
+    navigationState=chromeDirection?{back:was.back||!!chromeAssume.back,forward:was.forward||!!chromeAssume.forward}:{back:true,forward:false};chromeHoldControls=false;
     chromeDirection=null;
   }else{navigationState={back:!!state.back||!!chromeAssume.back,forward:!!state.forward||!!chromeAssume.forward};chromeHoldControls=false;}chromeLocation=next;syncRoute();syncNavigationControls();reportChromeLayout();
 }
