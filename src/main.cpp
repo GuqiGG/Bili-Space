@@ -678,7 +678,9 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_GETMINMAXINFO:{auto p=reinterpret_cast<MINMAXINFO*>(lp);p->ptMinTrackSize={pip?160:480,pip?90:320};return 0;}
     case dockActionMessage:dockAction(wp,lp);return 0;
     case WM_SIZE:fit();dockLayout();return 0;
-    case WM_MOVE:case WM_SHOWWINDOW:case WM_WINDOWPOSCHANGED:dockLayout();break;
+    // Every view learns that the window moved, so its popups (select lists, IME candidates, tooltips) open in the right place.
+    case WM_MOVE:{for(auto t:tabs)if(t->controller&&!t->closed)t->controller->NotifyParentWindowPositionChanged();if(chromeHost::ctl)chromeHost::ctl->NotifyParentWindowPositionChanged();dockLayout();break;}
+    case WM_SHOWWINDOW:case WM_WINDOWPOSCHANGED:dockLayout();break;
     case WM_DPICHANGED:{comp::applyScaleToAll();auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){rememberWindow();if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;

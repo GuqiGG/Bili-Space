@@ -3,7 +3,7 @@
 // hidden until the first page is ready, then opens at its remembered size with the system's open animation (fast,
 // then settling).
 namespace splash{
-HWND window{};ULONGLONG started{},revealStart{};RECT revealFrom{},revealTo{};BYTE opacity=255;int corner=16;ULONG_PTR token{};int showCommand=SW_SHOW;bool waiting=false;
+HWND window{};ULONGLONG started{},revealStart{};RECT revealFrom{},revealTo{},parked{};bool isParked=false;BYTE opacity=255;int corner=16;ULONG_PTR token{};int showCommand=SW_SHOW;bool waiting=false;
 HDC canvasDc{};HBITMAP canvasBitmap{};HGDIOBJ previous{};void* bits{};int side=0;
 constexpr UINT_PTR frameTimer=57,fallbackTimer=58,revealTimer=59;constexpr double revealMs=460;
 void rounded(Gdiplus::GraphicsPath& p,float x,float y,float w,float h,float r){float d=r*2;p.AddArc(x,y,d,d,180,90);p.AddArc(x+w-d,y,d,d,270,90);p.AddArc(x+w-d,y+h-d,d,d,0,90);p.AddArc(x,y+h-d,d,d,90,90);p.CloseFigure();}
@@ -51,10 +51,18 @@ void begin(HWND main,int command){
     draw();ShowWindow(window,SW_SHOWNOACTIVATE);SetTimer(window,frameTimer,16,nullptr);
     // The window is shown now with nothing visible (an empty window region), so the page renders while the television
     // turns; the reveal then uncovers a finished page instead of a blank one.
-    // An invisible window still gets the system's shadow and frame; non-client rendering stays off until it has opened.
+    // The window is shown now so the page renders while the television turns, but parked just beyond the right edge of the
+    // desktop: whatever the system or a window-animation tool draws for a newly shown window (shadow, frame, an opening
+    // animation) happens off screen. It moves into place when the opening starts. Non-client rendering stays off until it
+    // has opened.
     BOOL off=TRUE;DwmSetWindowAttribute(main,DWMWA_TRANSITIONS_FORCEDISABLED,&off,sizeof(off));
     DWMNCRENDERINGPOLICY none=DWMNCRP_DISABLED;DwmSetWindowAttribute(main,DWMWA_NCRENDERING_POLICY,&none,sizeof(none));
-    SetWindowRgn(main,CreateRectRgn(0,0,0,0),FALSE);ShowWindow(main,showCommand==SW_SHOWMAXIMIZED?SW_SHOWMAXIMIZED:SW_SHOWNOACTIVATE);
+    SetWindowRgn(main,CreateRectRgn(0,0,0,0),FALSE);
+    // Window-opening animation tools leave tool windows alone; the window takes its taskbar button when it opens.
+    SetWindowLongPtrW(main,GWL_EXSTYLE,GetWindowLongPtrW(main,GWL_EXSTYLE)|WS_EX_TOOLWINDOW);
+    if(showCommand==SW_SHOWMAXIMIZED)ShowWindow(main,SW_SHOWMAXIMIZED);
+    else{GetWindowRect(main,&parked);const int vx=GetSystemMetrics(SM_XVIRTUALSCREEN)+GetSystemMetrics(SM_CXVIRTUALSCREEN);
+        SetWindowPos(main,nullptr,vx+64,parked.top,0,0,SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);isParked=true;ShowWindow(main,SW_SHOWNOACTIVATE);}
     // Never keep the window hidden for long, whatever the page does.
     SetTimer(main,fallbackTimer,9000,nullptr);
 }
@@ -83,6 +91,12 @@ void finish(HWND main){
     if(!waiting)return;waiting=false;KillTimer(main,fallbackTimer);
     RECT tv{};if(window)GetWindowRect(window,&tv);
     if(!IsWindowVisible(main)){BOOL off=TRUE;DwmSetWindowAttribute(main,DWMWA_TRANSITIONS_FORCEDISABLED,&off,sizeof(off));DWMNCRENDERINGPOLICY none=DWMNCRP_DISABLED;DwmSetWindowAttribute(main,DWMWA_NCRENDERING_POLICY,&none,sizeof(none));SetWindowRgn(main,CreateRectRgn(0,0,0,0),FALSE);ShowWindow(main,showCommand==SW_SHOWMAXIMIZED?SW_SHOWMAXIMIZED:SW_SHOWNOACTIVATE);}
+    if(isParked){isParked=false;SetWindowPos(main,nullptr,parked.left,parked.top,0,0,SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);}
+    if(GetWindowLongPtrW(main,GWL_EXSTYLE)&WS_EX_TOOLWINDOW){
+        SetWindowLongPtrW(main,GWL_EXSTYLE,GetWindowLongPtrW(main,GWL_EXSTYLE)&~LONG_PTR(WS_EX_TOOLWINDOW));
+        SetWindowPos(main,nullptr,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED);
+        ITaskbarList* bar{};if(SUCCEEDED(CoCreateInstance(CLSID_TaskbarList,nullptr,CLSCTX_INPROC_SERVER,IID_ITaskbarList,reinterpret_cast<void**>(&bar)))&&bar){if(SUCCEEDED(bar->HrInit()))bar->AddTab(main);bar->Release();}
+    }
     RECT full{};GetWindowRect(main,&full);
     // The visible frame, without the invisible resize border around it. (While a window region is set the system reports
     // the whole window as its frame, so the border is computed: the work area when maximized, otherwise the sizing
