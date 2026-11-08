@@ -405,7 +405,11 @@ std::string script(){
     s+="const ICON_SETTINGS="+json(settings).dump()+", ICON_SPARKLES="+json(sparkles).dump()+", ICON_MESSAGE="+json(read(root/L"assets/message-square-more.svg")).dump()+";\n";
     s+="const ICON_FRAMES="+json(read(root/L"assets/frame-interpolation.svg")).dump()+";\n";
     s+=read(root/L"assets/bridge.js");
-    s+="\nif(INITIAL.btr){(()=>{\n"+read(root/L"assets/btr.user.js")+"\n})();}\n";
+    // The thread ripper only works where a player lives (its settings dialog opens from the header view); other pages
+    // skip its document-start hooks on every request.
+    s+=R"JS(
+if(INITIAL.btr&&(location.pathname==='/__bili_space_chrome__'||host==='live.bilibili.com'||/^\/(?:zh-Hans\/)?(?:video|bangumi\/play|list|medialist|festival|cheese|watchlater)(?:\/|$)/i.test(location.pathname))){(()=>{
+)JS"+read(root/L"assets/btr.user.js")+"\n})();}\n";
     // Upstream only executes on bilibili.com; fixture policy tests load it separately.
     s+="if(host==='www.bilibili.com'){(()=>{\n"+read(root/L"assets/blocker.home.user.js")+"\n})();}\n";
     s+=read(root/L"assets/desktop44.js");s+="\n";
