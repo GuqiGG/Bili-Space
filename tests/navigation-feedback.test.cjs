@@ -1,17 +1,15 @@
 const test=require('node:test'),assert=require('node:assert/strict'),{app}=require('./ui-harness.cjs');
 
-test('auto-hidden brand slides left before its slot collapses and can be interrupted',()=>{
+test('auto-hidden brand fades out as a ghost while the header slides with transforms only',()=>{
  const a=app({reduceMotion:false});try{
-  const s=a.w.document.querySelector('#bili-space-root').shadowRoot,animations=[];
+  const s=a.w.document.querySelector('#bili-space-root').shadowRoot,animations=[];const layoutKeys=m=>m.frames.some(f=>['width','marginRight','marginLeft','flexBasis','paddingLeft','paddingRight'].some(k=>k in f));
   a.w.Element.prototype.animate=function(frames,options){const motion={target:this,frames,options,onfinish:null,cancel(){this.cancelled=true;}};animations.push(motion);return motion;};
+  a.w.Element.prototype.getBoundingClientRect=function(){return {left:10,top:0,right:50,bottom:32,width:40,height:32};};
   a.w.history.pushState({},'','/history');
-  const brand=()=>animations.filter(m=>m.target.matches('.brand-slot,.brand-label'));
-  assert.equal(s.querySelector('.brand-label').hidden,false);
-  assert.equal(brand().length,2);assert.equal(brand()[0].options.duration,360);assert.equal(brand()[0].options.easing,'cubic-bezier(.4,0,.2,1)');assert.equal(brand()[1].frames.at(-1).transform,'translateX(-100%)');
-  brand()[0].onfinish();assert(s.querySelector('.brand-slot').hidden);
-  a.w.BiliSpace.update({logoAutoHide:false});assert(!s.querySelector('.brand-slot').hidden);
-  a.w.BiliSpace.update({logoAutoHide:true});assert(brand()[2].cancelled);
-  brand().at(-2).onfinish();assert(s.querySelector('.brand-label').hidden);
+  assert.equal(s.querySelector('.brand-slot').hidden,true);
+  const ghost=animations.find(m=>m.target.dataset?.ghost==='true'&&m.target.matches('.brand-slot'));assert(ghost);assert.equal(ghost.frames.at(-1).opacity,0);
+  assert(!animations.some(layoutKeys));
+  a.w.BiliSpace.update({logoAutoHide:false});assert.equal(s.querySelector('.brand-slot').hidden,false);
  }finally{a.close();}
 });
 
@@ -28,24 +26,23 @@ test('blank documents show loading feedback, expose retry on failure and clear w
 
 test('forward uses native history availability and enters when returning to home with a forward destination',()=>{
  const a=app({reduceMotion:false});try{
-  const s=a.w.document.querySelector('#bili-space-root').shadowRoot,button=s.querySelector('.history-forward'),motions=[];
-  a.w.Element.prototype.animate=function(frames,options){const m={onfinish:null,cancel(){}};motions.push({frames,options});return m;};
+  const s=a.w.document.querySelector('#bili-space-root').shadowRoot,button=s.querySelector('.history-forward'),motions=[];const layoutKeys=m=>m.frames.some(f=>['width','marginRight','marginLeft','flexBasis','paddingLeft','paddingRight'].some(k=>k in f));
+  a.w.Element.prototype.animate=function(frames,options){const m={frames,options,onfinish:null,cancel(){}};motions.push(m);return m;};
   assert(button.disabled);button.click();assert(!a.messages.some(m=>m.type==='window'&&m.action==='forward'));
   a.w.__bsAcceptNavigationState({back:true,forward:true,visible:0});
   assert(!button.hidden&&!button.disabled);assert(s.querySelector('.history-back').hidden);
-  assert(motions.some(m=>m.frames[0].opacity===0&&m.frames.at(-1).opacity===1));
+  assert(motions.some(m=>m.frames[0].opacity===0));assert(!motions.some(layoutKeys));
   button.click();assert(a.messages.some(m=>m.type==='window'&&m.action==='forward'));
  }finally{a.close();}
 });
 
-test('category arrow slides out before hiding and slides in independently of its rotation',()=>{
+test('category arrow hides at once and leaves as a fading ghost, without layout animation',()=>{
  const a=app({reduceMotion:false});try{
-  const s=a.w.document.querySelector('#bili-space-root').shadowRoot,b=s.querySelector('.back'),motions=[];
-  a.w.Element.prototype.animate=function(frames,options){const m={frames,options,onfinish:null,cancel(){}};motions.push(m);return m;};
-  a.w.BiliSpace.update({headerBack:false});assert(!b.hidden);assert.equal(motions[1].frames.at(-1).translate,'-8px 0px');
-  motions[0].onfinish();assert(b.hidden);
+  const s=a.w.document.querySelector('#bili-space-root').shadowRoot,b=s.querySelector('.back'),motions=[];const layoutKeys=m=>m.frames.some(f=>['width','marginRight','marginLeft','flexBasis','paddingLeft','paddingRight'].some(k=>k in f));
+  a.w.Element.prototype.animate=function(frames,options){const m={target:this,frames,options,onfinish:null,cancel(){}};motions.push(m);return m;};
+  a.w.Element.prototype.getBoundingClientRect=function(){return {left:10,top:0,right:50,bottom:32,width:40,height:32};};
+  a.w.BiliSpace.update({headerBack:false});assert(b.hidden);assert(motions.some(m=>m.target.dataset?.ghost==='true'&&m.frames.at(-1).opacity===0));
   a.w.BiliSpace.update({headerBack:true});assert(!b.hidden);
-  assert.equal(motions[3].frames[0].opacity,0);assert.equal(motions[3].frames.at(-1).opacity,1);
-  assert.equal(motions[3].options.duration,360);assert(!('transform' in motions[3].frames[0]));
+  assert(!motions.some(layoutKeys));
  }finally{a.close();}
 });

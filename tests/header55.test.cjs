@@ -14,9 +14,10 @@ test('a restored brand state that already matches keeps the logo visible',()=>{
  }finally{a.close();}
 });
 
-test('header motion decided before the page is revealed waits on its first frame',()=>{
+test('header motion decided before the page is revealed waits on its first frame, never longer than 1.2s',()=>{
  const fs=require('node:fs'),js=fs.readFileSync('assets/enhance.js','utf8');
- assert.match(js,/function holdForReveal\(m\)\{if\(typeof RUNTIME!=='undefined'&&!headerSurfaceReady&&m\?\.pause\)\{m\.pause\(\);revealMotion\.push\(m\);\}return m;\}/);
+ assert.match(js,/function holdForReveal\(m\)\{if\(typeof RUNTIME!=='undefined'&&!headerSurfaceReady&&m\?\.pause\)\{m\.pause\(\);revealMotion\.push\(m\);/);
+ assert.match(js,/revealFallback=setTimeout\(\(\)=>revealMotion\.splice\(0\)\.forEach/);
  assert.match(js,/const held=revealMotion\.splice\(0\);held\.forEach\(m=>\{try\{m\.play\(\);\}catch\{\}\}\);/);
- for(const site of ['brandMotion=[size,text].map(holdForReveal)','categoryMotion=[size,icon].map(holdForReveal)','const size=holdForReveal(group.animate('])assert(js.includes(site),site);
+ assert(js.includes('headerFlipMotion.push(holdForReveal('));
 });
