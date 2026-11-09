@@ -1407,11 +1407,13 @@ function showOnboarding(){
   const go=to=>{
     if(to===step||to<0||to>last)return;const from=steps[step],into=steps[to],dir=to>step?1:-1;
     motions.forEach(m=>m.finish());motions=[];steps.forEach(x=>{if(x!==from)x.classList.remove('ob-show');});
+    // A page that left earlier may still hold its exit pose; clear the script motions (CSS ones restart on display).
+    into.getAnimations({subtree:true}).forEach(m=>{if(!(m instanceof CSSAnimation))m.cancel();});
     step=to;render();play();into.classList.add('ob-show');
     if(still){from.classList.remove('ob-show');}
     else{
       const out=from.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateX(${-36*dir}px)`}],{duration:240,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
-      out.onfinish=()=>{if(steps[step]!==from)from.classList.remove('ob-show');out.cancel();};motions.push(out);
+      out.finished.then(()=>{if(steps[step]!==from)from.classList.remove('ob-show');out.cancel();},()=>{});motions.push(out);
       for(const [k,part] of [...into.children].entries())motions.push(part.animate([{opacity:0,transform:`translateX(${44*dir}px)`},{opacity:1,transform:'none'}],{duration:420,delay:90+k*60,easing:EASE,fill:'backwards'}));
     }
     into.focus({preventScroll:true});
