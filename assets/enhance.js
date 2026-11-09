@@ -1020,7 +1020,7 @@ html[data-bs-theme=dark] :is(.vui_button--blue,.vui_button--primary,.vui_button-
 html[data-bs-theme=dark] :is(#bilibili-player,#bilibili-player-wrap,#playerWrap,.player-wrap,.player-container,.video-container-v1,.video-container-v2,.bpx-player-container,.bpx-player-video-wrap){box-shadow:none!important;outline:none!important;border-color:#303034!important}
 html[data-bs-theme=dark] :is(#bilibili-player,.bpx-player-container,.bpx-player-video-wrap){background:#000!important}
 html[data-bs-theme=dark] :is(.bpx-player-sending-bar,.bilibili-player-video-sendbar):not([data-screen=full] *):not([data-screen=web] *):not(html[data-bs-full=true] *){background:#202023!important;border-color:#303034!important;box-shadow:none!important}
-html[data-bs-theme=dark] :is(.bpx-player-dm-wrap,.bpx-player-dm-input,.bilibili-player-video-danmaku-input,.bpx-player-sending-area):not([data-screen=full] *):not([data-screen=web] *):not(html[data-bs-full=true] *){background:#2c2c32!important;color:#eeeef0!important;border-color:#3b3b42!important}/* The viewer/danmaku count never spills over the danmaku switch, whatever width the player last measured. */.bpx-player-sending-bar .bpx-player-video-info{flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}.bpx-player-sending-bar :is(.bpx-player-dm-switch,.bpx-player-dm-setting){flex-shrink:0!important}/* UP charging (充电) prompts. */[class*=charge-btn],.bpx-player-electric-panel,.bpx-player-electric-box{display:none!important}
+html[data-bs-theme=dark] :is(.bpx-player-dm-wrap,.bpx-player-dm-input,.bilibili-player-video-danmaku-input,.bpx-player-sending-area):not([data-screen=full] *):not([data-screen=web] *):not(html[data-bs-full=true] *){background:#2c2c32!important;color:#eeeef0!important;border-color:#3b3b42!important}/* The viewer/danmaku count never spills over the danmaku switch, whatever width the player last measured. */.bpx-player-sending-bar .bpx-player-video-info{flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}.bpx-player-sending-bar :is(.bpx-player-dm-switch,.bpx-player-dm-setting){flex-shrink:0!important}
 html[data-bs-theme=dark] :is(.bpx-player-dm-input input,.bpx-player-dm-input textarea){background:transparent!important;color:#eeeef0!important}
 html[data-bs-theme=dark] :is(.roll-btn,.feed-roll-btn,.floor-single-card,.bili-live-card,.living-card,.vui_pagenation--btn,.vui_pagination--btn){background:#26262b!important;color:#d4d4dc!important;border-color:#38383f!important}
 /* Original refresh panels retain their size; elevation replaces the outline. */
@@ -1164,7 +1164,7 @@ input[type=range]{width:130px;accent-color:var(--accent)}.range{display:flex;ali
 @media(max-width:620px){.scrim{padding:12px}.dialog{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);height:calc(100vh - 24px);width:100%;min-height:0}.dialog aside{padding:10px;min-height:0}.dialog aside h1,.dialog aside .eyebrow,.dialog .aside-footer{display:none}.dialog .tabs{display:flex;overflow:auto;gap:4px}.dialog .tabs button{width:auto;white-space:nowrap;padding:10px;font-size:12px}.dialog main{padding:24px 18px}.dialog #dismiss{right:8px;top:4px;width:22px;height:22px}.chip-grid{grid-template-columns:repeat(2,minmax(0,1fr))}header{column-gap:8px;padding:0 12px}.header-left,.header-right{gap:8px}.lights{gap:6px}nav{gap:10px}nav a{font-size:12px}.search{min-width:70px}.account{max-width:38px;overflow:hidden;font-size:10px}}
 .dialog[data-compact=true]{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}.dialog[data-compact=true] aside{padding:10px;min-height:0}.dialog[data-compact=true] aside h1,.dialog[data-compact=true] aside .eyebrow,.dialog[data-compact=true] .aside-footer{display:none}.dialog[data-compact=true] .settings-matches{max-height:180px}.dialog[data-compact=true] .tabs{display:flex;overflow:auto;gap:4px}.dialog[data-compact=true] .tabs button{width:auto;white-space:nowrap;padding:10px;font-size:12px}.dialog[data-compact=true] main{padding:24px 18px}.dialog[data-compact=true] .chip-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-height:480px){.scrim{padding:12px}.dialog{height:calc(100vh - 24px);min-height:0}.dialog aside{padding:12px}.dialog .aside-footer,.dialog aside h1,.dialog aside .eyebrow{display:none}.dialog main{padding:24px 18px}}
-.update-notice-layer{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.24);pointer-events:auto}.update-notice{width:min(460px,100%);padding:28px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--ink);box-shadow:0 24px 70px #0003}.update-notice h2{font-size:21px;margin:0 0 16px}.update-notice ul{padding-left:20px;max-height:220px;overflow:auto;font-size:13px;line-height:1.8;color:var(--muted)}.update-notice .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap}.update-primary{border:0;border-radius:8px;background:var(--accent);color:white;padding:9px 16px;font-size:13px}.update-notice .link{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:transparent}.membership-notice p{margin:0 0 8px;font-size:14px;line-height:1.75;color:var(--muted)}.membership-plan{display:grid;gap:4px;padding:18px 20px;border-radius:14px;border:1.5px solid var(--accent);background:var(--field)}.membership-plan b{font-size:14px}.membership-plan .price{font-size:30px;font-weight:700;line-height:1.25;color:var(--accent)}.membership-plan .price small{margin-left:6px;font-size:14px;font-weight:500;color:var(--muted)}.membership-plan ul{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.8;color:var(--muted)}.membership-notice button:disabled{opacity:.72;cursor:progress}
+.update-notice-layer{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.24);pointer-events:auto}.update-notice{width:min(460px,100%);padding:28px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--ink);box-shadow:0 24px 70px #0003}.update-notice h2{font-size:21px;margin:0 0 16px}.update-notice ul{padding-left:20px;max-height:220px;overflow:auto;font-size:13px;line-height:1.8;color:var(--muted)}.update-notice .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap}.update-primary{border:0;border-radius:8px;background:var(--accent);color:white;padding:9px 16px;font-size:13px}.update-notice .link{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:transparent}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .dialog main{--settings-close-top:34px;--settings-close-right:36px}.dialog #dismiss{top:calc(var(--settings-close-top) + .8px);right:var(--settings-close-right);width:28px;height:28px;padding:0;display:grid;place-items:center;line-height:0}.dialog #dismiss svg{display:block;width:16px;height:16px}
 @media(max-width:1050px){.dialog main{--settings-close-top:30px;--settings-close-right:25px}}@media(max-width:620px),(max-height:480px){.dialog main{--settings-close-top:24px;--settings-close-right:18px}}.dialog[data-compact=true] main{--settings-close-top:24px;--settings-close-right:18px}
@@ -1259,60 +1259,6 @@ function showUpdateNotice(value){
   dialog.append(title,notes,actions);layer.append(dialog);shadow.append(layer);primary.focus();
   layer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}else if(e.key==='Tab'){const buttons=$$('button',layer),i=buttons.indexOf(shadow.activeElement),next=(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length;e.preventDefault();buttons[next].focus();}});
   native('updates',{action:'notice-shown',version:value.version});
-}
-// 0.1.60 only, once, for people who updated (a first install is marked as seen by the host): a joke membership wall
-// whose every button leads on and which always ends in "free". Nothing is asked for and nothing leaves the client.
-let membershipJokeTimer,membershipJokeTries=0;
-function scheduleMembershipJoke(delay=1600){
-  if(APP_META.version!=='0.1.60'||PREFS.membershipJoke060||CONTENT_VIEW)return;
-  clearTimeout(membershipJokeTimer);membershipJokeTimer=setTimeout(()=>{
-    if(PREFS.membershipJoke060||!shadow||$('#membership-notice',shadow))return;
-    const page=String((CHROME_VIEW?chromeLocation:location.href)||'');
-    const busy=document.visibilityState!=='visible'||!/^https:\/\/[^/]*bilibili\.com\//.test(page)||$('#update-notice',shadow)||$('#reset-confirm',shadow)||$('#settings:not([hidden])',shadow)||$('.scrim:not([hidden])',shadow);
-    if(busy){if(++membershipJokeTries<300)scheduleMembershipJoke(1000);return;}
-    showMembershipJoke();
-  },delay);
-}
-function showMembershipJoke(){
-  const previous=shadow.activeElement,layer=document.createElement('div');layer.className='update-notice-layer membership-layer';layer.id='membership-notice';
-  const dialog=document.createElement('section');dialog.className='update-notice membership-notice';dialog.setAttribute('role','alertdialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','membership-title');
-  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;let step=0,waiting=false;
-  const text=(tag,value,kind)=>{const e=document.createElement(tag);if(kind)e.className=kind;e.textContent=value;return e;};
-  const button=(label,kind)=>{const b=text('button',label,kind);b.type='button';b.onclick=advance;return b;};
-  const close=()=>{layer.remove();previous?.focus?.();};
-  function render(){
-    const title=text('h2',['Bili-Space 会员通知','开通 Bili-Space 会员','偶不，系统出问题了！'][step]);title.id='membership-title';
-    const body=[],actions=document.createElement('div');actions.className='actions';
-    if(step===0){
-      body.push(text('p','因为作者也要赚钱吃饭，从这个版本开始，Bili-Space 客户端需要开通会员才能继续使用。'),text('p','感谢你一直以来的支持。'));
-      actions.append(button('不要','link'),button('看看会员','update-primary'));
-    }else if(step===1){
-      const plan=document.createElement('div'),price=text('div','$10,000','price'),perks=document.createElement('ul');plan.className='membership-plan';price.append(text('small','/ 月'));
-      for(const line of ['继续使用 Bili-Space 客户端','作者每天都能吃上饭','尊贵的粉色（其实大家都有）'])perks.append(text('li',line));
-      plan.append(text('b','至尊会员'),price,perks);body.push(plan);
-      actions.append(button('太贵了','link'),button('立即开通','update-primary'));
-    }else{
-      body.push(text('p','支付系统突然坏掉了……算了算了，会员免费送你啦！'),text('p','祝你看得开心 🎉'));
-      actions.append(button('好耶','update-primary'));
-    }
-    dialog.replaceChildren(title,...body,actions);$('.update-primary',actions).focus();
-    if(!still)dialog.animate([{opacity:0,transform:'scale(.97)'},{opacity:1,transform:'none'}],{duration:200,easing:'cubic-bezier(0,0,.2,1)'});
-  }
-  function advance(){
-    if(waiting)return;
-    if(step===0){step=1;render();return;}
-    if(step===2){close();return;}
-    waiting=true;const buttons=$$('.actions button',dialog);buttons.forEach(b=>b.disabled=true);const primary=$('.update-primary',dialog);primary.textContent='正在处理…';primary.setAttribute('aria-busy','true');
-    setTimeout(()=>{waiting=false;step=2;render();update({membershipJoke060:true});},1100);
-  }
-  layer.addEventListener('click',e=>{if(e.target===layer)advance();});
-  layer.addEventListener('keydown',e=>{
-    if(e.isComposing)return;
-    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();advance();}
-    else if(e.key==='Tab'){const buttons=$$('button:not(:disabled)',layer);e.preventDefault();e.stopPropagation();if(!buttons.length)return;const i=buttons.indexOf(shadow.activeElement);buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();}
-  });
-  layer.append(dialog);shadow.append(layer);render();
-  if(!still)layer.animate([{opacity:0},{opacity:1}],{duration:180,easing:'ease-out'});
 }
 function renderUpdatePanel(){
   if(!shadow)return;const line=$('#client-update-status',shadow);if(!line)return;
@@ -2016,7 +1962,7 @@ function reportChromeLayout(){
     const rects=[],scale=devicePixelRatio||1;
     const add=el=>{if(!el||el.hidden||!el.isConnected)return;const look=getComputedStyle(el);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)return;const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)rects.push([Math.floor(r.left*scale),Math.floor(r.top*scale),Math.ceil(r.right*scale),Math.ceil(r.bottom*scale)]);};
     add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories','#settings-trigger','.upload','#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));
-    const modal=!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow)||!!$('#membership-notice',shadow);
+    const modal=!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow);
     const key=JSON.stringify([rects,modal]);if(key===chromeLayoutKey)return;chromeLayoutKey=key;native('chrome-layout',{rects,modal});
   });
 }
@@ -2126,7 +2072,7 @@ function boot(){
   window.addEventListener('pagehide',()=>{window.BiliDesktop44?.stop();window.BiliCommunity44?.stop();});
   window.addEventListener('pageshow',e=>{if(e.persisted){brandMotion.forEach(a=>{a.onfinish=null;a.cancel();});brandMotion=[];brandShown=undefined;brandStateRequested=false;syncHeaderBrand();categoryMotion.forEach(a=>{a.onfinish=null;a.cancel();});categoryMotion=[];categoryShown=undefined;syncCategoryVisibility();navigationMotion.forEach(a=>{a.onfinish=null;a.cancel();});navigationMotion=[];navigationState=undefined;navigationMask=undefined;navigationRequested=false;syncNavigationControls();}native('navigation-state',{action:'read'});window.BiliDesktop44?.start();window.BiliCommunity44?.start();});
   if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.enhancer=()=>gpu&&{trace:gpu.trace,frames:gpu.frames,generated:gpu.generated,sourceFrames:gpu.sourceFrames,anime:gpu.anime,plan:gpu.plan_,shown:gpu.shown,stopped:gpu.stopped,status:gpu.status};
-  native('updates',{action:'status'});scheduleMembershipJoke();
+  native('updates',{action:'status'});
   loadOfficialSearchHistory();
   if(document.readyState==='complete')window.__bsPaintReady?.();
   diagnostic('Bili-Space ready');

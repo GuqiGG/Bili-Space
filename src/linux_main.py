@@ -23,8 +23,7 @@ class App(Gtk.Application):
         self.directory=Path(GLib.get_user_data_dir())/'bili-space'
         if self.testing:self.directory=Path(GLib.dir_make_tmp('bili-space-test-XXXXXX'))
         self.directory.mkdir(parents=True,exist_ok=True,mode=0o700);self.directory.chmod(0o700)
-        self.state=self.read(self.directory/'state.json');first_run='config' not in self.state;defaults=self.read(self.resources/'defaults.json');defaults.update(self.state.get('config',{}));self.state['config']=defaults
-        if first_run:defaults['membershipJoke060']=True
+        self.state=self.read(self.directory/'state.json');defaults=self.read(self.resources/'defaults.json');defaults.update(self.state.get('config',{}));self.state['config']=defaults
         self.state.setdefault('gm',{});self.state.setdefault('profiles',[])
         self.category_visible=False;self.navigation_visible=0;self.header_route='';self.header_brand_shown=False;self.pending_add=None
         if self.state.get('pendingAccountID'):self.state['activeID']=self.state.pop('pendingAccountID')
@@ -85,7 +84,7 @@ class App(Gtk.Application):
         script=WebKit2.UserScript.new(bridge+self.renderer,WebKit2.UserContentInjectedFrames.TOP_FRAME,WebKit2.UserScriptInjectionTime.START,None,None);content.add_script(script)
         if self.web:self.stack.remove(self.web);self.web.destroy()
         self.web=WebKit2.WebView(web_context=self.context,user_content_manager=content)
-        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False);settings.set_enable_mediasource(True);settings.set_user_agent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 BiliSpace/0.1.60')
+        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False);settings.set_enable_mediasource(True);settings.set_user_agent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 BiliSpace/0.1.61')
         self.web.add_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.POINTER_MOTION_MASK)
         self.web.connect('button-press-event',self.resize_press);self.web.connect('motion-notify-event',self.resize_motion)
         self.web.connect('resource-load-started',self.resource_started)
