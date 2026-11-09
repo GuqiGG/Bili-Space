@@ -108,17 +108,21 @@ inline json nativeExec(const json& a){
     std::wstring line=quote(wide(a.value("file",std::string{})));if(line==L"\"\"")throw std::runtime_error("缺少程序");
     if(a.contains("args")&&a["args"].is_array())for(const auto& v:a["args"])if(v.is_string())line+=L" "+quote(wide(v.get<std::string>()));
     SECURITY_ATTRIBUTES sa{sizeof(sa),nullptr,TRUE};HANDLE outR{},outW{},errR{},errW{},inR{},inW{};
-    CreatePipe(&outR,&outW,&sa,0);CreatePipe(&errR,&errW,&sa,0);CreatePipe(&inR,&inW,&sa,0);SetHandleInformation(outR,HANDLE_FLAG_INHERIT,0);SetHandleInformation(errR,HANDLE_FLAG_INHERIT,0);SetHandleInformation(inW,HANDLE_FLAG_INHERIT,0);
+    CreatePipe(&outR,&outW,&sa,0);CreatePipe(&errR,&errW,&sa,0);CreatePipe(&inR,&inW,&sa,DWORD(std::clamp<size_t>(a.value("input",std::string{}).size()+1,4096,64u*1024*1024)));SetHandleInformation(outR,HANDLE_FLAG_INHERIT,0);SetHandleInformation(errR,HANDLE_FLAG_INHERIT,0);SetHandleInformation(inW,HANDLE_FLAG_INHERIT,0);
     STARTUPINFOW si{sizeof(si)};si.dwFlags=STARTF_USESTDHANDLES;si.hStdOutput=outW;si.hStdError=errW;si.hStdInput=inR;PROCESS_INFORMATION pi{};
     const auto cwd=wide(a.value("cwd",std::string{}));
     const BOOL ok=CreateProcessW(nullptr,line.data(),nullptr,nullptr,TRUE,CREATE_NO_WINDOW|CREATE_UNICODE_ENVIRONMENT,nullptr,cwd.empty()?nullptr:cwd.c_str(),&si,&pi);
     CloseHandle(outW);CloseHandle(errW);CloseHandle(inR);
     if(!ok){CloseHandle(outR);CloseHandle(errR);CloseHandle(inW);throw std::runtime_error("无法启动程序（错误 "+std::to_string(GetLastError())+"）");}
     const auto input=a.value("input",std::string{});std::thread feed([inW,input]{DWORD w=0;if(!input.empty())WriteFile(inW,input.data(),DWORD(input.size()),&w,nullptr);CloseHandle(inW);});
-    auto drain=[](HANDLE h,std::string& sink){char buffer[8192];DWORD n=0;while(ReadFile(h,buffer,sizeof(buffer),&n,nullptr)&&n){if(sink.size()<32u*1024*1024)sink.append(buffer,n);}CloseHandle(h);};
-    std::string out,err;std::thread o([&]{drain(outR,out);}),e([&]{drain(errR,err);});
-    const DWORD timeout=DWORD(std::clamp(a.value("timeout",120000),100,3600000));bool timedOut=WaitForSingleObject(pi.hProcess,timeout)==WAIT_TIMEOUT;
-    if(timedOut)TerminateProcess(pi.hProcess,1);DWORD code=0;GetExitCodeProcess(pi.hProcess,&code);o.join();e.join();feed.join();CloseHandle(pi.hThread);CloseHandle(pi.hProcess);
+    // Output is polled rather than read to the end: a program that starts something in the background (which keeps the
+    // pipes open) must not leave this request waiting forever once the program itself has finished.
+    std::string out,err;auto pull=[](HANDLE h,std::string& sink){DWORD available=0;while(PeekNamedPipe(h,nullptr,0,nullptr,&available,nullptr)&&available){char buffer[8192];DWORD n=0;if(!ReadFile(h,buffer,std::min<DWORD>(available,sizeof(buffer)),&n,nullptr)||!n)break;if(sink.size()<32u*1024*1024)sink.append(buffer,n);available=0;}};
+    const DWORD timeout=DWORD(std::clamp(a.value("timeout",120000),100,3600000));const ULONGLONG started=GetTickCount64();bool timedOut=false;
+    for(;;){pull(outR,out);pull(errR,err);const DWORD state=WaitForSingleObject(pi.hProcess,15);
+        if(state==WAIT_OBJECT_0){pull(outR,out);pull(errR,err);break;}
+        if(GetTickCount64()-started>timeout){timedOut=true;TerminateProcess(pi.hProcess,1);WaitForSingleObject(pi.hProcess,2000);pull(outR,out);pull(errR,err);break;}}
+    DWORD code=0;GetExitCodeProcess(pi.hProcess,&code);CloseHandle(outR);CloseHandle(errR);feed.join();CloseHandle(pi.hThread);CloseHandle(pi.hProcess);
     return {{"code",code},{"stdout",out},{"stderr",err},{"timedOut",timedOut}};
 }
 // Secrets (API keys and the like) for one plugin, encrypted for the current Windows user.
