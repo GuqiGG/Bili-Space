@@ -30,10 +30,13 @@ bool init(){
 }
 // Visual hosting must be told that bounds are physical pixels and that content rasterizes at the window's own DPI;
 // otherwise it scales the bounds again and the views draw 25% too large at 125% scaling, with input offset to match.
+// Windows' own "Text size" setting (Accessibility) enlarges web content in ordinary hosting; visual hosting sets the
+// rasterization scale itself, so it has to include that factor too or text comes out smaller than before.
+double textScaleFactor(){DWORD value=100,size=sizeof(value);if(RegGetValueW(HKEY_CURRENT_USER,L"Software\\Microsoft\\Accessibility",L"TextScaleFactor",RRF_RT_REG_DWORD,nullptr,&value,&size)!=ERROR_SUCCESS)value=100;return std::clamp<DWORD>(value,100,225)/100.0;}
 void applyScale(ICoreWebView2Controller* c){
     ICoreWebView2Controller3* c3{};if(!c||FAILED(c->QueryInterface(__uuidof(ICoreWebView2Controller3),reinterpret_cast<void**>(&c3)))||!c3)return;
     using Dpi=UINT(WINAPI*)(HWND);static auto dpi=reinterpret_cast<Dpi>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetDpiForWindow"));
-    auto h1=c3->put_ShouldDetectMonitorScaleChanges(FALSE),h2=c3->put_BoundsMode(COREWEBVIEW2_BOUNDS_MODE_USE_RAW_PIXELS),h3=c3->put_RasterizationScale(dpi?dpi(windowHandle)/96.0:1.0);double scale{};c3->get_RasterizationScale(&scale);
+    auto h1=c3->put_ShouldDetectMonitorScaleChanges(FALSE),h2=c3->put_BoundsMode(COREWEBVIEW2_BOUNDS_MODE_USE_RAW_PIXELS),h3=c3->put_RasterizationScale((dpi?dpi(windowHandle)/96.0:1.0)*textScaleFactor());double scale{};c3->get_RasterizationScale(&scale);
     (void)h1;(void)h2;(void)h3;(void)scale;c3->Release();
 }
 void applyScaleToAll(){for(auto& [c,v]:views)applyScale(c);}
