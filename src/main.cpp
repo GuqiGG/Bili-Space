@@ -539,7 +539,7 @@ void fullscreenReady(const std::vector<double>& rect){
         comp::revealFrom(k,x,y,fullSeconds,.1);comp::veilTo(0.f,1.f,fullSeconds);SetTimer(windowHandle,7760,UINT(fullSeconds*1000)+20,nullptr);
     }else if(fullPhase==FullPhase::returning){
         // The live page fades in over the pictures, which go once it is fully there.
-        endFullTransition();comp::crossIn(.16);fullPhase=FullPhase::idle;SetTimer(windowHandle,7767,200,nullptr);
+        endFullTransition();comp::crossIn(.22);fullPhase=FullPhase::idle;SetTimer(windowHandle,7767,260,nullptr);
         comp::fadeChrome(0.f,1.f,fullSeconds);SetTimer(windowHandle,7762,UINT(fullSeconds*1000)+40,nullptr);
     }
 }

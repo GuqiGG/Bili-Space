@@ -876,8 +876,22 @@ function fullReadyAt(width,height,ratio,entering){
       if(!v||v.paused||!v.requestVideoFrameCallback){report();return;}let done=false;const go=()=>{if(!done){done=true;report();}};v.requestVideoFrameCallback(go);setTimeout(go,120);}));};
   const check=()=>{if(right())fire();};if(right())fire();else{addEventListener('resize',check);setTimeout(fire,400);}
 }
+// Leaving fullscreen, the browser draws the page's normal layout at once - a frame before the host can cover it. The
+// player is pinned over the whole window in that same frame (danmaku bar tucked away), so that frame still looks like
+// fullscreen; the host releases it once the window is back to its size.
+let fullHold=null;
+function holdPlayer(on){
+  if(!on){if(!fullHold)return;clearTimeout(fullHold.timer);for(const [node,prop,value,priority] of fullHold.saved.reverse()){if(value)node.style.setProperty(prop,value,priority);else node.style.removeProperty(prop);}fullHold=null;return;}
+  if(fullHold)return;const c=fullTarget?.isConnected?fullTarget:document.querySelector('.bpx-player-container');if(!c)return;
+  const saved=[],keep=(node,prop,value)=>{saved.push([node,prop,node.style.getPropertyValue(prop),node.style.getPropertyPriority(prop)]);node.style.setProperty(prop,value,'important');};
+  for(let a=c.parentElement;a&&a!==document.documentElement;a=a.parentElement){const s=getComputedStyle(a);if(s.position!=='static'&&s.zIndex!=='auto')keep(a,'z-index','2147483000');if(s.transform!=='none')keep(a,'transform','none');}
+  for(const [prop,value] of [['position','fixed'],['inset','0'],['width','100vw'],['height','100vh'],['max-width','none'],['max-height','none'],['margin','0'],['z-index','2147483001'],['background','#000']])keep(c,prop,value);
+  const bar=c.querySelector('.bpx-player-sending-area');if(bar)keep(bar,'display','none');
+  fullHold={saved,timer:setTimeout(()=>holdPlayer(false),1500)};
+}
 document.addEventListener('fullscreenchange',()=>{
   if(CHROME_VIEW)return;const entering=!!document.fullscreenElement;
+  if(!entering&&!matchMedia('(prefers-reduced-motion: reduce)').matches)holdPlayer(true);
   if(entering&&!fullStartSent&&fullRect&&Date.now()-fullRectAt<3000){fullStartSent=true;native('fullscreen-start',{rect:fullRect});}
   if(!entering)fullStartSent=false;
 });
@@ -2096,7 +2110,7 @@ function boot(){
         for(const [el,[value,priority]] of pipHiddenHosts){if(value)el.style.setProperty('display',value,priority);else el.style.removeProperty('display');}pipHiddenHosts.clear();
       }
     },
-    setFullscreen(on){fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
+    setFullscreen(on){if(!on)holdPlayer(false);fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
     emitPipDanmaku(items,time){for(const item of items)pipDanmaku.emit(item,time);},
     get state(){return {headerBrand:{shown:brandShown,moving:brandMotion.length>0},pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status}:null};}
   };
