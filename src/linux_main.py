@@ -209,6 +209,8 @@ class App(Gtk.Application):
             elif kind=='header-brand':
                 if action=='read':self.js('window.__bsAcceptBrandState?.('+json.dumps(self.header_brand_shown)+')')
                 elif action=='write' and isinstance(m.get('shown'),bool):self.header_brand_shown=m['shown']
+            elif kind=='community' and action=='load':self.js('window.BiliCommunity44?.acceptState(%s)'%json.dumps(self.state.get('community') or {},ensure_ascii=False))
+            elif kind=='community' and action=='save' and isinstance(m.get('state'),dict):self.state['community']=m['state'];self.save()
             elif kind=='gm-set':self.state['gm'][m['key']]=m.get('value');self.save()
             elif kind=='media-probe-result' and self.testing:print('Linux media decode self-test:',json.dumps(m),flush=True);os._exit(0 if m.get('ok') else 1)
             elif kind=='accounts':self.accounts(m)
