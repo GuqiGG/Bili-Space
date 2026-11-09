@@ -8,7 +8,8 @@ namespace chromeHost{
 const std::wstring address=L"https://www.bilibili.com/__bili_space_chrome__";
 ICoreWebView2Controller* ctl{};ICoreWebView2* view{};bool ready=false;std::wstring pending,injection;
 bool active(){return comp::ready;}
-void place(){if(!ctl)return;RECT rc{};GetClientRect(windowHandle,&rc);ctl->put_Bounds(rc);}
+// Not while fullscreen: the hidden header keeps its size, so it comes back exactly as it left without re-laying out.
+void place(){if(!ctl||full)return;RECT rc{};GetClientRect(windowHandle,&rc);ctl->put_Bounds(rc);}
 void show(bool on){comp::chromeVisible=on&&ready;if(ctl)ctl->put_IsVisible(on?TRUE:FALSE);}
 // Sends the active page's address and history state; `target` is a navigation that is only starting.
 void push(const std::wstring& target=L""){

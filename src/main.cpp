@@ -458,7 +458,7 @@ void applyZoom(){
         if(target<800)target=1280;
         z=std::max(z,std::min(2.5,dip/target));
     }
-    controller->put_ZoomFactor(z);chromeZoom(z);
+    controller->put_ZoomFactor(z);if(!full)chromeZoom(z);
 }
 void fit(){chromePlace();if(controller){RECT rc;GetClientRect(windowHandle,&rc);controller->put_Bounds(rc);applyZoom();}}
 void toggleFull(bool on);
