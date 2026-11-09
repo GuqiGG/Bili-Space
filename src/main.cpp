@@ -26,6 +26,9 @@
 #include <mutex>
 #include <atomic>
 #include <algorithm>
+#ifndef PW_RENDERFULLCONTENT
+#define PW_RENDERFULLCONTENT 0x00000002 // Windows 8.1+; absent from Windows 7 target headers
+#endif
 #include <filesystem>
 #include <fstream>
 #include <functional>
