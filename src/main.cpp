@@ -496,6 +496,12 @@ bool playerMapping(float W,float H,float& scale,float& x,float& y){
     if(playerRect.size()!=4||playerRect[2]<40||W<=0)return false;
     scale=float(playerRect[2])/W;x=float(playerRect[0])+fullShift.x;y=float(playerRect[1])+fullShift.y+float(playerRect[3])/2-H*scale/2;return true;
 }
+// Keeps the transition pictures lined up with the screen while the window moves; called from WM_SIZE / WM_MOVE.
+void fullFollow(){
+    if(fullPhase==FullPhase::idle||fullPhase==FullPhase::entered)return;comp::movePage(monitorInClient());
+    if(fullPhase==FullPhase::returning&&playerRect.size()==4&&videoSize.cx>0){const float k=float(playerRect[2])/float(videoSize.cx),x=float(playerRect[0]),y=float(playerRect[1])+float(playerRect[3])/2-videoSize.cy*k/2;
+        comp::videoAt(k,x,y,{LONG(playerRect[0]),LONG(playerRect[1]),LONG(playerRect[0]+playerRect[2]),LONG(playerRect[1]+playerRect[3])});}
+}
 void endFullTransition(){KillTimer(windowHandle,7760);KillTimer(windowHandle,7761);KillTimer(windowHandle,7765);}
 // rect: where the player sat before entering, in device pixels of the page as it was; empty if unknown.
 void fullscreenReady(const std::vector<double>& rect){
@@ -511,11 +517,9 @@ void fullscreenReady(const std::vector<double>& rect){
 // The shrinking video has reached the player's place: the window goes back to its size under the pictures.
 void returnFromFull(){
     KillTimer(windowHandle,7765);fullPhase=FullPhase::returning;full=false;
-    SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_NOZORDER|SWP_NOCOPYBITS);
-    POINT now{};ClientToScreen(windowHandle,&now);comp::movePage(monitorInClient());
+    SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_NOZORDER|SWP_NOCOPYBITS);
     // The video picture stays on the player's place (now in the restored window's pixels), cut to the player's box.
-    if(playerRect.size()==4&&videoSize.cx>0){const float k=float(playerRect[2])/float(videoSize.cx),x=float(playerRect[0]),y=float(playerRect[1])+float(playerRect[3])/2-videoSize.cy*k/2;
-        comp::videoAt(k,x,y,{LONG(playerRect[0]),LONG(playerRect[1]),LONG(playerRect[0]+playerRect[2]),LONG(playerRect[1]+playerRect[3])});}
+    fullFollow();
     fit();dockLayout();execute("window.BiliSpace?.setFullscreen(false)");
     execute("requestAnimationFrame(()=>requestAnimationFrame(()=>window.chrome?.webview?.postMessage({type:'fullscreen-ready'})))");SetTimer(windowHandle,7761,400,nullptr);
 }
@@ -527,9 +531,10 @@ void toggleFull(bool on){
         POINT before{};ClientToScreen(windowHandle,&before);
         // The picture is taken while the screen still shows the page and staged under it; only then is the page layer hidden.
         Shot shot;bool animate=windowAnimations()&&takeScreenShot(shot,pageMonitor)&&comp::stagePage(shot.bitmap,monitorInClient());shot.drop();
+        if(animate)comp::shown();
         if(animate&&comp::hideContent())fullPhase=FullPhase::entering;else comp::clearUnder(false);
         GetWindowRect(windowHandle,&savedRect);MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi);full=true;
-        SetWindowPos(windowHandle,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right-mi.rcMonitor.left,mi.rcMonitor.bottom-mi.rcMonitor.top,SWP_FRAMECHANGED|SWP_NOCOPYBITS);
+        SetWindowPos(windowHandle,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right-mi.rcMonitor.left,mi.rcMonitor.bottom-mi.rcMonitor.top,SWP_NOCOPYBITS);
         POINT now{};ClientToScreen(windowHandle,&now);fullShift={before.x-now.x,before.y-now.y};
         if(fullPhase==FullPhase::entering){comp::movePage(monitorInClient());SetTimer(windowHandle,7761,400,nullptr);}
         fit();dockLayout();chromeShow(false);comp::settleChrome();
@@ -542,7 +547,7 @@ void toggleFull(bool on){
         HDC screen=GetDC(windowHandle),memory=CreateCompatibleDC(screen);video.bitmap=CreateCompatibleBitmap(screen,c.right,c.bottom);auto old=SelectObject(memory,video.bitmap);
         const BOOL ok=PrintWindow(windowHandle,memory,PW_CLIENTONLY|PW_RENDERFULLCONTENT);SelectObject(memory,old);DeleteDC(memory);ReleaseDC(windowHandle,screen);
         float k=1,x=0,y=0;
-        if(ok&&comp::stagePage(nullptr,monitorInClient(),.86f)&&comp::stageVideo(video.bitmap)&&playerMapping(float(c.right),float(c.bottom),k,x,y)&&comp::hideContent()){
+        if(ok&&comp::stagePage(nullptr,monitorInClient(),.86f)&&comp::stageVideo(video.bitmap)&&playerMapping(float(c.right),float(c.bottom),k,x,y)&&(comp::shown(),comp::hideContent())){
             video.drop();videoSize={c.right,c.bottom};fullPhase=FullPhase::leaving;
             comp::veilTo(.86f,0.f,fullSeconds);comp::videoTo(k,x,y,fullSeconds);SetTimer(windowHandle,7765,UINT(fullSeconds*1000)+10,nullptr);return;
         }
@@ -761,10 +766,10 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case dockActionMessage:dockAction(wp,lp);return 0;
     // Maximize and restore jump the size in one step; a page that is busy at that moment can keep showing its old-size frame
     // with the rest of the window empty. Shortly after such a jump the page is nudged to draw a fresh frame at the final size.
-    case WM_SIZE:{static WPARAM lastKind=SIZE_RESTORED;fit();dockLayout();if(wp!=lastKind&&wp!=SIZE_MINIMIZED&&!full&&fullPhase==FullPhase::idle){SetTimer(hwnd,7756,140,nullptr);SetTimer(hwnd,7758,600,nullptr);}if(wp!=SIZE_MINIMIZED)lastKind=wp;return 0;}
+    case WM_SIZE:{static WPARAM lastKind=SIZE_RESTORED;fullFollow();fit();dockLayout();if(wp!=lastKind&&wp!=SIZE_MINIMIZED&&!full&&fullPhase==FullPhase::idle){SetTimer(hwnd,7756,140,nullptr);SetTimer(hwnd,7758,600,nullptr);}if(wp!=SIZE_MINIMIZED)lastKind=wp;return 0;}
     case WM_ERASEBKGND:{RECT r{};GetClientRect(hwnd,&r);auto bg=CreateSolidBrush(full?RGB(0,0,0):surfaceDark?RGB(22,22,24):RGB(250,250,250));FillRect(reinterpret_cast<HDC>(wp),&r,bg);DeleteObject(bg);return 1;}
     // Every view learns that the window moved, so its popups (select lists, IME candidates, tooltips) open in the right place.
-    case WM_MOVE:{for(auto t:tabs)if(t->controller&&!t->closed)t->controller->NotifyParentWindowPositionChanged();if(chromeHost::ctl)chromeHost::ctl->NotifyParentWindowPositionChanged();dockLayout();break;}
+    case WM_MOVE:{fullFollow();for(auto t:tabs)if(t->controller&&!t->closed)t->controller->NotifyParentWindowPositionChanged();if(chromeHost::ctl)chromeHost::ctl->NotifyParentWindowPositionChanged();dockLayout();break;}
     case WM_SHOWWINDOW:case WM_WINDOWPOSCHANGED:dockLayout();break;
     case WM_SETTINGCHANGE:{static double text=comp::textScaleFactor();const double now=comp::textScaleFactor();if(now!=text){text=now;comp::applyScaleToAll();fit();}break;}
     case WM_DPICHANGED:{comp::applyScaleToAll();auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}

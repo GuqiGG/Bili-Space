@@ -130,6 +130,8 @@ void videoAt(float scale,float x,float y,const RECT& box){
     if(!videoPicture.visual)return;place(videoMotion,videoPicture.visual,scale,x,y);
     videoPicture.visual->SetClip(D2D_RECT_F{(box.left-x)/scale,(box.top-y)/scale,(box.right-x)/scale,(box.bottom-y)/scale});device->Commit();
 }
+// Blocks until the compositor has shown what was committed (the pictures are on screen before the page layer goes).
+void shown(){if(ready)device->WaitForCommitCompletion();}
 // Takes the pictures out of the tree; keepPage leaves the screen picture ready for the way back.
 void clearUnder(bool keepPage){
     if(underLayer)underLayer->RemoveAllVisuals();videoPicture.release();if(videoMotion){videoMotion->Release();videoMotion=nullptr;}if(!keepPage)pagePicture.release();if(ready)device->Commit();
