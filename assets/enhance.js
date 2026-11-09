@@ -866,28 +866,20 @@ const fullBox=el=>{const r=fullArea(el).getBoundingClientRect(),s=devicePixelRat
 for(const name of ['requestFullscreen','webkitRequestFullscreen']){const original=Element.prototype[name];if(typeof original!=='function'||CHROME_VIEW)continue;
   Element.prototype[name]=function(...args){const result=Reflect.apply(original,this,args);try{if(!document.fullscreenElement){fullTarget=this;fullRect=fullBox(this);fullRectAt=Date.now();fullStartSent=true;native('fullscreen-start',{rect:fullRect});}}catch{}return result;};
 }
-// Tells the host once the page is really drawn at a given size (device pixels): after its resize and three more frames.
-function fullReadyAt(width,height){
-  const s=devicePixelRatio||1,sized=()=>Math.abs(innerWidth*s-width)<=2&&Math.abs(innerHeight*s-height)<=2;let sent=false;
-  const report=()=>native('fullscreen-ready',{});
-  const fire=()=>{if(sent)return;sent=true;removeEventListener('resize',check);const v=fullTarget?.querySelector?.('video');
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!v||v.paused||!v.requestVideoFrameCallback){requestAnimationFrame(report);return;}let done=false;const go=()=>{if(!done){done=true;requestAnimationFrame(report);}};v.requestVideoFrameCallback(go);setTimeout(go,150);}));};
-  const check=()=>{if(sized())fire();};if(sized())fire();else{addEventListener('resize',check);setTimeout(fire,300);}
+// Tells the host once the page is really drawn at a given size and zoom (device pixels, device pixel ratio): after the
+// matching resize, two frames, and - while a video plays - its next frame. Entering, it also says where the player was.
+function fullReadyAt(width,height,ratio,entering){
+  const right=()=>Math.abs(innerWidth*devicePixelRatio-width)<=2&&Math.abs(innerHeight*devicePixelRatio-height)<=2&&Math.abs(devicePixelRatio-ratio)<.02;let sent=false;
+  const report=()=>{let rect=null;try{rect=entering?fullRect:null;}catch{}native('fullscreen-ready',{rect});};
+  const fire=()=>{if(sent)return;sent=true;removeEventListener('resize',check);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{const v=(entering?document.fullscreenElement:fullTarget)?.querySelector?.('video');
+      if(!v||v.paused||!v.requestVideoFrameCallback){report();return;}let done=false;const go=()=>{if(!done){done=true;report();}};v.requestVideoFrameCallback(go);setTimeout(go,120);}));};
+  const check=()=>{if(right())fire();};if(right())fire();else{addEventListener('resize',check);setTimeout(fire,400);}
 }
-// Fullscreen can also be asked for by a path that does not pass the wrapper above, so the player's place is noted on every
-// press beforehand and sent the moment fullscreen begins.
-if(!CHROME_VIEW)for(const type of ['pointerdown','keydown','dblclick'])document.addEventListener(type,()=>{if(document.fullscreenElement)return;const c=document.querySelector('.bpx-player-container,#bilibili-player');if(c){try{fullTarget=c;fullRect=fullBox(c);fullRectAt=Date.now();fullStartSent=false;}catch{}}},true);
 document.addEventListener('fullscreenchange',()=>{
   if(CHROME_VIEW)return;const entering=!!document.fullscreenElement;
   if(entering&&!fullStartSent&&fullRect&&Date.now()-fullRectAt<3000){fullStartSent=true;native('fullscreen-start',{rect:fullRect});}
-  if(!entering)fullStartSent=false;let sent=false;
-  const send=()=>{if(sent)return;sent=true;removeEventListener('resize',send);
-    const report=()=>{let rect=null;try{rect=entering?fullRect:fullTarget?.isConnected?fullBox(fullTarget):null;}catch{}native('fullscreen-ready',{rect});};
-    // Entering, a playing video is waited for until it has shown a frame at the new size (briefly), so the motion never starts on black.
-    const v=entering&&document.fullscreenElement?.querySelector?.('video');
-    if(!v||v.paused||!v.requestVideoFrameCallback){requestAnimationFrame(()=>requestAnimationFrame(report));return;}
-    let done=false;const go=()=>{if(!done){done=true;report();}};v.requestVideoFrameCallback(go);setTimeout(go,100);};
-  addEventListener('resize',send);setTimeout(send,220);
+  if(!entering)fullStartSent=false;
 });
 function scheduleScan(){
   if(scanTimer)return;

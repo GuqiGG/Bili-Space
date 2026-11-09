@@ -522,6 +522,12 @@ void startGrow(){
 void finishEnter(){
     KillTimer(windowHandle,7761);KillTimer(windowHandle,7766);comp::crossIn(.16);SetTimer(windowHandle,7760,190,nullptr);
 }
+void askFullReady(){
+    RECT c{};GetClientRect(windowHandle,&c);double zoom=1;if(controller)controller->get_ZoomFactor(&zoom);
+    using Dpi=UINT(WINAPI*)(HWND);static auto dpi=reinterpret_cast<Dpi>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetDpiForWindow"));
+    const double ratio=(dpi?dpi(windowHandle)/96.0:1.0)*comp::textScaleFactor()*zoom;char buffer[160];
+    snprintf(buffer,sizeof(buffer),"window.BiliSpace?.fullReadyAt?.(%ld,%ld,%.4f,%s)",c.right,c.bottom,ratio,fullPhase==FullPhase::entering?"true":"false");execute(buffer);
+}
 void endFullTransition(){KillTimer(windowHandle,7760);KillTimer(windowHandle,7761);KillTimer(windowHandle,7765);KillTimer(windowHandle,7766);cropGrowing=false;liveReady=false;}
 // rect: where the player sat before entering, in device pixels of the page as it was; empty if unknown.
 void fullscreenReady(const std::vector<double>& rect){
@@ -544,7 +550,7 @@ void returnFromFull(){
     // The video picture stays on the player's place (now in the restored window's pixels), cut to the player's box.
     fullFollow();
     fit();dockLayout();chromeShow(!pip);execute("window.BiliSpace?.setFullscreen(false)");
-    RECT c{};GetClientRect(windowHandle,&c);execute("window.BiliSpace?.fullReadyAt?.("+std::to_string(c.right)+","+std::to_string(c.bottom)+")");SetTimer(windowHandle,7761,450,nullptr);
+    askFullReady();SetTimer(windowHandle,7761,600,nullptr);
 }
 // A toggle in the middle of a transition (or right after one) goes straight to its end state, without motion, so quick
 // presses never leave a half-finished picture or a moving target behind.
@@ -559,12 +565,20 @@ void snapFull(bool on){
 }
 void toggleFull(bool on){
     if(pip)return;
-    const bool moving=fullPhase==FullPhase::entering||fullPhase==FullPhase::leaving||fullPhase==FullPhase::returning||GetTickCount64()-fullSettledAt<150;
+    if(testing)log(std::string("toggleFull ")+(on?"on":"off")+" full="+(full?"1":"0")+" phase="+std::to_string(int(fullPhase)));
     if(on&&full&&fullPhase!=FullPhase::leaving)return;
     if(!on&&!full)return;
     if(!on&&fullPhase==FullPhase::leaving)return;
-    if(moving){snapFull(on);return;}
-    if(testing)log(std::string("toggleFull ")+(on?"on":"off")+" full="+(full?"1":"0")+" phase="+std::to_string(int(fullPhase)));
+    if(on&&fullPhase==FullPhase::leaving){snapFull(true);return;}
+    if(on&&fullPhase==FullPhase::returning){
+        // The page is already back; only its fade-in was pending.
+        endFullTransition();comp::revealFrom(1.f,0.f,0.f,0);comp::settleContent();comp::clearUnder(false);comp::settleChrome();chromeShow(!pip);fullPhase=FullPhase::idle;
+    }
+    if(!on&&fullPhase==FullPhase::entering){
+        if(!cropGrowing||GetTickCount64()<growUntil){snapFull(false);return;}
+        // The video has finished growing; only the live page's fade-in was pending.
+        endFullTransition();comp::settleContent();comp::clearUnder(true);comp::settleChrome();fullPhase=FullPhase::entered;
+    }
     endFullTransition();
     if(on){
         if(fullPhase!=FullPhase::idle){comp::settleContent();comp::clearUnder(false);fullPhase=FullPhase::idle;}
@@ -578,7 +592,7 @@ void toggleFull(bool on){
         POINT now{};ClientToScreen(windowHandle,&now);fullShift={before.x-now.x,before.y-now.y};
         if(fullPhase==FullPhase::entering){comp::movePage(monitorInClient());SetTimer(windowHandle,7761,600,nullptr);startGrow();}
         fit();dockLayout();chromeShow(false);
-        execute("window.BiliSpace?.setFullscreen(true)");
+        execute("window.BiliSpace?.setFullscreen(true)");if(fullPhase==FullPhase::entering)askFullReady();
         return;
     }
     // Leaving plays the entrance backwards while the window is still fullscreen, then returns the window to its size.
