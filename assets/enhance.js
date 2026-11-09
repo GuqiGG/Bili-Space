@@ -891,7 +891,7 @@ function holdPlayer(on){
 }
 document.addEventListener('fullscreenchange',()=>{
   if(CHROME_VIEW)return;const entering=!!document.fullscreenElement;
-  if(!entering&&!matchMedia('(prefers-reduced-motion: reduce)').matches)holdPlayer(true);
+  if(!entering&&PREFS.experimentalFullscreenMotion&&!matchMedia('(prefers-reduced-motion: reduce)').matches)holdPlayer(true);
   if(entering&&!fullStartSent&&fullRect&&Date.now()-fullRectAt<3000){fullStartSent=true;native('fullscreen-start',{rect:fullRect});}
   if(!entering)fullStartSent=false;
 });

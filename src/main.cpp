@@ -589,7 +589,7 @@ void toggleFull(bool on){
         if(fullPhase!=FullPhase::idle){comp::settleContent();comp::clearUnder(false);fullPhase=FullPhase::idle;}
         POINT before{};ClientToScreen(windowHandle,&before);fullBefore=before;cropGrowing=false;liveReady=false;
         // The picture is taken while the screen still shows the page and staged under it; only then is the page layer hidden.
-        Shot shot;bool animate=windowAnimations()&&takeScreenShot(shot,pageMonitor)&&comp::stagePage(shot.bitmap,monitorInClient());shot.drop();
+        Shot shot;bool animate=windowAnimations()&&fullMotion()&&takeScreenShot(shot,pageMonitor)&&comp::stagePage(shot.bitmap,monitorInClient());shot.drop();
         if(animate)comp::shown();
         if(animate&&comp::hideContent()){comp::hideChrome();comp::shown();fullPhase=FullPhase::entering;}else comp::clearUnder(false);
         GetWindowRect(windowHandle,&savedRect);MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi);full=true;
@@ -601,8 +601,6 @@ void toggleFull(bool on){
         return;
     }
     // Leaving plays the entrance backwards while the window is still fullscreen, then returns the window to its size.
-    // Without the motion: the picture of the page from before fullscreen covers the return, then the page fades in.
-    if(fullPhase==FullPhase::entered&&windowAnimations()&&!fullMotion()&&comp::stagePage(nullptr,monitorInClient(),0.f)&&(comp::shown(),comp::hideContent())){videoSize={0,0};returnFromFull();return;}
     if(fullPhase==FullPhase::entered&&windowAnimations()&&fullMotion()){
         Shot video;RECT c{};GetClientRect(windowHandle,&c);
         HDC screen=GetDC(windowHandle),memory=CreateCompatibleDC(screen);video.bitmap=CreateCompatibleBitmap(screen,c.right,c.bottom);auto old=SelectObject(memory,video.bitmap);

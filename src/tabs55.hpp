@@ -101,8 +101,9 @@ std::wstring localeRouteKey(const std::wstring& uri,bool* localized=nullptr){
 bool localeKnown(const std::wstring& key){for(auto& v:localeRoutes)if(v.is_string()&&wide(v.get<std::string>())==key)return true;return false;}
 // Called for each top-level navigation start; returns the address to open instead, or an empty string.
 std::wstring localeRedirect(ICoreWebView2* view,const std::wstring& uri,bool redirected,bool history){
-    // Through the client proxy the site may well serve its mainland pages; what was learned without it does not apply.
-    if(proxyEnabled)return L"";
+    // Not applied: opening the /zh-Hans copy directly gets the overseas home (no 换一换) even where the site itself would
+    // serve the regular one; the site redirects on its own when it wants to.
+    return L"";
     bool zh=false;auto key=localeRouteKey(uri,&zh);auto& previous=navigationStarts[view];
     if(!key.empty()&&zh){bool fromPlain=false;auto before=localeRouteKey(previous,&fromPlain);
         // Learn only from the site moving a plain address to its own /zh-Hans copy (server redirect or page script).
