@@ -16,6 +16,9 @@
   const wrapped = new Map();
   // Everything a plugin set up through the API that has to be undone when it stops (observers, timers, listeners, keys).
   const cleanups = new Map();
+  // Native requests waiting for their answer: request id -> { resolve, reject }.
+  const pending = new Map();
+  let requestSeq = 0;
   const errors = [];
   const strikes = new Map();
   let options = { getVideo: () => document.querySelector('video'), getPrefs: () => ({}), toast: () => {}, update: null, getShadow: () => null, view: 'page', navigate: null };
@@ -123,6 +126,21 @@
     if (separateHeader && options.view !== 'header') return null;
     return options.getShadow ? options.getShadow() : null;
   }
+  function nativeCallFor(id) {
+    return function (op, args) {
+      return new Promise(function (resolve, reject) {
+        const request = id + ':' + (++requestSeq) + ':' + Math.random().toString(36).slice(2, 8);
+        pending.set(request, { resolve, reject });
+        post({ type: 'plugins', action: 'native', id, op, request, args: args || {} });
+      });
+    };
+  }
+  // Answers from the native host reach every view; only the one that asked has the request id.
+  function reply(message) {
+    const waiting = message && pending.get(message.request); if (!waiting) return;
+    pending.delete(message.request);
+    if (message.ok) waiting.resolve(message.result); else waiting.reject(new Error(String(message.error || '失败')));
+  }
   function safeMatches(element, selector) { try { return element.matches(selector); } catch (_) { return false; } }
   // Runs plugin code inside its error boundary.
   function guard(id, fn, args) { try { return fn.apply(null, args); } catch (error) { strike(id, error); } }
@@ -152,6 +170,7 @@
   }
   function apiFor(def) {
     const id = def.id;
+    const nativeCall = nativeCallFor(id);
     const own = [];
     const on = function (event, handler) {
       if (typeof event !== 'string' || typeof handler !== 'function') return function () {};
@@ -302,6 +321,13 @@
         seek: function (seconds) { const v = api.getVideo(); const t = Number(seconds); if (!v || !isFinite(t)) return false; v.currentTime = Math.max(0, Math.min(t, isFinite(v.duration) ? v.duration : t)); return true; },
         rate: function (x) { const v = api.getVideo(); const r = Number(x); if (!v || !(r >= 0.1 && r <= 16)) return false; v.playbackRate = r; return true; },
         volume: function (x) { const v = api.getVideo(); const n = Number(x); if (!v || !(n >= 0 && n <= 1)) return false; v.volume = n; return true; },
+        // The current picture as an image data URL ('image/jpeg' by default), scaled to at most maxWidth pixels wide.
+        frame: function (maxWidth, type, quality) {
+          const v = api.getVideo(); if (!v || !v.videoWidth) return null;
+          const scale = Math.min(1, (Number(maxWidth) || v.videoWidth) / v.videoWidth), c = document.createElement('canvas');
+          c.width = Math.round(v.videoWidth * scale); c.height = Math.round(v.videoHeight * scale);
+          try { c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); return c.toDataURL(type || 'image/jpeg', quality || 0.85); } catch (_) { return null; }
+        },
         state: function () { const v = api.getVideo(); return v ? { time: v.currentTime, duration: v.duration, paused: v.paused, rate: v.playbackRate, volume: v.volume, muted: v.muted, width: v.videoWidth, height: v.videoHeight } : null; }
       }),
       // GET a Bilibili web API (https://api.bilibili.com/...) as the signed-in account; resolves to the parsed JSON.
@@ -312,6 +338,49 @@
         if (query && typeof query === 'object') for (const [k, v] of Object.entries(query)) target.searchParams.set(k, String(v));
         return fetch(target.href, { credentials: 'include' }).then(function (response) { return response.json(); });
       },
+      // ---- Full access (plugins that declare `// @grant native` and were allowed at import) ----
+      // Absent unless the plugin declared `// @grant native` and the user allowed it at import.
+      native: !def.native ? undefined : Object.freeze({
+        http: function (url, init) { init = init || {}; return nativeCall('http', { url: String(url), method: init.method || 'GET', headers: init.headers || {}, body: init.body == null ? '' : (typeof init.body === 'string' ? init.body : JSON.stringify(init.body)), timeout: init.timeout, responseType: init.responseType }); },
+        readFile: function (path, encoding) { return nativeCall('readFile', { path: String(path), encoding: encoding || 'utf8' }).then(function (r) { return r.base64 != null ? r.base64 : r.text; }); },
+        writeFile: function (path, data, options) { options = options || {}; return nativeCall('writeFile', { path: String(path), data: String(data), encoding: options.encoding || 'utf8', append: !!options.append }); },
+        list: function (path) { return nativeCall('list', { path: String(path) }); },
+        exists: function (path) { return nativeCall('exists', { path: String(path) }); },
+        mkdir: function (path) { return nativeCall('mkdir', { path: String(path) }); },
+        remove: function (path) { return nativeCall('remove', { path: String(path) }); },
+        exec: function (file, args, options) { options = options || {}; return nativeCall('exec', { file: String(file), args: (args || []).map(String), cwd: options.cwd || '', input: options.input || '', timeout: options.timeout }); },
+        open: function (target) { return nativeCall('open', { target: String(target) }); },
+        paths: function () { return nativeCall('paths', {}); },
+        secret: Object.freeze({
+          get: function (key) { return nativeCall('secretGet', { key: String(key) }); },
+          set: function (key, value) { return nativeCall('secretSet', { key: String(key), value: value == null ? null : value }); }
+        })
+      }),
+      // The current video page: ids, title, description and owner (null elsewhere).
+      video: Object.freeze({
+        info: function () {
+          try {
+            const state = global.__INITIAL_STATE__ || {}; const v = state.videoData || {};
+            if (!v.bvid) return null;
+            const page = Math.max(1, Number(new URLSearchParams(location.search).get('p')) || 1);
+            const part = (v.pages || [])[page - 1] || {};
+            return { bvid: v.bvid, aid: v.aid, cid: part.cid || v.cid, page: page, title: v.title, desc: v.desc, duration: part.duration || v.duration, owner: v.owner ? { mid: v.owner.mid, name: v.owner.name } : null, cover: v.pic };
+          } catch (_) { return null; }
+        },
+        // Subtitles of the current video (Bilibili's AI or uploaded ones): [{ lang, name, lines: [{ from, to, text }] }].
+        subtitles: function () {
+          const info = api.video.info(); if (!info) return Promise.resolve([]);
+          return api.biliApi('/x/player/v2', { bvid: info.bvid, cid: info.cid }).then(function (j) {
+            const list = (j && j.data && j.data.subtitle && j.data.subtitle.subtitles) || [];
+            return Promise.all(list.slice(0, 6).map(function (item) {
+              const url = String(item.subtitle_url || '').replace(/^\/\//, 'https://'); if (!url) return null;
+              return fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+                return { lang: item.lan, name: item.lan_doc, lines: (data.body || []).map(function (line) { return { from: line.from, to: line.to, text: line.content }; }) };
+              }).catch(function () { return null; });
+            })).then(function (all) { return all.filter(Boolean); });
+          });
+        }
+      }),
       // ---- Controlling the client and adding to it ----
       // Messages between this plugin's copies in the header and in pages: api.send('seek', 30) here, and
       // api.on('message', m => m.name === 'seek' && ...) there. Data must be JSON (at most 64 KB).
@@ -369,7 +438,29 @@
           return close;
         },
         // Raw access to the client's interface root (same as api.shell()).
-        root: function () { return uiShell(); }
+        root: function () { return uiShell(); },
+        // A side panel over the right of the window: { title, html, width }. Returns { set(html), element, close() }.
+        panel: function (spec) {
+          const shell = uiShell(); if (!shell) return { set: function () {}, element: null, close: function () {} };
+          const box = document.createElement('aside'); box.className = 'bs-plugin-panel'; box.dataset.bsPlugin = id;
+          const width = Math.max(240, Math.min(720, Number(spec && spec.width) || 380));
+          box.style.cssText = 'position:fixed;top:calc(var(--bs-header-height,58px) + 10px);right:12px;bottom:12px;width:' + width + 'px;max-width:calc(100vw - 24px);z-index:110;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px #0004;overflow:hidden;pointer-events:auto';
+          const head = document.createElement('header'); head.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);font-weight:600';
+          const title = document.createElement('span'); title.style.flex = '1'; title.textContent = text(String((spec && spec.title) || def.name || id), 80);
+          const x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', '关闭'); x.style.cssText = 'border:0;background:transparent;color:var(--muted);font-size:20px;cursor:pointer';
+          const body = document.createElement('div'); body.style.cssText = 'flex:1;overflow:auto;padding:12px 14px;font-size:13px;line-height:1.7;user-select:text';
+          head.append(title, x); box.append(head, body); shell.append(box);
+          let undo = function () {};
+          const panelApi = {
+            element: body,
+            set: function (html) { body.innerHTML = String(html == null ? '' : html); },
+            close: function () { undo(); }
+          };
+          x.addEventListener('click', function () { panelApi.close(); if (spec && typeof spec.onClose === 'function') guard(id, spec.onClose, []); });
+          if (spec && spec.html != null) panelApi.set(spec.html);
+          undo = ownCleanup(id, function () { box.remove(); });
+          return panelApi;
+        }
       })
     };
     return { api: Object.freeze(api), own };
@@ -610,5 +701,5 @@
       node.append(line);
     }
   }
-  global.BiliSpacePlugins = { start, stop, snapshot, renderPanel, emit, setEnabled, remove, acceptData, deliver, get(id) { const i = instances.get(id); return i ? { id: i.id, state: i.state } : null; }, get errors() { return errors.slice(); } };
+  global.BiliSpacePlugins = { start, stop, snapshot, renderPanel, emit, setEnabled, remove, acceptData, deliver, reply, get(id) { const i = instances.get(id); return i ? { id: i.id, state: i.state } : null; }, get errors() { return errors.slice(); } };
 })(window);

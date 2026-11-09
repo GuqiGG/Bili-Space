@@ -797,6 +797,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
         }
     }
     switch(msg){
+    case pluginReplyMessage:nativeReplyArrived(lp);return 0;
     case updateReplyMessage:{std::unique_ptr<json> result(reinterpret_cast<json*>(lp));if(result)acceptUpdate(*result);return 0;}
     case downloadReplyMessage:{
         std::unique_ptr<DownloadReply> reply(reinterpret_cast<DownloadReply*>(lp));

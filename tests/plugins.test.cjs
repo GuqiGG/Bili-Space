@@ -82,3 +82,17 @@ test('the settings panel lists plugins and toggling writes pluginsDisabled', () 
     assert.deepEqual([...saved.pluginsDisabled], ['one']);
   } finally { a.close(); }
 });
+
+test('only a plugin granted full access (and allowed by the user) gets api.native', () => {
+  const a = host([
+    { id: 'plain', name: 'Plain', code: "window.__plain=typeof api.native;" },
+    { id: 'full', name: 'Full', grant: 'native', native: true, code: "window.__full=[typeof api.native,typeof api.native.http,typeof api.native.exec,typeof api.native.secret.get];" },
+    { id: 'asked', name: 'Asked', grant: 'native', native: false, code: "window.__asked=typeof api.native;" }
+  ]);
+  try {
+    a.api.start({});
+    assert.equal(a.w.__plain, 'undefined');
+    assert.equal(JSON.stringify(a.w.__full), JSON.stringify(['object', 'function', 'function', 'function']));
+    assert.equal(a.w.__asked, 'undefined');
+  } finally { a.close?.(); }
+});

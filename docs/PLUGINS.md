@@ -91,6 +91,15 @@ Bili-Space 的插件是一段 JS，可以改主题、改客户端界面（顶栏
 | `api.player.state()` | `{ time, duration, paused, rate, volume, muted, width, height }` |
 | `api.biliApi(path, query)` | 以当前登录账号请求 `https://api.bilibili.com/...`，返回解析好的 JSON（只允许这个域名） |
 
+### 更多界面与视频接口
+
+| 成员 | 说明 |
+| --- | --- |
+| `api.ui.panel({ title, html, width, onClose })` | 窗口右侧的侧边栏面板，返回 `{ element, set(html), close() }`；适合显示 AI 分析结果等长内容 |
+| `api.player.frame(maxWidth?, type?, quality?)` | 当前视频画面，返回图片 data URL（默认 JPEG），可以直接交给能看图的 AI |
+| `api.video.info()` | 当前视频的 `{ bvid, aid, cid, page, title, desc, duration, owner, cover }`，不在视频页时为 `null` |
+| `api.video.subtitles()` | 当前视频的字幕（B 站 AI 字幕或 UP 上传的）：`[{ lang, name, lines: [{ from, to, text }] }]` |
+
 ### 会自动清理的工具
 
 | 成员 | 说明 |
@@ -100,6 +109,35 @@ Bili-Space 的插件是一段 JS，可以改主题、改客户端界面（顶栏
 | `api.every(ms, fn)` / `api.after(ms, fn)` | 定时器（重复的最少间隔 50 ms） |
 
 以上每个都返回一个取消函数；插件停用时，它们会全部自动撤销，不用自己在 `destroy` 里清理。
+
+## 完全访问权限（超出客户端沙盒）
+
+插件在清单里声明 `// @grant native`（`plugin.json` 里写 `"grant": "native"`），导入时客户端会弹窗说明它将获得的权限；只有你点“是”，它才能使用 `api.native`。选“否”仍会安装，但 `api.native` 不存在。删除插件会同时收回权限。
+
+| 成员 | 说明 |
+| --- | --- |
+| `api.native.http(url, { method, headers, body, timeout, responseType })` | 请求任意网址（不受浏览器跨域限制），返回 `{ status, headers, text }`；`responseType: 'base64'` 时返回 `base64`。`body` 可以是字符串或对象（自动转 JSON） |
+| `api.native.readFile(path, 'utf8' \| 'base64')` / `writeFile(path, data, { encoding, append })` | 读写任意文件 |
+| `api.native.list(path)` / `exists(path)` / `mkdir(path)` / `remove(path)` | 目录操作 |
+| `api.native.exec(file, args, { cwd, input, timeout })` | 运行程序（不弹黑框），返回 `{ code, stdout, stderr, timedOut }` |
+| `api.native.open(target)` | 用系统默认方式打开文件或网址 |
+| `api.native.paths()` | `{ data, downloads, home, temp }`，`data` 是这个插件专属的文件夹 |
+| `api.native.secret.get(key)` / `set(key, value)` | 用 Windows 加密保存密钥（例如 AI 服务的 API Key），只有当前 Windows 用户能解开 |
+
+这些都返回 Promise，在后台线程执行，不会卡住界面。
+
+### 安全检查
+
+完全访问权限等于一个普通软件的权限，所以客户端有两道检查：
+
+1. **导入和每次加载时检查代码**：发现明显的恶意写法就拒绝运行，并在扩展插件页显示原因。包括运行加密的 PowerShell 命令、删除系统备份或破坏磁盘、加入开机自启或计划任务、读取浏览器密码/Cookie/钱包/SSH 密钥、读取客户端自己的账号数据或其他插件的密钥、挖矿、用 `eval(atob(...))` 之类方式执行隐藏代码、大段编码隐藏的内容。
+2. **执行时再拦一次**：即使代码检查没认出来，`api.native` 也会拒绝读取浏览器密码和本客户端账号文件、往开机启动目录或系统目录写文件、删除整个磁盘或用户文件夹、运行上面那类危险命令。
+
+这些检查只能挡住常见的恶意手法，无法证明一个插件是安全的。**只安装你信任的插件。**
+
+## 示例：AI 视频总结
+
+完整代码见 [`docs/examples/ai-summary.js`](examples/ai-summary.js)：顶栏多一个“AI 总结”按钮，读取当前视频字幕，用你自己的 AI 服务（任何 OpenAI 兼容接口：OpenAI、DeepSeek、通义千问、Kimi……）生成带时间点的要点，显示在侧边栏，点要点跳到对应位置。API 密钥加密保存。
 
 ## 示例：可以选颜色的主题
 
@@ -161,5 +199,5 @@ api.hotkey('Shift+ArrowDown', () => api.player.rate(Math.max(0.25, (api.player.s
 
 - 插件的入口、事件和包装函数都运行在错误边界里；同一个插件在一个页面里连续出错 20 次会在该页面自动停用。
 - 停用插件时，客户端会撤销它的样式、事件和包装，并先发送 `destroy` 事件，让插件清理自己做的其他改动。
-- 插件 API 不提供原生能力（下载、更新、窗口、文件系统）；客户端收到的每条页面消息都会校验。
+- 没有声明并获准 `@grant native` 的插件拿不到任何原生能力（文件、网络、运行程序）；客户端收到的每条页面消息都会校验。
 - 插件是本机代码，能读写页面内容和你的 B 站页面数据。**不要安装来源不明的插件。**
