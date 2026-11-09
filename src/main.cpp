@@ -512,7 +512,7 @@ void drawShot(HDC dc,const Shot& shot,const RECT& d,bool smooth){
     else{SetStretchBltMode(dc,smooth?HALFTONE:COLORONCOLOR);SetBrushOrgEx(dc,0,0,nullptr);StretchBlt(dc,d.left,d.top,w,h,memory,0,0,shot.width,shot.height,SRCCOPY);}
     SelectObject(memory,old);DeleteDC(memory);
 }
-void paintFull(HDC dc){
+void composeFull(HDC dc){
     RECT c{};GetClientRect(windowHandle,&c);FillRect(dc,&c,static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
     drawShot(dc,pageShot,pageDest,false);
     const double e=fullProgress(),dim=fullPhase==FullPhase::entering?e*.86:fullPhase==FullPhase::leaving?(1-e)*.86:0;
@@ -528,13 +528,19 @@ void paintFull(HDC dc){
         drawShot(dc,videoShot,{mix(0,to.left),mix(0,to.top),mix(c.right,to.right),mix(c.bottom,to.bottom)},false);
     }
 }
+// Each frame is composed off screen and copied to the window at once, so a half-drawn frame is never seen.
+void paintFull(HDC dc){
+    RECT c{};GetClientRect(windowHandle,&c);if(c.right<=0||c.bottom<=0)return;
+    HDC back=CreateCompatibleDC(dc);HBITMAP buffer=CreateCompatibleBitmap(dc,c.right,c.bottom);auto old=SelectObject(back,buffer);
+    composeFull(back);BitBlt(dc,0,0,c.right,c.bottom,back,0,0,SRCCOPY);SelectObject(back,old);DeleteObject(buffer);DeleteDC(back);
+}
 void endFullTransition(){KillTimer(windowHandle,7760);KillTimer(windowHandle,7761);KillTimer(windowHandle,7763);KillTimer(windowHandle,7764);motionFrom=0;}
 // rect: where the player sat before entering, in device pixels of the page as it was; empty if unknown.
 void fullscreenReady(const std::vector<double>& rect){
     if(fullPhase==FullPhase::entering){
         KillTimer(windowHandle,7761);if(rect.size()==4)playerRect=rect;
         RECT c{};GetClientRect(windowHandle,&c);const RECT to=playerTarget(float(c.right),float(c.bottom));
-        comp::revealFrom(float(to.right-to.left)/std::max(1.f,float(c.right)),float(to.left),float(to.top),fullSeconds);
+        comp::revealFrom(float(to.right-to.left)/std::max(1.f,float(c.right)),float(to.left),float(to.top),fullSeconds,.1);
         motionFrom=GetTickCount64();SetTimer(windowHandle,7763,15,nullptr);SetTimer(windowHandle,7760,UINT(fullSeconds*1000)+20,nullptr);
     }else if(fullPhase==FullPhase::returning){
         endFullTransition();comp::revealFrom(1.f,0.f,0.f,0);comp::settleContent();fullPhase=FullPhase::idle;pageShot.drop();videoShot.drop();

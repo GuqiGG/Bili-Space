@@ -865,7 +865,10 @@ for(const name of ['requestFullscreen','webkitRequestFullscreen']){const origina
 document.addEventListener('fullscreenchange',()=>{
   if(CHROME_VIEW)return;const entering=!!document.fullscreenElement;let sent=false;
   const send=()=>{if(sent)return;sent=true;removeEventListener('resize',send);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{let rect=null;try{rect=entering?fullRect:fullTarget?.isConnected?fullBox(fullTarget):null;}catch{}native('fullscreen-ready',{rect});}));};
+    const report=()=>{let rect=null;try{rect=entering?fullRect:fullTarget?.isConnected?fullBox(fullTarget):null;}catch{}native('fullscreen-ready',{rect});};
+    // Entering, a playing video is waited for until it has shown a frame at the new size (briefly), so the motion never starts on black.
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{const v=entering&&document.fullscreenElement?.querySelector?.('video');
+      if(!v||v.paused||!v.requestVideoFrameCallback){report();return;}let done=false;const go=()=>{if(!done){done=true;report();}};v.requestVideoFrameCallback(go);setTimeout(go,150);}));};
   addEventListener('resize',send);setTimeout(send,220);
 });
 function scheduleScan(){
