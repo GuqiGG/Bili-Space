@@ -30,6 +30,31 @@ bool init(){
 }
 // Visual hosting must be told that bounds are physical pixels and that content rasterizes at the window's own DPI;
 // otherwise it scales the bounds again and the views draw 25% too large at 125% scaling, with input offset to match.
+// Fullscreen transition: when the window jumps to or from fullscreen the page needs a frame or two to draw at the new
+// size, and its old-size frame would flash meanwhile. The page layer is hidden across the jump and, once the page has
+// drawn at the new size, it fades in from a slight zoom; the compositor runs the motion, so a busy page cannot stall it.
+IDCompositionEffectGroup* fade{};IDCompositionMatrixTransform* zoom{};
+bool hideContent(){
+    if(!ready||!contentLayer)return false;
+    if(!fade&&FAILED(device->CreateEffectGroup(&fade)))return false;
+    fade->SetOpacity(0.f);contentLayer->SetEffect(fade);device->Commit();return true;
+}
+// Ease-out cubic v(t)=a+d(3u-3u^2+u^3), u=t/T, written as the polynomial in t that DirectComposition evaluates.
+IDCompositionAnimation* easeOut(float from,float to,double T){IDCompositionAnimation* a{};if(FAILED(device->CreateAnimation(&a)))return nullptr;const double d=double(to)-from;
+    a->AddCubic(0,from,float(3*d/T),float(-3*d/(T*T)),float(d/(T*T*T)));a->End(T,to);return a;}
+void revealContent(float scale,float width,float height,double seconds){
+    if(!ready||!contentLayer||!fade)return;
+    if(auto a=easeOut(0.f,1.f,seconds)){fade->SetOpacity(a);a->Release();}else fade->SetOpacity(1.f);
+    if(scale!=1.f&&(zoom||SUCCEEDED(device->CreateMatrixTransform(&zoom)))){
+        // Scaled about the centre of the window.
+        const float x=width/2*(1-scale),y=height/2*(1-scale);D2D_MATRIX_3X2_F start{};start._11=scale;start._22=scale;start._31=x;start._32=y;zoom->SetMatrix(start);
+        for(auto [row,column,from]:{std::tuple{0,0,scale},std::tuple{1,1,scale},std::tuple{2,0,x},std::tuple{2,1,y}})if(auto a=easeOut(from,row==2?0.f:1.f,seconds)){zoom->SetMatrixElement(row,column,a);a->Release();}
+        contentLayer->SetTransform(zoom);
+    }
+    device->Commit();
+}
+// After the motion the effect and transform are removed, so the page draws straight to the screen again.
+void settleContent(){if(!ready||!contentLayer)return;contentLayer->SetEffect(nullptr);contentLayer->SetTransform(static_cast<IDCompositionTransform*>(nullptr));device->Commit();}
 // Windows' own "Text size" setting (Accessibility) enlarges web content in ordinary hosting; visual hosting sets the
 // rasterization scale itself, so it has to include that factor too or text comes out smaller than before.
 double textScaleFactor(){DWORD value=100,size=sizeof(value);if(RegGetValueW(HKEY_CURRENT_USER,L"Software\\Microsoft\\Accessibility",L"TextScaleFactor",RRF_RT_REG_DWORD,nullptr,&value,&size)!=ERROR_SUCCESS)value=100;return std::clamp<DWORD>(value,100,225)/100.0;}
