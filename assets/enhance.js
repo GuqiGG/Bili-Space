@@ -858,7 +858,9 @@ window.addEventListener('load',()=>setTimeout(pauseOffscreenLoops,500),{once:tru
 // Fullscreen motion is drawn by the host. The page tells it where the player sat before the jump (or sits after leaving)
 // and when it has drawn at the new size. The request itself goes first, while the click or key still allows it.
 let fullTarget=null,fullRect=null;
-const fullBox=el=>{const r=el.getBoundingClientRect(),s=devicePixelRatio||1;return [r.left*s,r.top*s,r.width*s,r.height*s];};
+// The video area only (not the danmaku bar under it), which is what fills the screen in fullscreen.
+const fullArea=el=>el?.querySelector?.('.bpx-player-video-area,.bpx-player-primary-area,.bilibili-player-video-wrap')||el?.querySelector?.('video')||el;
+const fullBox=el=>{const r=fullArea(el).getBoundingClientRect(),s=devicePixelRatio||1;return [r.left*s,r.top*s,r.width*s,r.height*s];};
 for(const name of ['requestFullscreen','webkitRequestFullscreen']){const original=Element.prototype[name];if(typeof original!=='function'||CHROME_VIEW)continue;
   Element.prototype[name]=function(...args){const result=Reflect.apply(original,this,args);try{if(!document.fullscreenElement){fullTarget=this;fullRect=fullBox(this);native('fullscreen-start',{rect:fullRect});}}catch{}return result;};
 }

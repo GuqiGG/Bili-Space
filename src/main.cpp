@@ -514,7 +514,7 @@ void startGrow(){
 }
 // Entering ends with the live fullscreen page fading in over the grown picture.
 void finishEnter(){
-    KillTimer(windowHandle,7761);KillTimer(windowHandle,7766);comp::crossIn(.1);SetTimer(windowHandle,7760,130,nullptr);
+    KillTimer(windowHandle,7761);KillTimer(windowHandle,7766);comp::crossIn(.16);SetTimer(windowHandle,7760,190,nullptr);
 }
 void endFullTransition(){KillTimer(windowHandle,7760);KillTimer(windowHandle,7761);KillTimer(windowHandle,7765);KillTimer(windowHandle,7766);cropGrowing=false;liveReady=false;}
 // rect: where the player sat before entering, in device pixels of the page as it was; empty if unknown.
@@ -527,20 +527,21 @@ void fullscreenReady(const std::vector<double>& rect){
         comp::revealFrom(k,x,y,fullSeconds,.1);comp::veilTo(0.f,.86f,fullSeconds);SetTimer(windowHandle,7760,UINT(fullSeconds*1000)+20,nullptr);
     }else if(fullPhase==FullPhase::returning){
         // The live page fades in over the pictures, which go once it is fully there.
-        endFullTransition();comp::crossIn(.12);fullPhase=FullPhase::idle;SetTimer(windowHandle,7767,150,nullptr);
-        comp::fadeChrome(0.f,1.f,fullSeconds);chromeShow(!pip);SetTimer(windowHandle,7762,UINT(fullSeconds*1000)+40,nullptr);
+        endFullTransition();comp::crossIn(.16);fullPhase=FullPhase::idle;SetTimer(windowHandle,7767,200,nullptr);
+        comp::fadeChrome(0.f,1.f,fullSeconds);SetTimer(windowHandle,7762,UINT(fullSeconds*1000)+40,nullptr);
     }
 }
 // The shrinking video has reached the player's place: the window goes back to its size under the pictures.
 void returnFromFull(){
-    KillTimer(windowHandle,7765);fullPhase=FullPhase::returning;full=false;
+    KillTimer(windowHandle,7765);fullPhase=FullPhase::returning;full=false;comp::hideChrome();
     SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_NOZORDER|SWP_NOCOPYBITS);
     // The video picture stays on the player's place (now in the restored window's pixels), cut to the player's box.
     fullFollow();
-    fit();dockLayout();execute("window.BiliSpace?.setFullscreen(false)");
+    fit();dockLayout();chromeShow(!pip);execute("window.BiliSpace?.setFullscreen(false)");
     RECT c{};GetClientRect(windowHandle,&c);execute("window.BiliSpace?.fullReadyAt?.("+std::to_string(c.right)+","+std::to_string(c.bottom)+")");SetTimer(windowHandle,7761,450,nullptr);
 }
 void toggleFull(bool on){
+    if(on&&full&&fullPhase==FullPhase::leaving){endFullTransition();comp::clearUnder(true);comp::settleContent();fullPhase=FullPhase::entered;chromeShow(false);execute("window.BiliSpace?.setFullscreen(true)");return;}
     if(on==full||pip)return;
     endFullTransition();
     if(on){
@@ -570,7 +571,7 @@ void toggleFull(bool on){
         }
         video.drop();
     }
-    comp::settleContent();comp::clearUnder(false);fullPhase=FullPhase::idle;full=false;
+    comp::settleContent();comp::clearUnder(false);comp::settleChrome();fullPhase=FullPhase::idle;full=false;
     SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_NOZORDER);
     InvalidateRect(windowHandle,nullptr,TRUE);fit();dockLayout();chromeShow(!pip);execute("window.BiliSpace?.setFullscreen(false)");
 }
