@@ -31,7 +31,11 @@ void broadcastConfig(){
     auto script=wide("window.BiliSpace?.acceptConfig?.("+config.dump()+",0)");
     for(auto t:tabs)if(t->view)t->view->ExecuteScript(script.c_str(),nullptr);if(view)view->ExecuteScript(script.c_str(),nullptr);
 }
-void receiveFromHeader(ICoreWebView2WebMessageReceivedEventArgs* args){
+void receiveFromHeaderUnchecked(ICoreWebView2WebMessageReceivedEventArgs* args);
+// A malformed message from the header view (a plugin runs there too) must never let an exception escape the WebView2
+// callback, which would end the whole program.
+void receiveFromHeader(ICoreWebView2WebMessageReceivedEventArgs* args){try{receiveFromHeaderUnchecked(args);}catch(const std::exception& e){log(std::string("header message rejected: ")+e.what());}}
+void receiveFromHeaderUnchecked(ICoreWebView2WebMessageReceivedEventArgs* args){
     LPWSTR body{};args->get_WebMessageAsJson(&body);std::string raw=body?utf8(body):"";CoTaskMemFree(body);if(raw.size()>256*1024)return;
     json m;try{m=json::parse(raw);}catch(...){return;}auto type=m.value("type",std::string{}),action=m.value("action",std::string{});
     if(type=="chrome-layout"){

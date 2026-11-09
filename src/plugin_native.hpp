@@ -141,8 +141,10 @@ inline json nativeRun(const std::string& id,const std::string& op,const json& a)
     if(op=="http")return nativeHttp(a);
     if(op=="exec")return nativeExec(a);
     if(op=="open"){const auto target=wide(a.value("target",std::string{}));if(target.empty())throw std::runtime_error("缺少目标");if(reinterpret_cast<INT_PTR>(ShellExecuteW(nullptr,L"open",target.c_str(),nullptr,nullptr,SW_SHOWNORMAL))<=32)throw std::runtime_error("无法打开");return true;}
-    if(op=="secretGet"){const auto all=readSecrets(id);const auto key=a.value("key",std::string{});return all.contains(key)?all[key]:json();}
-    if(op=="secretSet"){auto all=readSecrets(id);const auto key=a.value("key",std::string{});if(key.empty()||key.size()>80)throw std::runtime_error("名字无效");if(a.contains("value")&&!a["value"].is_null())all[key]=a["value"];else all.erase(key);writeSecrets(id,all);return true;}
+    // Requests run on their own threads: secret read-modify-write is serialized so two saves cannot drop one another.
+    static std::mutex secretsMutex;
+    if(op=="secretGet"){std::lock_guard<std::mutex> lock(secretsMutex);const auto all=readSecrets(id);const auto key=a.value("key",std::string{});return all.contains(key)?all[key]:json();}
+    if(op=="secretSet"){std::lock_guard<std::mutex> lock(secretsMutex);auto all=readSecrets(id);const auto key=a.value("key",std::string{});if(key.empty()||key.size()>80)throw std::runtime_error("名字无效");if(a.contains("value")&&!a["value"].is_null())all[key]=a["value"];else all.erase(key);writeSecrets(id,all);return true;}
     if(op=="paths"){PWSTR p{};std::string downloads,home;if(SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Downloads,0,nullptr,&p)))downloads=utf8(p);CoTaskMemFree(p);p=nullptr;if(SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Profile,0,nullptr,&p)))home=utf8(p);CoTaskMemFree(p);
         wchar_t temp[MAX_PATH]{};GetTempPathW(MAX_PATH,temp);std::error_code ec;const auto own=dataPath/L"plugin-files"/wide(id);fs::create_directories(own,ec);
         return {{"data",utf8(own.wstring())},{"downloads",downloads},{"home",home},{"temp",utf8(temp)}};}
