@@ -336,7 +336,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",8},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",8},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -471,6 +471,8 @@ void togglePip(bool on){
     fit();dockLayout();chromeShow(!full&&!pip);execute(std::string("window.BiliSpace?.setPip(")+(pip?"true":"false")+")");log(pip?"PIP entered: borderless, topmost":"PIP restored");
 }
 bool windowAnimations(){BOOL on=TRUE;SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&on,0);return on;}
+// The grow/shrink motion is an experimental setting; without it fullscreen switches still hide the jump and fade in.
+bool fullMotion(){return config.value("experimentalFullscreenMotion",false);}
 // Fullscreen transitions. Pictures of the screen are handed to the compositor and drawn under the page layer, which is
 // hidden across the window's jump, so neither the jump nor the page's first frames at a new size are ever seen; every
 // motion then runs on the GPU.
@@ -509,6 +511,7 @@ void fullFollow(){
 }
 // Grows the player cut from the screen picture, once the window has jumped and the page has said where the player was.
 void startGrow(){
+    if(!fullMotion())return;
     if(fullPhase!=FullPhase::entering||cropGrowing||startRect.size()<4||GetTickCount64()-startRectAt>1500)return;
     playerRect=startRect;RECT c{};GetClientRect(windowHandle,&c);const float W=float(c.right),H=float(c.bottom),a=videoAspect(startRect);
     // The video picture in screen-picture pixels: page pixels plus where the client area was on the monitor.
@@ -534,6 +537,8 @@ void fullscreenReady(const std::vector<double>& rect){
     if(fullPhase==FullPhase::entering){
         KillTimer(windowHandle,7761);if(rect.size()>=4&&playerRect.size()<4)playerRect=rect;
         if(cropGrowing){liveReady=true;if(GetTickCount64()>=growUntil)finishEnter();return;}
+        // Without the experimental motion the fullscreen page simply fades in over the screen picture.
+        if(!fullMotion()){finishEnter();return;}
         // No picture of the player to grow (its place came too late): the live page grows from the player instead.
         RECT c{};GetClientRect(windowHandle,&c);float k=1,x=0,y=0;playerMapping(float(c.right),float(c.bottom),k,x,y);
         comp::revealFrom(k,x,y,fullSeconds,.1);comp::veilTo(0.f,1.f,fullSeconds);SetTimer(windowHandle,7760,UINT(fullSeconds*1000)+20,nullptr);
@@ -596,7 +601,9 @@ void toggleFull(bool on){
         return;
     }
     // Leaving plays the entrance backwards while the window is still fullscreen, then returns the window to its size.
-    if(fullPhase==FullPhase::entered&&windowAnimations()){
+    // Without the motion: the picture of the page from before fullscreen covers the return, then the page fades in.
+    if(fullPhase==FullPhase::entered&&windowAnimations()&&!fullMotion()&&comp::stagePage(nullptr,monitorInClient(),0.f)&&(comp::shown(),comp::hideContent())){videoSize={0,0};returnFromFull();return;}
+    if(fullPhase==FullPhase::entered&&windowAnimations()&&fullMotion()){
         Shot video;RECT c{};GetClientRect(windowHandle,&c);
         HDC screen=GetDC(windowHandle),memory=CreateCompatibleDC(screen);video.bitmap=CreateCompatibleBitmap(screen,c.right,c.bottom);auto old=SelectObject(memory,video.bitmap);
         const BOOL ok=PrintWindow(windowHandle,memory,PW_CLIENTONLY|PW_RENDERFULLCONTENT);SelectObject(memory,old);DeleteDC(memory);ReleaseDC(windowHandle,screen);
