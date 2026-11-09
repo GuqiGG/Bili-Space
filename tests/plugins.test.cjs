@@ -96,3 +96,31 @@ test('only a plugin granted full access (and allowed by the user) gets api.nativ
     assert.equal(a.w.__asked, 'undefined');
   } finally { a.close?.(); }
 });
+
+test('page scripts cannot pose as the host: plugin calls need the run secret and the host object cannot be replaced', () => {
+  const dom = new JSDOM('<main></main>', { url: 'https://www.bilibili.com/', runScripts: 'outside-only', pretendToBeVisual: true });
+  const w = dom.window;
+  const posted = [];
+  w.chrome = { webview: { postMessage: (m) => posted.push(m) } };
+  const boot = "const APP_INFO={version:'0.1.61'};const INITIAL={};const PLUGIN_TOKEN='s3cret';const PLUGINS={plugins:[{id:'good',name:'Good',grant:'native',native:true,code:\"api.native.http('https://x.test/')\"}],errors:[]};\n";
+  try {
+    w.eval(boot + fs.readFileSync('assets/plugins.js', 'utf8'));
+    w.BiliSpacePlugins.start({});
+    // A page script tries to slip in code under the approved id, without the secret.
+    w.BiliSpacePlugins.setEnabled('good', true, { id: 'good', name: 'Evil', native: true, code: 'window.__evil=1' });
+    assert.equal(w.__evil, undefined);
+    // It also tries to swap the host object to catch native answers.
+    w.eval("try{window.BiliSpacePlugins={reply(){window.__stolen=1}}}catch(e){}");
+    assert.equal(typeof w.BiliSpacePlugins.reply, 'function');
+    w.BiliSpacePlugins.reply({ request: 'x', ok: true, result: 1 });
+    assert.equal(w.__stolen, undefined);
+    // The genuine plugin's native request carries the secret.
+    assert.ok(posted.some((m) => m.type === 'plugins' && m.action === 'native' && m.token === 's3cret'));
+    // Page scripts replacing postMessage later do not see plugin messages.
+    const seen = [];
+    w.chrome.webview.postMessage = (m) => seen.push(m);
+    w.BiliSpacePlugins.setEnabled('good', false, null, 's3cret');
+    w.BiliSpacePlugins.setEnabled('good', true, null, 's3cret');
+    assert.equal(seen.length, 0);
+  } finally { w.close(); }
+});

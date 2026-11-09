@@ -4,7 +4,7 @@
 // receive no native bridge, no filesystem and no network capability from the host.
 inline fs::path pluginsDirectory(){return dataPath/L"plugins";}
 // Values of the settings plugins declare, by plugin id; kept in settings.json so every view sees the same ones.
-void refreshInjection();void pluginsBroadcast(const std::string& script);void pluginsReloadViews();
+void refreshInjection();void pluginsBroadcast(const std::string& script);void pluginsReloadViews();const std::string& pluginToken();
 inline bool pluginIdValid(const std::string& id){return std::regex_match(id,std::regex(R"([a-z0-9][a-z0-9._-]{0,39})"));}
 #include "plugin_native.hpp"
 inline std::string pluginField(const json& item,const char* key,size_t limit){
@@ -91,6 +91,7 @@ inline std::string pluginsInstall(const fs::path& file){
     return id;
 }
 inline void pluginsAction(const json& message){
+    if(message.value("token",std::string{})!=pluginToken())return;
     const auto action=message.value("action",std::string{});
     const auto id=message.value("id",std::string{});
     if(action=="folder"){
@@ -103,7 +104,7 @@ inline void pluginsAction(const json& message){
         if(!std::regex_match(id,validId)||name.empty()||name.size()>40)return;
         const json payload={{"from",id},{"name",name},{"view",message.value("view",std::string{})=="header"?"header":"page"},{"data",message.contains("data")?message["data"]:json()}};
         const auto text=payload.dump();if(text.size()>66*1024)return;
-        pluginsBroadcast("window.BiliSpacePlugins?.deliver?.("+text+")");
+        pluginsBroadcast("window.BiliSpacePlugins?.deliver?.("+text+","+json(pluginToken()).dump()+")");
     }else if(action=="reload"){pluginsReloadViews();
     }else if(action=="import"){
         wchar_t path[MAX_PATH*4]{};OPENFILENAMEW dialog{};dialog.lStructSize=sizeof(dialog);dialog.hwndOwner=windowHandle;dialog.lpstrFilter=L"Bili-Space 插件 (plugin.json, *.js)\0plugin.json;*.js\0";dialog.lpstrFile=path;dialog.nMaxFile=MAX_PATH*4;dialog.lpstrTitle=L"导入插件";dialog.Flags=OFN_FILEMUSTEXIST|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;
@@ -116,22 +117,22 @@ inline void pluginsAction(const json& message){
             }else nativeApprove(installed,false);
             save();
             const auto def=pluginDefinition(installed);if(def.is_null())throw std::runtime_error("插件已复制，但清单或入口文件无效");
-            refreshInjection();pluginsBroadcast("window.BiliSpacePlugins?.setEnabled?.("+json(installed).dump()+",true,"+def.dump()+");window.BiliSpace?.pluginsChanged?.()");
+            refreshInjection();pluginsBroadcast("window.BiliSpacePlugins?.setEnabled?.("+json(installed).dump()+",true,"+def.dump()+","+json(pluginToken()).dump()+");window.BiliSpace?.pluginsChanged?.()");
             pluginsToast("已导入并启用："+def.value("name",installed));log("plugin imported: "+installed);
         }catch(const std::exception& e){pluginsToast(std::string("导入失败：")+e.what());}
     }else if(action=="toggle"&&pluginIdValid(id)){
         const bool on=message.value("enabled",false);pluginsSetDisabled(id,!on);save();refreshInjection();
         const auto def=pluginDefinition(id);
-        pluginsBroadcast("window.BiliSpacePlugins?.setEnabled?.("+json(id).dump()+","+(on?"true":"false")+","+(def.is_null()?std::string("null"):def.dump())+");window.BiliSpace?.pluginsChanged?.()");
+        pluginsBroadcast("window.BiliSpacePlugins?.setEnabled?.("+json(id).dump()+","+(on?"true":"false")+","+(def.is_null()?std::string("null"):def.dump())+","+json(pluginToken()).dump()+");window.BiliSpace?.pluginsChanged?.()");
     }else if(action=="remove"&&pluginIdValid(id)){nativeApprove(id,false);
         std::error_code ec;fs::remove_all(pluginsDirectory()/wide(id),ec);pluginsSetDisabled(id,false);pluginData.erase(id);save();refreshInjection();
-        pluginsBroadcast("window.BiliSpacePlugins?.remove?.("+json(id).dump()+");window.BiliSpace?.pluginsChanged?.()");pluginsToast("插件已删除");
+        pluginsBroadcast("window.BiliSpacePlugins?.remove?.("+json(id).dump()+","+json(pluginToken()).dump()+");window.BiliSpace?.pluginsChanged?.()");pluginsToast("插件已删除");
     }else if(action=="data"&&pluginIdValid(id)&&message.contains("value")){
         const auto key=message.value("key",std::string{});if(key.empty()||key.size()>40)return;
         if(!pluginData.contains(id)||!pluginData[id].is_object())pluginData[id]=json::object();
         if(pluginData[id].size()>=64&&!pluginData[id].contains(key))return;
         if(message["value"].dump().size()>16*1024)return;
         pluginData[id][key]=message["value"];save();refreshInjection();
-        pluginsBroadcast("window.BiliSpacePlugins?.acceptData?.("+json(id).dump()+","+pluginData[id].dump()+")");
+        pluginsBroadcast("window.BiliSpacePlugins?.acceptData?.("+json(id).dump()+","+pluginData[id].dump()+","+json(pluginToken()).dump()+")");
     }
 }

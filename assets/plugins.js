@@ -28,7 +28,12 @@
   let video = null;
 
   const text = (value, limit) => (typeof value === 'string' ? value.slice(0, limit) : '');
-  const post = (message) => { try { chrome.webview.postMessage(message); } catch (_) {} };
+  // Captured before any page script runs, so a page cannot intercept (or read the secret from) plugin messages.
+  const TOKEN = typeof PLUGIN_TOKEN === 'string' ? PLUGIN_TOKEN : '';
+  const postNative = (() => { try { const view = chrome.webview; return view.postMessage.bind(view); } catch (_) { return null; } })();
+  const post = (message) => { try { if (message && message.type === 'plugins') message = { ...message, token: TOKEN }; if (postNative) postNative(message); } catch (_) {} };
+  // Calls that only the native host may make (it passes the secret); page scripts calling them are ignored.
+  const fromHost = (token) => !TOKEN || token === TOKEN;
   function recordError(id, error) {
     const message = text(error && error.message ? error.message : String(error), 300);
     errors.push({ id, message });
@@ -136,7 +141,8 @@
     };
   }
   // Answers from the native host reach every view; only the one that asked has the request id.
-  function reply(message) {
+  function reply(message, token) {
+    if (!fromHost(token)) return;
     const waiting = message && pending.get(message.request); if (!waiting) return;
     pending.delete(message.request);
     if (message.ok) waiting.resolve(message.result); else waiting.reject(new Error(String(message.error || '失败')));
@@ -546,7 +552,8 @@
     emit('destroy');
   }
   // Called by the native host in every open view when a plugin is imported, removed or switched.
-  function setEnabled(id, enabled, def) {
+  function setEnabled(id, enabled, def, token) {
+    if (!fromHost(token)) return snapshot();
     if (def && typeof def === 'object' && def.id === id) {
       const index = defs.findIndex((item) => item.id === id);
       if (index >= 0) defs[index] = def; else defs.push(def);
@@ -562,18 +569,21 @@
     }
     syncTick();
   }
-  function remove(id) {
+  function remove(id, token) {
+    if (!fromHost(token)) return;
     setEnabled(id, false);
     const index = defs.findIndex((item) => item.id === id);
     if (index >= 0) defs.splice(index, 1);
     instances.delete(id);
   }
   // Relayed by the native host to every view: { from, name, view, data }.
-  function deliver(message) {
+  function deliver(message, token) {
+    if (!fromHost(token)) return;
     if (!message || typeof message.from !== 'string' || typeof message.name !== 'string') return;
     emit('message', Object.freeze({ name: message.name, data: message.data, view: message.view === 'header' ? 'header' : 'page' }), message.from);
   }
-  function acceptData(id, values) {
+  function acceptData(id, values, token) {
+    if (!fromHost(token)) return;
     if (!values || typeof values !== 'object') return;
     data.set(id, { ...values });
     emit('settings', { ...values }, id);
@@ -701,5 +711,7 @@
       node.append(line);
     }
   }
-  global.BiliSpacePlugins = { start, stop, snapshot, renderPanel, emit, setEnabled, remove, acceptData, deliver, reply, get(id) { const i = instances.get(id); return i ? { id: i.id, state: i.state } : null; }, get errors() { return errors.slice(); } };
+  // Read-only for page scripts: they cannot swap the host to catch native answers or plugin messages.
+  const hostApi = Object.freeze({ start, stop, snapshot, renderPanel, emit, setEnabled, remove, acceptData, deliver, reply, get(id) { const i = instances.get(id); return i ? { id: i.id, state: i.state } : null; }, get errors() { return errors.slice(); } });
+  try { Object.defineProperty(global, 'BiliSpacePlugins', { value: hostApi, writable: false, configurable: false, enumerable: true }); } catch (_) { global.BiliSpacePlugins = hostApi; }
 })(window);

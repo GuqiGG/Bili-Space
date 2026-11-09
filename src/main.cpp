@@ -402,10 +402,14 @@ bool trusted(const std::wstring& uri){
 bool chromeHostEnabled();bool chromeOpenSettings(const std::string& call);void chromePush(const std::wstring& target=L"");void chromePlace();void chromeZoom(double z);void chromeShow(bool on);void chromeAcceptConfig();void chromeClose();
 // The page script is rebuilt for every view (home, header, each video); its asset files are read from disk once.
 const std::string& assetText(const std::wstring& relative){static std::map<std::wstring,std::string> cache;auto it=cache.find(relative);if(it==cache.end())it=cache.emplace(relative,read(root/relative)).first;return it->second;}
+// A secret for this run, put only into the client's own injected script (page scripts cannot read it). Plugin
+// messages and the host's plugin calls carry it, so a script on a Bilibili page cannot pose as a plugin.
+const std::string& pluginToken(){static const std::string token=[]{unsigned char bytes[16]{};BCryptGenRandom(nullptr,bytes,sizeof(bytes),BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    std::string hex;const char digits[]="0123456789abcdef";for(auto b:bytes){hex+=digits[b>>4];hex+=digits[b&15];}return hex;}();return token;}
 std::string script(){
     std::string s="(()=>{if(window.top!==window)return; const host=location.hostname;if(!(['www.bilibili.com','search.bilibili.com','space.bilibili.com','live.bilibili.com','t.bilibili.com','passport.bilibili.com','account.bilibili.com','message.bilibili.com','manga.bilibili.com'].includes(host)";
     if(testing)s+="||host==='bili-space.local'";
-    s+="))return;\nconst APP_INFO="+appInfo().dump()+";const INITIAL="+config.dump()+";const GM_INITIAL="+gm.dump()+";const RUNTIME="+proxyState().dump()+";\n";
+    s+="))return;\nconst APP_INFO="+appInfo().dump()+";const INITIAL="+config.dump()+";const GM_INITIAL="+gm.dump()+";const RUNTIME="+proxyState().dump()+";const PLUGIN_TOKEN="+json(pluginToken()).dump()+";\n";
     s+="RUNTIME.platform='windows';\n";
     s+="RUNTIME.chromeHost="+std::string(chromeHostEnabled()?"true":"false")+";\n";
 #ifdef BILI_LEGACY_WIN7

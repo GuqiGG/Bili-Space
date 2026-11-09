@@ -154,5 +154,5 @@ inline void nativeRequest(const json& m){
 }
 inline void nativeReplyArrived(LPARAM lp){
     std::unique_ptr<json> r(reinterpret_cast<json*>(lp));if(!r)return;
-    pluginsBroadcast("window.BiliSpacePlugins?.reply?.("+r->dump(-1,' ',false,json::error_handler_t::replace)+")");
+    pluginsBroadcast("window.BiliSpacePlugins?.reply?.("+r->dump(-1,' ',false,json::error_handler_t::replace)+","+json(pluginToken()).dump()+")");
 }
