@@ -130,11 +130,26 @@ void videoAt(float scale,float x,float y,const RECT& box){
     if(!videoPicture.visual)return;place(videoMotion,videoPicture.visual,scale,x,y);
     videoPicture.visual->SetClip(D2D_RECT_F{(box.left-x)/scale,(box.top-y)/scale,(box.right-x)/scale,(box.bottom-y)/scale});device->Commit();
 }
+// The player cut out of the screen picture (crop in picture pixels), shown where it was and grown at once to the place
+// the fullscreen video will occupy, so the motion starts with the key press rather than after the page has re-laid out.
+IDCompositionVisual* cropVisual{};IDCompositionMatrixTransform* cropMotion{};
+bool growCrop(const RECT& crop,POINT at,float W,float H,double seconds){
+    if(!ready||!pagePicture.surface||!underLayer||crop.right<=crop.left||crop.bottom<=crop.top||W<=0)return false;
+    if(!cropVisual){if(FAILED(device->CreateVisual(&cropVisual)))return false;}
+    cropVisual->SetContent(pagePicture.surface);cropVisual->SetClip(D2D_RECT_F{float(crop.left),float(crop.top),float(crop.right),float(crop.bottom)});
+    underLayer->RemoveVisual(cropVisual);underLayer->AddVisual(cropVisual,TRUE,veilPicture.visual);
+    const float cw=float(crop.right-crop.left),ch=float(crop.bottom-crop.top),k=W/cw,x=-float(crop.left)*k,y=(H-ch*k)/2-float(crop.top)*k;
+    place(cropMotion,cropVisual,1.f,float(at.x),float(at.y));
+    for(auto [row,column,from,to]:{std::tuple{0,0,1.f,k},std::tuple{1,1,1.f,k},std::tuple{2,0,float(at.x),x},std::tuple{2,1,float(at.y),y}})if(auto a=easeOut(from,to,seconds)){cropMotion->SetMatrixElement(row,column,a);a->Release();}
+    device->Commit();return true;
+}
+// The live page layer fades in over the pictures (it is already where they lead), then they can go.
+void crossIn(double seconds){if(!ready||!contentLayer)return;contentLayer->SetTransform(static_cast<IDCompositionTransform*>(nullptr));if(fade){if(auto a=easeOut(0.f,1.f,seconds)){fade->SetOpacity(a);a->Release();}else fade->SetOpacity(1.f);}device->Commit();}
 // Blocks until the compositor has shown what was committed (the pictures are on screen before the page layer goes).
 void shown(){if(ready)device->WaitForCommitCompletion();}
 // Takes the pictures out of the tree; keepPage leaves the screen picture ready for the way back.
 void clearUnder(bool keepPage){
-    if(underLayer)underLayer->RemoveAllVisuals();videoPicture.release();if(videoMotion){videoMotion->Release();videoMotion=nullptr;}if(!keepPage)pagePicture.release();if(ready)device->Commit();
+    if(underLayer)underLayer->RemoveAllVisuals();if(cropVisual){cropVisual->Release();cropVisual=nullptr;}if(cropMotion){cropMotion->Release();cropMotion=nullptr;}videoPicture.release();if(videoMotion){videoMotion->Release();videoMotion=nullptr;}if(!keepPage)pagePicture.release();if(ready)device->Commit();
 }
 // The header layer fades with the page's fullscreen motion instead of popping.
 IDCompositionEffectGroup* chromeFade{};

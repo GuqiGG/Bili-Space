@@ -860,12 +860,14 @@ window.addEventListener('load',()=>setTimeout(pauseOffscreenLoops,500),{once:tru
 let fullTarget=null,fullRect=null;
 const fullBox=el=>{const r=el.getBoundingClientRect(),s=devicePixelRatio||1;return [r.left*s,r.top*s,r.width*s,r.height*s];};
 for(const name of ['requestFullscreen','webkitRequestFullscreen']){const original=Element.prototype[name];if(typeof original!=='function'||CHROME_VIEW)continue;
-  Element.prototype[name]=function(...args){const result=Reflect.apply(original,this,args);try{if(!document.fullscreenElement){fullTarget=this;fullRect=fullBox(this);}}catch{}return result;};
+  Element.prototype[name]=function(...args){const result=Reflect.apply(original,this,args);try{if(!document.fullscreenElement){fullTarget=this;fullRect=fullBox(this);native('fullscreen-start',{rect:fullRect});}}catch{}return result;};
 }
 // Tells the host once the page is really drawn at a given size (device pixels): after its resize and three more frames.
 function fullReadyAt(width,height){
   const s=devicePixelRatio||1,sized=()=>Math.abs(innerWidth*s-width)<=2&&Math.abs(innerHeight*s-height)<=2;let sent=false;
-  const fire=()=>{if(sent)return;sent=true;removeEventListener('resize',check);requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>native('fullscreen-ready',{}))));};
+  const report=()=>native('fullscreen-ready',{});
+  const fire=()=>{if(sent)return;sent=true;removeEventListener('resize',check);const v=fullTarget?.querySelector?.('video');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!v||v.paused||!v.requestVideoFrameCallback){requestAnimationFrame(report);return;}let done=false;const go=()=>{if(!done){done=true;requestAnimationFrame(report);}};v.requestVideoFrameCallback(go);setTimeout(go,150);}));};
   const check=()=>{if(sized())fire();};if(sized())fire();else{addEventListener('resize',check);setTimeout(fire,300);}
 }
 document.addEventListener('fullscreenchange',()=>{
