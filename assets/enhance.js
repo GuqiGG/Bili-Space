@@ -862,6 +862,12 @@ const fullBox=el=>{const r=el.getBoundingClientRect(),s=devicePixelRatio||1;retu
 for(const name of ['requestFullscreen','webkitRequestFullscreen']){const original=Element.prototype[name];if(typeof original!=='function'||CHROME_VIEW)continue;
   Element.prototype[name]=function(...args){const result=Reflect.apply(original,this,args);try{if(!document.fullscreenElement){fullTarget=this;fullRect=fullBox(this);}}catch{}return result;};
 }
+// Tells the host once the page is really drawn at a given size (device pixels): after its resize and three more frames.
+function fullReadyAt(width,height){
+  const s=devicePixelRatio||1,sized=()=>Math.abs(innerWidth*s-width)<=2&&Math.abs(innerHeight*s-height)<=2;let sent=false;
+  const fire=()=>{if(sent)return;sent=true;removeEventListener('resize',check);requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>native('fullscreen-ready',{}))));};
+  const check=()=>{if(sized())fire();};if(sized())fire();else{addEventListener('resize',check);setTimeout(fire,300);}
+}
 document.addEventListener('fullscreenchange',()=>{
   if(CHROME_VIEW)return;const entering=!!document.fullscreenElement;let sent=false;
   const send=()=>{if(sent)return;sent=true;removeEventListener('resize',send);
@@ -2058,7 +2064,7 @@ function boot(){
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
+  window.BiliSpace={fullReadyAt,offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};

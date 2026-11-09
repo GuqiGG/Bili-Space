@@ -140,6 +140,7 @@ void clearUnder(bool keepPage){
 IDCompositionEffectGroup* chromeFade{};
 void fadeChrome(float from,float to,double seconds){if(!ready||!chromeLayer)return;if(!chromeFade&&FAILED(device->CreateEffectGroup(&chromeFade)))return;
     if(auto a=easeOut(from,to,seconds)){chromeFade->SetOpacity(a);a->Release();}else chromeFade->SetOpacity(to);chromeLayer->SetEffect(chromeFade);device->Commit();}
+void hideChrome(){if(!ready||!chromeLayer)return;if(!chromeFade&&FAILED(device->CreateEffectGroup(&chromeFade)))return;chromeFade->SetOpacity(0.f);chromeLayer->SetEffect(chromeFade);device->Commit();}
 void settleChrome(){if(ready&&chromeLayer){chromeLayer->SetEffect(nullptr);device->Commit();}}
 // After the motion the effect and transform are removed, so the page draws straight to the screen again.
 void settleContent(){if(!ready||!contentLayer)return;contentLayer->SetEffect(nullptr);contentLayer->SetTransform(static_cast<IDCompositionTransform*>(nullptr));device->Commit();}
