@@ -471,114 +471,84 @@ void togglePip(bool on){
     fit();dockLayout();chromeShow(!full&&!pip);execute(std::string("window.BiliSpace?.setPip(")+(pip?"true":"false")+")");log(pip?"PIP entered: borderless, topmost":"PIP restored");
 }
 bool windowAnimations(){BOOL on=TRUE;SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&on,0);return on;}
-// Fullscreen transitions, drawn by the window itself under a hidden page layer, so neither the window's jump nor the
-// page's first frames at a new size are ever seen.
-// In: a picture of the page is painted at its old place; once the page has drawn at fullscreen size it comes back through
-//     a transform that grows the video from the player's old place, while the picture behind it darkens.
-// Out: exactly that backwards - a picture of the fullscreen video shrinks onto the player's place over the page picture,
-//     which brightens; then the window returns to its size and the page layer takes over where the picture was.
+// Fullscreen transitions. Pictures of the screen are handed to the compositor and drawn under the page layer, which is
+// hidden across the window's jump, so neither the jump nor the page's first frames at a new size are ever seen; every
+// motion then runs on the GPU.
+// In: the screen picture stays put; once the page has drawn at fullscreen size it comes back through a transform that
+//     grows the video from the player's old place, while a veil darkens the picture behind it.
+// Out: exactly that backwards - a picture of the fullscreen video shrinks onto the player's place while the veil lifts;
+//     then the window returns to its size and the page layer takes over where the pictures were.
 struct Shot{HBITMAP bitmap{};int width=0,height=0;void drop(){if(bitmap)DeleteObject(bitmap);*this=Shot{};}};
 enum class FullPhase{idle,entering,entered,leaving,returning};
-FullPhase fullPhase=FullPhase::idle;Shot pageShot,videoShot;RECT pageDest{},pageMonitor{};POINT fullShift{};std::vector<double> playerRect;ULONGLONG motionFrom=0;
+FullPhase fullPhase=FullPhase::idle;RECT pageMonitor{};POINT fullShift{};std::vector<double> playerRect;SIZE videoSize{};
 constexpr double fullSeconds=.32;
-bool takeShot(Shot& shot){
-    shot.drop();RECT c{};GetClientRect(windowHandle,&c);if(c.right<=0||c.bottom<=0)return false;
-    const ULONGLONG t0=GetTickCount64();HDC screen=GetDC(windowHandle),memory=CreateCompatibleDC(screen);HBITMAP bitmap=CreateCompatibleBitmap(screen,c.right,c.bottom);
-    auto old=SelectObject(memory,bitmap);const BOOL ok=PrintWindow(windowHandle,memory,PW_CLIENTONLY|PW_RENDERFULLCONTENT);SelectObject(memory,old);DeleteDC(memory);ReleaseDC(windowHandle,screen);
-    if(!ok){DeleteObject(bitmap);return false;}
-    shot.bitmap=bitmap;shot.width=c.right;shot.height=c.bottom;if(testing)log("fullscreen picture "+std::to_string(GetTickCount64()-t0)+"ms");return true;
-}
 bool takeScreenShot(Shot& shot,RECT& area){
     shot.drop();MONITORINFO mi{sizeof(mi)};if(!GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi))return false;area=mi.rcMonitor;
-    const int w=area.right-area.left,h=area.bottom-area.top;if(w<=0||h<=0)return false;const ULONGLONG t0=GetTickCount64();
+    const int w=area.right-area.left,h=area.bottom-area.top;if(w<=0||h<=0)return false;
     HDC screen=GetDC(nullptr),memory=CreateCompatibleDC(screen);HBITMAP bitmap=CreateCompatibleBitmap(screen,w,h);auto old=SelectObject(memory,bitmap);
     const BOOL ok=BitBlt(memory,0,0,w,h,screen,area.left,area.top,SRCCOPY|CAPTUREBLT);SelectObject(memory,old);DeleteDC(memory);ReleaseDC(nullptr,screen);
-    if(!ok){DeleteObject(bitmap);return false;}
-    shot.bitmap=bitmap;shot.width=w;shot.height=h;if(testing)log("fullscreen screen picture "+std::to_string(GetTickCount64()-t0)+"ms");return true;
+    if(!ok){DeleteObject(bitmap);return false;}shot.bitmap=bitmap;shot.width=w;shot.height=h;return true;
 }
-// Where the monitor picture goes in client coordinates, so that it lines up with the screen.
-RECT monitorInClient(){POINT o{};ClientToScreen(windowHandle,&o);return {pageMonitor.left-o.x,pageMonitor.top-o.y,pageMonitor.right-o.x,pageMonitor.bottom-o.y};}
-bool fullPainting(){return fullPhase==FullPhase::entering||fullPhase==FullPhase::leaving||fullPhase==FullPhase::returning;}
-double fullProgress(){if(!motionFrom)return 0;const double t=std::min(1.0,(GetTickCount64()-motionFrom)/(fullSeconds*1000));return 1-std::pow(1-t,3);}
-// The player's box, as the fullscreen video maps onto it: the window's width scaled to the player's width, centred on it.
-RECT playerTarget(float W,float H){
-    if(playerRect.size()!=4||playerRect[2]<40||W<=0)return {0,0,LONG(W),LONG(H)};
-    const float k=float(playerRect[2])/W,x=float(playerRect[0])+fullShift.x,y=float(playerRect[1])+fullShift.y+float(playerRect[3])/2-H*k/2;
-    return {LONG(x),LONG(y),LONG(x+W*k),LONG(y+H*k)};
+// Where the screen picture goes in client pixels, so that it lines up with the screen.
+POINT monitorInClient(){POINT o{};ClientToScreen(windowHandle,&o);return {pageMonitor.left-o.x,pageMonitor.top-o.y};}
+// The player's box as the fullscreen picture maps onto it: the window's width scaled to the player's width, centred on it.
+bool playerMapping(float W,float H,float& scale,float& x,float& y){
+    if(playerRect.size()!=4||playerRect[2]<40||W<=0)return false;
+    scale=float(playerRect[2])/W;x=float(playerRect[0])+fullShift.x;y=float(playerRect[1])+fullShift.y+float(playerRect[3])/2-H*scale/2;return true;
 }
-void drawShot(HDC dc,const Shot& shot,const RECT& d,bool smooth){
-    if(!shot.bitmap)return;HDC memory=CreateCompatibleDC(dc);auto old=SelectObject(memory,shot.bitmap);const int w=d.right-d.left,h=d.bottom-d.top;
-    if(w==shot.width&&h==shot.height)BitBlt(dc,d.left,d.top,w,h,memory,0,0,SRCCOPY);
-    else{SetStretchBltMode(dc,smooth?HALFTONE:COLORONCOLOR);SetBrushOrgEx(dc,0,0,nullptr);StretchBlt(dc,d.left,d.top,w,h,memory,0,0,shot.width,shot.height,SRCCOPY);}
-    SelectObject(memory,old);DeleteDC(memory);
-}
-void composeFull(HDC dc){
-    RECT c{};GetClientRect(windowHandle,&c);FillRect(dc,&c,static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
-    drawShot(dc,pageShot,pageDest,false);
-    const double e=fullProgress(),dim=fullPhase==FullPhase::entering?e*.86:fullPhase==FullPhase::leaving?(1-e)*.86:0;
-    if(dim>0){BLENDFUNCTION blend{AC_SRC_OVER,0,BYTE(dim*255),0};HDC dot=CreateCompatibleDC(dc);HBITMAP pixel=CreateCompatibleBitmap(dc,1,1);auto previous=SelectObject(dot,pixel);SetPixel(dot,0,0,RGB(0,0,0));
-        GdiAlphaBlend(dc,0,0,c.right,c.bottom,dot,0,0,1,1,blend);SelectObject(dot,previous);DeleteObject(pixel);DeleteDC(dot);}
-    if(fullPhase==FullPhase::returning&&videoShot.bitmap&&playerRect.size()==4){
-        const float k=float(playerRect[2])/std::max(1,videoShot.width),h=videoShot.height*k,top=float(playerRect[1])+float(playerRect[3])/2-h/2;
-        HRGN clip=CreateRectRgn(LONG(playerRect[0]),LONG(playerRect[1]),LONG(playerRect[0]+playerRect[2]),LONG(playerRect[1]+playerRect[3]));SelectClipRgn(dc,clip);
-        drawShot(dc,videoShot,{LONG(playerRect[0]),LONG(top),LONG(playerRect[0]+playerRect[2]),LONG(top+h)},false);SelectClipRgn(dc,nullptr);DeleteObject(clip);
-    }
-    if(fullPhase==FullPhase::leaving){
-        const RECT to=playerTarget(float(c.right),float(c.bottom));auto mix=[&](LONG a,LONG b){return LONG(a+(b-a)*e);};
-        drawShot(dc,videoShot,{mix(0,to.left),mix(0,to.top),mix(c.right,to.right),mix(c.bottom,to.bottom)},false);
-    }
-}
-// Each frame is composed off screen and copied to the window at once, so a half-drawn frame is never seen.
-void paintFull(HDC dc){
-    RECT c{};GetClientRect(windowHandle,&c);if(c.right<=0||c.bottom<=0)return;
-    HDC back=CreateCompatibleDC(dc);HBITMAP buffer=CreateCompatibleBitmap(dc,c.right,c.bottom);auto old=SelectObject(back,buffer);
-    composeFull(back);BitBlt(dc,0,0,c.right,c.bottom,back,0,0,SRCCOPY);SelectObject(back,old);DeleteObject(buffer);DeleteDC(back);
-}
-void endFullTransition(){KillTimer(windowHandle,7760);KillTimer(windowHandle,7761);KillTimer(windowHandle,7763);KillTimer(windowHandle,7764);motionFrom=0;}
+void endFullTransition(){KillTimer(windowHandle,7760);KillTimer(windowHandle,7761);KillTimer(windowHandle,7765);}
 // rect: where the player sat before entering, in device pixels of the page as it was; empty if unknown.
 void fullscreenReady(const std::vector<double>& rect){
     if(fullPhase==FullPhase::entering){
         KillTimer(windowHandle,7761);if(rect.size()==4)playerRect=rect;
-        RECT c{};GetClientRect(windowHandle,&c);const RECT to=playerTarget(float(c.right),float(c.bottom));
-        comp::revealFrom(float(to.right-to.left)/std::max(1.f,float(c.right)),float(to.left),float(to.top),fullSeconds,.1);
-        motionFrom=GetTickCount64();SetTimer(windowHandle,7763,15,nullptr);SetTimer(windowHandle,7760,UINT(fullSeconds*1000)+20,nullptr);
+        RECT c{};GetClientRect(windowHandle,&c);float k=1,x=0,y=0;playerMapping(float(c.right),float(c.bottom),k,x,y);
+        comp::revealFrom(k,x,y,fullSeconds,.1);comp::veilTo(0.f,.86f,fullSeconds);SetTimer(windowHandle,7760,UINT(fullSeconds*1000)+20,nullptr);
     }else if(fullPhase==FullPhase::returning){
-        endFullTransition();comp::revealFrom(1.f,0.f,0.f,0);comp::settleContent();fullPhase=FullPhase::idle;pageShot.drop();videoShot.drop();
-        chromeShow(!pip);comp::fadeChrome(0.f,1.f,fullSeconds);SetTimer(windowHandle,7762,UINT(fullSeconds*1000)+40,nullptr);InvalidateRect(windowHandle,nullptr,TRUE);
+        endFullTransition();comp::revealFrom(1.f,0.f,0.f,0);comp::settleContent();comp::clearUnder(false);fullPhase=FullPhase::idle;
+        chromeShow(!pip);comp::fadeChrome(0.f,1.f,fullSeconds);SetTimer(windowHandle,7762,UINT(fullSeconds*1000)+40,nullptr);
     }
 }
-// The shrinking video has reached the player's place: the window goes back to its size under the page picture.
+// The shrinking video has reached the player's place: the window goes back to its size under the pictures.
 void returnFromFull(){
-    KillTimer(windowHandle,7764);KillTimer(windowHandle,7765);fullPhase=FullPhase::returning;motionFrom=0;full=false;
+    KillTimer(windowHandle,7765);fullPhase=FullPhase::returning;full=false;
     SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_NOZORDER|SWP_NOCOPYBITS);
-    pageDest=monitorInClient();
-    RedrawWindow(windowHandle,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW);fit();dockLayout();
-    execute("window.BiliSpace?.setFullscreen(false)");
+    POINT now{};ClientToScreen(windowHandle,&now);comp::movePage(monitorInClient());
+    // The video picture stays on the player's place (now in the restored window's pixels), cut to the player's box.
+    if(playerRect.size()==4&&videoSize.cx>0){const float k=float(playerRect[2])/float(videoSize.cx),x=float(playerRect[0]),y=float(playerRect[1])+float(playerRect[3])/2-videoSize.cy*k/2;
+        comp::videoAt(k,x,y,{LONG(playerRect[0]),LONG(playerRect[1]),LONG(playerRect[0]+playerRect[2]),LONG(playerRect[1]+playerRect[3])});}
+    fit();dockLayout();execute("window.BiliSpace?.setFullscreen(false)");
     execute("requestAnimationFrame(()=>requestAnimationFrame(()=>window.chrome?.webview?.postMessage({type:'fullscreen-ready'})))");SetTimer(windowHandle,7761,400,nullptr);
 }
 void toggleFull(bool on){
     if(on==full||pip)return;
-    endFullTransition();comp::settleContent();
+    endFullTransition();
     if(on){
-        POINT before{};ClientToScreen(windowHandle,&before);videoShot.drop();
-        // The picture is taken while the window still shows the page, painted in place, and only then is the page layer hidden.
-        const bool animate=windowAnimations()&&takeScreenShot(pageShot,pageMonitor);
-        if(animate){fullPhase=FullPhase::entering;pageDest=monitorInClient();RedrawWindow(windowHandle,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW);}
-        if(!animate||!comp::hideContent()){fullPhase=FullPhase::idle;pageShot.drop();}
+        if(fullPhase!=FullPhase::idle){comp::settleContent();comp::clearUnder(false);fullPhase=FullPhase::idle;}
+        POINT before{};ClientToScreen(windowHandle,&before);
+        // The picture is taken while the screen still shows the page and staged under it; only then is the page layer hidden.
+        Shot shot;bool animate=windowAnimations()&&takeScreenShot(shot,pageMonitor)&&comp::stagePage(shot.bitmap,monitorInClient());shot.drop();
+        if(animate&&comp::hideContent())fullPhase=FullPhase::entering;else comp::clearUnder(false);
         GetWindowRect(windowHandle,&savedRect);MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi);full=true;
         SetWindowPos(windowHandle,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right-mi.rcMonitor.left,mi.rcMonitor.bottom-mi.rcMonitor.top,SWP_FRAMECHANGED|SWP_NOCOPYBITS);
         POINT now{};ClientToScreen(windowHandle,&now);fullShift={before.x-now.x,before.y-now.y};
-        if(fullPhase==FullPhase::entering){pageDest=monitorInClient();RedrawWindow(windowHandle,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW);SetTimer(windowHandle,7761,400,nullptr);}
+        if(fullPhase==FullPhase::entering){comp::movePage(monitorInClient());SetTimer(windowHandle,7761,400,nullptr);}
         fit();dockLayout();chromeShow(false);comp::settleChrome();
         execute("window.BiliSpace?.setFullscreen(true)");
         return;
     }
     // Leaving plays the entrance backwards while the window is still fullscreen, then returns the window to its size.
-    if(fullPhase==FullPhase::entered&&pageShot.bitmap&&windowAnimations()&&takeShot(videoShot)&&comp::hideContent()){
-        fullPhase=FullPhase::leaving;motionFrom=GetTickCount64();RedrawWindow(windowHandle,nullptr,nullptr,RDW_INVALIDATE|RDW_UPDATENOW);
-        SetTimer(windowHandle,7764,15,nullptr);SetTimer(windowHandle,7765,UINT(fullSeconds*1000)+10,nullptr);return;
+    if(fullPhase==FullPhase::entered&&windowAnimations()){
+        Shot video;RECT c{};GetClientRect(windowHandle,&c);
+        HDC screen=GetDC(windowHandle),memory=CreateCompatibleDC(screen);video.bitmap=CreateCompatibleBitmap(screen,c.right,c.bottom);auto old=SelectObject(memory,video.bitmap);
+        const BOOL ok=PrintWindow(windowHandle,memory,PW_CLIENTONLY|PW_RENDERFULLCONTENT);SelectObject(memory,old);DeleteDC(memory);ReleaseDC(windowHandle,screen);
+        float k=1,x=0,y=0;
+        if(ok&&comp::stagePage(nullptr,monitorInClient(),.86f)&&comp::stageVideo(video.bitmap)&&playerMapping(float(c.right),float(c.bottom),k,x,y)&&comp::hideContent()){
+            video.drop();videoSize={c.right,c.bottom};fullPhase=FullPhase::leaving;
+            comp::veilTo(.86f,0.f,fullSeconds);comp::videoTo(k,x,y,fullSeconds);SetTimer(windowHandle,7765,UINT(fullSeconds*1000)+10,nullptr);return;
+        }
+        video.drop();
     }
-    fullPhase=FullPhase::idle;pageShot.drop();videoShot.drop();full=false;
+    comp::settleContent();comp::clearUnder(false);fullPhase=FullPhase::idle;full=false;
     SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_NOZORDER);
     InvalidateRect(windowHandle,nullptr,TRUE);fit();dockLayout();chromeShow(!pip);execute("window.BiliSpace?.setFullscreen(false)");
 }
@@ -770,7 +740,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
         break;
     case WM_SETFOCUS:PostMessageW(hwnd,restoreWebFocusMessage,0,0);return 0;
     case restoreWebFocusMessage:restoreWebFocus();return 0;
-    case WM_PAINT:if(fullPainting()){PAINTSTRUCT ps{};HDC dc=BeginPaint(hwnd,&ps);paintFull(dc);EndPaint(hwnd,&ps);return 0;}if(surfaceWaiting){PAINTSTRUCT ps{};HDC dc=BeginPaint(hwnd,&ps);RECT r{};GetClientRect(hwnd,&r);auto bg=CreateSolidBrush(surfaceDark?RGB(22,22,24):RGB(250,250,250));FillRect(dc,&r,bg);DeleteObject(bg);SetGraphicsMode(dc,GM_ADVANCED);double a=(GetTickCount64()-surfaceStart)*6.283185307/700.;XFORM transform{FLOAT(cos(a)),FLOAT(sin(a)),FLOAT(-sin(a)),FLOAT(cos(a)),FLOAT((r.right-r.left)/2),FLOAT((r.bottom-r.top)/2)};SetWorldTransform(dc,&transform);auto brush=CreateSolidBrush(RGB(251,114,153));auto pen=CreatePen(PS_SOLID,3,RGB(251,114,153));auto oldBrush=SelectObject(dc,brush),oldPen=SelectObject(dc,pen);RoundRect(dc,-23,-16,23,18,8,8);MoveToEx(dc,-12,-28,nullptr);LineTo(dc,0,-18);LineTo(dc,12,-28);auto white=CreateSolidBrush(RGB(255,255,255));RECT eye1{-12,-4,-8,6},eye2{8,-4,12,6};FillRect(dc,&eye1,white);FillRect(dc,&eye2,white);DeleteObject(white);SelectObject(dc,oldBrush);SelectObject(dc,oldPen);DeleteObject(brush);DeleteObject(pen);ModifyWorldTransform(dc,nullptr,MWT_IDENTITY);EndPaint(hwnd,&ps);return 0;}break;
+    case WM_PAINT:if(surfaceWaiting){PAINTSTRUCT ps{};HDC dc=BeginPaint(hwnd,&ps);RECT r{};GetClientRect(hwnd,&r);auto bg=CreateSolidBrush(surfaceDark?RGB(22,22,24):RGB(250,250,250));FillRect(dc,&r,bg);DeleteObject(bg);SetGraphicsMode(dc,GM_ADVANCED);double a=(GetTickCount64()-surfaceStart)*6.283185307/700.;XFORM transform{FLOAT(cos(a)),FLOAT(sin(a)),FLOAT(-sin(a)),FLOAT(cos(a)),FLOAT((r.right-r.left)/2),FLOAT((r.bottom-r.top)/2)};SetWorldTransform(dc,&transform);auto brush=CreateSolidBrush(RGB(251,114,153));auto pen=CreatePen(PS_SOLID,3,RGB(251,114,153));auto oldBrush=SelectObject(dc,brush),oldPen=SelectObject(dc,pen);RoundRect(dc,-23,-16,23,18,8,8);MoveToEx(dc,-12,-28,nullptr);LineTo(dc,0,-18);LineTo(dc,12,-28);auto white=CreateSolidBrush(RGB(255,255,255));RECT eye1{-12,-4,-8,6},eye2{8,-4,12,6};FillRect(dc,&eye1,white);FillRect(dc,&eye2,white);DeleteObject(white);SelectObject(dc,oldBrush);SelectObject(dc,oldPen);DeleteObject(brush);DeleteObject(pen);ModifyWorldTransform(dc,nullptr,MWT_IDENTITY);EndPaint(hwnd,&ps);return 0;}break;
     case WM_CLIPBOARDUPDATE:if(!testing)checkClipboardVideo();return 0;
     case WM_NCCALCSIZE:
         if(full&&wp)return 0;
@@ -792,7 +762,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     // Maximize and restore jump the size in one step; a page that is busy at that moment can keep showing its old-size frame
     // with the rest of the window empty. Shortly after such a jump the page is nudged to draw a fresh frame at the final size.
     case WM_SIZE:{static WPARAM lastKind=SIZE_RESTORED;fit();dockLayout();if(wp!=lastKind&&wp!=SIZE_MINIMIZED&&!full&&fullPhase==FullPhase::idle){SetTimer(hwnd,7756,140,nullptr);SetTimer(hwnd,7758,600,nullptr);}if(wp!=SIZE_MINIMIZED)lastKind=wp;return 0;}
-    case WM_ERASEBKGND:{if(fullPainting())return 1;RECT r{};GetClientRect(hwnd,&r);auto bg=CreateSolidBrush(full?RGB(0,0,0):surfaceDark?RGB(22,22,24):RGB(250,250,250));FillRect(reinterpret_cast<HDC>(wp),&r,bg);DeleteObject(bg);return 1;}
+    case WM_ERASEBKGND:{RECT r{};GetClientRect(hwnd,&r);auto bg=CreateSolidBrush(full?RGB(0,0,0):surfaceDark?RGB(22,22,24):RGB(250,250,250));FillRect(reinterpret_cast<HDC>(wp),&r,bg);DeleteObject(bg);return 1;}
     // Every view learns that the window moved, so its popups (select lists, IME candidates, tooltips) open in the right place.
     case WM_MOVE:{for(auto t:tabs)if(t->controller&&!t->closed)t->controller->NotifyParentWindowPositionChanged();if(chromeHost::ctl)chromeHost::ctl->NotifyParentWindowPositionChanged();dockLayout();break;}
     case WM_SHOWWINDOW:case WM_WINDOWPOSCHANGED:dockLayout();break;
@@ -800,7 +770,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_DPICHANGED:{comp::applyScaleToAll();auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){rememberWindow();if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
-    case WM_TIMER:if(wp==7763||wp==7764){InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==7765){returnFromFull();return 0;}if(wp==7762){KillTimer(hwnd,wp);comp::settleChrome();return 0;}if(wp==7761){KillTimer(hwnd,wp);fullscreenReady({});return 0;}if(wp==7760){KillTimer(hwnd,wp);KillTimer(hwnd,7763);motionFrom=0;comp::settleContent();if(fullPhase==FullPhase::entering)fullPhase=FullPhase::entered;return 0;}if(wp==7756||wp==7758){KillTimer(hwnd,wp);if(controller&&!IsIconic(hwnd)){RECT rc{};GetClientRect(hwnd,&rc);RECT shy=rc;shy.bottom=std::max(rc.top,rc.bottom-1);controller->put_Bounds(shy);controller->put_Bounds(rc);controller->NotifyParentWindowPositionChanged();}chromePlace();return 0;}if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
+    case WM_TIMER:if(wp==7765){returnFromFull();return 0;}if(wp==7762){KillTimer(hwnd,wp);comp::settleChrome();return 0;}if(wp==7761){KillTimer(hwnd,wp);fullscreenReady({});return 0;}if(wp==7760){KillTimer(hwnd,wp);comp::settleContent();if(fullPhase==FullPhase::entering){fullPhase=FullPhase::entered;comp::clearUnder(true);}return 0;}if(wp==7756||wp==7758){KillTimer(hwnd,wp);if(controller&&!IsIconic(hwnd)){RECT rc{};GetClientRect(hwnd,&rc);RECT shy=rc;shy.bottom=std::max(rc.top,rc.bottom-1);controller->put_Bounds(shy);controller->put_Bounds(rc);controller->NotifyParentWindowPositionChanged();}chromePlace();return 0;}if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
     case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");windowRemembered=false;trayMemory(true);return 0;}DestroyWindow(hwnd);return 0;
     case WM_DESTROY:if(!windowRemembered)rememberWindow();{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
     }

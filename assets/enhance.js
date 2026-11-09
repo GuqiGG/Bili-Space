@@ -867,8 +867,9 @@ document.addEventListener('fullscreenchange',()=>{
   const send=()=>{if(sent)return;sent=true;removeEventListener('resize',send);
     const report=()=>{let rect=null;try{rect=entering?fullRect:fullTarget?.isConnected?fullBox(fullTarget):null;}catch{}native('fullscreen-ready',{rect});};
     // Entering, a playing video is waited for until it has shown a frame at the new size (briefly), so the motion never starts on black.
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{const v=entering&&document.fullscreenElement?.querySelector?.('video');
-      if(!v||v.paused||!v.requestVideoFrameCallback){report();return;}let done=false;const go=()=>{if(!done){done=true;report();}};v.requestVideoFrameCallback(go);setTimeout(go,150);}));};
+    const v=entering&&document.fullscreenElement?.querySelector?.('video');
+    if(!v||v.paused||!v.requestVideoFrameCallback){requestAnimationFrame(()=>requestAnimationFrame(report));return;}
+    let done=false;const go=()=>{if(!done){done=true;report();}};v.requestVideoFrameCallback(go);setTimeout(go,100);};
   addEventListener('resize',send);setTimeout(send,220);
 });
 function scheduleScan(){

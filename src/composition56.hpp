@@ -4,6 +4,7 @@
 // the header where it draws (its reported regions) and to the visible page everywhere else.
 // Win7, a failed DirectComposition start or the windowedWebView setting fall back to windowed hosting.
 #include <dcomp.h>
+#include <d3d11.h>
 void stepActive(int direction);
 namespace comp{
 // IID_IDCompositionDevice; the MinGW header declares the interface without its GUID.
@@ -14,6 +15,16 @@ std::map<ICoreWebView2Controller*,View> views;
 // Header view state: the regions it currently draws (physical client pixels) and whether a modal dialog takes all input.
 ICoreWebView2Controller* chromeController{};bool chromeVisible=false,chromeModal=false;std::vector<RECT> chromeRects;
 ICoreWebView2Controller *pointerTarget{},*capturedTarget{},*focusTarget{};
+// A Direct3D device lets the compositor hold pictures of its own (for the fullscreen transition), which it then moves and
+// fades on the GPU. Loaded at run time; without it the transition is simply skipped.
+ID3D11Device* d3d{};ID3D11DeviceContext* d3dContext{};
+IUnknown* renderingDevice(){
+    using Create=HRESULT(WINAPI*)(IDXGIAdapter*,D3D_DRIVER_TYPE,HMODULE,UINT,const D3D_FEATURE_LEVEL*,UINT,UINT,ID3D11Device**,D3D_FEATURE_LEVEL*,ID3D11DeviceContext**);
+    auto library=LoadLibraryW(L"d3d11.dll");auto create=library?reinterpret_cast<Create>(GetProcAddress(library,"D3D11CreateDevice")):nullptr;if(!create)return nullptr;
+    for(auto type:{D3D_DRIVER_TYPE_HARDWARE,D3D_DRIVER_TYPE_WARP})if(SUCCEEDED(create(nullptr,type,nullptr,D3D11_CREATE_DEVICE_BGRA_SUPPORT,nullptr,0,D3D11_SDK_VERSION,&d3d,nullptr,&d3dContext)))break;
+    if(!d3d)return nullptr;IDXGIDevice* dxgi{};if(FAILED(d3d->QueryInterface(__uuidof(IDXGIDevice),reinterpret_cast<void**>(&dxgi)))){d3dContext->Release();d3d->Release();d3d=nullptr;d3dContext=nullptr;return nullptr;}
+    return dxgi;
+}
 bool init(){
     if(ready)return true;if(failed)return false;
 #ifdef BILI_LEGACY_WIN7
@@ -22,7 +33,8 @@ bool init(){
     if(config.value("windowedWebView",false)){failed=true;return false;}
     using Create=HRESULT(WINAPI*)(IUnknown*,REFIID,void**);
     auto library=LoadLibraryW(L"dcomp.dll");auto create=library?reinterpret_cast<Create>(GetProcAddress(library,"DCompositionCreateDevice2")):nullptr;
-    if(!create||FAILED(create(nullptr,deviceIid,reinterpret_cast<void**>(&device)))||!device){failed=true;log("composition: unavailable, using windowed WebView");return false;}
+    IUnknown* rendering=create?renderingDevice():nullptr;const HRESULT made=create?create(rendering,deviceIid,reinterpret_cast<void**>(&device)):E_FAIL;if(rendering)rendering->Release();
+    if(!create||FAILED(made)||!device){failed=true;log("composition: unavailable, using windowed WebView");return false;}
     if(FAILED(device->CreateTargetForHwnd(windowHandle,TRUE,&target))||FAILED(device->CreateVisual(&root))||FAILED(device->CreateVisual(&contentLayer))||FAILED(device->CreateVisual(&chromeLayer))){failed=true;log("composition: target failed, using windowed WebView");return false;}
     // The header layer is explicitly placed in front of the content layer.
     root->AddVisual(contentLayer,FALSE,nullptr);root->AddVisual(chromeLayer,TRUE,contentLayer);target->SetRoot(root);
@@ -37,7 +49,7 @@ IDCompositionEffectGroup* fade{};IDCompositionMatrixTransform* zoom{};
 bool hideContent(){
     if(!ready||!contentLayer)return false;
     if(!fade&&FAILED(device->CreateEffectGroup(&fade)))return false;
-    fade->SetOpacity(0.f);contentLayer->SetEffect(fade);device->Commit();return true;
+    fade->SetOpacity(0.f);contentLayer->SetEffect(fade);contentLayer->SetTransform(static_cast<IDCompositionTransform*>(nullptr));device->Commit();return true;
 }
 // Ease-out cubic v(t)=a+d(3u-3u^2+u^3), u=t/T, written as the polynomial in t that DirectComposition evaluates.
 IDCompositionAnimation* easeOut(float from,float to,double T){IDCompositionAnimation* a{};if(FAILED(device->CreateAnimation(&a)))return nullptr;const double d=double(to)-from;
@@ -64,6 +76,63 @@ void revealFrom(float scale,float x,float y,double seconds,double fadeSeconds=0)
         contentLayer->SetTransform(zoom);
     }
     device->Commit();
+}
+// Transition pictures live in a layer under the page layer: what the screen showed, a black veil over it, and the video.
+IDCompositionVisual* underLayer{};
+struct Picture{IDCompositionVisual* visual{};IDCompositionSurface* surface{};int width=0,height=0;
+    void release(){if(visual)visual->Release();if(surface)surface->Release();*this=Picture{};}};
+Picture pagePicture,veilPicture,videoPicture;IDCompositionEffectGroup* veil{};IDCompositionMatrixTransform *veilSize{},*videoMotion{};
+bool upload(Picture& p,const uint32_t* pixels,int w,int h){
+    p.release();if(!ready||!d3d||w<=0||h<=0)return false;
+    if(FAILED(device->CreateSurface(UINT(w),UINT(h),DXGI_FORMAT_B8G8R8A8_UNORM,DXGI_ALPHA_MODE_IGNORE,&p.surface)))return false;
+    ID3D11Texture2D* texture{};POINT at{};if(FAILED(p.surface->BeginDraw(nullptr,__uuidof(ID3D11Texture2D),reinterpret_cast<void**>(&texture),&at))){p.release();return false;}
+    D3D11_BOX box{UINT(at.x),UINT(at.y),0,UINT(at.x+w),UINT(at.y+h),1};d3dContext->UpdateSubresource(texture,0,&box,pixels,UINT(w*4),0);texture->Release();p.surface->EndDraw();
+    if(FAILED(device->CreateVisual(&p.visual))){p.release();return false;}p.visual->SetContent(p.surface);p.width=w;p.height=h;return true;
+}
+bool upload(Picture& p,HBITMAP bitmap){
+    BITMAP info{};if(!bitmap||!GetObjectW(bitmap,sizeof(info),&info))return false;const int w=info.bmWidth,h=info.bmHeight;if(w<=0||h<=0)return false;
+    std::vector<uint32_t> pixels(size_t(w)*size_t(h));BITMAPINFO bi{};bi.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);bi.bmiHeader.biWidth=w;bi.bmiHeader.biHeight=-h;bi.bmiHeader.biPlanes=1;bi.bmiHeader.biBitCount=32;bi.bmiHeader.biCompression=BI_RGB;
+    HDC dc=GetDC(nullptr);const int lines=GetDIBits(dc,bitmap,0,UINT(h),pixels.data(),&bi,DIB_RGB_COLORS);ReleaseDC(nullptr,dc);if(lines!=h)return false;
+    for(auto& px:pixels)px|=0xFF000000u;return upload(p,pixels.data(),w,h);
+}
+void place(IDCompositionMatrixTransform*& t,IDCompositionVisual* v,float scale,float x,float y){
+    if(!t&&FAILED(device->CreateMatrixTransform(&t)))return;D2D_MATRIX_3X2_F m{};m._11=scale;m._22=scale;m._31=x;m._32=y;t->SetMatrix(m);v->SetTransform(t);
+}
+// Puts the screen picture (and a clear veil over it) under the page layer at a place in client pixels.
+bool stagePage(HBITMAP shot,POINT at,float veilOpacity=0.f){
+    if(!ready||!d3d)return false;
+    if(!underLayer){if(FAILED(device->CreateVisual(&underLayer)))return false;root->AddVisual(underLayer,FALSE,contentLayer);}
+    if(shot&&!upload(pagePicture,shot))return false;if(!pagePicture.visual)return false;
+    if(!veilPicture.visual){const uint32_t black=0xFF000000u;if(!upload(veilPicture,&black,1,1))return false;veilPicture.visual->SetBitmapInterpolationMode(DCOMPOSITION_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);}
+    if(!veil&&FAILED(device->CreateEffectGroup(&veil)))return false;veil->SetOpacity(veilOpacity);veilPicture.visual->SetEffect(veil);
+    underLayer->RemoveAllVisuals();underLayer->AddVisual(pagePicture.visual,FALSE,nullptr);underLayer->AddVisual(veilPicture.visual,TRUE,pagePicture.visual);
+    pagePicture.visual->SetOffsetX(float(at.x));pagePicture.visual->SetOffsetY(float(at.y));
+    place(veilSize,veilPicture.visual,1.f,float(at.x),float(at.y));if(veilSize){veilSize->SetMatrixElement(0,0,float(pagePicture.width));veilSize->SetMatrixElement(1,1,float(pagePicture.height));}
+    device->Commit();return true;
+}
+void movePage(POINT at){
+    if(!pagePicture.visual)return;pagePicture.visual->SetOffsetX(float(at.x));pagePicture.visual->SetOffsetY(float(at.y));
+    if(veilSize){veilSize->SetMatrixElement(2,0,float(at.x));veilSize->SetMatrixElement(2,1,float(at.y));}device->Commit();
+}
+void veilTo(float from,float to,double seconds){if(!veil)return;if(auto a=easeOut(from,to,seconds)){veil->SetOpacity(a);a->Release();}else veil->SetOpacity(to);device->Commit();}
+// The fullscreen video picture, on top of the veil; it shrinks from covering the window onto the player's place.
+bool stageVideo(HBITMAP shot){
+    if(!underLayer||!upload(videoPicture,shot))return false;
+    underLayer->AddVisual(videoPicture.visual,TRUE,veilPicture.visual);place(videoMotion,videoPicture.visual,1.f,0.f,0.f);device->Commit();return true;
+}
+void videoTo(float scale,float x,float y,double seconds){
+    if(!videoMotion)return;
+    for(auto [row,column,from,to]:{std::tuple{0,0,1.f,scale},std::tuple{1,1,1.f,scale},std::tuple{2,0,0.f,x},std::tuple{2,1,0.f,y}})if(auto a=easeOut(from,to,seconds)){videoMotion->SetMatrixElement(row,column,a);a->Release();}
+    device->Commit();
+}
+// Holds the video picture still on the player's place, cut to the player's box (rect in client pixels).
+void videoAt(float scale,float x,float y,const RECT& box){
+    if(!videoPicture.visual)return;place(videoMotion,videoPicture.visual,scale,x,y);
+    videoPicture.visual->SetClip(D2D_RECT_F{(box.left-x)/scale,(box.top-y)/scale,(box.right-x)/scale,(box.bottom-y)/scale});device->Commit();
+}
+// Takes the pictures out of the tree; keepPage leaves the screen picture ready for the way back.
+void clearUnder(bool keepPage){
+    if(underLayer)underLayer->RemoveAllVisuals();videoPicture.release();if(videoMotion){videoMotion->Release();videoMotion=nullptr;}if(!keepPage)pagePicture.release();if(ready)device->Commit();
 }
 // The header layer fades with the page's fullscreen motion instead of popping.
 IDCompositionEffectGroup* chromeFade{};
