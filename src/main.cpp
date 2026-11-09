@@ -471,12 +471,13 @@ void togglePip(bool on){
     fit();dockLayout();chromeShow(!full&&!pip);execute(std::string("window.BiliSpace?.setPip(")+(pip?"true":"false")+")");log(pip?"PIP entered: borderless, topmost":"PIP restored");
 }
 bool windowAnimations(){BOOL on=TRUE;SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&on,0);return on;}
-bool fullFading=false;
-void fullscreenReady(){if(!fullFading)return;fullFading=false;KillTimer(windowHandle,7761);RECT r{};GetClientRect(windowHandle,&r);comp::revealContent(full?.94f:1.03f,float(r.right),float(r.bottom),.26);SetTimer(windowHandle,7760,300,nullptr);}
+bool fullFading=false;ULONGLONG fullFlipAt=0;
+void fullscreenReady(){if(!fullFading)return;fullFading=false;KillTimer(windowHandle,7761);RECT r{};GetClientRect(windowHandle,&r);if(full){comp::revealContent(.94f,float(r.right),float(r.bottom),.26);SetTimer(windowHandle,7760,300,nullptr);return;}
+    comp::revealContent(1.f,float(r.right),float(r.bottom),0);comp::settleContent();chromeShow(!pip);comp::fadeChrome(0.f,1.f,.32);SetTimer(windowHandle,7762,360,nullptr);}
 void toggleFull(bool on){
     if(on==full||pip)return;
     // Hidden before the jump so neither the old-size frame nor the resize itself is ever seen.
-    KillTimer(windowHandle,7760);fullFading=windowAnimations()&&comp::hideContent();
+    KillTimer(windowHandle,7760);POINT before{};ClientToScreen(windowHandle,&before);fullFading=windowAnimations()&&!on&&comp::hideContent();
     if(on){GetWindowRect(windowHandle,&savedRect);MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi);full=true;
         SetWindowPos(windowHandle,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right-mi.rcMonitor.left,mi.rcMonitor.bottom-mi.rcMonitor.top,SWP_FRAMECHANGED);
     }else{full=false;SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_NOZORDER);}
@@ -485,6 +486,9 @@ void toggleFull(bool on){
     if(fullFading){execute("requestAnimationFrame(()=>requestAnimationFrame(()=>window.chrome?.webview?.postMessage({type:'fullscreen-ready'})))");SetTimer(windowHandle,7761,300,nullptr);}
     // The header comes back with the page, not before it.
     if(full||!fullFading)chromeShow(!full&&!pip);
+    if(full)comp::settleChrome();
+    if(full){POINT now{};ClientToScreen(windowHandle,&now);RECT c{};GetClientRect(windowHandle,&c);
+        execute("window.BiliSpace?.fullGrow?.("+std::to_string(before.x-now.x)+","+std::to_string(before.y-now.y)+","+std::to_string(c.right)+","+std::to_string(c.bottom)+")");}
     execute(std::string("window.BiliSpace?.setFullscreen(")+(full?"true":"false")+")");
 }
 void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
@@ -500,6 +504,8 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="community"){communityAction(m);
         }else if(type=="open-settings"){const auto tab=m.value("tab",std::string{});const auto call="window.BiliSpace?.openSettings?.("+json(tab).dump()+",true)";if(!chromeOpenSettings(call))execute(call);
         }else if(type=="fullscreen-ready"){fullscreenReady();
+        }else if(type=="fullscreen-cancel"){fullFlipAt=0;if(!full){comp::fadeChrome(0.f,1.f,.2);SetTimer(windowHandle,7762,240,nullptr);}
+        }else if(type=="fullscreen-flip"){fullFlipAt=GetTickCount64();comp::fadeChrome(1.f,0.f,.3);
         }else if(type=="plugins"){pluginsAction(m);
         }else if(type=="media-state"){windowsMediaAccept(m);
         }else if(type=="updates"){updateAction(m.value("action",std::string{}),m.value("version",std::string{}));
@@ -705,7 +711,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_DPICHANGED:{comp::applyScaleToAll();auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){rememberWindow();if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
-    case WM_TIMER:if(wp==7761){KillTimer(hwnd,wp);fullscreenReady();return 0;}if(wp==7760){KillTimer(hwnd,wp);comp::settleContent();chromeShow(!full&&!pip);return 0;}if(wp==7756||wp==7758){KillTimer(hwnd,wp);if(controller&&!IsIconic(hwnd)){RECT rc{};GetClientRect(hwnd,&rc);RECT shy=rc;shy.bottom=std::max(rc.top,rc.bottom-1);controller->put_Bounds(shy);controller->put_Bounds(rc);controller->NotifyParentWindowPositionChanged();}chromePlace();return 0;}if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
+    case WM_TIMER:if(wp==7762){KillTimer(hwnd,wp);comp::settleChrome();return 0;}if(wp==7761){KillTimer(hwnd,wp);fullscreenReady();return 0;}if(wp==7760){KillTimer(hwnd,wp);comp::settleContent();chromeShow(!full&&!pip);return 0;}if(wp==7756||wp==7758){KillTimer(hwnd,wp);if(controller&&!IsIconic(hwnd)){RECT rc{};GetClientRect(hwnd,&rc);RECT shy=rc;shy.bottom=std::max(rc.top,rc.bottom-1);controller->put_Bounds(shy);controller->put_Bounds(rc);controller->NotifyParentWindowPositionChanged();}chromePlace();return 0;}if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
     case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");windowRemembered=false;trayMemory(true);return 0;}DestroyWindow(hwnd);return 0;
     case WM_DESTROY:if(!windowRemembered)rememberWindow();{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
     }

@@ -855,6 +855,62 @@ function pauseOffscreenLoops(){
 // Every CSS animation announces its start, including ones that began before this script looked.
 document.addEventListener('animationstart',e=>watchLoop(e.target),true);
 window.addEventListener('load',()=>setTimeout(pauseOffscreenLoops,500),{once:true});
+// Fullscreen as one motion. The request goes through at once (the browser grants it only right after the click or key),
+// with the fullscreen layer held invisible over a clear backdrop, so nothing jumps. Once the window has grown, the player
+// starts at its old place on screen and grows to cover it while the backdrop darkens the rest of the client to black.
+// Leaving plays the same motion backwards. Only transforms and opacity move, so the page does not re-lay out per frame.
+const FULL_MS=320,FULL_EASE='cubic-bezier(.32,.72,0,1)';let fullMotion=null;
+const fullStill=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Lifts the player (and the ancestors that hold its stacking order) above the page, with a shade just beneath it.
+function fullLift(el){
+  const saved=[],keep=(node,prop,value)=>{saved.push([node,prop,node.style.getPropertyValue(prop),node.style.getPropertyPriority(prop)]);node.style.setProperty(prop,value,'important');};
+  for(let a=el.parentElement;a&&a!==document.body&&a!==document.documentElement;a=a.parentElement){const s=getComputedStyle(a);if(s.position!=='static'&&s.zIndex!=='auto')keep(a,'z-index','2147483000');}
+  if(getComputedStyle(el).position==='static')keep(el,'position','relative');keep(el,'z-index','2147483001');keep(el,'transform-origin','0 0');
+  const shade=document.createElement('div');shade.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#000;opacity:0;pointer-events:none';el.before(shade);
+  return {el,shade,restore(){shade.remove();for(const [node,prop,value,priority] of saved.reverse()){if(value)node.style.setProperty(prop,value,priority);else node.style.removeProperty(prop);}}};
+}
+// The transform that makes the player's box span the window's width, centred vertically, like the fullscreen video.
+function fullCover(r){const W=innerWidth,H=innerHeight,s=W/r.width;return `translate(${-r.left}px,${H/2-r.height*s/2-r.top}px) scale(${s})`;}
+function fullClear(){const m=fullMotion;fullMotion=null;document.documentElement.classList.remove('bs-full-wait','bs-full-zoom');if(!m)return;clearTimeout(m.timer);m.grow?.cancel();m.fade?.cancel();m.lift?.restore();m.el?.style.removeProperty('transform-origin');}
+for(const name of ['requestFullscreen','webkitRequestFullscreen']){const original=Element.prototype[name];if(typeof original!=='function'||CHROME_VIEW)continue;
+  Element.prototype[name]=function(...args){
+    if(!fullMotion&&!document.fullscreenElement&&!fullStill()){try{const r=this.getBoundingClientRect();if(r.width>=80&&r.height>=60){
+      fullMotion={el:this,rect:{left:r.left,top:r.top,width:r.width,height:r.height},entering:true};
+      document.documentElement.classList.add('bs-full-wait','bs-full-zoom');native('fullscreen-flip');
+      // A host that never reports the window's growth still gets the motion.
+      fullMotion.timer=setTimeout(()=>fullGrow(0,0,0,0),450);}}catch{}}
+    const refused=()=>{if(fullMotion?.entering){fullClear();native('fullscreen-cancel');}};
+    let result;try{result=Reflect.apply(original,this,args);}catch(error){refused();throw error;}
+    Promise.resolve(result).catch(refused);return result;
+  };
+}
+// Called by the host once the window has grown: how far the old client area moved and the new client size (device pixels).
+function fullGrow(dx,dy,width,height){
+  const m=fullMotion;if(!m?.entering||m.grow)return;const el=document.fullscreenElement;if(!el){if(!m.timer)fullClear();return;}
+  const s=devicePixelRatio||1;
+  // The page may hear about the new size a moment after the host; it waits for its own resize (briefly) first.
+  if(width&&Math.abs(innerWidth*s-width)>2&&!m.waited){m.waited=true;const go=()=>{removeEventListener('resize',go);fullGrow(dx,dy,0,0);};addEventListener('resize',go);setTimeout(go,250);return;}
+  clearTimeout(m.timer);const r=m.rect,W=innerWidth,H=innerHeight,k=r.width/W,x=r.left+dx/s,y=r.top+dy/s+r.height/2-H*k/2;
+  el.style.setProperty('transform-origin','0 0','important');
+  document.documentElement.classList.remove('bs-full-wait');
+  // translate/scale are separate from transform, which the browser pins to none on the fullscreen element.
+  m.grow=el.animate([{translate:`${x}px ${y}px`,scale:String(k)},{translate:'0px 0px',scale:'1'}],{duration:FULL_MS,easing:FULL_EASE});
+  m.grow.onfinish=()=>{if(fullMotion!==m)return;el.style.removeProperty('transform-origin');document.documentElement.classList.remove('bs-full-zoom');fullMotion={el,full:true};};
+}
+document.addEventListener('fullscreenchange',()=>{
+  if(CHROME_VIEW)return;
+  if(document.fullscreenElement){if(!fullMotion?.entering){fullClear();fullMotion={el:document.fullscreenElement,full:true};}return;}
+  const m=fullMotion;
+  if(!m?.full||fullStill()||!m.el.isConnected){fullClear();return;}
+  // Back out: wait for the window to return to its size, then start from the player covering the window and settle back.
+  let started=false;const start=()=>{if(started)return;started=true;removeEventListener('resize',start);
+    const r=m.el.getBoundingClientRect();if(r.width<80||r.height<60){fullMotion=null;return;}
+    const lift=fullLift(m.el);m.lift=lift;m.full=false;
+    m.fade=lift.shade.animate([{opacity:1},{opacity:0}],{duration:FULL_MS,easing:'ease-out',fill:'forwards'});
+    m.grow=m.el.animate([{transform:fullCover(r)},{transform:'none'}],{duration:FULL_MS,easing:FULL_EASE,fill:'forwards'});
+    m.grow.onfinish=()=>{if(fullMotion===m)fullClear();};};
+  addEventListener('resize',start);setTimeout(start,160);
+});
 function scheduleScan(){
   if(scanTimer)return;
   scanTimer=setTimeout(()=>{scanTimer=0;pauseOffscreenLoops();syncRoute();markAds();linkifyDescriptions();cacheSpaceBackgrounds();applyAudioBoost();watchVideoLoading();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==playbackVideo()))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==playbackVideo()))startGpu();},180);
@@ -1020,7 +1076,7 @@ html[data-bs-theme=dark] :is(.vui_button--blue,.vui_button--primary,.vui_button-
 html[data-bs-theme=dark] :is(#bilibili-player,#bilibili-player-wrap,#playerWrap,.player-wrap,.player-container,.video-container-v1,.video-container-v2,.bpx-player-container,.bpx-player-video-wrap){box-shadow:none!important;outline:none!important;border-color:#303034!important}
 html[data-bs-theme=dark] :is(#bilibili-player,.bpx-player-container,.bpx-player-video-wrap){background:#000!important}
 html[data-bs-theme=dark] :is(.bpx-player-sending-bar,.bilibili-player-video-sendbar):not([data-screen=full] *):not([data-screen=web] *):not(html[data-bs-full=true] *){background:#202023!important;border-color:#303034!important;box-shadow:none!important}
-html[data-bs-theme=dark] :is(.bpx-player-dm-wrap,.bpx-player-dm-input,.bilibili-player-video-danmaku-input,.bpx-player-sending-area):not([data-screen=full] *):not([data-screen=web] *):not(html[data-bs-full=true] *){background:#2c2c32!important;color:#eeeef0!important;border-color:#3b3b42!important}/* The viewer/danmaku count never spills over the danmaku switch, whatever width the player last measured. */.bpx-player-sending-bar .bpx-player-video-info{flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}.bpx-player-sending-bar :is(.bpx-player-dm-switch,.bpx-player-dm-setting){flex-shrink:0!important}
+html[data-bs-theme=dark] :is(.bpx-player-dm-wrap,.bpx-player-dm-input,.bilibili-player-video-danmaku-input,.bpx-player-sending-area):not([data-screen=full] *):not([data-screen=web] *):not(html[data-bs-full=true] *){background:#2c2c32!important;color:#eeeef0!important;border-color:#3b3b42!important}html.bs-full-wait :fullscreen{opacity:0!important}html.bs-full-wait :fullscreen::backdrop{background:transparent!important;animation:none!important}html.bs-full-zoom:not(.bs-full-wait) :fullscreen::backdrop{animation:bs-full-backdrop .32s ease-out both}@keyframes bs-full-backdrop{from{background:rgba(0,0,0,0)}to{background:#000}}/* The viewer/danmaku count never spills over the danmaku switch, whatever width the player last measured. */.bpx-player-sending-bar .bpx-player-video-info{flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}.bpx-player-sending-bar :is(.bpx-player-dm-switch,.bpx-player-dm-setting){flex-shrink:0!important}
 html[data-bs-theme=dark] :is(.bpx-player-dm-input input,.bpx-player-dm-input textarea){background:transparent!important;color:#eeeef0!important}
 html[data-bs-theme=dark] :is(.roll-btn,.feed-roll-btn,.floor-single-card,.bili-live-card,.living-card,.vui_pagenation--btn,.vui_pagination--btn){background:#26262b!important;color:#d4d4dc!important;border-color:#38383f!important}
 /* Original refresh panels retain their size; elevation replaces the outline. */
@@ -2041,7 +2097,7 @@ function boot(){
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
+  window.BiliSpace={fullGrow,offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};

@@ -44,6 +44,7 @@ IDCompositionAnimation* easeOut(float from,float to,double T){IDCompositionAnima
     a->AddCubic(0,from,float(3*d/T),float(-3*d/(T*T)),float(d/(T*T*T)));a->End(T,to);return a;}
 void revealContent(float scale,float width,float height,double seconds){
     if(!ready||!contentLayer||!fade)return;
+    if(seconds<=0){fade->SetOpacity(1.f);device->Commit();return;}
     if(auto a=easeOut(0.f,1.f,seconds)){fade->SetOpacity(a);a->Release();}else fade->SetOpacity(1.f);
     if(scale!=1.f&&(zoom||SUCCEEDED(device->CreateMatrixTransform(&zoom)))){
         // Scaled about the centre of the window.
@@ -53,6 +54,11 @@ void revealContent(float scale,float width,float height,double seconds){
     }
     device->Commit();
 }
+// The header layer fades with the page's fullscreen motion instead of popping.
+IDCompositionEffectGroup* chromeFade{};
+void fadeChrome(float from,float to,double seconds){if(!ready||!chromeLayer)return;if(!chromeFade&&FAILED(device->CreateEffectGroup(&chromeFade)))return;
+    if(auto a=easeOut(from,to,seconds)){chromeFade->SetOpacity(a);a->Release();}else chromeFade->SetOpacity(to);chromeLayer->SetEffect(chromeFade);device->Commit();}
+void settleChrome(){if(ready&&chromeLayer){chromeLayer->SetEffect(nullptr);device->Commit();}}
 // After the motion the effect and transform are removed, so the page draws straight to the screen again.
 void settleContent(){if(!ready||!contentLayer)return;contentLayer->SetEffect(nullptr);contentLayer->SetTransform(static_cast<IDCompositionTransform*>(nullptr));device->Commit();}
 // Windows' own "Text size" setting (Accessibility) enlarges web content in ordinary hosting; visual hosting sets the
