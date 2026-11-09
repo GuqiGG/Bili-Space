@@ -116,9 +116,9 @@ void movePage(POINT at){
 }
 void veilTo(float from,float to,double seconds){if(!veil)return;if(auto a=easeOut(from,to,seconds)){veil->SetOpacity(a);a->Release();}else veil->SetOpacity(to);device->Commit();}
 // The fullscreen video picture, on top of the veil; it shrinks from covering the window onto the player's place.
-bool stageVideo(HBITMAP shot){
+bool stageVideo(HBITMAP shot,const D2D_RECT_F& clip){
     if(!underLayer||!upload(videoPicture,shot))return false;
-    underLayer->AddVisual(videoPicture.visual,TRUE,veilPicture.visual);place(videoMotion,videoPicture.visual,1.f,0.f,0.f);device->Commit();return true;
+    underLayer->AddVisual(videoPicture.visual,TRUE,veilPicture.visual);place(videoMotion,videoPicture.visual,1.f,0.f,0.f);videoPicture.visual->SetClip(clip);device->Commit();return true;
 }
 void videoTo(float scale,float x,float y,double seconds){
     if(!videoMotion)return;
@@ -126,21 +126,19 @@ void videoTo(float scale,float x,float y,double seconds){
     device->Commit();
 }
 // Holds the video picture still on the player's place, cut to the player's box (rect in client pixels).
-void videoAt(float scale,float x,float y,const RECT& box){
-    if(!videoPicture.visual)return;place(videoMotion,videoPicture.visual,scale,x,y);
-    videoPicture.visual->SetClip(D2D_RECT_F{(box.left-x)/scale,(box.top-y)/scale,(box.right-x)/scale,(box.bottom-y)/scale});device->Commit();
+void videoAt(float scale,float x,float y){
+    if(!videoPicture.visual)return;place(videoMotion,videoPicture.visual,scale,x,y);device->Commit();
 }
 // The player cut out of the screen picture (crop in picture pixels), shown where it was and grown at once to the place
 // the fullscreen video will occupy, so the motion starts with the key press rather than after the page has re-laid out.
 IDCompositionVisual* cropVisual{};IDCompositionMatrixTransform* cropMotion{};
-bool growCrop(const RECT& crop,POINT at,float W,float H,double seconds){
-    if(!ready||!pagePicture.surface||!underLayer||crop.right<=crop.left||crop.bottom<=crop.top||W<=0)return false;
+bool growCrop(const RECT& crop,POINT at,float scale,float x,float y,double seconds){
+    if(!ready||!pagePicture.surface||!underLayer||crop.right<=crop.left||crop.bottom<=crop.top||!(scale>0.f))return false;
     if(!cropVisual){if(FAILED(device->CreateVisual(&cropVisual)))return false;}
     cropVisual->SetContent(pagePicture.surface);cropVisual->SetClip(D2D_RECT_F{float(crop.left),float(crop.top),float(crop.right),float(crop.bottom)});
     underLayer->RemoveVisual(cropVisual);underLayer->AddVisual(cropVisual,TRUE,veilPicture.visual);
-    const float cw=float(crop.right-crop.left),ch=float(crop.bottom-crop.top),k=W/cw,x=-float(crop.left)*k,y=(H-ch*k)/2-float(crop.top)*k;
     place(cropMotion,cropVisual,1.f,float(at.x),float(at.y));
-    for(auto [row,column,from,to]:{std::tuple{0,0,1.f,k},std::tuple{1,1,1.f,k},std::tuple{2,0,float(at.x),x},std::tuple{2,1,float(at.y),y}})if(auto a=easeOut(from,to,seconds)){cropMotion->SetMatrixElement(row,column,a);a->Release();}
+    for(auto [row,column,from,to]:{std::tuple{0,0,1.f,scale},std::tuple{1,1,1.f,scale},std::tuple{2,0,float(at.x),x},std::tuple{2,1,float(at.y),y}})if(auto a=easeOut(from,to,seconds)){cropMotion->SetMatrixElement(row,column,a);a->Release();}
     device->Commit();return true;
 }
 // The live page layer fades in over the pictures (it is already where they lead), then they can go.

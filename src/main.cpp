@@ -481,7 +481,11 @@ bool windowAnimations(){BOOL on=TRUE;SystemParametersInfoW(SPI_GETCLIENTAREAANIM
 struct Shot{HBITMAP bitmap{};int width=0,height=0;void drop(){if(bitmap)DeleteObject(bitmap);*this=Shot{};}};
 enum class FullPhase{idle,entering,entered,leaving,returning};
 FullPhase fullPhase=FullPhase::idle;RECT pageMonitor{};POINT fullShift{},fullBefore{};std::vector<double> playerRect,startRect;SIZE videoSize{};
-ULONGLONG startRectAt=0,growUntil=0;bool cropGrowing=false,liveReady=false;
+ULONGLONG startRectAt=0,growUntil=0,fullSettledAt=0;bool cropGrowing=false,liveReady=false;
+// The picture inside a box when shown with object-fit: contain (aspect = width / height of the video; 0 = the whole box).
+struct Box{float x,y,w,h;};
+Box contain(Box b,float aspect){if(!(aspect>0.f)||b.w<=0||b.h<=0)return b;if(b.w/b.h>aspect){const float w=b.h*aspect;return {b.x+(b.w-w)/2,b.y,w,b.h};}const float h=b.w/aspect;return {b.x,b.y+(b.h-h)/2,b.w,h};}
+float videoAspect(const std::vector<double>& r){return r.size()>=6&&r[4]>0&&r[5]>0?float(r[4]/r[5]):0.f;}
 constexpr double fullSeconds=.32;
 bool takeScreenShot(Shot& shot,RECT& area){
     shot.drop();MONITORINFO mi{sizeof(mi)};if(!GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi))return false;area=mi.rcMonitor;
@@ -494,23 +498,25 @@ bool takeScreenShot(Shot& shot,RECT& area){
 POINT monitorInClient(){POINT o{};ClientToScreen(windowHandle,&o);return {pageMonitor.left-o.x,pageMonitor.top-o.y};}
 // The player's box as the fullscreen picture maps onto it: the window's width scaled to the player's width, centred on it.
 bool playerMapping(float W,float H,float& scale,float& x,float& y){
-    if(playerRect.size()!=4||playerRect[2]<40||W<=0)return false;
-    scale=float(playerRect[2])/W;x=float(playerRect[0])+fullShift.x;y=float(playerRect[1])+fullShift.y+float(playerRect[3])/2-H*scale/2;return true;
+    if(playerRect.size()<4||playerRect[2]<40||W<=0||H<=0)return false;const float a=videoAspect(playerRect);
+    const Box small=contain({float(playerRect[0])+fullShift.x,float(playerRect[1])+fullShift.y,float(playerRect[2]),float(playerRect[3])},a),big=contain({0,0,W,H},a>0?a:float(playerRect[2]/playerRect[3]));
+    scale=small.w/big.w;x=small.x-big.x*scale;y=small.y-big.y*scale;return true;
 }
 // Keeps the transition pictures lined up with the screen while the window moves; called from WM_SIZE / WM_MOVE.
 void fullFollow(){
     if(fullPhase==FullPhase::idle||fullPhase==FullPhase::entered)return;comp::movePage(monitorInClient());
-    if(fullPhase==FullPhase::returning&&playerRect.size()==4&&videoSize.cx>0){const float k=float(playerRect[2])/float(videoSize.cx),x=float(playerRect[0]),y=float(playerRect[1])+float(playerRect[3])/2-videoSize.cy*k/2;
-        comp::videoAt(k,x,y,{LONG(playerRect[0]),LONG(playerRect[1]),LONG(playerRect[0]+playerRect[2]),LONG(playerRect[1]+playerRect[3])});}
+    if(fullPhase==FullPhase::returning&&videoSize.cx>0){const POINT keep=fullShift;fullShift={0,0};float k=1,x=0,y=0;if(playerMapping(float(videoSize.cx),float(videoSize.cy),k,x,y))comp::videoAt(k,x,y);fullShift=keep;}
 }
 // Grows the player cut from the screen picture, once the window has jumped and the page has said where the player was.
 void startGrow(){
-    if(fullPhase!=FullPhase::entering||cropGrowing||startRect.size()!=4||GetTickCount64()-startRectAt>1500)return;
-    playerRect=startRect;RECT c{};GetClientRect(windowHandle,&c);
-    // The player in screen-picture pixels: page pixels plus where the client area was on the monitor.
-    const LONG x=LONG(startRect[0])+fullBefore.x-pageMonitor.left,y=LONG(startRect[1])+fullBefore.y-pageMonitor.top;
-    if(!comp::growCrop({x,y,x+LONG(startRect[2]),y+LONG(startRect[3])},monitorInClient(),float(c.right),float(c.bottom),fullSeconds))return;
-    cropGrowing=true;growUntil=GetTickCount64()+ULONGLONG(fullSeconds*1000);comp::veilTo(0.f,.86f,fullSeconds);SetTimer(windowHandle,7766,UINT(fullSeconds*1000)+10,nullptr);
+    if(fullPhase!=FullPhase::entering||cropGrowing||startRect.size()<4||GetTickCount64()-startRectAt>1500)return;
+    playerRect=startRect;RECT c{};GetClientRect(windowHandle,&c);const float W=float(c.right),H=float(c.bottom),a=videoAspect(startRect);
+    // The video picture in screen-picture pixels: page pixels plus where the client area was on the monitor.
+    const Box crop=contain({float(startRect[0]+fullBefore.x-pageMonitor.left),float(startRect[1]+fullBefore.y-pageMonitor.top),float(startRect[2]),float(startRect[3])},a);
+    const Box target=contain({0,0,W,H},a>0?a:crop.w/crop.h);const POINT at=monitorInClient();
+    const float k=target.w/crop.w,x=target.x-crop.x*k,y=target.y-crop.y*k;
+    if(!comp::growCrop({LONG(crop.x),LONG(crop.y),LONG(crop.x+crop.w),LONG(crop.y+crop.h)},at,k,x,y,fullSeconds))return;
+    cropGrowing=true;growUntil=GetTickCount64()+ULONGLONG(fullSeconds*1000);comp::veilTo(0.f,1.f,fullSeconds);SetTimer(windowHandle,7766,UINT(fullSeconds*1000)+10,nullptr);
 }
 // Entering ends with the live fullscreen page fading in over the grown picture.
 void finishEnter(){
@@ -520,11 +526,11 @@ void endFullTransition(){KillTimer(windowHandle,7760);KillTimer(windowHandle,776
 // rect: where the player sat before entering, in device pixels of the page as it was; empty if unknown.
 void fullscreenReady(const std::vector<double>& rect){
     if(fullPhase==FullPhase::entering){
-        KillTimer(windowHandle,7761);if(rect.size()==4&&playerRect.size()!=4)playerRect=rect;
+        KillTimer(windowHandle,7761);if(rect.size()>=4&&playerRect.size()<4)playerRect=rect;
         if(cropGrowing){liveReady=true;if(GetTickCount64()>=growUntil)finishEnter();return;}
         // No picture of the player to grow (its place came too late): the live page grows from the player instead.
         RECT c{};GetClientRect(windowHandle,&c);float k=1,x=0,y=0;playerMapping(float(c.right),float(c.bottom),k,x,y);
-        comp::revealFrom(k,x,y,fullSeconds,.1);comp::veilTo(0.f,.86f,fullSeconds);SetTimer(windowHandle,7760,UINT(fullSeconds*1000)+20,nullptr);
+        comp::revealFrom(k,x,y,fullSeconds,.1);comp::veilTo(0.f,1.f,fullSeconds);SetTimer(windowHandle,7760,UINT(fullSeconds*1000)+20,nullptr);
     }else if(fullPhase==FullPhase::returning){
         // The live page fades in over the pictures, which go once it is fully there.
         endFullTransition();comp::crossIn(.16);fullPhase=FullPhase::idle;SetTimer(windowHandle,7767,200,nullptr);
@@ -540,9 +546,25 @@ void returnFromFull(){
     fit();dockLayout();chromeShow(!pip);execute("window.BiliSpace?.setFullscreen(false)");
     RECT c{};GetClientRect(windowHandle,&c);execute("window.BiliSpace?.fullReadyAt?.("+std::to_string(c.right)+","+std::to_string(c.bottom)+")");SetTimer(windowHandle,7761,450,nullptr);
 }
+// A toggle in the middle of a transition (or right after one) goes straight to its end state, without motion, so quick
+// presses never leave a half-finished picture or a moving target behind.
+void snapFull(bool on){
+    endFullTransition();comp::settleContent();comp::clearUnder(false);comp::settleChrome();
+    if(on){if(!full){GetWindowRect(windowHandle,&savedRect);MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi);full=true;
+            SetWindowPos(windowHandle,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right-mi.rcMonitor.left,mi.rcMonitor.bottom-mi.rcMonitor.top,SWP_NOCOPYBITS);}
+        fullPhase=FullPhase::entered;chromeShow(false);}
+    else{if(full){full=false;SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_NOZORDER|SWP_NOCOPYBITS);}
+        fullPhase=FullPhase::idle;chromeShow(!pip);}
+    fullSettledAt=GetTickCount64();InvalidateRect(windowHandle,nullptr,TRUE);fit();dockLayout();execute(std::string("window.BiliSpace?.setFullscreen(")+(on?"true":"false")+")");
+}
 void toggleFull(bool on){
-    if(on&&full&&fullPhase==FullPhase::leaving){endFullTransition();comp::clearUnder(true);comp::settleContent();fullPhase=FullPhase::entered;chromeShow(false);execute("window.BiliSpace?.setFullscreen(true)");return;}
-    if(on==full||pip)return;
+    if(pip)return;
+    const bool moving=fullPhase==FullPhase::entering||fullPhase==FullPhase::leaving||fullPhase==FullPhase::returning||GetTickCount64()-fullSettledAt<150;
+    if(on&&full&&fullPhase!=FullPhase::leaving)return;
+    if(!on&&!full)return;
+    if(!on&&fullPhase==FullPhase::leaving)return;
+    if(moving){snapFull(on);return;}
+    if(testing)log(std::string("toggleFull ")+(on?"on":"off")+" full="+(full?"1":"0")+" phase="+std::to_string(int(fullPhase)));
     endFullTransition();
     if(on){
         if(fullPhase!=FullPhase::idle){comp::settleContent();comp::clearUnder(false);fullPhase=FullPhase::idle;}
@@ -565,9 +587,10 @@ void toggleFull(bool on){
         HDC screen=GetDC(windowHandle),memory=CreateCompatibleDC(screen);video.bitmap=CreateCompatibleBitmap(screen,c.right,c.bottom);auto old=SelectObject(memory,video.bitmap);
         const BOOL ok=PrintWindow(windowHandle,memory,PW_CLIENTONLY|PW_RENDERFULLCONTENT);SelectObject(memory,old);DeleteDC(memory);ReleaseDC(windowHandle,screen);
         float k=1,x=0,y=0;
-        if(ok&&comp::stagePage(nullptr,monitorInClient(),.86f)&&comp::stageVideo(video.bitmap)&&playerMapping(float(c.right),float(c.bottom),k,x,y)&&(comp::shown(),comp::hideContent())){
+        const float a=videoAspect(playerRect);const Box big=contain({0,0,float(c.right),float(c.bottom)},a>0?a:float(c.right)/std::max(1L,c.bottom));
+        if(ok&&playerMapping(float(c.right),float(c.bottom),k,x,y)&&comp::stagePage(nullptr,monitorInClient(),1.f)&&comp::stageVideo(video.bitmap,D2D_RECT_F{big.x,big.y,big.x+big.w,big.y+big.h})&&(comp::shown(),comp::hideContent())){
             video.drop();videoSize={c.right,c.bottom};fullPhase=FullPhase::leaving;
-            comp::veilTo(.86f,0.f,fullSeconds);comp::videoTo(k,x,y,fullSeconds);SetTimer(windowHandle,7765,UINT(fullSeconds*1000)+10,nullptr);return;
+            comp::veilTo(1.f,0.f,fullSeconds);comp::videoTo(k,x,y,fullSeconds);SetTimer(windowHandle,7765,UINT(fullSeconds*1000)+10,nullptr);return;
         }
         video.drop();
     }
@@ -587,8 +610,8 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="header-brand"){auto action=m.value("action",std::string{});if(action=="read")execute(std::string("window.__bsAcceptBrandState?.(")+(headerBrandShown?"true":"false")+")");else if(action=="write"&&m.contains("shown")&&m["shown"].is_boolean())headerBrandShown=m["shown"].get<bool>();
         }else if(type=="community"){communityAction(m);
         }else if(type=="open-settings"){const auto tab=m.value("tab",std::string{});const auto call="window.BiliSpace?.openSettings?.("+json(tab).dump()+",true)";if(!chromeOpenSettings(call))execute(call);
-        }else if(type=="fullscreen-start"){startRect.clear();if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()==4)for(const auto& v:m["rect"])if(v.is_number())startRect.push_back(v.get<double>());startRectAt=GetTickCount64();startGrow();
-        }else if(type=="fullscreen-ready"){std::vector<double> rect;if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()==4)for(const auto& v:m["rect"])if(v.is_number())rect.push_back(v.get<double>());fullscreenReady(rect);
+        }else if(type=="fullscreen-start"){startRect.clear();if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()>=4&&m["rect"].size()<=6)for(const auto& v:m["rect"])if(v.is_number())startRect.push_back(v.get<double>());startRectAt=GetTickCount64();startGrow();
+        }else if(type=="fullscreen-ready"){std::vector<double> rect;if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()>=4&&m["rect"].size()<=6)for(const auto& v:m["rect"])if(v.is_number())rect.push_back(v.get<double>());fullscreenReady(rect);
         }else if(type=="plugins"){pluginsAction(m);
         }else if(type=="media-state"){windowsMediaAccept(m);
         }else if(type=="updates"){updateAction(m.value("action",std::string{}),m.value("version",std::string{}));
@@ -726,7 +749,7 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
             view->AddWebResourceRequestedFilter(L"*",COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);auto localResource=callback<ICoreWebView2WebResourceRequestedEventHandler,ICoreWebView2*,ICoreWebView2WebResourceRequestedEventArgs*>([env](ICoreWebView2*,auto args){localShell::handle(args,env);return S_OK;});view->add_WebResourceRequested(localResource,&token);localResource->Release();
             auto cacheResponse=callback<ICoreWebView2WebResourceResponseReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebResourceResponseReceivedEventArgs*>([](ICoreWebView2*,auto args){localShell::observe(args);return S_OK;});ICoreWebView2_2* responseEvents{};if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_2),reinterpret_cast<void**>(&responseEvents)))){responseEvents->add_WebResourceResponseReceived(cacheResponse,&token);responseEvents->Release();}cacheResponse->Release();
             auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([env](ICoreWebView2* sender,auto args){ViewScope scope(sender);LPWSTR uri{};args->get_Uri(&uri);if(uri){if(authProvider50(uri))authPopup50(env,args);else{args->put_Handled(TRUE);webview->Navigate(uri);}CoTaskMemFree(uri);}return S_OK;});view->add_NewWindowRequested(ph,&token);ph->Release();
-            auto fh=callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2* sender,IUnknown*){ViewScope scope(sender);if(!scope.active)return S_OK;BOOL on{};webview->get_ContainsFullScreenElement(&on);toggleFull(on);return S_OK;});view->add_ContainsFullScreenElementChanged(fh,&token);fh->Release();
+            auto fh=callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2* sender,IUnknown*){ViewScope scope(sender);BOOL on{};sender->get_ContainsFullScreenElement(&on);if(!scope.active){if(on||!full)return S_OK;BOOL visible{};if(activeTab&&activeTab->view)activeTab->view->get_ContainsFullScreenElement(&visible);if(visible)return S_OK;}if(testing)log(std::string("fullscreen event ")+(on?"on":"off")+(scope.active?"":" (background page)"));toggleFull(on);return S_OK;});view->add_ContainsFullScreenElementChanged(fh,&token);fh->Release();
             auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2* sender,auto args){ViewScope scope(sender);if(!scope.active)revealPendingTab(tabForView(sender));else chromePush();BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(!IsWindowVisible(windowHandle))execute("window.BiliSpace?.pauseForTray()");if(success){if(scope.active)surfaceCommitted=true;execute("window.__bsPaintReady?.()");}else if(scope.active){surfaceWaiting=false;KillTimer(windowHandle,75);KillTimer(windowHandle,76);controller->put_IsVisible(TRUE);}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});view->add_NavigationCompleted(ready,&token);ready->Release();
 }
 #include "startup49.hpp"
@@ -794,7 +817,7 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_DPICHANGED:{comp::applyScaleToAll();auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){rememberWindow();if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
-    case WM_TIMER:if(wp==7765){returnFromFull();return 0;}if(wp==7766){KillTimer(hwnd,wp);if(fullPhase==FullPhase::entering&&liveReady)finishEnter();return 0;}if(wp==7767){KillTimer(hwnd,wp);if(fullPhase==FullPhase::idle){comp::settleContent();comp::clearUnder(false);}return 0;}if(wp==7762){KillTimer(hwnd,wp);comp::settleChrome();return 0;}if(wp==7761){KillTimer(hwnd,wp);if(fullPhase==FullPhase::entering&&cropGrowing){liveReady=true;if(GetTickCount64()>=growUntil)finishEnter();}else fullscreenReady({});return 0;}if(wp==7760){KillTimer(hwnd,wp);comp::settleContent();if(fullPhase==FullPhase::entering){fullPhase=FullPhase::entered;comp::clearUnder(true);comp::settleChrome();}return 0;}if(wp==7756||wp==7758){KillTimer(hwnd,wp);if(controller&&!IsIconic(hwnd)){RECT rc{};GetClientRect(hwnd,&rc);RECT shy=rc;shy.bottom=std::max(rc.top,rc.bottom-1);controller->put_Bounds(shy);controller->put_Bounds(rc);controller->NotifyParentWindowPositionChanged();}chromePlace();return 0;}if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
+    case WM_TIMER:if(wp==7765){returnFromFull();return 0;}if(wp==7766){KillTimer(hwnd,wp);if(fullPhase==FullPhase::entering&&liveReady)finishEnter();return 0;}if(wp==7767){KillTimer(hwnd,wp);if(fullPhase==FullPhase::idle){comp::settleContent();comp::clearUnder(false);fullSettledAt=GetTickCount64();}return 0;}if(wp==7762){KillTimer(hwnd,wp);comp::settleChrome();return 0;}if(wp==7761){KillTimer(hwnd,wp);if(fullPhase==FullPhase::entering&&cropGrowing){liveReady=true;if(GetTickCount64()>=growUntil)finishEnter();}else fullscreenReady({});return 0;}if(wp==7760){KillTimer(hwnd,wp);comp::settleContent();if(fullPhase==FullPhase::entering){fullPhase=FullPhase::entered;comp::clearUnder(true);comp::settleChrome();fullSettledAt=GetTickCount64();}return 0;}if(wp==7756||wp==7758){KillTimer(hwnd,wp);if(controller&&!IsIconic(hwnd)){RECT rc{};GetClientRect(hwnd,&rc);RECT shy=rc;shy.bottom=std::max(rc.top,rc.bottom-1);controller->put_Bounds(shy);controller->put_Bounds(rc);controller->NotifyParentWindowPositionChanged();}chromePlace();return 0;}if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
     case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");windowRemembered=false;trayMemory(true);return 0;}DestroyWindow(hwnd);return 0;
     case WM_DESTROY:if(!windowRemembered)rememberWindow();{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
     }

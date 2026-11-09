@@ -857,12 +857,14 @@ document.addEventListener('animationstart',e=>watchLoop(e.target),true);
 window.addEventListener('load',()=>setTimeout(pauseOffscreenLoops,500),{once:true});
 // Fullscreen motion is drawn by the host. The page tells it where the player sat before the jump (or sits after leaving)
 // and when it has drawn at the new size. The request itself goes first, while the click or key still allows it.
-let fullTarget=null,fullRect=null;
+let fullTarget=null,fullRect=null,fullRectAt=0,fullStartSent=false;
 // The video area only (not the danmaku bar under it), which is what fills the screen in fullscreen.
-const fullArea=el=>el?.querySelector?.('.bpx-player-video-area,.bpx-player-primary-area,.bilibili-player-video-wrap')||el?.querySelector?.('video')||el;
-const fullBox=el=>{const r=fullArea(el).getBoundingClientRect(),s=devicePixelRatio||1;return [r.left*s,r.top*s,r.width*s,r.height*s];};
+// Tried in this order (a selector list would return whichever comes first in the page, i.e. the larger wrapper).
+const fullArea=el=>{for(const q of ['.bpx-player-video-area','.bilibili-player-video-wrap','.bpx-player-video-wrap','video']){const found=el?.querySelector?.(q);if(found&&found.getBoundingClientRect().width>40)return found;}return el;};
+// The video area in device pixels, plus the video's own size so the host can find the picture inside any black bars.
+const fullBox=el=>{const r=fullArea(el).getBoundingClientRect(),s=devicePixelRatio||1,v=el?.querySelector?.('video');return [r.left*s,r.top*s,r.width*s,r.height*s,v?.videoWidth||0,v?.videoHeight||0];};
 for(const name of ['requestFullscreen','webkitRequestFullscreen']){const original=Element.prototype[name];if(typeof original!=='function'||CHROME_VIEW)continue;
-  Element.prototype[name]=function(...args){const result=Reflect.apply(original,this,args);try{if(!document.fullscreenElement){fullTarget=this;fullRect=fullBox(this);native('fullscreen-start',{rect:fullRect});}}catch{}return result;};
+  Element.prototype[name]=function(...args){const result=Reflect.apply(original,this,args);try{if(!document.fullscreenElement){fullTarget=this;fullRect=fullBox(this);fullRectAt=Date.now();fullStartSent=true;native('fullscreen-start',{rect:fullRect});}}catch{}return result;};
 }
 // Tells the host once the page is really drawn at a given size (device pixels): after its resize and three more frames.
 function fullReadyAt(width,height){
@@ -872,8 +874,13 @@ function fullReadyAt(width,height){
     requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!v||v.paused||!v.requestVideoFrameCallback){requestAnimationFrame(report);return;}let done=false;const go=()=>{if(!done){done=true;requestAnimationFrame(report);}};v.requestVideoFrameCallback(go);setTimeout(go,150);}));};
   const check=()=>{if(sized())fire();};if(sized())fire();else{addEventListener('resize',check);setTimeout(fire,300);}
 }
+// Fullscreen can also be asked for by a path that does not pass the wrapper above, so the player's place is noted on every
+// press beforehand and sent the moment fullscreen begins.
+if(!CHROME_VIEW)for(const type of ['pointerdown','keydown','dblclick'])document.addEventListener(type,()=>{if(document.fullscreenElement)return;const c=document.querySelector('.bpx-player-container,#bilibili-player');if(c){try{fullTarget=c;fullRect=fullBox(c);fullRectAt=Date.now();fullStartSent=false;}catch{}}},true);
 document.addEventListener('fullscreenchange',()=>{
-  if(CHROME_VIEW)return;const entering=!!document.fullscreenElement;let sent=false;
+  if(CHROME_VIEW)return;const entering=!!document.fullscreenElement;
+  if(entering&&!fullStartSent&&fullRect&&Date.now()-fullRectAt<3000){fullStartSent=true;native('fullscreen-start',{rect:fullRect});}
+  if(!entering)fullStartSent=false;let sent=false;
   const send=()=>{if(sent)return;sent=true;removeEventListener('resize',send);
     const report=()=>{let rect=null;try{rect=entering?fullRect:fullTarget?.isConnected?fullBox(fullTarget):null;}catch{}native('fullscreen-ready',{rect});};
     // Entering, a playing video is waited for until it has shown a frame at the new size (briefly), so the motion never starts on black.
