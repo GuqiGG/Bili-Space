@@ -54,6 +54,16 @@ void revealContent(float scale,float width,float height,double seconds){
     }
     device->Commit();
 }
+// Shows the page layer at once, drawn through a transform that starts at (scale, x, y) and eases out to identity.
+void revealFrom(float scale,float x,float y,double seconds){
+    if(!ready||!contentLayer)return;if(fade)fade->SetOpacity(1.f);
+    if(seconds>0&&(scale!=1.f||x!=0.f||y!=0.f)&&(zoom||SUCCEEDED(device->CreateMatrixTransform(&zoom)))){
+        D2D_MATRIX_3X2_F start{};start._11=scale;start._22=scale;start._31=x;start._32=y;zoom->SetMatrix(start);
+        for(auto [row,column,from,to]:{std::tuple{0,0,scale,1.f},std::tuple{1,1,scale,1.f},std::tuple{2,0,x,0.f},std::tuple{2,1,y,0.f}})if(auto a=easeOut(from,to,seconds)){zoom->SetMatrixElement(row,column,a);a->Release();}
+        contentLayer->SetTransform(zoom);
+    }
+    device->Commit();
+}
 // The header layer fades with the page's fullscreen motion instead of popping.
 IDCompositionEffectGroup* chromeFade{};
 void fadeChrome(float from,float to,double seconds){if(!ready||!chromeLayer)return;if(!chromeFade&&FAILED(device->CreateEffectGroup(&chromeFade)))return;
