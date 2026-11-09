@@ -57,6 +57,50 @@ Bili-Space 的插件是一段 JS，可以改主题、改客户端界面（顶栏
 | `api.navigate(url)` | 在当前页面打开地址 |
 | `api.getVideo()` / `api.route()` / `api.log(...)` | 当前视频元素、当前地址、带前缀的日志 |
 
+### 往客户端里加东西
+
+这些只在画客户端界面的那个视图里生效（Windows 上是 `header` 视图；没有独立顶栏的平台是页面本身），在其他视图里调用会安静地什么也不做。
+
+| 成员 | 说明 |
+| --- | --- |
+| `api.ui.button({ text, title, onClick })` | 在顶栏搜索框旁边加一个按钮，返回移除函数 |
+| `api.ui.dialog({ title, text, buttons: [{ label, primary, onClick }] })` | 在客户端上弹出对话框（最多 4 个按钮，Esc 关闭），返回关闭函数 |
+| `api.ui.root()` | 客户端界面的根节点（同 `api.shell()`），可以自由插入自己的元素 |
+
+### 控制客户端
+
+| 成员 | 说明 |
+| --- | --- |
+| `api.window.minimize()` / `maximize()` / `fullscreen()` / `pip()` / `close()` | 窗口操作，和客户端自己的按钮一样 |
+| `api.window.back()` / `forward()` | 后退 / 前进 |
+| `api.navigate(url)` | 打开地址 |
+| `api.prefs()` / `api.setPrefs(patch)` | 读取 / 修改任意客户端设置（主题、强调色、顶栏项目、缩放……） |
+| `api.wrap(name, fn)` | 改写客户端页面逻辑函数（见上表） |
+
+### 顶栏和页面之间传消息
+
+插件在顶栏和每个页面里各运行一份。用 `api.send(name, data)` 发消息，所有视图里这个插件的 `api.on('message', m => …)` 都会收到 `{ name, data, view }`（`view` 是发送方）。数据必须能转成 JSON，最大 64 KB；只会送到同一个插件。
+
+### 页面和视频
+
+| 成员 | 说明 |
+| --- | --- |
+| `api.page()` | 当前页面类型：`home`、`video`、`bangumi`、`live`、`dynamic`、`history`、`search`、`space`、`other` |
+| `api.watch(selector, fn, 'shell'?)` | 对现在和以后出现的每个匹配元素调用一次 `fn(element)`；第三个参数写 `'shell'` 时监听客户端界面。按帧合并，弹幕再多也不会被拖慢 |
+| `api.player.play()` / `pause()` / `seek(秒)` / `rate(倍速)` / `volume(0~1)` | 控制当前视频，没有视频时返回 `false` |
+| `api.player.state()` | `{ time, duration, paused, rate, volume, muted, width, height }` |
+| `api.biliApi(path, query)` | 以当前登录账号请求 `https://api.bilibili.com/...`，返回解析好的 JSON（只允许这个域名） |
+
+### 会自动清理的工具
+
+| 成员 | 说明 |
+| --- | --- |
+| `api.hotkey('Ctrl+Shift+K', fn)` | 快捷键；在输入框里打字时不触发 |
+| `api.listen(target, type, fn, capture)` | 加事件监听 |
+| `api.every(ms, fn)` / `api.after(ms, fn)` | 定时器（重复的最少间隔 50 ms） |
+
+以上每个都返回一个取消函数；插件停用时，它们会全部自动撤销，不用自己在 `destroy` 里清理。
+
 ## 示例：可以选颜色的主题
 
 ```js
@@ -73,6 +117,44 @@ api.on('settings', apply);
 ```js
 // 在主页按 Ctrl+T 时换一句提示
 api.wrap('homeBubble', (original) => original('已经在首页了'));
+```
+
+## 示例：顶栏按钮控制视频
+
+```js
+// @id skip-op
+// @name 跳过片头
+// 顶栏按钮按下时，让视频页跳过 90 秒
+if (api.view === 'header') {
+  api.ui.button({ text: '⏭', title: '跳过片头 90 秒', onClick: () => api.send('skip', 90) });
+} else {
+  api.on('message', (m) => { if (m.name === 'skip') api.player.seek((api.player.state()?.time || 0) + m.data); });
+}
+```
+
+## 示例：给每个视频卡片加标记
+
+```js
+// @id card-mark
+// @name 卡片标记
+if (api.page() === 'home') {
+  api.watch('.bili-video-card', (card) => {
+    const tag = document.createElement('span');
+    tag.textContent = '★';
+    tag.style.cssText = 'position:absolute;top:6px;left:6px;z-index:2;color:#fb7299';
+    card.style.position = 'relative';
+    card.append(tag);
+  });
+}
+```
+
+## 示例：快捷键切换倍速
+
+```js
+// @id speed-key
+// @name 倍速快捷键
+api.hotkey('Shift+ArrowUp', () => api.player.rate(Math.min(4, (api.player.state()?.rate || 1) + 0.25)));
+api.hotkey('Shift+ArrowDown', () => api.player.rate(Math.max(0.25, (api.player.state()?.rate || 1) - 0.25)));
 ```
 
 ## 稳定性与安全

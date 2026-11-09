@@ -674,7 +674,9 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             else if(action=="save")saveDownload(m.value("url",std::string{}),m.value("title",std::string{}),m.value("audioUrl",std::string{}));
         }else if(type=="proxy"){proxyAction(m.value("action",std::string{}),m.value("node",std::string{}),m.value("url",std::string{}));
         }else if(type=="config"){
-            mergeConfig(m.at("value"));save();applyZoom();refreshInjection();
+            // Only zoom settings re-apply the zoom: any other setting (the volume, say) must not undo a zoom the user set by hand.
+            const auto& changed=m.at("value");const bool zoomChanged=changed.is_object()&&(changed.contains("zoom")||changed.contains("autoZoom")||changed.contains("autoZoomTarget"));
+            mergeConfig(changed);save();if(zoomChanged)applyZoom();refreshInjection();
             if(m.at("value").contains("proxyAll"))proxyAction("reload","","");
             log("config saved: "+m.at("value").dump());
             chromeAcceptConfig();dockSync();execute("window.BiliSpace?.acceptConfig("+config.dump()+","+std::to_string(m.value("revision",0))+")");

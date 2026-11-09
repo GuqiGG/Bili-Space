@@ -91,6 +91,13 @@ inline void pluginsAction(const json& message){
     if(action=="folder"){
         std::error_code ec;const auto root=pluginsDirectory();fs::create_directories(root,ec);
         ShellExecuteW(windowHandle,L"open",root.c_str(),nullptr,nullptr,SW_SHOWNORMAL);
+    }else if(action=="message"){
+        // A plugin's copies in the header and in pages talk through here: relayed to every view, size-checked.
+        static const std::regex validId(R"([a-z0-9][a-z0-9._-]{0,39})");const auto name=message.value("name",std::string{});
+        if(!std::regex_match(id,validId)||name.empty()||name.size()>40)return;
+        const json payload={{"from",id},{"name",name},{"view",message.value("view",std::string{})=="header"?"header":"page"},{"data",message.contains("data")?message["data"]:json()}};
+        const auto text=payload.dump();if(text.size()>66*1024)return;
+        pluginsBroadcast("window.BiliSpacePlugins?.deliver?.("+text+")");
     }else if(action=="reload"){pluginsReloadViews();
     }else if(action=="import"){
         wchar_t path[MAX_PATH*4]{};OPENFILENAMEW dialog{};dialog.lStructSize=sizeof(dialog);dialog.hwndOwner=windowHandle;dialog.lpstrFilter=L"Bili-Space 插件 (plugin.json, *.js)\0plugin.json;*.js\0";dialog.lpstrFile=path;dialog.nMaxFile=MAX_PATH*4;dialog.lpstrTitle=L"导入插件";dialog.Flags=OFN_FILEMUSTEXIST|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;

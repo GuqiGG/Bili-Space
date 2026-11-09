@@ -2028,7 +2028,7 @@ function reportChromeLayout(){
     const rects=[],scale=devicePixelRatio||1;
     const add=el=>{if(!el||el.hidden||!el.isConnected)return;const look=getComputedStyle(el);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)return;const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)rects.push([Math.floor(r.left*scale),Math.floor(r.top*scale),Math.ceil(r.right*scale),Math.ceil(r.bottom*scale)]);};
     add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories','#settings-trigger','.upload','#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));
-    const modal=!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow);
+    const modal=!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow)||!!$('#plugin-dialog',shadow);
     const key=JSON.stringify([rects,modal]);if(key===chromeLayoutKey)return;chromeLayoutKey=key;native('chrome-layout',{rects,modal});
   });
 }

@@ -14,6 +14,8 @@
   const listeners = new Map();
   const instances = new Map();
   const wrapped = new Map();
+  // Everything a plugin set up through the API that has to be undone when it stops (observers, timers, listeners, keys).
+  const cleanups = new Map();
   const errors = [];
   const strikes = new Map();
   let options = { getVideo: () => document.querySelector('video'), getPrefs: () => ({}), toast: () => {}, update: null, getShadow: () => null, view: 'page', navigate: null };
@@ -115,6 +117,27 @@
       }
     };
   }
+  // The client's interface root, only in the view that draws it (the header view, or the page where there is no header view).
+  function uiShell() {
+    const separateHeader = typeof RUNTIME !== 'undefined' && RUNTIME && RUNTIME.chromeHost;
+    if (separateHeader && options.view !== 'header') return null;
+    return options.getShadow ? options.getShadow() : null;
+  }
+  function safeMatches(element, selector) { try { return element.matches(selector); } catch (_) { return false; } }
+  // Runs plugin code inside its error boundary.
+  function guard(id, fn, args) { try { return fn.apply(null, args); } catch (error) { strike(id, error); } }
+  // Registers something to undo when the plugin stops; returns a function that undoes it now.
+  function ownCleanup(id, undo) {
+    const list = cleanups.get(id) || [];
+    if (list.length >= 200) { try { undo(); } catch (_) {} return function () {}; }
+    let done = false;
+    const once = function () {
+      if (done) return; done = true;
+      try { undo(); } catch (_) {}
+      cleanups.set(id, (cleanups.get(id) || []).filter(function (item) { return item !== once; }));
+    };
+    list.push(once); cleanups.set(id, list); return once;
+  }
   function writeSetting(id, key, value) {
     if (typeof key !== 'string' || !/^[A-Za-z0-9_.-]{1,40}$/.test(key)) return false;
     let raw;
@@ -200,7 +223,154 @@
         rebuild(name);
         return true;
       },
-      unwrap: function (name) { return unwrapFor(id, name); }
+      unwrap: function (name) { return unwrapFor(id, name); },
+      // ---- Additions: everything below is undone automatically when the plugin is switched off. ----
+      // Calls fn(element) for every element matching the selector now and whenever one appears later (page, or 'shell').
+      watch: function (selector, fn, where) {
+        if (typeof selector !== 'string' || typeof fn !== 'function') return function () {};
+        const root = where === 'shell' ? (options.getShadow ? options.getShadow() : null) : document;
+        if (!root) return function () {};
+        const seen = new WeakSet();
+        const visit = function (scope) {
+          let found;
+          try { found = scope.querySelectorAll ? [].slice.call(scope.querySelectorAll(selector)) : []; } catch (_) { return; }
+          if (scope.nodeType === 1 && safeMatches(scope, selector)) found.unshift(scope);
+          for (const element of found) { if (seen.has(element)) continue; seen.add(element); guard(id, fn, [element]); }
+        };
+        visit(root);
+        let pending = [];
+        const observer = new MutationObserver(function (records) {
+          // Batched per frame: a busy page (danmaku, live chat) cannot make a plugin run on every single mutation.
+          const first = !pending.length;
+          for (const record of records) for (const node of record.addedNodes) if (node.nodeType === 1) pending.push(node);
+          if (first && pending.length) requestAnimationFrame(function () { const nodes = pending; pending = []; for (const node of nodes) if (node.isConnected) visit(node); });
+        });
+        observer.observe(root === document ? document.documentElement : root, { childList: true, subtree: true });
+        return ownCleanup(id, function () { observer.disconnect(); });
+      },
+      // Keyboard shortcut such as 'Ctrl+Shift+K' or 'Alt+ArrowLeft'; ignored while typing in a field.
+      hotkey: function (combo, fn) {
+        if (typeof combo !== 'string' || typeof fn !== 'function') return function () {};
+        const parts = combo.split('+').map(function (part) { return part.trim().toLowerCase(); });
+        const key = parts.pop();
+        return api.listen(document, 'keydown', function (event) {
+          const path = event.composedPath ? event.composedPath() : [];
+          if (path.some(function (el) { return el && el.nodeType === 1 && safeMatches(el, 'input,textarea,select,[contenteditable=true]'); })) return;
+          if (String(event.key).toLowerCase() !== key && String(event.code).toLowerCase() !== key) return;
+          if (event.ctrlKey !== parts.includes('ctrl') || event.shiftKey !== parts.includes('shift') || event.altKey !== parts.includes('alt') || event.metaKey !== parts.includes('meta')) return;
+          event.preventDefault(); fn(event);
+        }, true);
+      },
+      // addEventListener that is removed when the plugin stops.
+      listen: function (target, type, fn, capture) {
+        if (!target || typeof target.addEventListener !== 'function' || typeof type !== 'string' || typeof fn !== 'function') return function () {};
+        const handler = function (event) { guard(id, fn, [event]); };
+        target.addEventListener(type, handler, capture);
+        return ownCleanup(id, function () { target.removeEventListener(type, handler, capture); });
+      },
+      // Timers that stop with the plugin (repeats at least 50 ms apart).
+      every: function (ms, fn) {
+        if (typeof fn !== 'function') return function () {};
+        const handle = setInterval(function () { guard(id, fn, []); }, Math.max(50, Number(ms) || 0));
+        return ownCleanup(id, function () { clearInterval(handle); });
+      },
+      after: function (ms, fn) {
+        if (typeof fn !== 'function') return function () {};
+        let cancel = function () {};
+        const handle = setTimeout(function () { cancel(); guard(id, fn, []); }, Math.max(0, Number(ms) || 0));
+        cancel = ownCleanup(id, function () { clearTimeout(handle); });
+        return cancel;
+      },
+      // The kind of page: 'home', 'video', 'bangumi', 'live', 'dynamic', 'history', 'search', 'space' or 'other'.
+      page: function () {
+        const host = location.hostname, path = location.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/, '') || '/';
+        if (host === 'live.bilibili.com') return 'live';
+        if (host === 't.bilibili.com') return 'dynamic';
+        if (host === 'search.bilibili.com') return 'search';
+        if (host === 'space.bilibili.com') return 'space';
+        if (/^\/video\//.test(path)) return 'video';
+        if (/^\/bangumi\/play\//.test(path)) return 'bangumi';
+        if (/^\/(?:account\/)?history/.test(path)) return 'history';
+        if (path === '/' && host === 'www.bilibili.com') return 'home';
+        return 'other';
+      },
+      // The playing video, with safe controls (each returns false when there is no video or the value is invalid).
+      player: Object.freeze({
+        video: function () { return options.getVideo ? options.getVideo() : null; },
+        play: function () { const v = api.getVideo(); if (!v) return false; try { const p = v.play(); if (p && p.catch) p.catch(function () {}); } catch (_) {} return true; },
+        pause: function () { const v = api.getVideo(); if (!v) return false; v.pause(); return true; },
+        seek: function (seconds) { const v = api.getVideo(); const t = Number(seconds); if (!v || !isFinite(t)) return false; v.currentTime = Math.max(0, Math.min(t, isFinite(v.duration) ? v.duration : t)); return true; },
+        rate: function (x) { const v = api.getVideo(); const r = Number(x); if (!v || !(r >= 0.1 && r <= 16)) return false; v.playbackRate = r; return true; },
+        volume: function (x) { const v = api.getVideo(); const n = Number(x); if (!v || !(n >= 0 && n <= 1)) return false; v.volume = n; return true; },
+        state: function () { const v = api.getVideo(); return v ? { time: v.currentTime, duration: v.duration, paused: v.paused, rate: v.playbackRate, volume: v.volume, muted: v.muted, width: v.videoWidth, height: v.videoHeight } : null; }
+      }),
+      // GET a Bilibili web API (https://api.bilibili.com/...) as the signed-in account; resolves to the parsed JSON.
+      biliApi: function (path, query) {
+        let target;
+        try { target = new URL(String(path), 'https://api.bilibili.com/'); } catch (_) { return Promise.reject(new Error('bad address')); }
+        if (target.origin !== 'https://api.bilibili.com') return Promise.reject(new Error('only https://api.bilibili.com is allowed'));
+        if (query && typeof query === 'object') for (const [k, v] of Object.entries(query)) target.searchParams.set(k, String(v));
+        return fetch(target.href, { credentials: 'include' }).then(function (response) { return response.json(); });
+      },
+      // ---- Controlling the client and adding to it ----
+      // Messages between this plugin's copies in the header and in pages: api.send('seek', 30) here, and
+      // api.on('message', m => m.name === 'seek' && ...) there. Data must be JSON (at most 64 KB).
+      send: function (name, data) {
+        if (typeof name !== 'string' || !name || name.length > 40) return false;
+        let raw; try { raw = JSON.stringify(data === undefined ? null : data); } catch (_) { return false; }
+        if (raw.length > 64 * 1024) return false;
+        post({ type: 'plugins', action: 'message', id, name, view: api.view, data: JSON.parse(raw) });
+        return true;
+      },
+      // The window and navigation, like the client's own buttons.
+      window: Object.freeze({
+        minimize: function () { post({ type: 'window', action: 'minimize' }); },
+        maximize: function () { post({ type: 'window', action: 'maximize' }); },
+        fullscreen: function () { post({ type: 'window', action: 'fullscreen' }); },
+        pip: function () { post({ type: 'window', action: 'pip' }); },
+        back: function () { post({ type: 'window', action: 'back' }); },
+        forward: function () { post({ type: 'window', action: 'forward' }); },
+        close: function () { post({ type: 'window', action: 'close' }); }
+      }),
+      // Additions to the client's own interface. They appear where the client UI is drawn: the header view (or the
+      // page itself on platforms without a separate header); elsewhere they quietly do nothing.
+      ui: Object.freeze({
+        // A button in the header, next to the search box. Returns a function that removes it.
+        button: function (spec) {
+          const shell = uiShell(); if (!shell || !spec || typeof spec.onClick !== 'function') return function () {};
+          const bar = shell.querySelector('.header-right'); if (!bar) return function () {};
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'bs-plugin-button'; b.dataset.bsPlugin = id;
+          b.textContent = text(String(spec.text || spec.label || '★'), 24); b.title = text(String(spec.title || def.name || id), 80); b.setAttribute('aria-label', b.title);
+          b.style.cssText = 'height:34px;min-width:34px;padding:0 10px;margin-right:8px;border:0;border-radius:10px;background:var(--field);color:var(--ink);font:inherit;font-size:13px;cursor:pointer;flex:none';
+          b.addEventListener('click', function (event) { guard(id, spec.onClick, [event]); });
+          const search = bar.querySelector('.search'); if (search && search.nextSibling) bar.insertBefore(b, search.nextSibling); else bar.append(b);
+          return ownCleanup(id, function () { b.remove(); });
+        },
+        // A dialog over the client: { title, text, buttons: [{ label, primary, onClick }] }. Returns a function that closes it.
+        dialog: function (spec) {
+          const shell = uiShell(); if (!shell || !spec) return function () {};
+          const layer = document.createElement('div'); layer.className = 'update-notice-layer'; layer.id = 'plugin-dialog'; layer.dataset.bsPlugin = id;
+          const box = document.createElement('section'); box.className = 'update-notice'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+          const h = document.createElement('h2'); h.textContent = text(String(spec.title || def.name || id), 80);
+          const p = document.createElement('p'); p.textContent = text(String(spec.text || ''), 2000); p.style.cssText = 'white-space:pre-wrap;line-height:1.7;color:var(--muted)';
+          const actions = document.createElement('div'); actions.className = 'actions';
+          let undo = function () {};
+          const close = function () { undo(); };
+          const buttons = Array.isArray(spec.buttons) && spec.buttons.length ? spec.buttons.slice(0, 4) : [{ label: '好', primary: true }];
+          for (const item of buttons) {
+            const b = document.createElement('button'); b.type = 'button'; b.className = item.primary ? 'update-primary' : 'link'; b.textContent = text(String(item.label || '好'), 20);
+            b.addEventListener('click', function () { close(); if (typeof item.onClick === 'function') guard(id, item.onClick, []); });
+            actions.append(b);
+          }
+          box.append(h, p, actions); layer.append(box);
+          layer.addEventListener('keydown', function (event) { if (event.key === 'Escape') { event.stopPropagation(); close(); } });
+          shell.append(layer); const primary = actions.querySelector('.update-primary') || actions.querySelector('button'); if (primary) primary.focus();
+          undo = ownCleanup(id, function () { layer.remove(); });
+          return close;
+        },
+        // Raw access to the client's interface root (same as api.shell()).
+        root: function () { return uiShell(); }
+      })
     };
     return { api: Object.freeze(api), own };
   }
@@ -249,6 +419,8 @@
     const instance = instances.get(id);
     if (instance && instance.state === 'running') emit('destroy', undefined, id);
     for (const [event, list] of listeners) listeners.set(event, list.filter((entry) => entry.id !== id));
+    for (const undo of (cleanups.get(id) || []).slice()) undo();
+    cleanups.delete(id);
     unwrapFor(id);
     for (const root of [document, options.getShadow ? options.getShadow() : null]) {
       if (!root) continue;
@@ -304,6 +476,11 @@
     const index = defs.findIndex((item) => item.id === id);
     if (index >= 0) defs.splice(index, 1);
     instances.delete(id);
+  }
+  // Relayed by the native host to every view: { from, name, view, data }.
+  function deliver(message) {
+    if (!message || typeof message.from !== 'string' || typeof message.name !== 'string') return;
+    emit('message', Object.freeze({ name: message.name, data: message.data, view: message.view === 'header' ? 'header' : 'page' }), message.from);
   }
   function acceptData(id, values) {
     if (!values || typeof values !== 'object') return;
@@ -433,5 +610,5 @@
       node.append(line);
     }
   }
-  global.BiliSpacePlugins = { start, stop, snapshot, renderPanel, emit, setEnabled, remove, acceptData, get(id) { const i = instances.get(id); return i ? { id: i.id, state: i.state } : null; }, get errors() { return errors.slice(); } };
+  global.BiliSpacePlugins = { start, stop, snapshot, renderPanel, emit, setEnabled, remove, acceptData, deliver, get(id) { const i = instances.get(id); return i ? { id: i.id, state: i.state } : null; }, get errors() { return errors.slice(); } };
 })(window);
