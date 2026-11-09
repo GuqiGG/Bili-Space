@@ -450,6 +450,9 @@ void refreshInjection(){
 }
 void setSurface(bool dark){surfaceDark=dark;if(surfaceWaiting)InvalidateRect(windowHandle,nullptr,FALSE);if(!controller)return;ICoreWebView2Controller2* c{};if(SUCCEEDED(controller->QueryInterface(__uuidof(ICoreWebView2Controller2),reinterpret_cast<void**>(&c)))){COREWEBVIEW2_COLOR color{255,BYTE(dark?22:250),BYTE(dark?22:250),BYTE(dark?24:250)};c->put_DefaultBackgroundColor(color);c->Release();}}
 
+// The page zoom the user set by hand, as a factor on top of the client's own zoom; kept across resizes, maximize,
+// fullscreen and settings changes instead of being reset by them.
+double manualZoom=1,zoomBase=1,zoomApplied=1;
 void applyZoom(){
     if(!controller)return;
     RECT r{};GetClientRect(windowHandle,&r);
@@ -465,7 +468,7 @@ void applyZoom(){
         if(target<800)target=1280;
         z=std::max(z,std::min(2.5,dip/target));
     }
-    controller->put_ZoomFactor(z);if(!full)chromeZoom(z);
+    zoomBase=z;z=std::clamp(z*manualZoom,.25,5.0);zoomApplied=z;controller->put_ZoomFactor(z);if(!full)chromeZoom(zoomBase);
 }
 void fit(){chromePlace();if(controller){RECT rc;GetClientRect(windowHandle,&rc);controller->put_Bounds(rc);applyZoom();}}
 void toggleFull(bool on);
@@ -538,6 +541,21 @@ void askFullReady(){
     const double ratio=(dpi?dpi(windowHandle)/96.0:1.0)*comp::textScaleFactor()*zoom;char buffer[160];
     snprintf(buffer,sizeof(buffer),"window.BiliSpace?.fullReadyAt?.(%ld,%ld,%.4f,%s)",c.right,c.bottom,ratio,fullPhase==FullPhase::entering?"true":"false");execute(buffer);
 }
+// The shell only hides the taskbar for a window that covers the monitor and is not maximized. A maximized window drops
+// its maximized flag (no restore animation, its normal size kept in the saved placement) before it covers the monitor,
+// and is maximized again from that placement afterwards.
+WINDOWPLACEMENT fullPlacement{sizeof(WINDOWPLACEMENT)};bool fullWasZoomed=false;
+void enterFullWindow(){
+    GetWindowRect(windowHandle,&savedRect);fullPlacement.length=sizeof(fullPlacement);GetWindowPlacement(windowHandle,&fullPlacement);fullWasZoomed=IsZoomed(windowHandle);
+    MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi);
+    if(fullWasZoomed)SetWindowLongPtrW(windowHandle,GWL_STYLE,GetWindowLongPtrW(windowHandle,GWL_STYLE)&~LONG_PTR(WS_MAXIMIZE));
+    full=true;
+    SetWindowPos(windowHandle,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right-mi.rcMonitor.left,mi.rcMonitor.bottom-mi.rcMonitor.top,SWP_NOCOPYBITS|(fullWasZoomed?SWP_FRAMECHANGED:0));
+}
+void restoreFromFull(UINT flags){
+    if(fullWasZoomed){WINDOWPLACEMENT back=fullPlacement;back.showCmd=SW_SHOWMAXIMIZED;SetWindowPlacement(windowHandle,&back);fullWasZoomed=false;}
+    else SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,flags);
+}
 void endFullTransition(){KillTimer(windowHandle,7760);KillTimer(windowHandle,7761);KillTimer(windowHandle,7765);KillTimer(windowHandle,7766);cropGrowing=false;liveReady=false;}
 // rect: where the player sat before entering, in device pixels of the page as it was; empty if unknown.
 void fullscreenReady(const std::vector<double>& rect){
@@ -558,7 +576,7 @@ void fullscreenReady(const std::vector<double>& rect){
 // The shrinking video has reached the player's place: the window goes back to its size under the pictures.
 void returnFromFull(){
     KillTimer(windowHandle,7765);fullPhase=FullPhase::returning;full=false;comp::hideChrome();
-    SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_NOZORDER|SWP_NOCOPYBITS);
+    restoreFromFull(SWP_NOZORDER|SWP_NOCOPYBITS);
     // The video picture stays on the player's place (now in the restored window's pixels), cut to the player's box.
     fullFollow();
     fit();dockLayout();chromeShow(!pip);execute("window.BiliSpace?.setFullscreen(false)");
@@ -568,10 +586,9 @@ void returnFromFull(){
 // presses never leave a half-finished picture or a moving target behind.
 void snapFull(bool on){
     endFullTransition();comp::settleContent();comp::clearUnder(false);comp::settleChrome();
-    if(on){if(!full){GetWindowRect(windowHandle,&savedRect);MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi);full=true;
-            SetWindowPos(windowHandle,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right-mi.rcMonitor.left,mi.rcMonitor.bottom-mi.rcMonitor.top,SWP_NOCOPYBITS);}
+    if(on){if(!full)enterFullWindow();
         fullPhase=FullPhase::entered;chromeShow(false);}
-    else{if(full){full=false;SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_NOZORDER|SWP_NOCOPYBITS);}
+    else{if(full){full=false;restoreFromFull(SWP_NOZORDER|SWP_NOCOPYBITS);}
         fullPhase=FullPhase::idle;chromeShow(!pip);}
     fullSettledAt=GetTickCount64();InvalidateRect(windowHandle,nullptr,TRUE);fit();dockLayout();execute(std::string("window.BiliSpace?.setFullscreen(")+(on?"true":"false")+")");
 }
@@ -599,8 +616,7 @@ void toggleFull(bool on){
         Shot shot;bool animate=windowAnimations()&&fullMotion()&&takeScreenShot(shot,pageMonitor)&&comp::stagePage(shot.bitmap,monitorInClient());shot.drop();
         if(animate)comp::shown();
         if(animate&&comp::hideContent()){comp::hideChrome();comp::shown();fullPhase=FullPhase::entering;}else comp::clearUnder(false);
-        GetWindowRect(windowHandle,&savedRect);MONITORINFO mi{sizeof(mi)};GetMonitorInfoW(MonitorFromWindow(windowHandle,MONITOR_DEFAULTTONEAREST),&mi);full=true;
-        SetWindowPos(windowHandle,HWND_TOP,mi.rcMonitor.left,mi.rcMonitor.top,mi.rcMonitor.right-mi.rcMonitor.left,mi.rcMonitor.bottom-mi.rcMonitor.top,SWP_NOCOPYBITS);
+        enterFullWindow();
         POINT now{};ClientToScreen(windowHandle,&now);fullShift={before.x-now.x,before.y-now.y};
         if(fullPhase==FullPhase::entering){comp::movePage(monitorInClient());SetTimer(windowHandle,7761,600,nullptr);startGrow();}
         fit();dockLayout();chromeShow(false);
@@ -621,7 +637,7 @@ void toggleFull(bool on){
         video.drop();
     }
     comp::settleContent();comp::clearUnder(false);comp::settleChrome();fullPhase=FullPhase::idle;full=false;
-    SetWindowPos(windowHandle,nullptr,savedRect.left,savedRect.top,savedRect.right-savedRect.left,savedRect.bottom-savedRect.top,SWP_FRAMECHANGED|SWP_NOZORDER);
+    restoreFromFull(SWP_FRAMECHANGED|SWP_NOZORDER);
     InvalidateRect(windowHandle,nullptr,TRUE);fit();dockLayout();chromeShow(!pip);execute("window.BiliSpace?.setFullscreen(false)");
 }
 void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
@@ -680,7 +696,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="config"){
             // Only zoom settings re-apply the zoom: any other setting (the volume, say) must not undo a zoom the user set by hand.
             const auto& changed=m.at("value");const bool zoomChanged=changed.is_object()&&(changed.contains("zoom")||changed.contains("autoZoom")||changed.contains("autoZoomTarget"));
-            mergeConfig(changed);save();if(zoomChanged)applyZoom();refreshInjection();
+            mergeConfig(changed);save();if(zoomChanged){if(changed.contains("zoom"))manualZoom=1;applyZoom();}refreshInjection();
             if(m.at("value").contains("proxyAll"))proxyAction("reload","","");
             log("config saved: "+m.at("value").dump());
             chromeAcceptConfig();dockSync();execute("window.BiliSpace?.acceptConfig("+config.dump()+","+std::to_string(m.value("revision",0))+")");
@@ -750,6 +766,12 @@ void lightenSettings(ICoreWebView2Settings* settings){
     ICoreWebView2Settings4* s4{};if(SUCCEEDED(settings->QueryInterface(__uuidof(ICoreWebView2Settings4),reinterpret_cast<void**>(&s4)))&&s4){s4->put_IsGeneralAutofillEnabled(FALSE);s4->Release();}
 }
 void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Environment* env){
+            {EventRegistrationToken zoomToken;
+            // A zoom change the client did not make is the user's own: remember it relative to the client's zoom.
+            auto zoomed=callback<ICoreWebView2ZoomFactorChangedEventHandler,ICoreWebView2Controller*,IUnknown*>([](ICoreWebView2Controller* sender,IUnknown*){
+                if(sender!=controller)return S_OK;double now=1;sender->get_ZoomFactor(&now);
+                if(std::abs(now-zoomApplied)>.001&&zoomBase>0){manualZoom=std::clamp(now/zoomBase,.25,5.0);zoomApplied=now;}
+                return S_OK;});c->add_ZoomFactorChanged(zoomed,&zoomToken);zoomed->Release();}
             EventRegistrationToken acceleratorToken;
             auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller* sender,auto args){ViewScope scope(sender);
                 UINT key{};COREWEBVIEW2_KEY_EVENT_KIND kind{};args->get_VirtualKey(&key);args->get_KeyEventKind(&kind);if(tabAccelerator(key,kind)){args->put_Handled(TRUE);return S_OK;}
