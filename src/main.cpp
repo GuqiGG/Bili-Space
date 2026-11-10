@@ -399,7 +399,7 @@ bool trusted(const std::wstring& uri){
 #include "accounts50.hpp"
 #include "local_shell.hpp"
 #include "auth_popup50.hpp"
-bool chromeHostEnabled();bool chromeOpenSettings(const std::string& call);void chromePush(const std::wstring& target=L"");void chromePlace();void chromeZoom(double z);void chromeShow(bool on);void chromeAcceptConfig();void chromeClose();
+bool chromeHostEnabled();bool chromeOpenSettings(const std::string& call);void chromePush(const std::wstring& target=L"");void chromePlace();void chromeZoom(double z);void chromeExecute(const wchar_t* js);void chromeShow(bool on);void chromeAcceptConfig();void chromeClose();
 // The page script is rebuilt for every view (home, header, each video); its asset files are read from disk once.
 const std::string& assetText(const std::wstring& relative){static std::map<std::wstring,std::string> cache;auto it=cache.find(relative);if(it==cache.end())it=cache.emplace(relative,read(root/relative)).first;return it->second;}
 // A secret for this run, put only into the client's own injected script (page scripts cannot read it). Plugin
@@ -682,6 +682,9 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="community"){communityAction(m);
         }else if(type=="open-settings"){const auto tab=m.value("tab",std::string{});const auto call="window.BiliSpace?.openSettings?.("+json(tab).dump()+",true)";if(!chromeOpenSettings(call))execute(call);
         }else if(type=="fullscreen-start"){startRect.clear();if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()>=4&&m["rect"].size()<=6)for(const auto& v:m["rect"])if(v.is_number())startRect.push_back(v.get<double>());startRectAt=GetTickCount64();startGrow();
+        }else if(type=="page-scrolled"){if(viewScopeActive)chromeExecute(m.value("past",false)?L"window.BiliSpace?.setPageScrolled?.(true)":L"window.BiliSpace?.setPageScrolled?.(false)");
+        }else if(type=="page-top"){if(activeTab&&activeTab->view)activeTab->view->ExecuteScript(L"window.BiliSpace?.scrollPageTop?.()",nullptr);
+        }else if(type=="feed-roll"){if(activeTab&&activeTab->view)activeTab->view->ExecuteScript(L"window.BiliSpace?.rollFeed?.()",nullptr);
         }else if(type=="zoom-step"){
             // Ctrl+wheel over the header zooms the page (and with it the header) in the browser's own steps.
             static const double steps[]{.25,.33,.5,.67,.75,.8,.9,1,1.1,1.25,1.5,1.75,2,2.5,3,4,5};const int dir=m.value("dir",0);double next=zoomApplied;
@@ -788,7 +791,7 @@ void restoreWebFocus(){
 
 #include "chrome56.hpp"
 bool chromeHostEnabled(){return chromeHost::active();}void chromePush(const std::wstring& target){chromeHost::push(target);}void chromePlace(){chromeHost::place();}
-void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}
+void chromeZoom(double z){if(chromeHost::ctl)chromeHost::ctl->put_ZoomFactor(z);}void chromeExecute(const wchar_t* js){if(chromeHost::view)chromeHost::view->ExecuteScript(js,nullptr);}void chromeShow(bool on){chromeHost::show(on);}void chromeClose(){chromeHost::close();}
 bool chromeOpenSettings(const std::string& call){if(!chromeHost::view||!chromeHost::ready)return false;chromeHost::view->ExecuteScript(wide(call).c_str(),nullptr);if(chromeHost::ctl){chromeHost::ctl->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);comp::focusTarget=chromeHost::ctl;}return true;}
 void executeEverywhere(const std::string& js){auto w=wide(js);ICoreWebView2* page=activeTab&&activeTab->view?activeTab->view:webview;if(page)page->ExecuteScript(w.c_str(),nullptr);if(chromeHost::view&&chromeHost::view!=page)chromeHost::view->ExecuteScript(w.c_str(),nullptr);if(webview&&webview!=page&&webview!=chromeHost::view)webview->ExecuteScript(w.c_str(),nullptr);}
 void chromeRescript(){chromeHost::rescript();}
