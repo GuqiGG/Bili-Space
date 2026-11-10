@@ -641,6 +641,34 @@ void toggleFull(bool on){
     restoreFromFull(SWP_FRAMECHANGED|SWP_NOZORDER);
     InvalidateRect(windowHandle,nullptr,TRUE);fit();dockLayout();chromeShow(!pip);execute("window.BiliSpace?.setFullscreen(false)");
 }
+// Feedback goes to the project site, which mails it to the developer; no mail credentials live in the client.
+constexpr UINT feedbackReplyMessage=WM_APP+172;
+ULONGLONG lastFeedbackAt=0;
+std::string windowsDescription(){
+    auto read=[](const wchar_t* name){wchar_t buf[128]{};DWORD size=sizeof(buf);
+        if(RegGetValueW(HKEY_LOCAL_MACHINE,L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",name,RRF_RT_REG_SZ,nullptr,buf,&size)!=ERROR_SUCCESS)return std::string{};return utf8(buf);};
+    auto build=read(L"CurrentBuild"),display=read(L"DisplayVersion");int number=0;try{number=std::stoi(build);}catch(...){}
+    return std::string(number>=22000?"Windows 11":"Windows 10")+(display.empty()?"":" "+display)+(build.empty()?"":" ("+build+")");
+}
+void feedbackReply(bool ok,const std::string& message){auto p=new json{{"ok",ok},{"message",message}};if(!PostMessageW(windowHandle,feedbackReplyMessage,0,reinterpret_cast<LPARAM>(p)))delete p;}
+void sendFeedback(const json& m){
+    auto text=m.value("text",std::string{}),email=m.value("email",std::string{}),kind=m.value("kind",std::string("other"));
+    if(text.size()<4||text.size()>16000){feedbackReply(false,"反馈内容的长度不对");return;}
+    if(email.size()>254||(!email.empty()&&(email.find('@')==std::string::npos||email.find_first_of("\r\n<>\"' ,;")!=std::string::npos))){feedbackReply(false,"邮箱格式好像不对，也可以留空。");return;}
+    if(kind!="bug"&&kind!="idea"&&kind!="other")kind="other";
+    const auto now=GetTickCount64();if(lastFeedbackAt&&now-lastFeedbackAt<30000){feedbackReply(false,"提交得太快了，请半分钟后再试。");return;}lastFeedbackAt=now;
+    json body{{"kind",kind},{"text",text},{"email",email},{"version",appVersion},{"platform","windows-x64"}};
+    if(m.value("diag",false)){wchar_t locale[LOCALE_NAME_MAX_LENGTH]{};GetUserDefaultLocaleName(locale,LOCALE_NAME_MAX_LENGTH);
+        body["os"]=windowsDescription();body["locale"]=utf8(locale);auto page=m.value("page",std::string{});body["page"]=page.substr(0,32);}
+    std::thread([body]{
+        try{auto r=nativeHttp({{"url","https://bili.gvqi.top/feedback"},{"method","POST"},{"body",body.dump()},{"headers",{{"Content-Type","application/json"}}},{"timeout",20000}});
+            const int status=r.value("status",0);
+            if(status>=200&&status<300)feedbackReply(true,"");
+            else if(status==429)feedbackReply(false,"今天提交得有点多，请稍后再试。内容已保留。");
+            else feedbackReply(false,"发送失败（"+std::to_string(status)+"），请稍后再试。内容已保留。");
+        }catch(...){feedbackReply(false,"网络连接失败，请检查网络后重试。内容已保留。");}
+    }).detach();
+}
 void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
     LPWSTR origin{},body{};args->get_Source(&origin);args->get_WebMessageAsJson(&body);
     std::wstring uri=origin?origin:L"";std::string raw=body?utf8(body):"";CoTaskMemFree(origin);CoTaskMemFree(body);
@@ -654,6 +682,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="community"){communityAction(m);
         }else if(type=="open-settings"){const auto tab=m.value("tab",std::string{});const auto call="window.BiliSpace?.openSettings?.("+json(tab).dump()+",true)";if(!chromeOpenSettings(call))execute(call);
         }else if(type=="fullscreen-start"){startRect.clear();if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()>=4&&m["rect"].size()<=6)for(const auto& v:m["rect"])if(v.is_number())startRect.push_back(v.get<double>());startRectAt=GetTickCount64();startGrow();
+        }else if(type=="feedback"){sendFeedback(m);
         }else if(type=="web-fullscreen"){executeEverywhere(std::string("window.BiliSpace?.setWebFullscreen?.(")+(m.value("on",false)?"true":"false")+")");
         }else if(type=="tour-backdrop"){executeEverywhere(std::string("window.BiliSpace?.tourBackdrop?.(")+(m.value("on",false)?"true":"false")+")");
         }else if(type=="fullscreen-ready"){std::vector<double> rect;if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()>=4&&m["rect"].size()<=6)for(const auto& v:m["rect"])if(v.is_number())rect.push_back(v.get<double>());fullscreenReady(rect);
@@ -818,15 +847,16 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
         if(lp==WM_LBUTTONDBLCLK){restoreFromTray();return 0;}
         if(lp==WM_RBUTTONUP||lp==WM_CONTEXTMENU){
             HMENU menu=CreatePopupMenu();AppendMenuW(menu,MF_STRING,1,L"打开 Bili Space");
-            AppendMenuW(menu,MF_STRING,2,L"隐藏窗口");AppendMenuW(menu,MF_SEPARATOR,0,nullptr);
+            AppendMenuW(menu,MF_STRING,2,L"隐藏窗口");AppendMenuW(menu,MF_STRING,4,L"反馈问题…");AppendMenuW(menu,MF_SEPARATOR,0,nullptr);
             AppendMenuW(menu,MF_STRING,3,L"退出");POINT pt{};GetCursorPos(&pt);SetForegroundWindow(hwnd);
             auto selected=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_RIGHTBUTTON,pt.x,pt.y,0,hwnd,nullptr);DestroyMenu(menu);
-            if(selected==1)restoreFromTray();else if(selected==2){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);}else if(selected==3){config["closeAction"]="exit";PostMessageW(hwnd,WM_CLOSE,0,0);}
+            if(selected==1)restoreFromTray();else if(selected==4){restoreFromTray();executeEverywhere("window.BiliSpace?.openFeedback?.()");}else if(selected==2){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);}else if(selected==3){config["closeAction"]="exit";PostMessageW(hwnd,WM_CLOSE,0,0);}
             PostMessageW(hwnd,WM_NULL,0,0);return 0;
         }
     }
     switch(msg){
     case pluginReplyMessage:nativeReplyArrived(lp);return 0;
+    case feedbackReplyMessage:{std::unique_ptr<json> result(reinterpret_cast<json*>(lp));if(result)executeEverywhere("window.BiliSpace?.feedbackResult?.("+result->dump()+")");return 0;}
     case updateReplyMessage:{std::unique_ptr<json> result(reinterpret_cast<json*>(lp));if(result)acceptUpdate(*result);return 0;}
     case downloadReplyMessage:{
         std::unique_ptr<DownloadReply> reply(reinterpret_cast<DownloadReply*>(lp));
