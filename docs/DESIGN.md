@@ -80,6 +80,13 @@
 - 引导期间背后整个客户端全模糊：顶栏层用 backdrop-filter，页面层用 `tourBackdrop` 给 body 加 filter。关闭时卡片先淡出，背景再约 1.1 秒慢慢变清晰，露出配好的样子。
 - 老用户在跳过的位置看到「还是现在好」，选了就保留全部现有设置。
 
+## 5.5 更新公告
+
+- 每个版本在安装包里带自己的公告（`assets/whats-new/`），离线也能看。
+- 新版本第一次启动时弹一次；新安装的用户在欢迎引导结束后再弹。
+- 可以用按钮、圆点或左右键翻页，用 ×、Esc 或「知道了」关闭。看过的版本记在 `whatsNewSeen` 里。设置 → 关于与更新可以重新打开。
+- 每页高度一致，翻页时窗口不跳。图片区保持 16:9，并按窗口高度缩小。
+
 ## 6. 否决过的方案（不要再做）
 
 - **启动时的屏外窗口 + 从小电视展开的启动动画**：用户觉得难看。保留原来窗口内的启动页。
@@ -97,7 +104,8 @@
   1. 在 CMakeLists.txt、assets/app-info.json、package.json、package-lock.json、src/app.rc（两处字符串和逗号形式）、src/app_info.hpp、src/linux_main.py、src/macos_main.mm 里改版本号。
   2. `git mv .github/workflows/platforms-<旧>.yml platforms-<新>.yml`，并替换文件里的版本号。
   3. 写 `docs/RELEASE-<版本>.md`。
-  4. 提交信息带 `[release-<版本>]`。
+  4. 更新公告：改 `assets/whats-new/whats-new.json` 的 `version` 为新版本，并写好每一页（`title`、`text`，`media` 可以是 mp4/webm/gif/png/webp，或者用 `items` 列一组要点）；配图放在同一目录，可以用 `scripts/record_whats_new.py` 从测试窗口录。版本号对不上时公告不会弹出。
+  5. 提交信息带 `[release-<版本>]`。
 - 不要改动 `D:\Bili-Space`（用户自己装的那份），除非用户要求。
 - 测试绝不发送系统级键鼠输入（keybd_event、mouse_event、SetCursorPos），只用 CDP 操作测试窗口。用户在玩游戏时不要弹出测试窗口。
 - 不打印、不保存 GitHub token。不要使用裸 `git stash`。
