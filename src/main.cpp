@@ -664,7 +664,7 @@ void sendFeedback(const json& m){
         try{auto r=nativeHttp({{"url","https://bili.gvqi.top/feedback"},{"method","POST"},{"body",body.dump()},{"headers",{{"Content-Type","application/json"}}},{"timeout",20000}});
             const int status=r.value("status",0);
             if(status>=200&&status<300)feedbackReply(true,"");
-            else if(status==429)feedbackReply(false,"今天提交得有点多，请稍后再试。内容已保留。");
+            else if(status==429)feedbackReply(false,"提交得太快了，请半分钟后再试。内容已保留。");
             else feedbackReply(false,"发送失败（"+std::to_string(status)+"），请稍后再试。内容已保留。");
         }catch(...){feedbackReply(false,"网络连接失败，请检查网络后重试。内容已保留。");}
     }).detach();
