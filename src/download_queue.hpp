@@ -21,7 +21,7 @@ void loadDownloadQueue(){
     }catch(const std::exception& e){downloadQueueItems=json::array();downloadQueueLoadFailed=true;downloadQueueError=e.what();}
 }
 json downloadQueueSnapshot(){loadDownloadQueue();return {{"items",downloadQueueItems},{"paused",downloadQueuePaused},{"activeId",activeQueueId},{"resolvingId",resolvingQueueId},{"directory",downloadQueueDirectory},{"message",downloadQueueError}};}
-void pushDownloadQueue(){execute("window.BiliSpace?.acceptDownloadQueue("+downloadQueueSnapshot().dump()+")");}
+void pushDownloadQueue(){executeEverywhere("window.BiliSpace?.acceptDownloadQueue("+downloadQueueSnapshot().dump()+")");}
 std::string downloadQueueToken(){GUID id{};wchar_t text[64]{};if(FAILED(CoCreateGuid(&id))||!StringFromGUID2(id,text,64))throw std::runtime_error("无法创建任务编号");return utf8(text);}
 void kickDownloadQueue(){
     loadDownloadQueue();if(downloadQueuePaused||downloadBusy||!activeQueueId.empty()||!resolvingQueueId.empty()||downloadQueueLoadFailed)return;

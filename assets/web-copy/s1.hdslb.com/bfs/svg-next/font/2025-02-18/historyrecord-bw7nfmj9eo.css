@@ -1,0 +1,133 @@
+
+@font-face {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  src:
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo-colrv0.woff') format("woff"),
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.ttf') format('truetype');
+  src:
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.woff2') format("woff2") tech(color-COLRv1),
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo-colrv0.woff') format("woff"),
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+.sic-BDC-clock_history_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e000';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-magnifier_search_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e001';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-list_select_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e002';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-uploader_name_square_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e003';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-phone_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e004';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-trash_delete_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e005';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-xmark_close_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e006';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_square_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e007';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-playdata_square_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e008';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-playtime_square_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e009';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-eye_browse_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e00a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_hot_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e00b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-hand_thumbsup_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e00c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-xmark_close_circle_fill::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e00d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-pad_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e00e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-computer_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e00f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-television_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e010';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_up_triangle_fill::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e011';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-grid_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e012';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-list_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e013';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-car_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e014';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-screen_speaker_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e015';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brush_clear_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e016';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_expand_line::after {
+  font-family: 'historyrecord-bw7nfmj9eo';
+  content: '\e017';
+  text-rendering: geometricPrecision;
+}

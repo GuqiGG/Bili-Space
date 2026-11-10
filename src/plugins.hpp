@@ -3,7 +3,10 @@
 // they run inside the page with the same privileges as the injected enhancer and
 // receive no native bridge, no filesystem and no network capability from the host.
 inline fs::path pluginsDirectory(){return dataPath/L"plugins";}
+// Values of the settings plugins declare, by plugin id; kept in settings.json so every view sees the same ones.
+void refreshInjection();void pluginsBroadcast(const std::string& script);void pluginsReloadViews();const std::string& pluginToken();
 inline bool pluginIdValid(const std::string& id){return std::regex_match(id,std::regex(R"([a-z0-9][a-z0-9._-]{0,39})"));}
+#include "plugin_native.hpp"
 inline std::string pluginField(const json& item,const char* key,size_t limit){
     if(!item.is_object()||!item.contains(key)||!item[key].is_string())return {};
     auto value=item[key].get<std::string>();
@@ -31,24 +34,105 @@ inline json pluginsRegistry(){
             auto name=pluginField(manifest,"name",80);if(name.empty())name=id;
             const auto version=pluginField(manifest,"version",32);
             const auto description=pluginField(manifest,"description",300);
+            bool grantNative=false;if(manifest.contains("grant")){const auto& g=manifest["grant"];if(g.is_string())grantNative=g.get<std::string>()=="native";else if(g.is_array())for(const auto& v:g)if(v.is_string()&&v.get<std::string>()=="native")grantNative=true;}
             auto main=pluginField(manifest,"main",64);if(main.empty())main="main.js";
-            if(main.find_first_of(std::string("\/"))!=std::string::npos||main.find("..")!=std::string::npos)throw std::runtime_error("main 只能是文件名");
+            if(main.find_first_of("\\/")!=std::string::npos||main.find("..")!=std::string::npos)throw std::runtime_error("main 只能是文件名");
             const auto mainPath=folder/wide(main);
             if(!fs::is_regular_file(mainPath,ec))throw std::runtime_error("缺少入口文件 "+main);
             if(fs::file_size(mainPath,ec)>512*1024)throw std::runtime_error("入口文件超过 512 KB");
+            if(const auto risk=pluginRisk(read(mainPath));!risk.empty())throw std::runtime_error("疑似恶意插件，已阻止运行（"+risk+"）");
             bool disabled=false;
             if(config.contains("pluginsDisabled")&&config["pluginsDisabled"].is_array())for(const auto& entry:config["pluginsDisabled"])if(entry.is_string()&&entry.get<std::string>()==id)disabled=true;
-            result["plugins"].push_back({{"id",id},{"name",name},{"version",version},{"description",description},{"main",main},{"enabled",!disabled},{"code",read(mainPath)}});
+            json values=pluginData.contains(id)&&pluginData[id].is_object()?pluginData[id]:json::object();
+            result["plugins"].push_back({{"id",id},{"name",name},{"version",version},{"description",description},{"main",main},{"enabled",!disabled},{"code",read(mainPath)},{"data",values},{"grant",grantNative?"native":""},{"native",grantNative&&nativeApproved(id)}});
         }catch(const std::exception& e){
             result["errors"].push_back({{"folder",utf8(folder.filename().wstring())},{"message",e.what()}});
         }
     }
     return result;
 }
+inline json pluginDefinition(const std::string& id){for(auto& p:pluginsRegistry()["plugins"])if(p.value("id",std::string{})==id)return p;return nullptr;}
+inline void pluginsToast(const std::string& text){pluginsBroadcast("window.BiliSpace?.proxyToast?.("+json(text).dump()+")");}
+inline void pluginsSetDisabled(const std::string& id,bool off){
+    json next=json::array();if(config.contains("pluginsDisabled")&&config["pluginsDisabled"].is_array())for(auto& v:config["pluginsDisabled"])if(v.is_string()&&v.get<std::string>()!=id)next.push_back(v);
+    if(off&&next.size()<32)next.push_back(id);config["pluginsDisabled"]=next;
+}
+// Imports a plugin from its plugin.json (the whole folder is copied) or from a single .js file whose leading
+// `// @id`, `// @name`, `// @version`, `// @description` comments describe it. Returns the plugin id.
+inline std::string pluginsInstall(const fs::path& file){
+    std::error_code ec;const auto root=pluginsDirectory();fs::create_directories(root,ec);
+    auto lower=[](std::wstring v){for(auto& c:v)c=towlower(c);return v;};
+    if(lower(file.filename().wstring())==L"plugin.json"){
+        if(fs::file_size(file,ec)>16*1024)throw std::runtime_error("plugin.json 超过 16 KB");
+        const auto manifest=json::parse(read(file));const auto id=pluginField(manifest,"id",64);
+        if(!pluginIdValid(id))throw std::runtime_error("插件 id 无效（小写字母数字 . _ -）");
+        const auto folder=file.parent_path();std::uintmax_t total=0;size_t count=0;
+        {auto main=pluginField(manifest,"main",64);if(main.empty())main="main.js";if(main.find_first_of("\\/")==std::string::npos){const auto risk=pluginRisk(read(folder/wide(main)));if(!risk.empty())throw std::runtime_error("疑似恶意插件，已拒绝导入（"+risk+"）");}}
+        for(auto& entry:fs::recursive_directory_iterator(folder,ec)){if(entry.is_regular_file()){total+=entry.file_size();if(++count>64||total>4*1024*1024)throw std::runtime_error("插件文件夹太大（最多 64 个文件、4 MB）");}}
+        const auto target=root/wide(id);if(fs::exists(target,ec)&&fs::equivalent(folder,target,ec))return id;
+        fs::remove_all(target,ec);ec.clear();fs::copy(folder,target,fs::copy_options::recursive|fs::copy_options::overwrite_existing,ec);
+        if(ec)throw std::runtime_error("复制插件失败："+ec.message());
+        return id;
+    }
+    if(lower(file.extension().wstring())!=L".js")throw std::runtime_error("请选择插件的 plugin.json 或 .js 文件");
+    if(fs::file_size(file,ec)>512*1024)throw std::runtime_error("插件文件超过 512 KB");
+    const auto code=read(file);
+    if(const auto risk=pluginRisk(code);!risk.empty())throw std::runtime_error("疑似恶意插件，已拒绝导入（"+risk+"）");json manifest=json::object();
+    std::istringstream lines(code);std::string line;int n=0;static const std::regex tag(R"(^\s*//\s*@(id|name|version|description|grant)\s+(.+?)\s*$)");
+    while(n++<60&&std::getline(lines,line)){if(!line.empty()&&line.back()=='\r')line.pop_back();std::smatch m;if(std::regex_match(line,m,tag)&&!manifest.contains(m[1].str()))manifest[m[1].str()]=m[2].str();}
+    std::string id=manifest.value("id",std::string{});
+    if(id.empty()){for(wchar_t c:lower(file.stem().wstring())){id+=(c<128&&(iswalnum(c)||c==L'.'||c==L'_'||c==L'-'))?char(c):'-';}while(!id.empty()&&!isalnum(static_cast<unsigned char>(id[0])))id.erase(0,1);if(id.size()>40)id.resize(40);}
+    if(!pluginIdValid(id))throw std::runtime_error("无法从文件得到有效的插件 id，请在文件开头写 // @id my-plugin");
+    if(!manifest.contains("name"))manifest["name"]=id;
+    manifest["id"]=id;manifest["main"]="main.js";
+    const auto target=root/wide(id);fs::create_directories(target,ec);
+    {std::ofstream f(target/L"plugin.json",std::ios::binary);f<<manifest.dump(2);}
+    {std::ofstream f(target/L"main.js",std::ios::binary);f<<code;if(!f)throw std::runtime_error("写入插件失败");}
+    return id;
+}
 inline void pluginsAction(const json& message){
+    if(message.value("token",std::string{})!=pluginToken())return;
     const auto action=message.value("action",std::string{});
+    const auto id=message.value("id",std::string{});
     if(action=="folder"){
         std::error_code ec;const auto root=pluginsDirectory();fs::create_directories(root,ec);
         ShellExecuteW(windowHandle,L"open",root.c_str(),nullptr,nullptr,SW_SHOWNORMAL);
-    }else if(action=="reload"&&webview){webview->Reload();}
+    }else if(action=="native"){nativeRequest(message);
+    }else if(action=="message"){
+        // A plugin's copies in the header and in pages talk through here: relayed to every view, size-checked.
+        static const std::regex validId(R"([a-z0-9][a-z0-9._-]{0,39})");const auto name=message.value("name",std::string{});
+        if(!std::regex_match(id,validId)||name.empty()||name.size()>40)return;
+        const json payload={{"from",id},{"name",name},{"view",message.value("view",std::string{})=="header"?"header":"page"},{"data",message.contains("data")?message["data"]:json()}};
+        const auto text=payload.dump();if(text.size()>66*1024)return;
+        pluginsBroadcast("window.BiliSpacePlugins?.deliver?.("+text+","+json(pluginToken()).dump()+")");
+    }else if(action=="reload"){pluginsReloadViews();
+    }else if(action=="import"){
+        wchar_t path[MAX_PATH*4]{};OPENFILENAMEW dialog{};dialog.lStructSize=sizeof(dialog);dialog.hwndOwner=windowHandle;dialog.lpstrFilter=L"Bili-Space 插件 (plugin.json, *.js)\0plugin.json;*.js\0";dialog.lpstrFile=path;dialog.nMaxFile=MAX_PATH*4;dialog.lpstrTitle=L"导入插件";dialog.Flags=OFN_FILEMUSTEXIST|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;
+        if(!GetOpenFileNameW(&dialog))return;
+        try{
+            const auto installed=pluginsInstall(fs::path(path));pluginsSetDisabled(installed,false);
+            if(auto asked=pluginDefinition(installed);!asked.is_null()&&asked.value("grant",std::string{})=="native"){
+                const auto text=L"插件「"+wide(asked.value("name",installed))+L"」请求完全访问权限：\n\n· 访问任意网址（可以把数据发到任何地方）\n· 读写你电脑上的任意文件\n· 运行程序\n\n它的权限等同于一个普通软件。只在你完全信任插件来源时才允许。\n\n允许它获得完全访问权限吗？（选“否”仍会安装，但不能使用这些能力）";
+                nativeApprove(installed,MessageBoxW(windowHandle,text.c_str(),L"Bili-Space 插件权限",MB_YESNO|MB_ICONWARNING|MB_DEFBUTTON2)==IDYES);
+            }else nativeApprove(installed,false);
+            save();
+            const auto def=pluginDefinition(installed);if(def.is_null())throw std::runtime_error("插件已复制，但清单或入口文件无效");
+            refreshInjection();pluginsBroadcast("window.BiliSpacePlugins?.setEnabled?.("+json(installed).dump()+",true,"+def.dump()+","+json(pluginToken()).dump()+");window.BiliSpace?.pluginsChanged?.()");
+            pluginsToast("已导入并启用："+def.value("name",installed));log("plugin imported: "+installed);
+        }catch(const std::exception& e){pluginsToast(std::string("导入失败：")+e.what());}
+    }else if(action=="toggle"&&pluginIdValid(id)){
+        const bool on=message.value("enabled",false);pluginsSetDisabled(id,!on);save();refreshInjection();
+        const auto def=pluginDefinition(id);
+        pluginsBroadcast("window.BiliSpacePlugins?.setEnabled?.("+json(id).dump()+","+(on?"true":"false")+","+(def.is_null()?std::string("null"):def.dump())+","+json(pluginToken()).dump()+");window.BiliSpace?.pluginsChanged?.()");
+    }else if(action=="remove"&&pluginIdValid(id)){nativeApprove(id,false);
+        std::error_code ec;fs::remove_all(pluginsDirectory()/wide(id),ec);pluginsSetDisabled(id,false);pluginData.erase(id);save();refreshInjection();
+        pluginsBroadcast("window.BiliSpacePlugins?.remove?.("+json(id).dump()+","+json(pluginToken()).dump()+");window.BiliSpace?.pluginsChanged?.()");pluginsToast("插件已删除");
+    }else if(action=="data"&&pluginIdValid(id)&&message.contains("value")){
+        const auto key=message.value("key",std::string{});if(key.empty()||key.size()>40)return;
+        if(!pluginData.contains(id)||!pluginData[id].is_object())pluginData[id]=json::object();
+        if(pluginData[id].size()>=64&&!pluginData[id].contains(key))return;
+        if(message["value"].dump().size()>16*1024)return;
+        pluginData[id][key]=message["value"];save();refreshInjection();
+        pluginsBroadcast("window.BiliSpacePlugins?.acceptData?.("+json(id).dump()+","+pluginData[id].dump()+","+json(pluginToken()).dump()+")");
+    }
 }

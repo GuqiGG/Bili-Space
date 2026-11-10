@@ -3,8 +3,14 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:8,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalControlsV1:false,fiMode:'off',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,showClock:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',officialVideoStyle:false,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
+/* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
+   keep their header space but hide their own copy (content mode). */
+const CHROME_HOST=typeof RUNTIME!=='undefined'&&!!RUNTIME.chromeHost,CHROME_VIEW=CHROME_HOST&&location.pathname==='/__bili_space_chrome__',CONTENT_VIEW=CHROME_HOST&&!CHROME_VIEW;
+let chromeLocation=null;
+const NATIVE_PLATFORM=typeof RUNTIME!=='undefined'?RUNTIME.platform||'windows':'windows';
+if(NATIVE_PLATFORM!=='windows'){PREFS.srMode='off';PREFS.fiMode='off';PREFS.downloader=false;}else if(typeof RUNTIME!=='undefined'&&RUNTIME.legacyWin7){PREFS.srMode='off';PREFS.fiMode='off';}
 /* PiP-only renderer. Protocol fields are independently parsed; no third-party parser code. */
 function parsePipDanmaku(buffer){
  const bytes=new Uint8Array(buffer);if(bytes.length>8*1024*1024)throw Error('弹幕数据过大');const decoder=new TextDecoder();
@@ -81,27 +87,90 @@ function applyHeaderPreferences(){
   if(!shadow)return;
   if(!PREFS.headerFavorites)favoritesController?.close();
   if($('.upload',shadow).parentElement!==shadow)shadow.append($('.upload',shadow));
-  const left=$('.header-left',shadow);if($('.brand-label',shadow).parentElement!==left)left.insertBefore($('.brand-label',shadow),$('.nav-lane',shadow));left.dataset.controls=PREFS.trafficLights?'traffic':'windows';$('.lights',shadow).hidden=!PREFS.trafficLights;$('.window-actions',shadow).hidden=Boolean(PREFS.trafficLights);
-  for(const [key,,selector] of HEADER_ITEMS)$(selector,shadow).hidden=!PREFS[key];
-  $('.brand-label',shadow).hidden=!PREFS.headerBrand||(PREFS.logoAutoHide&&pageKind()!=='home');
+  const left=$('.header-left',shadow);let slot=$('.brand-slot',shadow);if(!slot){slot=document.createElement('span');slot.className='brand-slot';left.insertBefore(slot,$('.nav-lane',shadow));slot.append($('.brand-label',shadow));}left.dataset.controls=PREFS.trafficLights?'traffic':'windows';$('.lights',shadow).hidden=!PREFS.trafficLights;$('.window-actions',shadow).hidden=Boolean(PREFS.trafficLights);if(NATIVE_PLATFORM==='macos'){left.dataset.controls='native';$('.lights',shadow).hidden=true;$('.window-actions',shadow).hidden=true;}
+  for(const [key,,selector] of HEADER_ITEMS)if(key!=='headerBack')$(selector,shadow).hidden=!PREFS[key];
+  syncCategoryVisibility();
+  syncHeaderBrand();
+  syncNavigationControls();
   $('.upload',shadow).hidden=!PREFS.headerUpload||pageKind()!=='home';
   const categoriesOpen=$('.back',shadow).getAttribute('aria-expanded')==='true';
   $('.primary-nav',shadow).hidden=categoriesOpen||!$$('.primary-nav a',shadow).some(a=>!a.hidden);
   if(!PREFS.headerBack)setCategories(false);
   updateHeaderClock();requestAnimationFrame(layoutHeaderLeading);syncPipPresentation();
   $$('#header-categories a',shadow).forEach((a,i)=>a.hidden=!PREFS.categorySelection.includes(i));
-  let empty=$('.category-empty',shadow);if(!empty){empty=document.createElement('button');empty.type='button';empty.className='category-empty';empty.textContent='未选择分区 · 前往设置';empty.onclick=()=>{openSettings();currentTab='categories';renderSettings();};$('#header-categories',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;
+  let empty=$('.category-empty',shadow);if(!empty){empty=document.createElement('button');empty.type='button';empty.className='category-empty';empty.textContent='未选择分区 · 前往设置';empty.onclick=()=>{openSettings('categories');currentTab='categories';renderSettings();};$('#header-categories',shadow).append(empty);}empty.hidden=PREFS.categorySelection.length>0;
 }
+let brandMotion=[],brandShown,brandStateRequested=false;
+/* Header motion is compositor-only: the layout change applies at once, elements that moved slide from their previous
+   place with `translate`, new ones fade in, and leaving ones are replaced by a fading ghost outside the layout.
+   Nothing animates width or margin, so a page busy loading cannot stall the header. */
+let headerFlipMotion=[];
+function headerZoom(){return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bs-ui-scale'))||1;}
+function headerFlip(apply,extra=[]){
+  const left=shadow&&$('.header-left',shadow);if(!left||CONTENT_VIEW){apply();return;}
+  const tracked=[...left.children,...extra].filter(el=>el&&!el.dataset.ghost);
+  const visible=el=>!el.hidden&&el.isConnected&&getComputedStyle(el).display!=='none';
+  const before=new Map(tracked.map(el=>[el,visible(el)?el.getBoundingClientRect():null])),origin=left.getBoundingClientRect();
+  headerFlipMotion.forEach(m=>{m.onfinish=null;m.cancel();});headerFlipMotion=[];$$('[data-ghost]',left).forEach(g=>g.remove());
+  apply();settleHeader();
+  if(!left.animate||headerMotionReduced())return;
+  const zoom=headerZoom(),slide={duration:380,easing:'cubic-bezier(.32,.72,0,1)'};
+  // New items uncover from the side their neighbours slide away from, so nothing sweeps across a half-shown item.
+  let drift=0;for(const el of tracked){const was=before.get(el);if(was&&visible(el))drift+=was.left-el.getBoundingClientRect().left;}
+  const hidden=drift>0?'inset(-4px 0 -4px 100%)':'inset(-4px 100% -4px 0)';
+  for(const el of tracked){
+    const was=before.get(el),now=visible(el)?el.getBoundingClientRect():null;
+    if(was&&now){const dx=(was.left-now.left)/zoom;if(Math.abs(dx)>.5)headerFlipMotion.push(holdForReveal(el.animate([{translate:dx+'px 0px'},{translate:'0px 0px'}],slide)));}
+    // Arrivals take exactly as long as departures (200ms), so the logo comes in while back/forward go out.
+    else if(!was&&now)headerFlipMotion.push(holdForReveal(el.animate([{opacity:0,clipPath:hidden},{opacity:getComputedStyle(el).opacity,clipPath:'inset(-4px 0 -4px 0)'}],{duration:200,easing:'cubic-bezier(0,0,.2,1)'})));
+    else if(was&&!now&&was.width>0){
+      const wasHidden=el.hidden;el.hidden=false;const look=getComputedStyle(el),keep={display:look.display==='none'?'inline-flex':look.display,alignItems:'center',justifyContent:look.justifyContent,fontSize:look.fontSize,fontWeight:look.fontWeight,fontFamily:look.fontFamily,lineHeight:look.lineHeight,color:look.color,padding:look.padding,boxSizing:'border-box'};el.hidden=wasHidden;
+      const ghost=el.cloneNode(true);ghost.hidden=false;Object.assign(ghost.style,keep);ghost.removeAttribute('id');ghost.dataset.ghost='true';ghost.inert=true;ghost.setAttribute('aria-hidden','true');
+      Object.assign(ghost.style,{position:'absolute',left:(was.left-origin.left)/zoom+'px',top:(was.top-origin.top)/zoom+'px',width:was.width/zoom+'px',height:was.height/zoom+'px',margin:'0',pointerEvents:'none'});
+      left.append(ghost);const m=holdForReveal(ghost.animate([{opacity:1,translate:'0px 0px'},{opacity:0,translate:'-8px 0px'}],{duration:200,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'}));m.onfinish=()=>ghost.remove();headerFlipMotion.push(m);
+    }
+  }
+}
+function syncHeaderBrand(){
+  const slot=$('.brand-slot',shadow),label=$('.brand-label',shadow);if(!slot||!label)return;
+  if(brandShown===undefined&&typeof RUNTIME!=='undefined'&&!brandStateRequested){brandStateRequested=true;slot.hidden=true;label.hidden=true;let fallback;window.__bsAcceptBrandState=previous=>{if(brandShown!==undefined)return;clearTimeout(fallback);brandShown=typeof previous==='boolean'?previous:false;syncHeaderBrand();};fallback=setTimeout(()=>window.__bsAcceptBrandState(false),150);native('header-brand',{action:'read'});return;}
+  if(brandShown===undefined&&brandStateRequested)return;
+  const show=!!PREFS.headerBrand&&(!PREFS.logoAutoHide||pageKind()==='home');if(brandShown===show){if(!brandMotion.length){slot.hidden=!show;label.hidden=!show;}return;}
+  const initial=brandShown===undefined;brandShown=show;native('header-brand',{action:'write',shown:show});
+  if(initial&&show){slot.hidden=false;label.hidden=false;return;}
+  headerFlip(()=>{slot.hidden=!show;label.hidden=!show;});
+}
+let navigationState,navigationMask,navigationRequested=false,navigationMotion=[];
+window.__bsAcceptNavigationState=value=>{/* the header view learns history from chromeActive; this only seeds it */if(!(CHROME_VIEW&&navigationState))navigationState={back:!!value.back,forward:!!value.forward};acceptRouteOrigin(value.route);if(navigationMask===undefined)navigationMask=Number(value.visible)&3;if(categoryShown===undefined)categoryShown=!!value.categoryVisible;syncNavigationControls();syncCategoryVisibility();};
+function syncNavigationControls(){
+  if(CHROME_VIEW&&chromeHoldControls)return;const group=$('.history-controls',shadow);if(!group)return;
+  if(!navigationState){if(typeof RUNTIME!=='undefined'){group.hidden=true;if(!navigationRequested){navigationRequested=true;native('navigation-state',{action:'read'});}return;}navigationState={back:history.length>1,forward:false};navigationMask=0;}
+  const home=pageKind()==='home',mask=home?0:3,previous=navigationMask;
+  const buttons=[$('.history-back',shadow),$('.history-forward',shadow)];buttons[0].disabled=!navigationState.back;buttons[1].disabled=!navigationState.forward;
+  if(previous===mask){group.hidden=!mask;buttons.forEach((b,i)=>b.hidden=!(mask&(1<<i)));return;}
+  navigationMask=mask;native('navigation-state',{action:'visibility',visible:mask});
+  headerFlip(()=>{group.hidden=!mask;buttons.forEach((b,i)=>b.hidden=!(mask&(1<<i)));},buttons);
+}
+let categoryShown,categoryMotion=[];
+function syncCategoryVisibility(){
+  const button=$('.back',shadow);if(!button)return;
+  if(categoryShown===undefined){if(typeof RUNTIME!=='undefined'){button.hidden=true;return;}categoryShown=false;}
+  const show=!!PREFS.headerBack,previous=categoryShown;if(previous===show){button.hidden=!show;return;}
+  categoryShown=show;native('navigation-state',{action:'category-visibility',visible:show});
+  headerFlip(()=>{button.hidden=!show;});
+}
+// The clock shows minutes, so it wakes once a minute, on the minute, and only while it is switched on.
+let headerClockTimer;function scheduleHeaderClock(){clearTimeout(headerClockTimer);updateHeaderClock();if(CONTENT_VIEW||!PREFS.showClock)return;const now=new Date();headerClockTimer=setTimeout(scheduleHeaderClock,(60-now.getSeconds())*1000-now.getMilliseconds()+30);}
 function updateHeaderClock(){if(!shadow)return;const clock=$('.header-clock',shadow);if(!clock)return;clock.hidden=!PREFS.showClock;if(clock.hidden){clock.textContent='';return;}const now=new Date();clock.textContent=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:false});clock.dateTime=now.toISOString();clock.title=now.toLocaleString();}
 function layoutHeaderLeading(){if(!shadow)return;const brand=$('.brand',shadow),dock=$('.brand-leading',shadow),nav=$('.primary-nav',shadow),left=$('.header-left',shadow);if(!dock||brand.hidden)return;const stop=nav&&!nav.hidden?nav.getBoundingClientRect().right:left.getBoundingClientRect().left+110;const available=Math.max(36,brand.getBoundingClientRect().left-stop-16);dock.style.maxWidth=available+'px';dock.dataset.compact=String(available<(PREFS.showClock?150:100));}
-let favoritesController;
+let favoritesController,accountsController;
 let copiedVideoLinkTimer;
 function currentVideoLink(){
-  if(pageKind()!=='video')return '';const path=location.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'').replace(/\/$/,'');
+  const location=chromeLocation||window.location;if(pageKind()!=='video')return '';const path=location.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'').replace(/\/$/,'');
   const url=new URL('https://www.bilibili.com'+path);for(const key of ['p','t']){const value=new URLSearchParams(location.search).get(key);if(value&&/^\d+(?:\.\d+)?$/.test(value))url.searchParams.set(key,value);}return url.href;
 }
 function syncVideoLink(){
-  if(!shadow)return;const button=$('.video-link',shadow);if(!button)return;const url=currentVideoLink();button.hidden=!url;
+  if(!shadow)return;const button=$('.video-link',shadow);if(!button)return;const url=currentVideoLink();button.hidden=!url||!PREFS.videoLinkButton;button.dataset.mini=String(!!PREFS.videoLinkCompact);
   if(button.dataset.url!==url){clearTimeout(copiedVideoLinkTimer);delete button.dataset.copied;delete button.dataset.copyUrl;button.dataset.url=url;$('.video-link-text',button).textContent=url.replace('https://www.','');}
   requestAnimationFrame(layoutHeaderLeading);button.title=url?'点击复制链接 · Shift+点击复制当前时间点\n'+url:'';button.setAttribute('aria-label',url?'复制视频链接（Shift+点击含当前时间）：'+url:'复制视频链接');
 }
@@ -204,35 +273,76 @@ function scheduleVideoAlign(){
     videoAlignTimer=setTimeout(()=>{alignVideoToolbar();setTimeout(()=>{alignVideoToolbar();setTimeout(alignVideoToolbar,900);},420);},120);
   });
 }
-function pageKind(){
-  const path=location.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'')||'/';
-  if(location.hostname==='space.bilibili.com')return 'space';
-  if(location.hostname==='search.bilibili.com')return 'search';
-  if(location.hostname==='t.bilibili.com'||/^\/opus(?:\/|$)/.test(path))return 'dynamic';
+// While a navigation is being previewed, the header is laid out for the destination instead of the current page.
+let routePreview=null;
+function pageKind(at=routePreview||chromeLocation||location){
+  const path=at.pathname.replace(/^\/(?:zh-Hans|zh-Hant|en)(?=\/|$)/,'')||'/';
+  if(at.hostname==='space.bilibili.com')return 'space';
+  if(at.hostname==='search.bilibili.com')return 'search';
+  if(at.hostname==='t.bilibili.com'||/^\/opus(?:\/|$)/.test(path))return 'dynamic';
   if(/\/(?:account\/)?history(?:\/|$)/.test(path))return 'history';
   if(/^\/(?:video|bangumi|list)(?:\/|$)/.test(path))return 'video';
-  if(location.hostname==='message.bilibili.com')return 'messages';
+  if(at.hostname==='message.bilibili.com')return 'messages';
   return /^\/(?:index\.html)?$/.test(path)?'home':'other';
 }
-let headerSurfaceReady=false,headerVideoTarget=false,headerRouteFrame;
-function animateHeaderRoute(){if(!shadow)return;const left=$('.header-left',shadow);cancelAnimationFrame(headerRouteFrame);headerRouteFrame=requestAnimationFrame(()=>{headerRouteFrame=requestAnimationFrame(()=>{left.dataset.video=String(headerVideoTarget);});});}
-function surfaceRevealed(){headerSurfaceReady=true;animateHeaderRoute();}
+/* Brand, history and category changes are decided before the native host shows a freshly loaded page; hold them on their first frame until it is visible. */
+const revealMotion=[];let revealFallback;function holdForReveal(m){if(typeof RUNTIME!=='undefined'&&!headerSurfaceReady&&m?.pause){m.pause();revealMotion.push(m);clearTimeout(revealFallback);revealFallback=setTimeout(releaseHeldMotion,1200);}return m;}
+// The fallback never plays held motion in a page that is still hidden (a video view loading behind the opener).
+function releaseHeldMotion(){if(document.visibilityState==='hidden'){document.addEventListener('visibilitychange',releaseHeldMotion,{once:true});return;}revealMotion.splice(0).forEach(x=>{try{x.play();}catch{}});}
+let headerSurfaceReady=false,headerRouteFrame,routeOrigin=typeof RUNTIME!=='undefined'?undefined:'',routeArrived=false,reportedRoute,videoHomeShown,videoHomeMotion=[],videoHomeTimer;
+const headerMotionReduced=()=>CONTENT_VIEW||matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* The previous page's route comes back from the native host, so a full page load can continue the header motion it started. */
+function acceptRouteOrigin(route){if(routeOrigin!==undefined)return;routeOrigin=['home','dynamic','history','video','other'].includes(route)?route:'';if(!headerSurfaceReady&&shadow&&routeOrigin)syncVideoHome(routeOrigin==='video',false);arriveHeaderRoute();}
+function arriveHeaderRoute(){if(routeArrived||!headerSurfaceReady||routeOrigin===undefined||!shadow)return;routeArrived=true;const kind=pageKind();syncVideoHome(kind==='video',true);if(routeOrigin&&routeOrigin!==kind)slideRouteIndicator(routeLink(routeOrigin),routeLink(kind));}
+function surfaceRevealed(){const first=!headerSurfaceReady;headerSurfaceReady=true;const held=revealMotion.splice(0);held.forEach(m=>{try{m.play();}catch{}});if(first&&routeOrigin===undefined)setTimeout(()=>acceptRouteOrigin(''),150);arriveHeaderRoute();}
+/* Local-first pages: the native host opens the account's saved copy instantly, so after each visit the official HTML of the
+   current page and the other header destinations is refetched quietly and saved for the next switch. */
+const LOCAL_PAGES=/^https:\/\/(?:www\.bilibili\.com\/(?:zh-Hans\/?)?(?:history|account\/history)?|t\.bilibili\.com\/(?:zh-Hans)?|message\.bilibili\.com\/|space\.bilibili\.com\/(?:zh-Hans\/)?\d{1,20}\/?)$/;
+function warmLocalPages(){
+  if(CHROME_VIEW||typeof RUNTIME==='undefined'||navigator.connection?.saveData)return;const mid=(document.cookie.match(/(?:^|;\s*)DedeUserID=(\d{1,20})(?:;|$)/)||[])[1];
+  const now=Date.now(),urls=[...new Set([location.href.split(/[?#]/)[0],'https://www.bilibili.com/','https://t.bilibili.com/','https://www.bilibili.com/history','https://message.bilibili.com/',mid&&'https://space.bilibili.com/'+mid].filter(u=>u&&LOCAL_PAGES.test(u)))].filter(u=>{try{const key='bs-warm:'+u,last=Number(localStorage.getItem(key))||0;if(now-last<600000)return false;localStorage.setItem(key,String(now));}catch{}return true;});
+  if(!urls.length)return;if(NATIVE_PLATFORM==='macos'){native('page-warm',{urls});return;}
+  urls.forEach((url,i)=>setTimeout(()=>fetch(url,{credentials:'include',mode:'no-cors',cache:'no-store',priority:'low'}).catch(()=>{}),i*1500));
+}
+window.addEventListener('load',()=>setTimeout(()=>(window.requestIdleCallback||setTimeout)(warmLocalPages,{timeout:4000}),6000),{once:true});
+function routeLink(route){return route&&shadow?$('.primary-nav a[data-route="'+route+'"]',shadow):null;}
+/* The current-page underline travels from the previous item instead of jumping; with no previous item it grows from its centre. */
+function slideRouteIndicator(fromLink,toLink){
+  if(!toLink?.animate||headerMotionReduced()||toLink.closest('nav')?.hidden)return;const to=toLink.getBoundingClientRect();if(!to.width)return;
+  const from=fromLink&&fromLink!==toLink?fromLink.getBoundingClientRect():null;
+  const frames=from?.width?[{transform:'translateX('+((from.left+from.width/2)-(to.left+to.width/2))+'px) scaleX('+(from.width/to.width)+')'},{transform:'none'}]:[{transform:'scaleX(0)',opacity:0},{transform:'none',opacity:1}];
+  try{toLink.animate(frames,{duration:420,easing:'cubic-bezier(.32,.72,0,1)',pseudoElement:'::after'});}catch{}
+}
+/* Video pages trade the nav Home item for the television Home: with window buttons both resize in place, with traffic lights the row shifts. */
+function syncVideoHome(show,animate){
+  const left=$('.header-left',shadow),top=$('.video-home-top',shadow),home=$('.primary-nav a[data-route=home]',shadow);if(!left||!top)return;
+  if(videoHomeShown===show)return;const previous=videoHomeShown,windows=left.dataset.controls==='windows';videoHomeShown=show;
+  const topWidth=top.hidden?0:top.getBoundingClientRect().width,homeWidth=home&&getComputedStyle(home).display!=='none'?home.getBoundingClientRect().width:0;
+  cancelAnimationFrame(headerRouteFrame);clearTimeout(videoHomeTimer);videoHomeMotion.forEach(m=>{m.onfinish=null;m.cancel();});videoHomeMotion=[];delete top.dataset.leaving;if(home)delete home.dataset.leaving;
+  if(!animate||previous===undefined||!top.animate||headerMotionReduced()){left.dataset.instant='true';top.hidden=!show;left.dataset.video=String(show);void left.offsetWidth;delete left.dataset.instant;return;}
+  settleHeader();
+  if(!windows){if(show){top.hidden=false;headerRouteFrame=requestAnimationFrame(()=>{headerRouteFrame=requestAnimationFrame(()=>{left.dataset.video='true';});});}else{left.dataset.video='false';videoHomeTimer=setTimeout(()=>{if(!videoHomeShown)top.hidden=true;},260);}return;}
+  headerFlip(()=>{top.hidden=!show;left.dataset.video=String(show);},[...$$('.primary-nav a',shadow)]);
+}
 function syncRoute(){
-  const key=location.href,kind=pageKind();
-  document.documentElement.dataset.bsPage=kind;
-  if(shadow){$('.brand-label',shadow).hidden=!PREFS.headerBrand||(PREFS.logoAutoHide&&kind!=='home');$('.upload',shadow).hidden=!PREFS.headerUpload||kind!=='home';}
+  const key=(chromeLocation||location).href,kind=pageKind();
+  document.documentElement.dataset.bsPage=kind;if(CONTENT_VIEW)document.documentElement.dataset.bsHosted='true';syncFeedRoll();
+  if(kind!=='home')document.documentElement.dataset.bsBannerUnderlap='false';
+  if(shadow){syncNavigationControls();syncHeaderBrand();$('.upload',shadow).hidden=!PREFS.headerUpload||kind!=='home';}
   mountVideoHome();
   if(kind==='video'&&key!==routeKey)scheduleVideoAlign();
   else{const toolbar=$('.video-toolbar-container');if(toolbar)toolbar.style.removeProperty('margin-top');}
   mountHomeBanner();
   compactHomeFeed();
   if(!shadow)return;
-  syncVideoLink();const topHome=$('.video-home-top',shadow);if(topHome)topHome.hidden=kind!=='video';headerVideoTarget=kind==='video';if(headerSurfaceReady)animateHeaderRoute();
+  syncVideoLink();syncVideoHome(kind==='video',routeArrived);if(kind!==reportedRoute){reportedRoute=kind;native('navigation-state',{action:'route',route:kind});}
+  const formerRoute=$('nav a[aria-current=page]',shadow);
   $$('nav a[data-route]',shadow).forEach(a=>{
     if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
   });
+  const currentRoute=$('nav a[aria-current=page]',shadow);if(routeArrived&&currentRoute&&currentRoute!==formerRoute)slideRouteIndicator(formerRoute,currentRoute);syncRouteRefreshLabels();
   if(key!==routeKey){
-    const previous=routeKey;routeKey=key;if(previous&&kind==='video'){beginVideoLoading();setTimeout(()=>settleVideoLoading(),200);}else if(kind!=='video')cancelVideoLoading();
+    const previous=routeKey;routeKey=key;native('navigation-state',{action:'read'});if(previous&&kind==='video'){beginVideoLoading();setTimeout(()=>settleVideoLoading(),200);}else if(kind!=='video')cancelVideoLoading();
     const query=new URLSearchParams(location.search).get('keyword');
     if(query!==null)$('.search input',shadow).value=query;
   }
@@ -240,7 +350,7 @@ function syncRoute(){
 function mountHomeBanner(){
   if(pageKind()!=='home')return;
   const banner=$('.bili-header__banner')||$('.bili-header .bili-banner');if(!banner)return;
-  banner.dataset.bsBanner='true';
+  banner.dataset.bsBanner='true';document.documentElement.dataset.bsBannerUnderlap='false';
   // Reveal only the banner's header ancestors, not the duplicate webpage toolbar.
   for(let host=banner.parentElement;host&&host.matches('.bili-header,#biliMainHeader,#bili-header-container,#internationalHeader,.international-header');host=host.parentElement){
     host.dataset.bsBannerHost='true';
@@ -312,14 +422,132 @@ function wakeHomeLoader(host){
 
 // Existing headerBack preference remains compatible with previously saved settings.
 const CATEGORIES=[['番剧','https://www.bilibili.com/anime/'],['国创','https://www.bilibili.com/guochuang/'],['漫画','https://manga.bilibili.com/'],['直播','https://live.bilibili.com/'],['动画','https://www.bilibili.com/v/douga/'],['游戏','https://www.bilibili.com/v/game/'],['音乐','https://www.bilibili.com/v/music/'],['舞蹈','https://www.bilibili.com/v/dance/'],['鬼畜','https://www.bilibili.com/v/kichiku/'],['知识','https://www.bilibili.com/v/knowledge/'],['科技','https://www.bilibili.com/v/tech/'],['美食','https://www.bilibili.com/v/food/'],['生活','https://www.bilibili.com/v/life/'],['影视','https://www.bilibili.com/v/cinephile/'],['电影','https://www.bilibili.com/movie/'],['电视剧','https://www.bilibili.com/tv/'],['纪录片','https://www.bilibili.com/documentary/'],['专栏','https://www.bilibili.com/read/home']];
+let primaryNavMotion;
+/* Opening the channel list pushes the main nav out to the right as the channels slide in from the left, and closing reverses it. */
+function setPrimaryNavHidden(nav,hide,instant){
+  const shown=!nav.hidden&&nav.dataset.leaving!=='true';if(shown===!hide)return;
+  const from=primaryNavMotion?{opacity:getComputedStyle(nav).opacity,translate:getComputedStyle(nav).translate||'0px 0px'}:null;primaryNavMotion?.cancel();primaryNavMotion=null;delete nav.dataset.leaving;
+  if(instant||!nav.animate||headerMotionReduced()){nav.hidden=hide;return;}
+  if(hide){nav.dataset.leaving='true';const m=primaryNavMotion=nav.animate([from||{opacity:1,translate:'0px 0px'},{opacity:0,translate:'12px 0px'}],{duration:180,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});m.playbackRate=CATEGORY_SPEED;m.onfinish=()=>{if(primaryNavMotion!==m)return;nav.hidden=true;delete nav.dataset.leaving;m.cancel();primaryNavMotion=null;};}
+  else{nav.hidden=false;const m=primaryNavMotion=nav.animate([from||{opacity:0,translate:'12px 0px'},{opacity:1,translate:'0px 0px'}],{duration:320,easing:'cubic-bezier(.32,.72,0,1)'});m.playbackRate=CATEGORY_SPEED;m.onfinish=()=>{if(primaryNavMotion===m)primaryNavMotion=null;};}
+}
+let headerSettleTimer;
+// The current nav item only offers refresh 1.5s after the header last moved, and only once the pointer moves again.
+function settleHeader(ms=1500){const left=shadow&&$('.header-left',shadow);if(!left)return;left.dataset.settling='true';clearTimeout(headerSettleTimer);headerSettleTimer=setTimeout(()=>{const release=()=>{delete left.dataset.settling;};left.addEventListener('pointermove',release,{once:true});},ms);}
+// Samples an underdamped spring: `step` settles 0→1 with overshoot, `kick` starts and ends at rest and swings around 0 (peak 1).
+function springCurve(stiffness,damping,steps=60){
+  const w=Math.sqrt(stiffness),z=Math.min(.95,damping/(2*w)),wd=w*Math.sqrt(1-z*z),decay=t=>Math.exp(-z*w*t);
+  let end=.1;while(end<4&&decay(end)>.003)end+=.02;
+  const at=i=>i/steps*end,raw=[...Array(steps+1).keys()].map(i=>decay(at(i))*Math.sin(wd*at(i))),peak=Math.max(...raw.map(Math.abs))||1;
+  return{duration:Math.round(end*1000),step:[...Array(steps+1).keys()].map(i=>{const t=at(i);return i===steps?1:1-decay(t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t));}),kick:raw.map((v,i)=>i===steps?0:v/peak)};
+}
+// Pointer-leave flourishes for the Windows caption buttons; each glyph ends exactly where it started.
+const WINDOW_LEAVE_MOTION={
+  close(svg,button,from=0){
+    // A replay picks the spin up from the current angle and still lands on a whole turn.
+    const to=from+1080+((360-from%360)%360),timing={duration:1350,easing:'cubic-bezier(.07,.83,.16,1)'};
+    svg.animate([{transform:`rotate(${from}deg)`,filter:'blur(.8px)'},{filter:'blur(.45px)',offset:.3},{transform:`rotate(${to}deg)`,filter:'blur(0px)'}],timing);
+    // Trailing copies lag by an angle that shrinks with progress, so the smear tightens as the spin slows.
+    for(const [lag,alpha] of [[30,.5],[60,.3],[90,.16],[120,.07]]){
+      const ghost=svg.cloneNode(true);ghost.classList.add('motion-ghost');ghost.setAttribute('aria-hidden','true');button.append(ghost);
+      ghost.animate([{transform:`rotate(${from-lag}deg)`,opacity:alpha,filter:'blur(1.1px)'},{opacity:alpha*.35,offset:.32},{opacity:0,offset:.62},{transform:`rotate(${to}deg)`,opacity:0,filter:'blur(0px)'}],timing).finished.catch(()=>{}).finally(()=>ghost.remove());
+    }
+  },
+  maximize(svg){
+    const {duration,step,kick}=springCurve(240,10),n=kick.length-1;
+    svg.animate(step.map((v,i)=>{const k=kick[i],lead=kick[Math.min(n,i+4)],s=1+k*.2;return{transform:`rotate(${v*90}deg) scale(${s*(1+lead*.14)},${s*(1-lead*.14)})`};}),{duration:duration+120});
+  },
+  minimize(svg,button,from,e){
+    const path=svg.querySelector('path'),r=svg.getBoundingClientRect();
+    if(!path||!r.width||!CSS.supports?.('d','path("M0 0")')){const {duration,kick}=springCurve(300,9);svg.animate(kick.map(k=>({transform:`translateY(${k*3}px) scale(${1+k*.5},${1-k*.3})`})),{duration});return;}
+    // The line is a rubber band the pointer drags as it leaves: the near end stretches and the middle bows toward it, then it springs back.
+    const k=16/r.width,mx=(e.clientX-r.left)*k-8,my=(e.clientY-r.top)*k-8,len=Math.hypot(mx,my)||1,ux=mx/len,uy=my/len,f=n=>n.toFixed(2);
+    const shape=p=>{const x1=3+ux*p*(ux>0?.8:2.8),x2=13+ux*p*(ux>0?2.8:.8),y=8+uy*p*.9;return{d:`path("M${f(x1)} ${f(y)}Q${f(8+ux*p*1.8)} ${f(8+uy*p*5.5)} ${f(x2)} ${f(y)}")`};};
+    const grab=130,{duration,step}=springCurve(380,7),total=grab+duration,a=grab/total;
+    const frames=[{...shape(0),offset:0,easing:'cubic-bezier(.2,.9,.35,1)'},{...shape(1),offset:a},...step.slice(1).map((v,i)=>({...shape(1-v),offset:a+(1-a)*(i+1)/(step.length-1)}))];
+    path.animate(frames,{duration:total});
+  }
+};
+function windowLeaveMotion(e,button){
+  const svg=button.querySelector('svg:not(.motion-ghost)'),play=WINDOW_LEAVE_MOTION[button.dataset.window];
+  if(e.pointerType!=='mouse'||!play||!svg?.animate||headerMotionReduced())return;
+  // Every leave replays from the top; the close spin continues from wherever it currently points.
+  const m=getComputedStyle(svg).transform.match(/matrix\(([^,]+),([^,]+)/),angle=m?(Math.atan2(+m[2],+m[1])*180/Math.PI+360)%360:0;
+  svg.getAnimations({subtree:true}).forEach(a=>a.cancel());button.querySelectorAll('.motion-ghost').forEach(g=>g.remove());
+  play(svg,button,Math.round(angle),e);
+}
+let categoryLinkMotion=[],categoryHoldTimer,categoryNavTimer=0;
+// Keeps the strip visible while links leave on their own; the CSS fade would otherwise hide them after 180ms.
+function holdCategoryStrip(links,hold){clearTimeout(categoryHoldTimer);links.style.opacity=hold?'1':'';links.style.transform=hold?'none':'';links.style.transition=hold?'none':'';}
+// Rare collapse: one channel snags, strains toward the trigger like rubber, snaps free the wrong way, hangs out there, then dashes home.
+function stuckCategoryFrames(dx,dy){
+  const side=dx<=0?1:-1,out=side*150;
+  return[
+    {transform:'none',easing:'linear'},
+    {transform:'translate(0px,0px) rotate(0deg)',offset:.08},
+    {transform:`translate(${-side*2}px,0px) rotate(${-side*4}deg)`,offset:.12},{transform:`translate(${side*2}px,0px) rotate(${side*3}deg)`,offset:.16},
+    {transform:`translate(${-side*3}px,0px) rotate(${-side*5}deg)`,offset:.2},{transform:`translate(${side}px,0px) rotate(${side*2}deg)`,offset:.24},
+    {transform:`translate(${-side*4}px,0px) rotate(${-side*6}deg)`,offset:.28,easing:'cubic-bezier(.3,0,.7,1)'},
+    {transform:`translate(${(dx*.14).toFixed(1)}px,${(dy*.14).toFixed(1)}px) scale(1.75,.62)`,offset:.46,easing:'cubic-bezier(.15,0,.2,1)'},
+    {transform:`translate(${out*.35}px,-2px) rotate(${-side*14}deg) scale(.86,1.18)`,offset:.52,easing:'cubic-bezier(.1,.7,.3,1)'},
+    {transform:`translate(${out}px,-6px) rotate(${-side*26}deg) scale(.9)`,offset:.64,opacity:1,easing:'ease-in-out'},
+    {transform:`translate(${out*.96}px,-2px) rotate(${-side*18}deg) scale(.92)`,offset:.72,easing:'ease-in-out'},
+    {transform:`translate(${out}px,-5px) rotate(${-side*22}deg) scale(.9)`,offset:.78,easing:'cubic-bezier(.3,1.6,.6,1)'},
+    {transform:`translate(${out*.97}px,-3px) rotate(${side*10}deg) scale(1.12,.9)`,offset:.83,opacity:1,easing:'cubic-bezier(.6,0,.9,.4)'},
+    {transform:`translate(${((out+dx)/2).toFixed(1)}px,${(dy/2).toFixed(1)}px) rotate(0deg) scale(1.7,.68)`,offset:.93,opacity:.85,filter:'blur(1.5px)'},
+    {transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(.25,.45)`,opacity:0,filter:'blur(4px)'}
+  ];
+}
+// The whole channel-strip choreography plays at 1.14x; timers that wait for it are divided by the same rate.
+const CATEGORY_SPEED=1.14;
+function animateCategoryLinks(links,open){
+  categoryLinkMotion.forEach(m=>m.cancel());categoryLinkMotion=[];holdCategoryStrip(links,false);
+  if(!links.animate||headerMotionReduced())return;
+  const items=$$(':scope>a:not([hidden]),:scope>.category-empty',links),dropdown=getComputedStyle(links).position==='fixed';
+  const away=d=>dropdown?`translateY(${(d*-14).toFixed(2)}px)`:`translateX(${(d*-34).toFixed(2)}px)`;
+  if(open){
+    // Each link springs out from the trigger a beat after its left neighbour, overshoots, and wobbles like jelly as it lands.
+    const {duration,step,kick}=springCurve(320,11),n=kick.length-1,gap=Math.min(32,420/Math.max(1,items.length));
+    const frames=step.map((v,i)=>{const wobble=kick[Math.min(n,i+3)]*.12,s=.7+.3*v;return{transform:`${away(1-v)} scale(${(s*(1+wobble)).toFixed(4)},${(s*(1-wobble)).toFixed(4)})`,opacity:Math.min(1,v*1.8).toFixed(3),filter:`blur(${(Math.max(0,1-v)*6).toFixed(2)}px)`};});
+    categoryLinkMotion=items.map((item,i)=>item.animate(frames,{duration,delay:i*gap,fill:'backwards'}));categoryLinkMotion.forEach(m=>m.playbackRate=CATEGORY_SPEED);
+  }else{
+    // Links wind up away from the trigger, then get sucked into it, stretching on the way; the nearest goes first.
+    const trigger=$('.back',shadow),aim=trigger?.getBoundingClientRect(),zoom=headerZoom(),gap=Math.min(24,160/Math.max(1,items.length));
+    if(!aim||!items.length)return;
+    const tx=aim.left+aim.width/2,ty=aim.top+aim.height/2,stuck=items.length>1&&(categoryEggForced||Math.random()<.01)?Math.floor(Math.random()*items.length):-1;
+    holdCategoryStrip(links,true);
+    categoryLinkMotion=items.map((item,i)=>{
+      const r=item.getBoundingClientRect(),dx=(tx-(r.left+r.width/2))/zoom,dy=(ty-(r.top+r.height/2))/zoom,wind=dx<0?6:-6;
+      if(i===stuck)return item.animate(stuckCategoryFrames(dx,dy),{duration:2300,delay:i*gap,fill:'forwards'});
+      return item.animate([
+        {transform:'none',easing:'cubic-bezier(.3,0,.5,1)'},
+        {transform:`translate(${wind}px,0px) scale(1.06,.94)`,offset:.28,easing:'cubic-bezier(.6,0,.9,.5)'},
+        {transform:`translate(${(dx*.55).toFixed(1)}px,${(dy*.55).toFixed(1)}px) scale(1.45,.72)`,offset:.72,opacity:.9,filter:'blur(1px)'},
+        {transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(.25,.45)`,opacity:0,filter:'blur(4px)'}
+      ],{duration:300,delay:i*gap,fill:'forwards'});
+    });
+    categoryLinkMotion.forEach(m=>m.playbackRate=CATEGORY_SPEED);
+    const timing=categoryLinkMotion.map(m=>m.effect.getTiming()),last=Math.max(...timing.map(t=>(t.delay||0)+t.duration))/CATEGORY_SPEED;
+    categoryHoldTimer=setTimeout(()=>holdCategoryStrip(links,false),last+20);
+    // Hand the lane back to the main nav as the last channel is swallowed (for the snag, as it dashes home).
+    return Math.max(...timing.map((t,i)=>(t.delay||0)+t.duration*(i===stuck?.97:.8)))/CATEGORY_SPEED;
+  }
+  return 0;
+}
 function setCategories(open,keyboard=false){
   if(!shadow)return;
   const trigger=$('.back',shadow),links=$('#header-categories',shadow),lane=$('.nav-lane',shadow),nav=$('.primary-nav',shadow);
   open=Boolean(open&&PREFS.headerBack);
-  trigger.dataset.instant=String(keyboard);trigger.setAttribute('aria-expanded',String(open));links.inert=!open;
+  let navDelay=0;
+  if(trigger.getAttribute('aria-expanded')!==String(open)){clearTimeout(categoryNavTimer);categoryNavTimer=0;if(keyboard){categoryLinkMotion.forEach(m=>m.cancel());categoryLinkMotion=[];holdCategoryStrip(links,false);}else navDelay=animateCategoryLinks(links,open)||0;}
+  if(!keyboard&&trigger.getAttribute('aria-expanded')!==String(open))settleHeader();trigger.dataset.instant=String(keyboard);trigger.setAttribute('aria-expanded',String(open));links.inert=!open;
   trigger.setAttribute('aria-label',open?'返回主导航':'展开分区');
   $('.header-left',shadow).dataset.categories=String(open);
-  nav.hidden=open||!$$('a',nav).some(a=>!a.hidden);nav.inert=open;
+  // The main nav waits until the channels have been pulled back in, so the two never share the lane.
+  const hideNav=open||!$$('a',nav).some(a=>!a.hidden);
+  if(!hideNav&&navDelay)categoryNavTimer=setTimeout(()=>{categoryNavTimer=0;if(trigger.getAttribute('aria-expanded')!=='true')setPrimaryNavHidden(nav,false,false);},navDelay);
+  else if(hideNav||!categoryNavTimer){clearTimeout(categoryNavTimer);categoryNavTimer=0;setPrimaryNavHidden(nav,hideNav,keyboard);}
+  nav.inert=open;
   lane.style.setProperty('--category-space','100%');
   nav.style.transform='none';
   if(keyboard)lane.classList.add('instant');else lane.classList.remove('instant');
@@ -335,11 +563,28 @@ function beginVideoLoading(target=location.href){
   let layer=$('#bs-video-loading');if(layer?.dataset.key===key)return;if(layer)cancelVideoLoading();
   recordVideoLoading('enter');layer=document.createElement('div');layer.id='bs-video-loading';layer.dataset.key=key;layer.setAttribute('role','status');layer.setAttribute('aria-live','polite');layer.innerHTML='<div>'+ICON_TV+'<p>正在打开视频…</p></div>';document.documentElement.append(layer);setTimeout(()=>settleVideoLoading(),0);
 }
-function beginNavigation(target){const url=new URL(target,location.href);if(videoLoadingKey(url.href)){setLoading(false);beginVideoLoading(url.href);}else{cancelVideoLoading();setLoading(url.hostname==='search.bilibili.com');}}
+/* The header moves the moment a navigation starts, in the page that is still fully loaded, and records the
+   destination's state with the native host so the new page opens already settled instead of replaying it. */
+function previewHeaderRoute(target){
+  if(!shadow)return;let url;try{url=new URL(target,location.href);}catch{return;}
+  if(!/(^|\.)bilibili\.com$/i.test(url.hostname))return;const kind=pageKind(url);if(kind===pageKind())return;
+  const former=$('nav a[aria-current=page]',shadow);routePreview=url;settleHeader();if(CHROME_VIEW){navigationState={back:true,forward:false};chromeHoldControls=false;chromeAssume={};}
+  try{
+    syncHeaderBrand();syncNavigationControls();
+    $$('nav a[data-route]',shadow).forEach(a=>{if(a.dataset.route===kind)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+    const link=routeLink(kind);if(link&&link!==former)slideRouteIndicator(former,link);syncRouteRefreshLabels();
+    reportedRoute=kind;native('navigation-state',{action:'route',route:kind});
+  }finally{routePreview=null;}
+  // The header view has no page of its own to load, so it adopts the destination now; otherwise the next route sync
+  // would still read the old address, slide back, and slide forward again once the native host reports the move.
+  if(CHROME_VIEW){chromeLocation=url;chromePending={kind,until:Date.now()+8000,previewed:Date.now()};}
+}
+function beginNavigation(target){previewHeaderRoute(target);const url=new URL(target,location.href);if(videoLoadingKey(url.href)){setLoading(false);beginVideoLoading(url.href);}else{cancelVideoLoading();setLoading(url.hostname==='search.bilibili.com');}}
 function finishVideoLoading(){
   const layer=$('#bs-video-loading');if(!layer||layer.classList.contains('leaving'))return;completedVideoKey=layer.dataset.key;clearTimeout(videoWaitTimer);cancelLoadingFrame();clearTimeout(videoLoadTimer);if(!layer.classList.contains('leaving'))recordVideoLoading('exit');layer.classList.add('leaving');layer.style.background='transparent';const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;videoLoadTimer=setTimeout(()=>{layer.remove();recordVideoLoading('removed');},reduced?0:120);
 }
 function videoInterfaceReady(){return !!$('.video-info-container,#viewbox_report,.video-container-v1,.video-container-v2,.left-container,.bpx-player-container,.bpx-player-video-wrap,#bilibili-player');}
+function revealFade(){if(pageKind()!=='video'||$('#bs-video-loading'))return;const layer=document.createElement('div');layer.id='bs-video-loading';layer.dataset.key=videoLoadingKey();layer.setAttribute('aria-hidden','true');layer.innerHTML='<div>'+ICON_TV+'<p>正在打开视频…</p></div>';document.documentElement.append(layer);requestAnimationFrame(()=>requestAnimationFrame(finishVideoLoading));}
 function settleVideoLoading(failed=false){
   const layer=$('#bs-video-loading');if(!layer)return;if(failed){toast('页面加载失败，请检查网络后重试。');finishVideoLoading();return;}
   if(layer.dataset.waiting)return;layer.dataset.waiting='true';const start=performance.now();
@@ -353,6 +598,7 @@ function settleVideoLoading(failed=false){
 }
 
 function setLoading(on,failed=false){
+  if(!on)updatePagePending(failed);
   if(!on&&pageKind()==='video')settleVideoLoading(failed);else if(pageKind()!=='video')cancelVideoLoading();
   if(!shadow)return;
   const form=$('.search',shadow);form.setAttribute('aria-busy',String(on));
@@ -376,16 +622,16 @@ async function readOfficialSearchHistory(){let raw=await officialHistoryRequest(
 async function loadOfficialSearchHistory(){try{const records=await readOfficialSearchHistory();officialHistoryStatus='';acceptSearchHistory(records.map(x=>x.value));}catch{officialHistoryStatus='暂时无法获取历史记录';if(shadow&&root?.isConnected&&!$('#search-panel',shadow).hidden)renderSearchPanel();}}
 function changeSearchHistory(action,term){const operation=officialHistoryQueue.then(async()=>{let records=await readOfficialSearchHistory();if(action==='add')records=[{value:term,timestamp:Date.now()},...records.filter(x=>x.value!==term)].slice(0,20);else if(action==='delete')records=records.filter(x=>x.value!==term);else records=[];await officialHistoryRequest('COLS_SET',JSON.stringify(records));await officialHistoryRequest('COLS_SET','1','search_history:migrated');officialHistoryStatus='';acceptSearchHistory(records.map(x=>x.value));});officialHistoryQueue=operation.catch(()=>{officialHistoryStatus='暂时无法获取历史记录';toast('无法更新B站搜索历史，请稍后重试。');if(shadow&&root?.isConnected&&!$('#search-panel',shadow).hidden)renderSearchPanel();});return officialHistoryQueue;}
 
-function closeSearchPanel(){if(!shadow)return;$('#search-panel',shadow).hidden=true;$('.search input',shadow).setAttribute('aria-expanded','false');$('.search input',shadow).removeAttribute('aria-activedescendant');clearTimeout(searchSuggestTimer);searchSuggestRequest?.abort();searchSuggestRevision++;searchActive=-1;}
+function closeSearchPanel(){if(!shadow)return;const panel=$('#search-panel',shadow);if(!panel.hidden&&panel.dataset.closing!=='true'&&panel.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const visual=getComputedStyle(panel);openSearchPanel.motion?.cancel();panel.dataset.closing='true';const m=openSearchPanel.motion=panel.animate([{opacity:visual.opacity,transform:visual.transform},{opacity:0,transform:'translateY(-4px) scale(.98)'}],{duration:140,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});m.onfinish=()=>{if(openSearchPanel.motion!==m)return;panel.hidden=true;delete panel.dataset.closing;m.cancel();openSearchPanel.motion=null;};}else if(panel.dataset.closing!=='true')panel.hidden=true;$('.search input',shadow).setAttribute('aria-expanded','false');$('.search input',shadow).removeAttribute('aria-activedescendant');clearTimeout(searchSuggestTimer);searchSuggestRequest?.abort();searchSuggestRevision++;searchActive=-1;}
 function renderSearchPanel(){
   const panel=$('#search-panel',shadow),input=$('.search input',shadow);panel.replaceChildren();searchActive=-1;input.removeAttribute('aria-activedescendant');
   const heading=(label)=>{const h=document.createElement('h2');h.textContent=label;panel.append(h);return h;};
-  const choice=(term,history)=>{const row=document.createElement('div');row.className=history?'search-history-chip':'search-row';const button=document.createElement('button');button.type='button';button.className='search-choice';button.dataset.query=term;button.dataset.searchKind=history?'history':'suggestion';button.textContent=term;button.id='search-option-'+panel.querySelectorAll('[data-query]').length;button.setAttribute('role','option');button.tabIndex=-1;row.append(button);if(history){const remove=document.createElement('button');remove.type='button';remove.className='search-remove';remove.dataset.remove=term;remove.textContent='×';remove.setAttribute('aria-label','删除搜索历史：'+term);row.append(remove);}(history?$('.search-history-chips',panel):panel).append(row);};
+  const choice=(term,history)=>{const row=document.createElement('div');row.className=history?'search-history-chip':'search-row';const button=document.createElement('button');button.type='button';button.className='search-choice';button.dataset.query=term;button.dataset.searchKind=history?'history':'suggestion';button.textContent=term;button.id='search-option-'+panel.querySelectorAll('[data-query]').length;button.setAttribute('role','option');button.tabIndex=-1;row.append(button);if(history){const remove=document.createElement('button');remove.type='button';remove.className='search-remove';remove.dataset.remove=term;remove.innerHTML='<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg>';remove.setAttribute('aria-label','删除搜索历史：'+term);row.append(remove);}(history?$('.search-history-chips',panel):panel).append(row);};
   if(!input.value.length){if(searchHistory.length){const h=heading('搜索历史'),clear=document.createElement('button');clear.type='button';clear.className='search-clear';clear.dataset.clear='true';clear.textContent='清空';clear.setAttribute('aria-label','清空搜索历史');h.append(clear);const chips=document.createElement('div');chips.className='search-history-chips';panel.append(chips);(searchHistoryExpanded?searchHistory:searchHistory.slice(0,6)).forEach(term=>choice(term,true));if(searchHistory.length>6){const more=document.createElement('button');more.type='button';more.className='search-clear';more.dataset.historyMore='true';more.setAttribute('aria-expanded',String(searchHistoryExpanded));more.textContent=searchHistoryExpanded?'收起历史':'更多历史';panel.append(more);}}
   else{heading('搜索历史');const empty=document.createElement('p');empty.textContent=officialHistoryStatus||'暂无搜索历史';panel.append(empty);}
   }else{heading('猜你想搜');searchSuggestions.forEach(term=>choice(term,false));if(!searchSuggestions.length&&searchSuggestStatus){const status=document.createElement('p');status.setAttribute('role','status');status.textContent=searchSuggestStatus||'';panel.append(status);}}
 }
-function openSearchPanel(){if(!shadow)return;favoritesController?.close();if($('#search-panel',shadow).hidden)searchHistoryExpanded=false;$('#search-panel',shadow).hidden=false;$('.search input',shadow).setAttribute('aria-expanded','true');renderSearchPanel();if(!$('.search input',shadow).value.length)loadOfficialSearchHistory();queueSearchSuggestions();}
+function openSearchPanel(){if(!shadow)return;favoritesController?.close();const closing=$('#search-panel',shadow).dataset.closing==='true',wasHidden=$('#search-panel',shadow).hidden||closing;if(closing){delete $('#search-panel',shadow).dataset.closing;openSearchPanel.motion?.cancel();openSearchPanel.motion=null;}if(wasHidden)searchHistoryExpanded=false;$('#search-panel',shadow).hidden=false;if(wasHidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const p=$('#search-panel',shadow);openSearchPanel.motion?.cancel();openSearchPanel.motion=p.animate?.([{opacity:0,transform:'translateY(-4px) scale(.98,.88)',filter:'blur(2px)'},{opacity:1,transform:'translateY(0) scale(1)',filter:'blur(0px)'}],{duration:180,easing:'cubic-bezier(.32,.72,0,1)'});}$('.search input',shadow).setAttribute('aria-expanded','true');renderSearchPanel();if(!$('.search input',shadow).value.length)loadOfficialSearchHistory();queueSearchSuggestions();}
 function queueSearchSuggestions(){
   clearTimeout(searchSuggestTimer);searchSuggestRequest?.abort();const revision=++searchSuggestRevision,query=$('.search input',shadow).value;searchSuggestions=[];searchSuggestStatus='';renderSearchPanel();if(!query.trim()){searchSuggestStatus='';renderSearchPanel();return;}
   const cached=searchSuggestionCache.get(query);if(cached&&Date.now()-cached.time<60000){searchSuggestions=cached.items;searchSuggestStatus=searchSuggestions.length?'':'暂无建议';renderSearchPanel();return;}
@@ -443,11 +689,15 @@ function mergeAccountDecorations(info={},cardData={}){
 }
 function renderAccountDecorations(){
   const card=$('#account-card',shadow),account=$('.account',shadow),portrait=$('.account-portrait',card),banner=$('.account-banner',card),profile=accountProfile;
+  // accountChecked stays 0 until the first status read finishes. Until then the header
+  // cannot know whether this is a signed-out visitor or a slow network, so it shows a
+  // neutral avatar placeholder instead of flashing "登录 B站" over a real profile.
+  const settled=accountChecked!==0;
   const face=profileMediaUrl(profile?.face),pendant=profile?.pendant||{},vip=profile?.vip||{},reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const frame=profileMediaUrl((reduced&&pendant.image_enhance_frame)||pendant.image_enhance||pendant.image||pendant.image_enhance_frame);
   const vipType=Number(vip.type??vip.vipType),vipStatus=Number(vip.status??vip.vipStatus),isVip=vipType>0&&vipStatus===1;
   const badge=isVip?(profileMediaUrl(vip.avatar_subscript_url||vip.avatar_icon?.icon_resource?.url)||'https://i0.hdslb.com/bfs/seed/jinkela/short/user-avatar/'+(Number(vip.avatar_subscript)===2?'small-vip':'big-vip')+'.svg'):'';
-  if(face){if(!$('.account-face',account))account.replaceChildren();for(const host of [account,portrait]){setProfileImage(host,'account-face',face,profile.uname||'我的头像');setProfileImage(host,'account-pendant',frame,pendant.name||'头像挂件');setProfileImage(host,'account-vip-badge',badge,'大会员');}}else{portrait.replaceChildren();if(!profile){account.replaceChildren(document.createTextNode('登录 B站'));account.removeAttribute('title');account.setAttribute('aria-label','登录 B站');delete account.dataset.authenticated;account.href='https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F';}}
+  if(face){delete account.dataset.pending;if(!$('.account-face',account))account.replaceChildren();for(const host of [account,portrait]){setProfileImage(host,'account-face',face,profile.uname||'我的头像');setProfileImage(host,'account-pendant',frame,pendant.name||'头像挂件');setProfileImage(host,'account-vip-badge',badge,'大会员');}}else{portrait.replaceChildren();if(!profile&&settled){account.replaceChildren(document.createTextNode('登录 B站'));account.removeAttribute('title');account.setAttribute('aria-label','登录 B站');delete account.dataset.authenticated;account.href='https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F';}else if(!profile){account.dataset.pending='true';account.setAttribute('aria-label','正在读取账号');account.removeAttribute('title');}}
   portrait.hidden=!face;
   const label=$('.account-vip-label',card);label.textContent=isVip?(vip.label?.text||'大会员'):'';label.hidden=!isVip;
   const src=profileMediaUrl((reduced&&profile?.bannerStatic)||profile?.banner);banner.hidden=!src;
@@ -464,14 +714,193 @@ function messageUnreadCounts(){
   return {count:likes+replies+unreadNumber(f.follow??f.follower)+unreadNumber(f.up)+unreadNumber(f.coin)+unreadNumber(f.favorite)+unreadNumber(f.danmu)+unreadNumber(d.follow_unread)+unreadNumber(d.unfollow_unread),
     system:unreadNumber(f.sys_msg)+unreadNumber(d.biz_msg_follow_unread)+unreadNumber(d.biz_msg_unfollow_unread)>0};
 }
+/* Replies, mentions and likes show their counts; system notices and private messages only show a dot, as on the official site. */
+function messageMenuCounts(){const {feed:f,direct:d}=messageUnread;return {reply:unreadNumber(f.reply)||unreadNumber(f.recv_reply),at:unreadNumber(f.at),love:Math.max(unreadNumber(f.recv_like),unreadNumber(f.like)),system:unreadNumber(f.sys_msg)+unreadNumber(d.biz_msg_follow_unread)+unreadNumber(d.biz_msg_unfollow_unread)>0,whisper:unreadNumber(d.follow_unread)+unreadNumber(d.unfollow_unread)>0};}
+function renderMessageMenu(){
+  const menu=shadow&&$('#messages-menu',shadow);if(!menu)return;const counts=messageMenuCounts();
+  for(const item of $$('.messages-item',menu)){const value=counts[item.dataset.kind],badge=$('.messages-count',item),label=$('span',item).textContent;
+    if(typeof value==='boolean'){badge.hidden=!value;badge.dataset.kind='dot';badge.textContent='';item.setAttribute('aria-label',value?label+'，有未读':label);}
+    else{badge.hidden=!value;badge.dataset.kind='count';badge.textContent=value>99?'99+':String(value);item.setAttribute('aria-label',value?label+'，'+value+' 条未读':label);}}
+}
 function renderMessageUnread(){
-  if(!shadow)return;const link=$('.messages',shadow);if(!link)return;
+  renderMessageMenu();if(!shadow)return;const link=$('.messages',shadow);if(!link)return;
   let badge=$('.message-unread',link);if(!badge){badge=document.createElement('span');badge.className='message-unread';badge.setAttribute('aria-hidden','true');link.append(badge);}
   const {count,system}=messageUnreadCounts();badge.hidden=!count&&!system;badge.dataset.kind=count?'count':'dot';badge.textContent=count?(count>99?'99+':String(count)):'';
   const label=count?'消息 · '+count+' 条未读互动或私信'+(system?'，另有系统消息':''):system?'消息 · 有未读系统消息':'消息';link.setAttribute('aria-label',label);link.title=label;
 }
+let messageMenuShowTimer,messageMenuHideTimer,messageMenuMotion;
+function placeMessageMenu(menu,link){const r=link.getBoundingClientRect(),width=menu.offsetWidth||168;menu.style.left=Math.round(Math.max(12,Math.min(innerWidth-width-12,r.left+r.width/2-width/2)))+'px';menu.style.top=Math.round(r.bottom+8)+'px';}
+function showMessageMenu(){
+  clearTimeout(messageMenuHideTimer);const menu=$('#messages-menu',shadow),link=$('.messages',shadow);if(!menu||!link||link.hidden||!PREFS.headerMessages)return;
+  if(menu.dataset.open==='true')return;menu.hidden=false;placeMessageMenu(menu,link);renderMessageMenu();menu.dataset.open='true';link.setAttribute('aria-expanded','true');
+  if(Date.now()-messageChecked>15000)refreshMessageUnread(true);
+  if(menu.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const visual=getComputedStyle(menu),from=messageMenuMotion?{opacity:visual.opacity,transform:visual.transform}:{opacity:0,transform:'translateY(-6px) scale(.97)'};messageMenuMotion?.cancel();const m=messageMenuMotion=menu.animate([from,{opacity:1,offset:.45},{opacity:1,transform:'none'}],{duration:300,easing:'cubic-bezier(.32,.72,0,1)'});m.onfinish=()=>{if(messageMenuMotion===m)messageMenuMotion=null;};}
+}
+function hideMessageMenu(instant=false){
+  clearTimeout(messageMenuShowTimer);const menu=shadow&&$('#messages-menu',shadow);if(!menu||menu.dataset.open!=='true')return;menu.dataset.open='false';$('.messages',shadow)?.setAttribute('aria-expanded','false');
+  if(instant||!menu.animate||matchMedia('(prefers-reduced-motion: reduce)').matches){messageMenuMotion?.cancel();messageMenuMotion=null;menu.hidden=true;return;}
+  const visual=getComputedStyle(menu),from={opacity:visual.opacity,transform:visual.transform};messageMenuMotion?.cancel();const m=messageMenuMotion=menu.animate([from,{opacity:0,transform:'translateY(-4px) scale(.98)'}],{duration:140,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+  m.onfinish=()=>{if(messageMenuMotion!==m)return;menu.hidden=menu.dataset.open!=='true';m.cancel();messageMenuMotion=null;};
+}
+const ICON_REFRESH='<svg class="route-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5A8 8 0 1 1 17.7 6"/><path d="M20 4.5V9h-4.5"/></svg>';
+function installRouteRefresh(){
+  for(const link of $$('.primary-nav a[data-route]',shadow)){if($('.route-text',link))continue;const text=document.createElement('span');text.className='route-text';text.append(...link.childNodes);link.append(text);link.insertAdjacentHTML('beforeend',ICON_REFRESH);
+    link.addEventListener('click',e=>{if(link.getAttribute('aria-current')!=='page'||e.button||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();e.stopImmediatePropagation();const icon=$('.route-refresh',link);icon.removeAttribute('data-spin');void icon.getBoundingClientRect();icon.dataset.spin='true';if(CHROME_VIEW)icon.addEventListener('animationend',()=>icon.removeAttribute('data-spin'),{once:true});beginNavigation?.((chromeLocation||location).href);setTimeout(()=>CHROME_VIEW?native('window',{action:'reload'}):location.reload(),140);},true);}
+  syncRouteRefreshLabels();settleHeader();
+}
+function syncRouteRefreshLabels(){if(!shadow)return;for(const link of $$('.primary-nav a[data-route]',shadow)){const label=$('.route-text',link)?.textContent||link.textContent;link.removeAttribute('title');if(link.getAttribute('aria-current')==='page')link.setAttribute('aria-label','刷新'+label);else link.removeAttribute('aria-label');}}
+function installVideoLinkDrag(){
+  const button=$('.video-link',shadow);if(!button)return;let start=null;
+  button.addEventListener('mousedown',e=>{if(e.button===0)start={x:e.screenX,y:e.screenY};});
+  window.addEventListener('mousemove',e=>{if(!start||!(e.buttons&1))return;if(Math.hypot(e.screenX-start.x,e.screenY-start.y)>4){start=null;button.dataset.dragged='true';native('window',{action:'drag',screenX:e.screenX,screenY:e.screenY});}},true);
+  window.addEventListener('mouseup',()=>{start=null;setTimeout(()=>delete button.dataset.dragged,0);},true);
+  button.addEventListener('click',e=>{if(button.dataset.dragged==='true'){e.preventDefault();e.stopImmediatePropagation();delete button.dataset.dragged;}},true);
+}
+// While the pointer rests on an empty search box, its placeholder gives way to a random line from search-quips.txt.
+// Lines are drawn from a shuffled deck, and two lines of the same kind (same opening) never come back to back.
+let categoryEggForced=false,searchQuips=null,searchQuipDeck=[],searchQuipLast='';
+const SEARCH_QUIPS_FALLBACK=['今天也要好好吃饭哦','三连不迷路，搜索不迷茫','搜索框：我准备好了','据说按回车会有好事发生','猫猫视频包治百病'];
+function localAsset(path){return (typeof RUNTIME!=='undefined'&&['macos','linux'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+path;}
+function loadSearchQuips(){
+  if(searchQuips)return searchQuips;
+  searchQuips=fetch(localAsset('search-quips.txt')).then(r=>r.ok?r.text():'').then(text=>{const list=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);return list.length?list:SEARCH_QUIPS_FALLBACK;}).catch(()=>SEARCH_QUIPS_FALLBACK);
+  return searchQuips;
+}
+function nextSearchQuip(list){
+  for(let tries=0;tries<6;tries++){
+    if(!searchQuipDeck.length){searchQuipDeck=list.slice();for(let i=searchQuipDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[searchQuipDeck[i],searchQuipDeck[j]]=[searchQuipDeck[j],searchQuipDeck[i]];}}
+    const line=searchQuipDeck.pop();if(tries<5&&searchQuipLast&&line.slice(0,3)===searchQuipLast.slice(0,3))continue;searchQuipLast=line;return line;
+  }
+  return searchQuipDeck.pop()||list[0];
+}
+function installSearchQuips(){
+  const form=$('.search',shadow),input=$('.search input',shadow);if(!form||!input||$('.search-quip',form))return;
+  const placeholder=input.getAttribute('placeholder')||'';
+  const layer=document.createElement('span');layer.className='search-quip';layer.setAttribute('aria-hidden','true');
+  const plain=document.createElement('span'),quip=document.createElement('span');plain.className='sq-plain';quip.className='sq-line';plain.textContent=placeholder;
+  // Three fading copies trail the line as it sweeps in: a left-to-right motion blur that closes up as the line slows.
+  const trails=[0,1,2].map(()=>{const t=document.createElement('span');t.className='sq-trail';return t;});
+  layer.append(plain,...trails,quip);form.insertBefore(layer,input.nextSibling);
+  const still=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // One rule decides what shows: a line while the pointer is on the box and it is empty, the placeholder otherwise.
+  let hovering=false,shown=false,motions=[],list=null;
+  const stop=()=>{motions.forEach(m=>m.cancel());motions=[];};
+  const play=(el,frames,options)=>{const m=el.animate(frames,{fill:'both',...options,duration:still()?1:options.duration,delay:still()?0:(options.delay||0)});motions.push(m);return m;};
+  const SWEEP='cubic-bezier(.16,1,.3,1)';
+  const sync=(instant=false)=>{
+    const want=hovering&&!input.value&&!!list;
+    if(want===shown)return;shown=want;stop();
+    if(want){
+      const line=nextSearchQuip(list);quip.textContent=line;trails.forEach(t=>t.textContent=line);quip.style.fontSize='';
+      input.setAttribute('placeholder','');layer.dataset.on='true';
+      // A long line shrinks to fit the box (down to 10.5px) before it is cut with an ellipsis.
+      const room=layer.clientWidth,need=quip.scrollWidth;const size=room&&need>room?Math.max(10.5,12*room/need).toFixed(2)+'px':'';quip.style.fontSize=size;trails.forEach(t=>t.style.fontSize=size);
+      play(plain,[{opacity:1,transform:'none',filter:'blur(0)'},{opacity:0,transform:'translateX(12px)',filter:'blur(2px)'}],{duration:110,easing:'cubic-bezier(.4,0,1,1)'});
+      play(quip,[{clipPath:'inset(0 100% 0 0)',transform:'translateX(-22px)',filter:'blur(3px)',opacity:.4},{clipPath:'inset(0 0 0 0)',transform:'none',filter:'blur(0)',opacity:1}],{duration:560,delay:95,easing:SWEEP});
+      // The trails are revealed by the same wipe, so the streak only ever lies behind the leading edge.
+      trails.forEach((t,k)=>play(t,[{clipPath:'inset(0 100% 0 0)',transform:`translateX(${-(30+k*16)}px)`,opacity:0,filter:`blur(${2+k}px)`},{offset:.22,opacity:.3-k*.08},{clipPath:'inset(0 0 0 0)',transform:'translateX(0)',opacity:0,filter:'blur(0)'}],{duration:440+k*70,delay:95,easing:SWEEP}));
+      return;
+    }
+    const done=()=>{if(shown)return;stop();delete layer.dataset.on;input.setAttribute('placeholder',placeholder);};
+    if(instant||input.value){done();return;}
+    // On the way out the line draws back into its left edge, then the placeholder settles in again.
+    play(quip,[{clipPath:'inset(0 0 0 0)',transform:'none',opacity:1},{clipPath:'inset(0 100% 0 0)',transform:'translateX(-10px)',opacity:.3}],{duration:270,easing:'cubic-bezier(.45,0,.75,.35)'});
+    play(plain,[{opacity:0,transform:'translateX(-8px)',filter:'blur(2px)'},{opacity:1,transform:'none',filter:'blur(0)'}],{duration:320,delay:230,easing:'cubic-bezier(.32,.72,0,1)'}).onfinish=done;
+  };
+  form.addEventListener('pointerenter',e=>{if(e.pointerType&&e.pointerType!=='mouse')return;hovering=true;if(list)sync();else loadSearchQuips().then(l=>{list=l;sync();});});
+  form.addEventListener('pointerleave',()=>{hovering=false;sync();});
+  input.addEventListener('input',()=>sync(true));
+}
+// Rest the pointer on the avatar for 10 seconds and it starts to turn, slowly at first and ever faster, smeared by a
+// rotational motion blur (fading copies spread behind it by its speed). Leaving lets it brake in the same direction
+// and settle upright on a whole turn, the smear closing up as it slows.
+function installAvatarSpin(){
+  const account=$('.account',shadow);if(!account||account.dataset.spin)return;account.dataset.spin='ready';
+  const TRAILS=4,MAX_SPEED=1080,WAIT=10000;
+  let hoverAt=0,angle=0,speed=0,frame=0,last=0,brake=null,ghosts=[];
+  const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const face=()=>account.querySelector(':scope>.account-face:not(.account-spin-ghost)');
+  // Only the face turns; the pendant and the badge stay put. Each trail is a copy of the face placed just under the
+  // pendant, rebuilt whenever the avatar itself is redrawn.
+  // The face is centred with a transform of its own; the turn is appended to it so it spins about its visual centre.
+  let spinning=null,base='';
+  const ensureGhosts=()=>{
+    const img=face();if(spinning&&spinning!==img){spinning.style.transform='';spinning.style.filter='';}
+    if(img&&spinning!==img){img.style.transform='';const t=getComputedStyle(img).transform;base=t&&t!=='none'?t:'';}spinning=img;
+    if(ghosts.length&&ghosts.every(g=>g.isConnected)&&ghosts[0].dataset.src===img?.src)return;
+    ghosts.forEach(g=>g.remove());ghosts=[];if(!img)return;
+    for(let k=1;k<=TRAILS;k++){const g=img.cloneNode();g.alt='';g.classList.add('account-spin-ghost');g.setAttribute('aria-hidden','true');g.dataset.src=img.src;img.after(g);ghosts.push(g);}
+  };
+  const paint=()=>{
+    ensureGhosts();if(!spinning)return;
+    const smear=Math.min(1,speed/MAX_SPEED),turn=angle%360;
+    spinning.style.transform=`${base} rotate(${turn.toFixed(2)}deg)`;spinning.style.filter=smear>.02?`blur(${(smear*.9).toFixed(2)}px)`:'';
+    ghosts.forEach((g,i)=>{const k=i+1,lag=Math.min(70,speed*.014*k);g.style.transform=`${base} rotate(${(turn-lag).toFixed(2)}deg)`;g.style.opacity=(smear*.42/k).toFixed(3);});
+  };
+  const reset=()=>{angle=0;speed=0;brake=null;if(spinning){spinning.style.transform='';spinning.style.filter='';}spinning=null;ghosts.forEach(g=>g.remove());ghosts=[];};
+  const tick=now=>{
+    const dt=Math.min(.05,(now-last)/1000)||0;last=now;
+    if(brake){
+      const t=Math.min(1,(now-brake.start)/brake.duration),e=1-(1-t)*(1-t);
+      angle=brake.from+(brake.to-brake.from)*e;speed=brake.speed*(1-t);
+      if(t>=1){reset();frame=0;return;}
+    }else if(hoverAt&&now-hoverAt>=WAIT){
+      // Ever faster: the speed grows with the square of the time spent spinning, up to three turns a second.
+      const spun=(now-hoverAt-WAIT)/1000;speed=Math.min(MAX_SPEED,18+40*spun+32*spun*spun);angle+=speed*dt;
+    }
+    if(speed||brake)paint();frame=requestAnimationFrame(tick);
+  };
+  const run=()=>{if(!frame){last=performance.now();frame=requestAnimationFrame(tick);}};
+  // The header redraws around the avatar (its card, the hover styles) and can report a leave and a re-entry within a few
+  // frames while the pointer has not moved; only a leave that lasts 180ms counts, so the 10 seconds are not reset.
+  let leaveTimer=0;
+  account.addEventListener('pointerenter',e=>{if(e.pointerType&&e.pointerType!=='mouse')return;if(leaveTimer){clearTimeout(leaveTimer);leaveTimer=0;return;}if(reduced()||brake)return;hoverAt=performance.now();run();});
+  account.addEventListener('pointerleave',()=>{clearTimeout(leaveTimer);leaveTimer=setTimeout(()=>{leaveTimer=0;
+    hoverAt=0;if(!speed||brake){if(!speed&&!brake){cancelAnimationFrame(frame);frame=0;}return;}
+    // Brake in the same direction and land upright: the stop is the next whole turn past about a second of braking.
+    const from=angle,to=Math.ceil((from+speed*.6)/360)*360,duration=Math.min(3200,Math.max(450,2000*(to-from)/Math.max(speed,1)));
+    brake={from,to,duration,speed,start:performance.now()};run();
+  },180);});
+}
+// 换一换 lives in the client's own layer (like the settings button) on the home page: it stays put while the feed
+// scrolls, and asks the visible page to roll its feed. The page's own roll buttons are hidden behind it.
+const ICON_ROLL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.6L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4.6L20 16"/><path d="M20 20v-4h-4"/></svg>';
+function installFeedRoll(){
+  if(!CHROME_VIEW||$('#feed-roll',shadow))return;
+  const button=document.createElement('button');button.id='feed-roll';button.type='button';button.className='feed-roll';button.hidden=true;button.setAttribute('aria-label','换一换');button.title='换一批推荐';
+  button.innerHTML=ICON_ROLL+'<span>换一换</span>';shadow.append(button);
+  const top=document.createElement('button');top.id='page-top';top.type='button';top.className='page-top';top.hidden=true;top.setAttribute('aria-label','回到顶部');
+  top.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7.5 18 14H6z"/></svg><span>顶部</span>';shadow.append(top);
+  top.addEventListener('click',()=>native('page-top'));
+  let turn=0;
+  button.addEventListener('click',()=>{native('feed-roll');turn+=360;const icon=$('svg',button);
+    if(icon&&!matchMedia('(prefers-reduced-motion: reduce)').matches)icon.animate([{rotate:`${turn-360}deg`},{rotate:`${turn}deg`}],{duration:620,easing:'cubic-bezier(.32,.72,0,1)',fill:'forwards'});});
+  syncFeedRoll();
+}
+let pageScrolled=false;
+function syncFeedRoll(){if(!CHROME_VIEW||!shadow)return;const button=$('#feed-roll',shadow),top=$('#page-top',shadow);if(!button||!top)return;const home=pageKind(chromeLocation||location)==='home';
+  if(button.hidden===!home&&top.hidden===!(home&&pageScrolled))return;button.hidden=!home;top.hidden=!(home&&pageScrolled);reportChromeLayout();}
+function setPageScrolled(on){if(!CHROME_VIEW)return;pageScrolled=!!on;syncFeedRoll();}
+// The page tells the client's layer when it has scrolled far enough for 顶部 to be worth showing (and again when it comes to the front).
+function watchPageScroll(){if(!CONTENT_VIEW)return;let was=null,frame=0;const check=()=>{frame=0;const past=scrollY>innerHeight*.6;if(past!==was){was=past;native('page-scrolled',{past});}};
+  addEventListener('scroll',()=>{if(!frame)frame=requestAnimationFrame(check);},{passive:true});document.addEventListener('visibilitychange',()=>{if(!document.hidden){was=null;check();}});check();}
+function scrollPageTop(){if(CONTENT_VIEW)scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
+// In the page: roll the feed the way Bilibili's own button does (scrolled down, its floating button also brings the top back).
+function rollFeed(){if(!CONTENT_VIEW)return;const inline=document.querySelector('.feed-roll-btn .roll-btn,.feed-roll-btn button')||document.querySelector('.flexible-roll-btn');
+  if(scrollY>0)scrollPageTop();inline?.click();}
+function installMessagesMenu(){
+  const link=$('.messages',shadow),menu=$('#messages-menu',shadow);if(!link||!menu)return;shadow.append(menu);link.setAttribute('aria-haspopup','true');link.setAttribute('aria-controls','messages-menu');link.setAttribute('aria-expanded','false');
+  const enter=e=>{if(e.pointerType&&e.pointerType!=='mouse')return;clearTimeout(messageMenuHideTimer);clearTimeout(messageMenuShowTimer);messageMenuShowTimer=setTimeout(showMessageMenu,90);};
+  const leave=e=>{if(e.pointerType&&e.pointerType!=='mouse')return;clearTimeout(messageMenuShowTimer);clearTimeout(messageMenuHideTimer);messageMenuHideTimer=setTimeout(()=>hideMessageMenu(),200);};
+  for(const el of [link,menu]){el.addEventListener('pointerenter',enter);el.addEventListener('pointerleave',leave);el.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.dataset.open==='true'){e.preventDefault();e.stopPropagation();hideMessageMenu(true);link.focus();}});}
+  link.addEventListener('focus',()=>{if(link.matches(':focus-visible'))showMessageMenu();});
+  for(const el of [link,menu])el.addEventListener('focusout',e=>{if(!link.contains(e.relatedTarget)&&!menu.contains(e.relatedTarget))hideMessageMenu();});
+  menu.addEventListener('click',e=>{if(e.target.closest('a'))hideMessageMenu(true);});document.addEventListener('pointerdown',e=>{const path=e.composedPath();if(!path.includes(menu)&&!path.includes(link))hideMessageMenu();},{passive:true});
+  window.addEventListener('resize',()=>{if(menu.dataset.open==='true')placeMessageMenu(menu,link);});window.addEventListener('pagehide',()=>hideMessageMenu(true));
+}
 function resetMessageUnread(){messageRequest?.abort();messageRequest=null;messageAccount='';messageChecked=0;messageUnread={feed:{},direct:{}};renderMessageUnread();}
 async function refreshMessageUnread(force=false){
+  if(CONTENT_VIEW)return;
   const mid=accountProfile?.mid;if(!mid){resetMessageUnread();return;}
   if(document.hidden||playbackSuspended||!PREFS.headerMessages)return;
   if(messageAccount!==String(mid)){resetMessageUnread();messageAccount=String(mid);}
@@ -486,7 +915,7 @@ async function refreshMessageUnread(force=false){
   finally{clearTimeout(timer);if(messageRequest===request)messageRequest=null;}
 }
 function renderAccountCard(){
-  if(!shadow)return;const card=$('#account-card',shadow);if(!card)return;
+  if(!shadow)return;accountsController?.setProfile(accountProfile);const card=$('#account-card',shadow);if(!card)return;
   renderAccountDecorations();
   $('.account-name',card).textContent=accountProfile?.uname||'尚未登录';$('.account-name',card).title=accountProfile?.uname||'';
   $('.account-level',card).textContent=Number.isInteger(accountProfile?.level)?'Lv.'+accountProfile.level:'等级 —';
@@ -506,12 +935,12 @@ function hideAccountCard(){clearTimeout(accountShowTimer);const card=$('#account
 async function refreshAccount(force=false){
   if(accountRequest||(!force&&Date.now()-accountChecked<60000))return;
   accountChecked=Date.now();accountRequest=new AbortController();
-  const timeout=setTimeout(()=>accountRequest?.abort(),8000);
+  const request=accountRequest,timeout=setTimeout(()=>request.abort(),8000);
   try{
     const response=await fetch('https://api.bilibili.com/x/web-interface/nav',{credentials:'include',signal:accountRequest.signal});
     if(!response.ok)throw Error('account status unavailable');
-    const result=await response.json(),data=result.data;
-    if(result.code!==0||!data?.isLogin){accountProfile=null;resetMessageUnread();renderAccountCard();return;}if(!accountProfile||String(accountProfile.mid)!==String(data.mid)){accountProfile={mid:data.mid,...cachedProfileBanner(data.mid)};accountStatsAt=0;}Object.assign(accountProfile,{uname:String(data.uname||'我的主页'),level:Number.isInteger(data.level_info?.current_level)?data.level_info.current_level:null,face:profileMediaUrl(data.face),wbi:data.wbi_img||accountProfile.wbi,vip:data.vip||{type:data.vipType,status:data.vipStatus,avatar_subscript:data.vip_avatar_subscript},pendant:data.pendant||accountProfile.pendant});renderAccountCard();refreshMessageUnread();
+    const result=await response.json(),data=result.data;if(request.signal.aborted||accountRequest!==request)return;
+    if(result.code!==0||!data?.isLogin){if(accountsController?.isAdding())return;accountProfile=null;resetMessageUnread();renderAccountCard();return;}if(accountsController?.isAdding()){accountsController.acceptLoginProfile(data);return;}if(!accountProfile||String(accountProfile.mid)!==String(data.mid)){accountProfile={mid:data.mid,...cachedProfileBanner(data.mid)};accountStatsAt=0;}Object.assign(accountProfile,{uname:String(data.uname||'我的主页'),level:Number.isInteger(data.level_info?.current_level)?data.level_info.current_level:null,face:profileMediaUrl(data.face),wbi:data.wbi_img||accountProfile.wbi,vip:data.vip||{type:data.vipType,status:data.vipStatus,avatar_subscript:data.vip_avatar_subscript},pendant:data.pendant||accountProfile.pendant});renderAccountCard();refreshMessageUnread();
     const face=new URL(data.face,location.href);
     if(!['https:','http:'].includes(face.protocol)||!/(^|\.)(hdslb|bilibili)\.com$/i.test(face.hostname))return;
     face.protocol='https:';
@@ -522,15 +951,16 @@ async function refreshAccount(force=false){
     account.dataset.authenticated='true';
   }catch(_){
     // Login cookies stay in the browser. A failed status read must not fake a profile.
-  }finally{clearTimeout(timeout);accountRequest=null;}
+  }finally{clearTimeout(timeout);if(accountRequest===request)accountRequest=null;}
 }
 
-function applyPreferences() {
+function applyPreferences() {root?.style.setProperty('--bs-settings-zoom',String(Math.min(160,Math.max(80,Number(PREFS.settingsZoom)||100))/100));
   const html=document.documentElement;
   syncRoute();
   const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);
-  html.dataset.bsTheme=dark?'dark':'light';
-  html.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const early=$('#bs-navigation-surface');if(early)early.textContent=`html,body${location.hostname==='space.bilibili.com'?'':',#app'}{background-color:${dark?'#161618':'#fafafa'}!important}`;native('surface',{dark});applyAudioBoost();watchVideoLoading();
+  html.dataset.bsTheme=dark?'dark':'light';html.dataset.bsFrost=String(!!PREFS.experimentalFrost);html.dataset.bsBannerUnderlap='false';
+  // The header view only draws the header; its page must stay see-through in either theme or it hides the page below.
+  if(CHROME_VIEW){html.style.setProperty('background-color','transparent','important');if(!$('#bs-chrome-clear'))document.head?.append(Object.assign(document.createElement('style'),{id:'bs-chrome-clear',textContent:'html:root:root,html:root:root body{background:transparent!important}'}));}else html.style.setProperty('background-color',dark?'#161618':'#fafafa','important');const early=$('#bs-navigation-surface');if(early)early.textContent=`html,body${location.hostname==='space.bilibili.com'?'':',#app'}{background-color:${dark?'#161618':'#fafafa'}!important}`;native('surface',{dark});applyAudioBoost();watchVideoLoading();
   html.classList.toggle('night-mode',dark);
   html.classList.toggle('bili_dark',dark);
   html.dataset.bsFont=String(PREFS.font);
@@ -538,27 +968,49 @@ function applyPreferences() {
   html.dataset.bsAds=String(PREFS.hideAds);
   html.dataset.bsAlways=String(PREFS.progressAlways);
   html.dataset.bsThumb=String(PREFS.progressThumb);
-  if(Number.isInteger(PREFS.feedColumns)&&PREFS.feedColumns>=2&&PREFS.feedColumns<=8)html.style.setProperty('--bs-feed-columns',PREFS.feedColumns);else html.style.removeProperty('--bs-feed-columns');
+  html.style.removeProperty('--bs-feed-columns');applyUiScale();
   html.style.setProperty('--bs-accent',PREFS.accent);
+  const tint=/^#[0-9a-f]{6}$/i.test(PREFS.accent)?PREFS.accent:'#fb7299',base=dark?35:255,rgb=[1,3,5].map(i=>Math.round(base*.91+parseInt(tint.slice(i,i+2),16)*.09)),glass='rgba('+rgb.join(',')+','+(dark?.56:.68)+')';html.style.setProperty('--bs-glass',glass);root?.style.setProperty('--frost-tint',glass);root?.style.setProperty('--frost-control','rgba('+rgb.join(',')+','+(dark?.3:.45)+')');
   html.style.setProperty('--bs-progress',PREFS.progressColor);
   html.style.setProperty('--bs-progress-height',`${PREFS.progressHeight}px`);
   html.style.setProperty('--bs-progress-radius',`${PREFS.progressRadius}px`);
-  if(root){root.style.setProperty('--accent',PREFS.accent);root.style.setProperty('--font',PREFS.font?'BiliDouyin,"Microsoft YaHei UI",sans-serif':'"Microsoft YaHei UI",sans-serif');root.dataset.theme=dark?'dark':'light';}
-  applyHeaderPreferences();
+  if(root){root.dataset.mode=CHROME_VIEW?'chrome':CHROME_HOST?'content':'page';root.dataset.frost=String(!!PREFS.experimentalFrost);root.dataset.bounce=String(!!PREFS.experimentalBounce);root.style.setProperty('--accent',PREFS.accent);root.style.setProperty('--font',PREFS.font?'BiliDouyin,"Microsoft YaHei UI",sans-serif':'"Microsoft YaHei UI",sans-serif');root.dataset.theme=dark?'dark':'light';}
+  if(!PREFS.clipboardAutoOpen)shadow?.querySelector('#clipboard-video-prompt')?.remove();
+  applyHeaderPreferences();accountsController?.applyTheme();
   if(shadow)renderSettings();
   const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');
   scheduleScan();
 }
 function update(patch) {
 
-  const before=PREFS.srMode+PREFS.srScale+PREFS.srFps;
+  const before=PREFS.srMode+PREFS.srScale+PREFS.srModel;
   Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision});
-  if(before!==PREFS.srMode+PREFS.srScale+PREFS.srFps)startGpu();
-  if('fiMode' in patch||'fiFps' in patch||'fiFlowScale' in patch)startInterpolation();
+  if(before!==PREFS.srMode+PREFS.srScale+PREFS.srModel||'fiMode' in patch)startEnhancer();
   if('downloader' in patch)mountVideoHome();
+  if('showClock' in patch)scheduleHeaderClock();
+  if('videoLinkButton' in patch||'videoLinkCompact' in patch)syncVideoLink();
   if('headerMessages' in patch){if(patch.headerMessages)refreshMessageUnread(true);else{messageRequest?.abort();messageRequest=null;}}
   if((patch.srMode&&patch.srMode!=='off')||(patch.fiMode&&patch.fiMode!=='off'))toast('警告：超分与补帧是测试功能，可能卡顿、闪烁或抖动；不保证画质提升，异常时请关闭。');
 }
+
+function clipboardVideoTarget(value){
+  if(typeof value!=='string'||value.length>16384)return null;
+  const text=value.trim();if(/^[Bb][Vv][A-Za-z0-9]{10}$/.test(text))return 'https://www.bilibili.com/video/BV'+text.slice(2);
+  const match=text.match(/(?:https?:\/\/)?(?:(?:www\.|m\.)?bilibili\.com\/video\/[Bb][Vv][A-Za-z0-9]{10}(?=[/?#\s<>]|$)(?:[/?#][^\s<>]*)?|b23\.tv\/[A-Za-z0-9]+(?=[/?#\s<>]|$)(?:[/?#][^\s<>]*)?)/i);
+  if(!match||match.index>0&&/[\w./@-]/.test(text[match.index-1]))return null;
+  try{const url=new URL(/^https?:\/\//i.test(match[0])?match[0]:'https://'+match[0]);if(url.username||url.password||url.port)return null;
+    if(url.hostname==='b23.tv')return 'https://b23.tv'+url.pathname;
+    const id=url.pathname.match(/^\/video\/([Bb][Vv][A-Za-z0-9]{10})\/?$/);if(!id||!['www.bilibili.com','m.bilibili.com','bilibili.com'].includes(url.hostname))return null;
+    const out=new URL('https://www.bilibili.com/video/BV'+id[1].slice(2));for(const key of ['p','t']){const v=url.searchParams.get(key);if(v&&/^\d+(\.\d+)?$/.test(v))out.searchParams.set(key,v);}return out.href;
+  }catch{return null;}
+}
+function offerClipboardVideo(value){
+  if(!shadow||!PREFS.clipboardAutoOpen)return false;
+  const target=clipboardVideoTarget(value);if(!target)return false;
+  let el=$('#clipboard-video-prompt',shadow);if(!el){el=document.createElement('section');el.id='clipboard-video-prompt';el.setAttribute('role','region');el.setAttribute('aria-label','剪贴板视频提示');el.innerHTML='<div role="status"><strong>检测到视频链接</strong><p>是否跳转观看？</p><small></small></div><div class="clipboard-actions"><button type="button" data-dismiss>暂不</button><button type="button" data-open>跳转观看</button></div>';shadow.append(el);$('[data-dismiss]',el).onclick=()=>el.remove();$('[data-open]',el).onclick=()=>{const url=el.dataset.url;el.remove();location.assign(url);};el.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();el.remove();}};}
+  el.dataset.url=target;$('small',el).textContent=new URL(target).pathname.split('/').filter(Boolean).pop();return true;
+}
+
 function toast(text){
   if(!shadow)return;
   const el=$('#toast',shadow);el.textContent=text;el.hidden=false;
@@ -623,9 +1075,68 @@ function linkifyDescriptions(){
   }
 }
 
+/* Endless page animations (skeleton shimmers, spinners) keep the page redrawing every frame even where nobody can see
+   them, such as the load-more placeholders below the fold; a shimmer that moves a background even restyles on the main
+   thread each frame. They are paused while off screen and resume as soon as they come near the viewport, so what is
+   visible never changes. */
+const loopObserver=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(entries=>{for(const e of entries)for(const a of e.target.getAnimations?e.target.getAnimations({subtree:true}):[]){if(a.effect?.getTiming?.().iterations!==Infinity)continue;if(e.isIntersecting){if(a.__bsPaused){a.__bsPaused=false;a.play();}}else if(a.playState==='running'){a.__bsPaused=true;a.pause();}}},{rootMargin:'200px'}):null;
+const loopTargets=new WeakSet();
+function watchLoop(t){
+  if(!loopObserver||!t?.getAnimations||!t.isConnected||loopTargets.has(t)||t.closest?.('#bili-space-root'))return;
+  // Shimmers usually run on ::before/::after, which an element's own animation list leaves out without subtree.
+  if(!t.getAnimations({subtree:true}).some(a=>a.effect?.getTiming?.().iterations===Infinity))return;
+  loopTargets.add(t);loopObserver.observe(t);
+}
+function pauseOffscreenLoops(){
+  if(!loopObserver||!document.getAnimations)return;
+  for(const a of document.getAnimations())if(a.effect?.getTiming?.().iterations===Infinity)watchLoop(a.effect.target);
+}
+// Every CSS animation announces its start, including ones that began before this script looked.
+document.addEventListener('animationstart',e=>watchLoop(e.target),true);
+window.addEventListener('load',()=>setTimeout(pauseOffscreenLoops,500),{once:true});
+// Fullscreen motion is drawn by the host. The page tells it where the player sat before the jump (or sits after leaving)
+// and when it has drawn at the new size. The request itself goes first, while the click or key still allows it.
+let fullTarget=null,fullRect=null,fullRectAt=0,fullStartSent=false;
+// The video area only (not the danmaku bar under it), which is what fills the screen in fullscreen.
+// Tried in this order (a selector list would return whichever comes first in the page, i.e. the larger wrapper).
+const fullArea=el=>{for(const q of ['.bpx-player-video-area','.bilibili-player-video-wrap','.bpx-player-video-wrap','video']){const found=el?.querySelector?.(q);if(found&&found.getBoundingClientRect().width>40)return found;}return el;};
+// The video area in device pixels, plus the video's own size so the host can find the picture inside any black bars.
+const fullBox=el=>{const r=fullArea(el).getBoundingClientRect(),s=devicePixelRatio||1,v=el?.querySelector?.('video');return [r.left*s,r.top*s,r.width*s,r.height*s,v?.videoWidth||0,v?.videoHeight||0];};
+for(const name of ['requestFullscreen','webkitRequestFullscreen']){const original=Element.prototype[name];if(typeof original!=='function'||CHROME_VIEW)continue;
+  Element.prototype[name]=function(...args){const result=Reflect.apply(original,this,args);try{if(!document.fullscreenElement){fullTarget=this;fullRect=fullBox(this);fullRectAt=Date.now();fullStartSent=true;native('fullscreen-start',{rect:fullRect});}}catch{}return result;};
+}
+// Tells the host once the page is really drawn at a given size and zoom (device pixels, device pixel ratio): after the
+// matching resize, two frames, and - while a video plays - its next frame. Entering, it also says where the player was.
+function fullReadyAt(width,height,ratio,entering){
+  const right=()=>Math.abs(innerWidth*devicePixelRatio-width)<=2&&Math.abs(innerHeight*devicePixelRatio-height)<=2&&Math.abs(devicePixelRatio-ratio)<.02;let sent=false;
+  const report=()=>{let rect=null;try{rect=entering?fullRect:null;}catch{}native('fullscreen-ready',{rect});};
+  const fire=()=>{if(sent)return;sent=true;removeEventListener('resize',check);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{const v=(entering?document.fullscreenElement:fullTarget)?.querySelector?.('video');
+      if(!v||v.paused||!v.requestVideoFrameCallback){report();return;}let done=false;const go=()=>{if(!done){done=true;report();}};v.requestVideoFrameCallback(go);setTimeout(go,120);}));};
+  const check=()=>{if(right())fire();};if(right())fire();else{addEventListener('resize',check);setTimeout(fire,400);}
+}
+// Leaving fullscreen, the browser draws the page's normal layout at once - a frame before the host can cover it. The
+// player is pinned over the whole window in that same frame (danmaku bar tucked away), so that frame still looks like
+// fullscreen; the host releases it once the window is back to its size.
+let fullHold=null;
+function holdPlayer(on){
+  if(!on){if(!fullHold)return;clearTimeout(fullHold.timer);for(const [node,prop,value,priority] of fullHold.saved.reverse()){if(value)node.style.setProperty(prop,value,priority);else node.style.removeProperty(prop);}fullHold=null;return;}
+  if(fullHold)return;const c=fullTarget?.isConnected?fullTarget:document.querySelector('.bpx-player-container');if(!c)return;
+  const saved=[],keep=(node,prop,value)=>{saved.push([node,prop,node.style.getPropertyValue(prop),node.style.getPropertyPriority(prop)]);node.style.setProperty(prop,value,'important');};
+  for(let a=c.parentElement;a&&a!==document.documentElement;a=a.parentElement){const s=getComputedStyle(a);if(s.position!=='static'&&s.zIndex!=='auto')keep(a,'z-index','2147483000');if(s.transform!=='none')keep(a,'transform','none');}
+  for(const [prop,value] of [['position','fixed'],['inset','0'],['width','100vw'],['height','100vh'],['max-width','none'],['max-height','none'],['margin','0'],['z-index','2147483001'],['background','#000']])keep(c,prop,value);
+  const bar=c.querySelector('.bpx-player-sending-area');if(bar)keep(bar,'display','none');
+  fullHold={saved,timer:setTimeout(()=>holdPlayer(false),1500)};
+}
+document.addEventListener('fullscreenchange',()=>{
+  if(CHROME_VIEW)return;const entering=!!document.fullscreenElement;
+  if(!entering&&PREFS.experimentalFullscreenMotion&&!matchMedia('(prefers-reduced-motion: reduce)').matches)holdPlayer(true);
+  if(entering&&!fullStartSent&&fullRect&&Date.now()-fullRectAt<3000){fullStartSent=true;native('fullscreen-start',{rect:fullRect});}
+  if(!entering)fullStartSent=false;
+});
 function scheduleScan(){
   if(scanTimer)return;
-  scanTimer=setTimeout(()=>{scanTimer=0;syncRoute();markAds();linkifyDescriptions();cacheSpaceBackgrounds();applyAudioBoost();watchVideoLoading();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==playbackVideo()))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==playbackVideo()))startGpu();},180);
+  scanTimer=setTimeout(()=>{scanTimer=0;pauseOffscreenLoops();syncRoute();markAds();linkifyDescriptions();cacheSpaceBackgrounds();applyAudioBoost();watchVideoLoading();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==playbackVideo()))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==playbackVideo()))startGpu();},180);
 }
 
 // Short wheel easing only: precision gestures retain the OS's own momentum.
@@ -672,6 +1183,22 @@ function installWheelInertia(){
 }
 
 const pageCss = `
+html[data-bs-page=home] [data-bs-banner=true] .inner-logo{display:none!important}
+html[data-bs-page=home] :is(.bili-header__channel,.channel-container){margin-block:0!important;padding-block:0!important;min-height:0!important}
+html[data-bs-page=home] :is(.channel-fixed,.channel-fixed-container){top:var(--bs-header-height,58px)!important;margin-top:0!important}
+
+html[data-bs-page=home][data-bs-theme] :is(.channel-link,.channel-link__right,.channel-items__left>a){border:0!important;box-shadow:0 3px 10px #00000018!important}
+html[data-bs-page=home][data-bs-theme] :is(.channel-items__right>a,.channel-link__right){background:transparent!important;box-shadow:none!important;border:0!important}
+
+html[data-bs-frost=true]{--bs-glass:rgba(35,35,40,.78);--bs-glass-shadow:0 7px 24px #0002}html[data-bs-frost=true][data-bs-theme=light]{--bs-glass:rgba(255,255,255,.8);--bs-glass-shadow:0 7px 24px #27273312}
+html[data-bs-frost=true] :is(.bili-feed4-layout,.recommended-container_floor-aside) :is(.feed-card,.bili-video-card,.floor-single-card){border-color:transparent!important;border-radius:16px;background:var(--bs-glass)!important;box-shadow:var(--bs-glass-shadow);backdrop-filter:blur(14px) saturate(120%);-webkit-backdrop-filter:blur(14px) saturate(120%)}
+html[data-bs-frost=true] :is(.bili-header__channel,.channel-container,.channel-floor,.channel-fixed,.channel-fixed-container,.channel-header){border-color:transparent!important;background:var(--bs-glass)!important;box-shadow:var(--bs-glass-shadow);backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%)}
+html[data-bs-frost=true] :is(.bili-header__channel,.channel-container,.channel-floor,.channel-fixed,.channel-fixed-container,.channel-header) :is(a,button){border-color:transparent!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html[data-bs-frost=true] :is(.bili-header__channel,.channel-container,.channel-floor,.channel-fixed,.channel-fixed-container,.channel-header) :is(a,button):hover{background:#ffffff0d!important}
+html[data-bs-frost=true] :is(.bili-feed4-layout,.recommended-container_floor-aside) .feed-card .bili-video-card{background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-radius:0!important}html[data-bs-frost=true] :is(.bili-feed4-layout,.recommended-container_floor-aside) :is(.feed-card,.floor-single-card,.bili-video-card:not(.feed-card .bili-video-card)){padding:6px!important;box-sizing:border-box!important}html[data-bs-frost=true] :is(.bili-feed4-layout,.recommended-container_floor-aside) :is(.bili-video-card__image,.bili-video-card__cover,.bili-video-card__image--wrap){border-radius:10px!important;overflow:hidden!important}html[data-bs-frost=true] :is(.bili-feed4-layout,.recommended-container_floor-aside) .bili-video-card__info{padding:2px 4px 4px!important}
+html[data-bs-frost=true] :is(button,.bs-player-tool){border-color:transparent!important;background:var(--bs-glass)!important;box-shadow:var(--bs-glass-shadow);backdrop-filter:blur(14px) saturate(120%);-webkit-backdrop-filter:blur(14px) saturate(120%)}
+@media(prefers-reduced-transparency:reduce){html[data-bs-frost=true] :is(button,.bs-player-tool,.feed-card,.bili-video-card,.floor-single-card){backdrop-filter:none;-webkit-backdrop-filter:none}}
+
 @font-face{font-family:BiliDouyin;src:url("https://bili-space.local/fonts/DouyinSansBold.ttf") format("truetype"),local("DouyinSans Bold"),local("DOUYINSANSBOLD-GB"),local("抖音美好体 Bold");font-display:swap}
 #bs-video-loading{position:fixed;inset:var(--bs-header-height,58px) 0 0;z-index:2147483000;display:grid;place-items:center;text-align:center;background:var(--bg1,#161618);color:var(--text1,#eeeef0);animation:bs-loading-in 120ms cubic-bezier(.23,1,.32,1) both}#bs-video-loading svg{width:56px;height:56px;color:var(--bs-accent,#fb7299);animation:bs-loading-spin 700ms cubic-bezier(.77,0,.175,1) infinite}#bs-video-loading.leaving{animation:bs-loading-out 120ms cubic-bezier(.23,1,.32,1) forwards;pointer-events:none}@keyframes bs-loading-in{from{opacity:0}to{opacity:1}}@keyframes bs-loading-out{to{opacity:0}}@keyframes bs-loading-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){#bs-video-loading,#bs-video-loading svg{animation:none!important}#bs-video-loading.leaving{opacity:0}}
 #bs-close-animation{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:var(--bg1,#161618);color:var(--bs-accent,#fb7299);text-align:center;animation:bs-close-in 180ms cubic-bezier(.23,1,.32,1) both}#bs-close-animation svg{width:64px;height:64px;animation:bs-tv-exit 240ms cubic-bezier(.77,0,.175,1) both}#bs-close-animation p{color:var(--text1,#eeeef0)}@keyframes bs-close-in{from{opacity:0}to{opacity:1}}@keyframes bs-tv-exit{to{transform:rotate(360deg) scale(.96)}}@media(prefers-reduced-motion:reduce){#bs-close-animation,#bs-close-animation svg{animation:none!important}}
@@ -695,11 +1222,15 @@ html[data-bs-page=home] :is(#biliMainHeader,#bili-header-container,#internationa
 html[data-bs-page=home] [data-bs-banner=true]{display:block!important;position:relative!important;inset:auto!important;height:clamp(100px,8vw,142px)!important;min-height:0!important;min-width:0!important;width:100%!important;overflow:hidden!important;margin:0!important;isolation:isolate}
 html[data-bs-page=home] [data-bs-banner=true] :is(.banner-img,#bili-header-banner-img){position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
 html[data-bs-page=home] [data-bs-banner=true] :is(.banner-img,#bili-header-banner-img) img{width:100%!important;height:100%!important;object-fit:cover!important}
+html[data-bs-page=home][data-bs-banner-underlap=true] body{padding-top:0!important}
+html[data-bs-page=home][data-bs-banner-underlap=true] [data-bs-banner=true]{height:calc(clamp(100px,8vw,142px) + var(--bs-header-height,58px))!important}
+html[data-bs-page=home][data-bs-banner-underlap=true] [data-bs-banner=true] .inner-logo{position:relative!important;top:var(--bs-header-height,58px)!important}
+html[data-bs-page=home][data-bs-banner-underlap=true] .bs-banner-brand{top:calc(50% + var(--bs-header-height,58px)/2)!important}
 [data-bs-motion=static] .banner-img{transform:translateX(var(--bs-banner-x,0px)) scale(1.025);transition:transform 160ms ease-out;will-change:transform}
 .bs-banner-brand{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;z-index:5;font:clamp(26px,2.5vw,38px)/1.2 BiliDouyin,sans-serif!important;letter-spacing:-1px;color:#fff!important;text-shadow:0 2px 12px #082c22,0 1px 3px #0009;text-decoration:none!important;white-space:nowrap;pointer-events:none!important}
 .bs-banner-brand b{color:var(--bs-accent)!important;font-weight:400}
 html[data-bs-ads=true] [data-bs-ad=true]{display:none!important}
-html[data-bs-channels=false] .bili-header__channel,html[data-bs-channels=false] .channel-container,html[data-bs-channels=false] .bili-feed4-layout .channel-floor{display:none!important}
+html[data-bs-channels=false] :is(.bili-header__channel,.channel-container,.channel-floor,.channel-fixed,.channel-fixed-container,.channel-header){display:none!important}
 html[data-bs-page=home] .bili-feed4-layout{width:auto!important;margin-left:clamp(20px,3vw,48px)!important;margin-right:clamp(20px,3vw,48px)!important}
 html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=grid]{display:grid!important;position:relative!important;grid-template-columns:repeat(var(--bs-feed-columns),minmax(0,1fr))!important;grid-template-rows:none!important;grid-template-areas:none!important;grid-auto-flow:row dense!important;grid-auto-rows:auto!important;gap:28px 20px!important;align-items:start!important;align-content:start!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;padding:20px 0 0!important}
 html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card][data-bs-empty=true]{display:none!important}
@@ -731,6 +1262,11 @@ html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(.l
 html[data-bs-page=video] :is(.video-info-container,.video-title,.up-info-container,.video-desc-container,.video-toolbar-container,.video-toolbar-left,.video-toolbar-right){min-width:0!important;max-width:100%!important;box-sizing:border-box!important;overflow-wrap:anywhere}
 html[data-bs-page=video] .video-title{white-space:normal!important;height:auto!important}
 html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(#bilibili-player,#bilibili-player-wrap,#playerWrap,.bpx-player-container:not([data-screen=mini]):not(.bpx-state-mini):not(.bpx-state-miniscreen),.bpx-player-sending-bar){width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+/* Bilibili fixes the player wrapper's height for its own column width; once the client widens the column (a maximized
+   window), the 16:9 player with its danmaku bar outgrows that height and the bar slides over the like/coin row. The
+   wrappers take their height from their width instead and still grow to fit. They keep that height while the player
+   floats (mini, web fullscreen) so the page does not jump; only the wide mode keeps Bilibili's own size. */
+html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(#playerWrap,#bilibili-player,.bpx-docker):not(:has(.bpx-player-container[data-screen=wide])){height:auto!important;aspect-ratio:16/9}
 html[data-bs-page=video] .video-toolbar-container{flex-wrap:wrap!important;gap:12px!important}
 /* Keep each recommendation metric intact; wrap whole metrics, never the unit suffix. */
 html[data-bs-page=video] .video-page-card-small .playinfo{display:flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;column-gap:8px!important;row-gap:4px!important;height:auto!important;min-width:0!important;line-height:18px!important}
@@ -767,19 +1303,25 @@ html[data-bs-theme=dark] :is(.channel-link,.channel-link__right,.channel-items__
 html[data-bs-theme=dark] :is(.vui_button--blue,.vui_button--primary,.vui_button--active,.filter-item.active){background:#35303a!important;color:#ff9fbb!important}
 html[data-bs-theme=dark] :is(#bilibili-player,#bilibili-player-wrap,#playerWrap,.player-wrap,.player-container,.video-container-v1,.video-container-v2,.bpx-player-container,.bpx-player-video-wrap){box-shadow:none!important;outline:none!important;border-color:#303034!important}
 html[data-bs-theme=dark] :is(#bilibili-player,.bpx-player-container,.bpx-player-video-wrap){background:#000!important}
-html[data-bs-theme=dark] :is(.bpx-player-sending-bar,.bilibili-player-video-sendbar){background:#202023!important;border-color:#303034!important;box-shadow:none!important}
-html[data-bs-theme=dark] :is(.bpx-player-dm-wrap,.bpx-player-dm-input,.bilibili-player-video-danmaku-input,.bpx-player-sending-area){background:#2c2c32!important;color:#eeeef0!important;border-color:#3b3b42!important}
+html[data-bs-theme=dark] :is(.bpx-player-sending-bar,.bilibili-player-video-sendbar):not([data-screen=full] *):not([data-screen=web] *):not(html[data-bs-full=true] *){background:#202023!important;border-color:#303034!important;box-shadow:none!important}
+html[data-bs-theme=dark] :is(.bpx-player-dm-wrap,.bpx-player-dm-input,.bilibili-player-video-danmaku-input,.bpx-player-sending-area):not([data-screen=full] *):not([data-screen=web] *):not(html[data-bs-full=true] *){background:#2c2c32!important;color:#eeeef0!important;border-color:#3b3b42!important}html.bs-tour-blur body{filter:blur(26px) saturate(1.15) brightness(.78);transition:filter .45s cubic-bezier(.32,.72,0,1);pointer-events:none}@media (prefers-reduced-motion:reduce){html.bs-tour-blur body{transition:none}}/* The viewer/danmaku count never spills over the danmaku switch, whatever width the player last measured. */.bpx-player-sending-bar .bpx-player-video-info{flex:0 1 auto!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}.bpx-player-sending-bar :is(.bpx-player-dm-switch,.bpx-player-dm-setting){flex-shrink:0!important}
 html[data-bs-theme=dark] :is(.bpx-player-dm-input input,.bpx-player-dm-input textarea){background:transparent!important;color:#eeeef0!important}
 html[data-bs-theme=dark] :is(.roll-btn,.feed-roll-btn,.floor-single-card,.bili-live-card,.living-card,.vui_pagenation--btn,.vui_pagination--btn){background:#26262b!important;color:#d4d4dc!important;border-color:#38383f!important}
+/* Original refresh panels retain their size; elevation replaces the outline. */
+html[data-bs-theme] :is(.roll-btn,.feed-roll-btn),html[data-bs-theme][data-bs-page] .feed-roll-btn :is(button,.primary-btn,.roll-btn){border-radius:12px!important}html[data-bs-page=home] .feed-roll-btn{margin-top:44px!important}html[data-bs-hosted=true][data-bs-page=home] :is(.feed-roll-btn,.palette-button-wrap){visibility:hidden!important;pointer-events:none!important}.palette-button-wrap .watchlater-pip-button{display:none!important}.bpx-player-top-issue,.bpx-player-top-feedback,.bpx-player-ctrl-feedback,[class*=bpx-player-top-issue]{display:none!important}.bpx-player-top-logo,.bpx-player-video-logo,.bpx-player-top-left-logo{opacity:.35!important}html[data-bs-theme] :is(.roll-btn,.feed-roll-btn){border-color:transparent!important;outline:0!important;box-shadow:0 4px 14px rgba(0,0,0,.12),0 1px 3px rgba(0,0,0,.06)!important}
+html[data-bs-theme][data-bs-page] .feed-roll-btn :is(button,.primary-btn,.roll-btn){border-color:transparent!important;outline:0!important;box-shadow:none!important}
+html[data-bs-theme=dark] :is(.roll-btn,.feed-roll-btn){box-shadow:0 5px 18px rgba(0,0,0,.3),0 1px 4px rgba(0,0,0,.16)!important}
+html[data-bs-page=home] :is(.feedback-btn,.customer-service-btn){display:none!important}
+
 html[data-bs-page=messages] #message-pc-header{display:none!important;height:0!important;min-height:0!important}
 html[data-bs-page=messages] .message-layout{width:calc(100% - 48px)!important;max-width:1440px!important;margin:16px auto!important;height:calc(100vh - var(--bs-header-height) - 32px)!important;min-height:0!important;border-radius:12px;overflow:hidden}
 html[data-bs-page=messages][data-bs-theme=dark] :is(.message-bg,.message-bgc,#skeleton-bg){background:#161618!important;background-image:none!important}
 html[data-bs-page=messages][data-bs-theme=dark] :is(#app,#message-pc-app,.message-main){background:#161618!important;color:var(--text1)!important}
 html[data-bs-page=messages][data-bs-theme=dark] .message-aside{background:#202023!important;color:var(--text1)!important}
 html[data-bs-page=messages][data-bs-theme=dark] :is(.message-header,.message-box-shadow){background:var(--bg2)!important;color:var(--text1)!important;box-shadow:none!important;border-color:var(--line_regular)!important}
-.bs-video-bar{max-width:100%;flex-wrap:wrap;display:flex!important;align-items:center;gap:8px;width:fit-content;margin:0 0 10px;align-self:flex-start}
+.bs-video-bar{max-width:100%;flex-wrap:wrap;display:flex!important;align-items:center;gap:8px;width:fit-content;margin:0 0 10px;align-self:flex-start}.bs-video-bar{margin:0 0 2px!important}.bs-video-bar+*{margin-top:0!important;padding-top:0!important}/* Edges come from a soft shadow, not an outline. */.bs-video-home,.bs-video-download{border-color:transparent!important;background:var(--bg1,#fff)!important;box-shadow:0 1px 2px rgba(0,0,0,.06),0 3px 10px rgba(0,0,0,.08);transition:color 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1),transform 160ms cubic-bezier(.32,.72,0,1)}html[data-bs-theme=dark] :is(.bs-video-home,.bs-video-download){background:#25252a!important;box-shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.32)}.bs-video-home:hover,.bs-video-download:hover{border-color:transparent!important;box-shadow:0 2px 4px rgba(0,0,0,.1),0 6px 18px rgba(0,0,0,.14)}.bs-video-home:active{transform:scale(.97)}.bs-video-download:is([data-state=blocked],[data-state=busy],[data-state=done]){border-color:transparent!important}
 .bs-download-progress{font-size:12px;line-height:20px;color:var(--text2,#67676e);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;min-width:0}.bs-download-progress[hidden]{display:none!important}
-.bs-video-home,.bs-video-download{display:inline-flex!important;align-items:center;gap:6px;width:fit-content;padding:4px 9px;border:1px solid var(--line_regular,#dedee3);border-radius:7px;color:var(--text2,#67676e)!important;font-size:12px;line-height:20px;text-decoration:none!important;background:var(--bg2,#f1f1f3);font-family:inherit;cursor:pointer;appearance:none;transition:color 160ms ease,border-color 160ms ease,opacity 160ms ease}
+.bs-video-home,.bs-video-download{display:inline-flex!important;align-items:center;gap:6px;width:fit-content;padding:4px 9px;border:1px solid var(--line_regular,#dedee3);border-radius:7px;color:var(--text2,#67676e)!important;font-size:12px;line-height:20px;text-decoration:none!important;background:var(--bg2,#f1f1f3);font-family:inherit;cursor:pointer;appearance:none;transition:color 160ms cubic-bezier(.2,.8,.2,1),border-color 160ms cubic-bezier(.2,.8,.2,1),opacity 160ms cubic-bezier(.2,.8,.2,1)}
 .bs-video-home svg,.bs-video-download svg{width:15px;height:15px;flex-shrink:0}
 .bs-video-home:hover,.bs-video-download:hover{color:var(--bs-accent,#fb7299)!important;border-color:var(--bs-accent,#fb7299)}
 .bs-video-download:active{transform:scale(.98)}
@@ -822,7 +1364,11 @@ html[data-bs-pip=true] .bs-pip-controls{display:flex}
 html[data-bs-pip=true] body:hover .bs-pip-controls,html[data-bs-pip=true] .bs-pip-controls:focus-within{opacity:1}
 .bs-pip-controls button{background:#16161bd9;border:1px solid #ffffff40;color:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
 button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(--bs-accent);outline-offset:3px}
-@media(prefers-reduced-motion:reduce){.bs-pip-controls,[data-bs-motion=static] .banner-img{transition:none!important;transform:none!important}}
+@media(prefers-reduced-motion:reduce){.bs-pip-controls,html[data-bs-page=home][data-bs-banner-underlap=true] body{padding-top:0!important}
+html[data-bs-page=home][data-bs-banner-underlap=true] [data-bs-banner=true]{height:calc(clamp(100px,8vw,142px) + var(--bs-header-height,58px))!important}
+html[data-bs-page=home][data-bs-banner-underlap=true] [data-bs-banner=true] .inner-logo{position:relative!important;top:var(--bs-header-height,58px)!important}
+html[data-bs-page=home][data-bs-banner-underlap=true] .bs-banner-brand{top:calc(50% + var(--bs-header-height,58px)/2)!important}
+[data-bs-motion=static] .banner-img{transition:none!important;transform:none!important}}
 
 #bs-pip-danmaku[hidden]{display:none!important}#bs-pip-danmaku{position:fixed;z-index:2147483002;overflow:hidden;pointer-events:none;visibility:hidden}html[data-bs-pip=true] #bs-pip-danmaku:not([hidden]),html[data-bs-pip=true] #bs-pip-danmaku:not([hidden]) *{visibility:visible!important}.bs-pip-comment{position:absolute;left:0;white-space:nowrap;font-family:BiliDouyin,"Microsoft YaHei",sans-serif;font-weight:600;line-height:1.35;text-shadow:1px 1px 2px #000,-1px -1px 2px #000;will-change:transform;pointer-events:none}
 .bs-pip-controls button{width:36px;height:36px;padding:6px;display:grid;place-items:center}.bs-pip-controls svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.bs-pip-play svg{stroke-width:2.8}.pip-play-glyph{fill:currentColor;stroke:none;transform-origin:center;opacity:0;transform:scale(.75) rotate(-20deg)}.pip-pause-glyph{transform-origin:center;opacity:1;transform:scale(1)}.bs-pip-play[data-paused=true] .pip-play-glyph{opacity:1;transform:scale(1) rotate(0)}.bs-pip-play[data-paused=true] .pip-pause-glyph{opacity:0;transform:scale(.75)}.pip-play-glyph,.pip-pause-glyph{transition:opacity 160ms cubic-bezier(.23,1,.32,1),transform 180ms cubic-bezier(.23,1,.32,1)}
@@ -831,6 +1377,28 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(
 `;
 
 const shellCss=`
+.search-panel{border:0!important;top:calc(100% + 4px)!important;transform-origin:50% 0;box-shadow:0 16px 40px #0004,0 4px 12px #0002!important}
+.settings-group{margin:0 0 12px;padding:0;border:0}.settings-group>summary{display:flex;align-items:center;gap:10px;padding:16px 0;cursor:pointer;color:var(--ink);font-size:15px;font-weight:600;list-style:none}.settings-group>summary::-webkit-details-marker{display:none}.settings-group>summary::after{content:"⌄";margin-left:auto;color:var(--muted);font-size:16px}.settings-group[open]>summary::after{transform:rotate(180deg)}.settings-group>summary small{font-size:11px;font-weight:400;color:var(--muted)}.settings-group .section-label{display:none}.settings-group .row{min-height:54px;padding-block:12px}
+
+:host{--frost-base:rgba(35,35,40,.76);--frost-shadow:0 8px 28px #0003;--frost-tint:color-mix(in srgb,var(--accent) 9%,var(--frost-base));--frost-filter:blur(18px) saturate(125%)}
+:host([data-theme=light]){--frost-base:rgba(255,255,255,.78);--frost-shadow:0 8px 28px #29293418}
+#clipboard-video-prompt{position:fixed;right:24px;bottom:24px;width:310px;max-width:calc(100vw - 32px);padding:20px;border:0;border-radius:20px;background:var(--frost-base);background:var(--frost-tint);color:var(--ink);box-shadow:var(--frost-shadow);backdrop-filter:var(--frost-filter);-webkit-backdrop-filter:var(--frost-filter);pointer-events:auto;z-index:50}
+#clipboard-video-prompt strong{font-size:15px}#clipboard-video-prompt p{margin:7px 0;color:var(--muted)}#clipboard-video-prompt small{color:var(--muted);overflow-wrap:anywhere}.clipboard-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}.clipboard-actions button{border:0;border-radius:10px;padding:9px 14px;background:var(--frost-base);box-shadow:0 3px 10px #0001}.clipboard-actions [data-open]{color:var(--accent);font-weight:600}
+:host([data-frost=true]) :is(button,.search,.account-card,.favorites-panel,.dialog,.upload,.messages,.favorites-toggle,.account){border-color:transparent!important;background:var(--frost-base)!important;background:var(--frost-tint)!important;background-image:none!important;box-shadow:var(--frost-shadow)!important;backdrop-filter:var(--frost-filter);-webkit-backdrop-filter:var(--frost-filter)}
+:host([data-frost=true]) :is(button,.upload,.messages,.favorites,.chip){background:var(--frost-control,var(--frost-tint))!important;background-image:linear-gradient(140deg,#ffffff0a,transparent 70%)!important;border-color:transparent!important;backdrop-filter:var(--frost-filter);-webkit-backdrop-filter:var(--frost-filter)}
+:host([data-frost=true]) #chrome .account-card :is(button,.account-switch){background:var(--frost-control,var(--frost-tint))!important;box-shadow:var(--frost-shadow)!important;backdrop-filter:var(--frost-filter)!important;-webkit-backdrop-filter:var(--frost-filter)!important}
+:host([data-frost=true]) #chrome :is(.header-left,.header-right) > :is(button,a,input,.search),:host([data-frost=true]) #chrome :is(.nav-lane,.window-actions) :is(button,a),:host([data-frost=true]) #chrome .search input,:host([data-frost=true]) #chrome .account-wrap>.account,:host([data-frost=true]) #chrome .favorites-wrap>.favorites{border-color:transparent!important;background:transparent!important;background-image:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:host([data-frost=true]) .lights .light.close{background:#ff5f57!important}:host([data-frost=true]) .lights .light.min{background:#febc2e!important}:host([data-frost=true]) .lights .light.max{background:#28c840!important}
+:host([data-frost=true]) #chrome :is(.primary-nav a,.messages,.favorites,.account){color:var(--ink)}
+:host([data-frost=true]) #chrome .search{border-radius:12px;background:#ffffff07!important;box-shadow:0 3px 14px #0000000a!important}
+:host([data-frost=true]) #chrome :is(button,a):hover{background:#ffffff0a!important;border-radius:8px}
+:host([data-frost=true]) #chrome{position:relative;background:transparent!important;box-shadow:0 8px 22px #00000008!important;isolation:isolate}
+:host([data-frost=true]) #chrome::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(to bottom,#ffffff0c,transparent),linear-gradient(to bottom,var(--frost-tint) 0%,var(--frost-tint) 70%,transparent 100%);backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:var(--frost-filter);mask-image:linear-gradient(#000 0%,#000e 65%,#000a 85%,transparent 100%);-webkit-mask-image:linear-gradient(#000 0%,#000e 65%,#000a 85%,transparent 100%)}
+@media(prefers-reduced-transparency:reduce){:host{--frost-base:var(--panel);--frost-filter:none}}
+/* Corner buttons float over the page, so they keep a hairline edge even when frosted. */
+:host :is(.upload,#settings-trigger){border:1px solid #ffffff1f!important;box-shadow:0 1px 3px #0000004d,0 6px 18px #00000040!important}
+:host([data-theme=light]) :is(.upload,#settings-trigger){border-color:#0000001c!important;box-shadow:0 1px 3px #0000001f,0 6px 18px #0000001a!important}
+
 :host{all:initial;font-family:var(--font,BiliDouyin,"Microsoft YaHei UI",sans-serif);color:#f5f5f7;--accent:#fb7299;--bg:#202023;--panel:#27272b;--ink:#f5f5f7;--muted:#adadb7;--line:#ffffff12;--field:#333338;position:fixed;inset:0;z-index:2147483646;pointer-events:none;font-size:14px}
 :host{color-scheme:dark}:host([data-theme=light]){color-scheme:light;--bg:#f8f8fa;--panel:#fff;--ink:#25252a;--muted:#696973;--line:#00000012;--field:#ededf1;color:var(--ink)}
 *{scrollbar-width:none!important}*::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
@@ -839,33 +1407,34 @@ svg{width:20px;height:20px;vertical-align:middle}a{color:inherit;text-decoration
 header{height:var(--bs-header-height,58px);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:16px;padding:0 24px;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);pointer-events:auto;user-select:none}
 .video-home-top{position:absolute;left:0;top:50%;height:32px;width:64px;display:inline-flex;align-items:center;justify-content:flex-start;gap:8px;font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;opacity:0;transform:translate(-8px,-50%);pointer-events:none;transition:opacity 180ms cubic-bezier(.23,1,.32,1),transform 240ms cubic-bezier(.23,1,.32,1)}.video-home-top[hidden]{display:none}.video-home-top svg{display:block;width:20px;height:20px;flex:0 0 20px;color:var(--accent)}.header-left[data-video=true] .video-home-top{opacity:1;transform:translate(0,-50%);pointer-events:auto}.header-left>.lights,.header-left>.back,.header-left>.nav-lane{transition:transform 240ms cubic-bezier(.23,1,.32,1);transform:translateX(0)}.header-left[data-video=true]>.lights,.header-left[data-video=true]>.back,.header-left[data-video=true]>.nav-lane{transform:translateX(80px)}.header-left[data-video=true]{padding-right:80px;--header-home-shift:80px}@media(max-width:800px){.header-left[data-video=true]>.back{display:none}.header-left[data-video=true]{grid-column:1/-1}.header-left[data-video=true]~.brand{visibility:hidden}}@media(prefers-reduced-motion:reduce){.video-home-top,.header-left>.lights,.header-left>.back,.header-left>.nav-lane{transition:none!important}}
 
-.header-left nav a{display:inline-flex;align-items:center;justify-content:center;height:32px;line-height:20px}.header-left>.lights{height:32px}.header-left[data-controls=windows]>.lights{display:none!important}.header-left[data-controls=windows]>.nav-lane{order:0}.header-left[data-controls=windows]>.back{order:0;margin-left:0}.window-actions{display:flex;gap:3px;align-items:center;margin-left:12px;padding-left:12px;border-left:1px solid var(--line);flex-shrink:0}.window-actions button{width:28px;height:32px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent}.window-actions button:hover{background:var(--field)}.window-actions button:last-child:hover{background:#e55353;color:white}.window-actions svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.5;fill:none;display:block}.header-left[data-controls=windows][data-video=true]>.back,.header-left[data-controls=windows][data-video=true]>.nav-lane{transform:translateX(0)}.header-left[data-controls=windows][data-video=true]{padding-right:0;--header-home-shift:0px}.header-left[data-controls=windows] .video-home-top{position:static;width:auto;gap:8px;padding-right:12px;border-right:1px solid var(--line);opacity:1;transform:none;pointer-events:auto}.header-left[data-controls=windows] .video-home-top svg{color:var(--accent)}.header-left[data-controls=windows][data-video=true] .primary-nav a[data-route=home]{display:none}.window-actions[hidden]{display:none!important}
+.header-left nav a{padding:0 10px;border-radius:10px;min-width:48px;display:inline-flex;align-items:center;justify-content:center;height:32px;line-height:20px}.header-left>.lights{height:32px}.header-left[data-controls=windows]>.lights{display:none!important}.header-left[data-controls=windows]>.nav-lane{order:0}.header-left[data-controls=windows]>.back{order:0;margin-left:0}.window-actions{display:flex;gap:3px;align-items:center;margin-left:12px;padding-left:12px;border-left:1px solid var(--line);flex-shrink:0}.window-actions button{width:28px;height:32px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent}.window-actions button:hover{background:var(--field)}.window-actions button:last-child:hover{background:#e55353;color:white}.window-actions svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.5;fill:none;display:block}.header-left[data-controls=windows][data-video=true]>.back,.header-left[data-controls=windows][data-video=true]>.nav-lane{transform:translateX(0)}.header-left[data-controls=windows][data-video=true]{padding-right:0;--header-home-shift:0px}.header-left[data-controls=windows] .video-home-top{position:static;width:auto;gap:8px;padding-right:12px;border-right:1px solid var(--line);opacity:1;transform:none;pointer-events:auto}.header-left[data-controls=windows] .video-home-top svg{color:var(--accent)}.header-left[data-controls=windows][data-video=true] .primary-nav a[data-route=home]{display:none}.window-actions[hidden]{display:none!important}
 .header-left{position:relative;grid-column:1;grid-row:1;display:flex;align-items:center;gap:16px;min-width:0;max-width:100%;height:100%}.header-right{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:14px;min-width:0;height:100%}
 .back{flex-shrink:0}.nav-lane{position:relative;flex:1;min-width:0;height:100%;display:flex;align-items:center;overflow:hidden}.nav-lane .primary-nav{transition:transform 240ms cubic-bezier(0.23,1,0.32,1);will-change:transform}
-.category-links{position:absolute;left:0;top:0;height:100%;width:var(--category-space,0px);display:flex;align-items:center;gap:18px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 16px),transparent);opacity:0;transform:translateX(-12px);transition:opacity 180ms ease,transform 240ms cubic-bezier(0.23,1,0.32,1);pointer-events:none}.category-links::-webkit-scrollbar{display:none}
-.category-links a{flex-shrink:0;font-size:15px;white-space:nowrap;color:var(--muted);padding:8px 0}.category-links a:hover,.category-links a:focus-visible{color:var(--accent)}.header-left[data-categories=true] .category-links{opacity:1;transform:translateX(0);pointer-events:auto}.back{transition:transform 180ms ease}.header-left[data-categories=true] .back{color:var(--accent);transform:translateX(var(--header-home-shift,0px))}.nav-lane.instant .primary-nav,.nav-lane.instant .category-links{transition:none}
-.back svg{transform:rotate(0deg);transition:transform 180ms cubic-bezier(.23,1,.32,1)}.back[aria-expanded=true] svg{transform:rotate(180deg)}.back[data-instant=true] svg{transition:none}@media(prefers-reduced-motion:reduce){.back svg{transition:none!important}}
-.lights{display:flex;align-items:center;flex:0 0 auto;gap:9px;margin-right:0}.lights .light{display:block;flex:0 0 14px;width:14px;height:14px;min-width:14px;border:0;border-radius:50%;padding:0;position:relative;line-height:0;appearance:none}.light.close{background:#ff5f57}.light.min{background:#febc2e}.light.max{background:#28c840}.lights .light svg{display:block;position:absolute;inset:3px;width:8px;height:8px;fill:none;stroke:#111a;stroke-width:1.4;stroke-linecap:round;opacity:1;pointer-events:none;transition:opacity 150ms ease}.lights:hover svg,.lights .light:focus-visible svg{opacity:1}
+.category-links{position:absolute;left:0;top:0;height:100%;width:var(--category-space,0px);display:flex;align-items:center;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 16px),transparent);opacity:0;transform:translateX(-12px);transition:opacity 180ms cubic-bezier(.2,.8,.2,1),transform 240ms cubic-bezier(0.23,1,0.32,1);pointer-events:none}.category-links::-webkit-scrollbar{display:none}
+.category-links a{flex-shrink:0;font-size:15px;white-space:nowrap;color:var(--muted);padding:6px 8px}.category-links a:hover,.category-links a:focus-visible{color:var(--accent)}.header-left[data-categories=true] .category-links{opacity:1;transform:translateX(0);pointer-events:auto}.back{transition:transform 180ms cubic-bezier(.2,.8,.2,1)}.header-left[data-categories=true] .back{color:var(--accent);transform:translateX(var(--header-home-shift,0px))}.nav-lane.instant .primary-nav,.nav-lane.instant .category-links{transition:none}
+.window-actions button>svg{grid-area:1/1;transform-origin:50% 50%}.window-actions .motion-ghost{pointer-events:none}
+.back svg{transform:rotate(0deg);transition:transform 491ms cubic-bezier(.34,1.56,.64,1)}.back[aria-expanded=true] svg{transform:rotate(180deg)}.back[data-instant=true] svg{transition:none}@media(prefers-reduced-motion:reduce){.back svg{transition:none!important}}
+.lights{display:flex;align-items:center;flex:0 0 auto;gap:9px;margin-right:0}.lights .light{display:block;flex:0 0 14px;width:14px;height:14px;min-width:14px;border:0;border-radius:50%;padding:0;position:relative;line-height:0;appearance:none}.light.close{background:#ff5f57}.light.min{background:#febc2e}.light.max{background:#28c840}.lights .light svg{display:block;position:absolute;inset:3px;width:8px;height:8px;fill:none;stroke:#111a;stroke-width:1.4;stroke-linecap:round;opacity:1;pointer-events:none;transition:opacity 150ms cubic-bezier(.2,.8,.2,1)}.lights:hover svg,.lights .light:focus-visible svg{opacity:1}
 .lights .light:before{content:'';position:absolute;inset:-5px;border-radius:50%}
 .video-link{display:inline-flex;align-items:center;gap:6px;flex:0 1 210px;min-width:36px;max-width:210px;height:32px;padding:0 9px;margin-left:auto;overflow:hidden;border:1px solid color-mix(in srgb,var(--muted) 45%,transparent);border-radius:7px;background:transparent;color:var(--muted);text-align:left;cursor:pointer}.video-link svg{width:15px;height:15px;flex:0 0 15px}.video-link-text{font:12px/18px Consolas,"Cascadia Mono",monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.video-link:hover,.video-link[data-copied=true]{border-color:var(--accent);color:var(--accent)}.header-left[data-video=true]>.video-link{transform:translateX(80px)}.header-left[data-controls=windows][data-video=true]>.video-link{transform:none}.header-left:has(.video-link:not([hidden]))>.nav-lane{flex:0 1 auto}.header-left:has(.video-link:not([hidden])) .primary-nav{flex-shrink:0}.video-link:focus-visible{outline:2px solid var(--accent);outline-offset:3px}@media(max-width:1050px){.video-link{flex-basis:100px;max-width:100px}}@media(max-width:600px){.video-link{flex-basis:36px;max-width:36px}.video-link-text{display:none}}
 .header-left[data-categories=true]>.nav-lane{flex:1 1 0!important;min-width:72px}.header-left[data-categories=true]>.video-link{flex:0 0 36px;max-width:36px}.header-left[data-categories=true]>.video-link .video-link-text{display:none}.category-empty{font-size:12px;white-space:nowrap;background:transparent;border:0;padding:6px;color:var(--muted)}
 @media(max-width:1050px){.header-left>.nav-lane{transform:none!important}.header-left[data-video=true]{padding-left:80px;padding-right:0}.header-left[data-video=true]>.lights,.header-left[data-video=true]>.back,.header-left[data-video=true]>.nav-lane,.header-left[data-video=true]>.video-link{transform:none}.header-left[data-controls=windows][data-video=true]{padding-left:0}}
-.brand{position:relative;display:inline-flex;align-items:center;grid-column:2;grid-row:1;justify-self:center;font-family:BiliDouyin,sans-serif;font-size:16px;white-space:nowrap;letter-spacing:-.5px}.brand-leading{position:absolute;right:calc(100% + 12px);display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;width:max-content;overflow:hidden}.brand-leading .video-link{margin:0;flex:0 1 180px;max-width:180px;min-width:32px;transform:none!important}.brand-leading[data-compact=true] .video-link{flex:0 0 32px;max-width:32px;padding-inline:7px}.brand-leading[data-compact=true] .video-link-text{display:none}.header-clock{flex:0 0 auto;color:var(--muted);font:500 12px/32px Consolas,monospace;font-variant-numeric:tabular-nums;letter-spacing:.3px}.brand b{font-weight:400;color:var(--accent)}
-nav{display:flex;flex-shrink:0;gap:22px;height:100%;align-items:center}nav a{font-size:14px;color:var(--muted);position:relative}nav a[aria-current=page]{color:var(--ink)}nav a[aria-current=page]:after{content:'';position:absolute;left:25%;right:25%;bottom:-10px;height:2px;border-radius:2px;background:var(--accent)}nav a:hover{color:var(--accent)}
-.search{flex:1;margin-left:0;width:0;min-width:60px;max-width:380px;position:relative}.search input{width:100%;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;padding:9px 36px 9px 13px;outline-offset:1px;font-size:12px}.search > button{position:absolute;right:7px;top:5px;border:0;background:none;color:var(--muted);padding:4px}
+.brand{position:relative;display:inline-flex;align-items:center;grid-column:2;grid-row:1;justify-self:center;font-family:BiliDouyin,sans-serif;font-size:16px;white-space:nowrap;letter-spacing:-.5px}.brand-leading{position:absolute;right:calc(100% + 12px);display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;width:max-content;overflow:hidden}.brand-leading .video-link{margin:0;flex:0 1 180px;max-width:180px;min-width:32px;transform:none!important}.brand-leading[data-compact=true] .video-link{flex:0 0 32px;max-width:32px;padding-inline:7px}.brand-leading[data-compact=true] .video-link-text{display:none}.video-link[data-mini=true]{flex:0 0 32px;max-width:32px;min-width:32px;padding:0;justify-content:center;border-radius:9px}.video-link[data-mini=true] .video-link-text{display:none}.video-link[data-mini=true] svg{width:16px;height:16px;flex-basis:16px;transition:transform .2s cubic-bezier(.32,.72,0,1)}.video-link[data-mini=true]:hover svg{transform:rotate(-12deg)}.video-link[data-mini=true][data-copied=true] svg{transform:scale(1.12)}.header-clock{flex:0 0 auto;color:var(--muted);font:13px/32px BiliDouyin,"Microsoft YaHei UI",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.4px}.brand b{font-weight:400;color:var(--accent)}
+nav{display:flex;flex-shrink:0;gap:4px;height:100%;align-items:center}nav a{font-size:14px;color:var(--muted);position:relative}nav a[aria-current=page]{color:var(--ink)}nav a[aria-current=page]:after{content:'';position:absolute;left:25%;right:25%;bottom:-10px;height:2px;border-radius:2px;background:var(--accent)}nav a:hover{color:var(--accent)}
+.search{flex:1;margin-left:0;width:0;min-width:60px;max-width:380px;position:relative}.search-quip{position:absolute;left:14px;right:38px;top:0;bottom:0;display:none;pointer-events:none;overflow:hidden;color:var(--muted);font-size:12px}.search-quip[data-on]{display:block}.search-quip>span{position:absolute;left:0;right:0;top:50%;height:20px;margin-top:-10px;line-height:20px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;will-change:transform,opacity,filter}.search-quip>.sq-trail{opacity:0}.search-quip>.sq-line{opacity:0}.search input{width:100%;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:9px;padding:9px 36px 9px 13px;outline-offset:1px;font-size:12px}.search > button{position:absolute;right:7px;top:50%;translate:0 -50%;border:0;background:none;color:var(--muted);padding:4px}
 .account-wrap{position:relative;flex:0 0 auto}.account-card{position:absolute;right:0;top:calc(100% + 10px);width:290px;max-width:calc(100vw - 32px);padding:18px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 36px #0003;opacity:0;transform:translateY(-4px) scale(.98);transform-origin:top right;transition:opacity 180ms cubic-bezier(.23,1,.32,1),transform 180ms cubic-bezier(.23,1,.32,1);pointer-events:none}.account-card[data-open=true]{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}.account-card[hidden]{display:none}.account-identity{display:flex;align-items:center;gap:12px}.account-card-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}.account-banner{height:100px;margin:-18px -18px 14px;overflow:hidden;border-radius:13px 13px 0 0;background:var(--field)}.account-banner[hidden],.account-portrait[hidden],.account-vip-label[hidden]{display:none}.account-banner img,.account-banner video{display:block;width:100%;height:100%;object-fit:cover}.account-portrait{position:relative;width:52px;height:52px;flex-shrink:0}.account-portrait .account-face{width:52px;height:52px;border-radius:50%;object-fit:cover}.account-vip-label{font-size:10px;background:#fb729918;color:#fb7299;border-radius:4px;padding:2px 5px}.account-portrait .account-pendant{position:absolute;inset:-9px;width:70px;height:70px;object-fit:contain;pointer-events:none}.account-portrait .account-vip-badge{position:absolute;right:-1px;bottom:-1px;width:17px;height:17px;object-fit:contain}.account-name{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.account-level{color:var(--accent);font-size:12px;flex-shrink:0}.account-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px;text-align:center}.account-stats b{display:block;font-size:15px;overflow-wrap:anywhere}.account-stats span{font-size:12px;color:var(--muted)}.account-status{font-size:11px;color:var(--muted);line-height:1.5;margin:14px 0 0}@media(prefers-reduced-motion:reduce){.account-card{transition:none!important}}
-.account{font-size:12px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-width:30px;height:32px}.account{position:relative;overflow:visible!important}.account .account-face{width:30px;height:30px;display:block;border-radius:50%;object-fit:cover;border:1px solid var(--line)}.account .account-pendant{position:absolute;inset:-5px;width:40px;height:40px;object-fit:contain;pointer-events:none}.account .account-vip-badge{position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;object-fit:contain;pointer-events:none}.upload{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;height:32px;padding:0 14px;border-radius:8px;background:#fb7299;color:#fff!important;font-size:13px;font-weight:500;line-height:20px}.upload:hover{background:#ff85a7}.upload:active{transform:scale(.97)}.messages{position:relative;overflow:visible;display:flex;align-items:center;justify-content:center;width:32px;height:34px;flex-shrink:0;color:var(--muted);border-radius:8px}.message-unread{position:absolute;top:-2px;right:-6px;min-width:18px;height:18px;padding:0 4px;border:2px solid var(--bg);border-radius:10px;background:#f04452;color:#fff;font:600 10px/14px "Segoe UI",sans-serif;text-align:center;white-space:nowrap;pointer-events:none}.message-unread[data-kind=dot]{top:2px;right:1px;width:9px;min-width:9px;height:9px;padding:0;border-radius:50%}.messages:hover{background:var(--field);color:var(--ink)}.back{background:none;border:0;color:var(--muted);display:grid;place-items:center;width:26px;height:32px;line-height:0;padding:0}.back svg{display:block;width:20px;height:20px}
+.account{font-size:12px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-width:30px;height:32px}.account{position:relative;overflow:visible!important}.account .account-face{width:30px;height:30px;display:block;border-radius:50%;object-fit:cover;border:1px solid var(--line)}.account[data-pending=true]{width:30px;min-width:30px;border-radius:50%;background:var(--field);border:1px solid var(--line);animation:bs-account-pending 1.4s ease-in-out infinite}.account[data-pending=true]::after{content:'';width:12px;height:12px;border-radius:50%;background:var(--muted);opacity:.45}@keyframes bs-account-pending{0%,100%{opacity:.55}50%{opacity:.9}}@media(prefers-reduced-motion:reduce){.account[data-pending=true]{animation:none}}.account .account-pendant{position:absolute;inset:-5px;width:40px;height:40px;object-fit:contain;pointer-events:none}.account .account-vip-badge{position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;object-fit:contain;pointer-events:none}.upload{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;height:32px;padding:0 14px;border-radius:8px;background:#fb7299;color:#fff!important;font-size:13px;font-weight:500;line-height:20px}.upload:hover{background:#ff85a7}.upload:active{transform:scale(.97)}.messages{position:relative;overflow:visible;display:flex;align-items:center;justify-content:center;width:32px;height:34px;flex-shrink:0;color:var(--muted);border-radius:8px}.message-unread{position:absolute;top:-2px;right:-6px;min-width:18px;height:18px;padding:0 4px;border:2px solid var(--bg);border-radius:10px;background:#f04452;color:#fff;font:600 10px/14px "Segoe UI",sans-serif;text-align:center;white-space:nowrap;pointer-events:none}.message-unread[data-kind=dot]{top:2px;right:1px;width:9px;min-width:9px;height:9px;padding:0;border-radius:50%}.messages:hover{background:var(--field);color:var(--ink)}.back{overflow:hidden;background:none;border:0;color:var(--muted);display:grid;place-items:center;width:26px;height:32px;line-height:0;padding:0}.back svg{display:block;width:20px;height:20px}
 .search[aria-busy=true] > button svg{opacity:0}.search[aria-busy=true] > button:after{content:'';position:absolute;inset:6px;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:bs-search-spin .7s linear infinite}.search[aria-busy=true]:after{content:'';position:fixed;left:0;right:0;top:calc(var(--bs-header-height,58px) - 1px);height:2px;background:var(--accent);transform-origin:left;animation:bs-search-progress 1.2s ease-in-out infinite}
 .search-panel{position:absolute;top:calc(100% + 9px);left:0;right:0;max-height:min(460px,calc(100vh - var(--bs-header-height,58px) - 24px));overflow:auto;overscroll-behavior:contain;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 12px 32px #0004;pointer-events:auto;text-align:left}.search-panel[hidden]{display:none}.search-panel h2{position:relative;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0 9px;font-size:12px;color:var(--muted);font-weight:500}.search-panel p{font-size:12px;color:var(--muted);margin:12px 2px}.search-history-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.search-history-chip{display:inline-flex;align-items:center;max-width:100%;min-width:0;background:var(--field);border-radius:6px}.search-history-chip .search-choice{flex:0 1 auto!important;max-width:200px;padding:6px 8px!important;font-size:12px!important}.search-history-chip .search-remove{width:22px!important;height:24px!important;font-size:16px!important}.search-row{display:flex;align-items:center;min-width:0;border-radius:7px}.search-panel button{border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}.search-panel .search-choice{flex:1;min-width:0;text-align:left;padding:9px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;border-radius:7px}.search-choice:hover,.search-choice.selected{background:var(--field);color:var(--accent)}.search-panel .search-remove{flex:none;width:28px;height:28px;color:var(--muted);font-size:19px;border-radius:6px}.search-remove:hover,.search-panel .search-clear:hover{color:var(--accent);background:var(--field)}.search-panel .search-clear{padding:3px 5px;color:var(--muted);font-size:11px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @keyframes bs-search-spin{to{transform:rotate(360deg)}}@keyframes bs-search-progress{0%{transform:scaleX(.1)}70%{transform:scaleX(.85)}100%{transform:scaleX(1);opacity:.35}}
-#settings-trigger{position:fixed;bottom:22px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
+:host([data-web-full]) :is(#settings-trigger,.upload,#feed-roll,#page-top){opacity:0!important;transform:translateY(8px)!important;pointer-events:none!important}:is(#settings-trigger,.upload){transition:opacity .24s cubic-bezier(.32,.72,0,1),transform .24s cubic-bezier(.32,.72,0,1)}#settings-trigger{position:fixed;bottom:22px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
 #settings-trigger svg{width:23px;height:23px}#settings-trigger circle,#settings-trigger path{stroke:currentColor}
 .scrim{position:fixed;inset:0;background:#08080c80;display:grid;place-items:center;padding:40px;pointer-events:auto}
-.dialog{width:min(940px,100%);height:min(660px,calc(100vh - 80px));min-height:260px;min-width:min(360px,100%);max-width:100%;max-height:100%;resize:both;display:grid;grid-template-columns:210px 1fr;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 32px 100px #0006;overflow:hidden}
+.dialog{width:min(940px,100%);height:min(660px,calc(100vh - 80px));min-height:260px;min-width:min(360px,100%);max-width:100%;max-height:100%;resize:both;display:grid;grid-template-columns:calc(210px * var(--bs-settings-zoom,1)) 1fr;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 32px 100px #0006;overflow:hidden}#settings .dialog>:is(aside,main){zoom:var(--bs-settings-zoom,1)}
 aside{border-right:1px solid var(--line);padding:28px 16px;display:flex;flex-direction:column;background:var(--panel);min-height:0;overflow:hidden}.eyebrow{font:10px/1.5 Consolas,monospace;letter-spacing:2px;color:var(--muted)}h1{font-size:21px;letter-spacing:-.5px;font-weight:400;margin:7px 10px 28px}.eyebrow{margin-left:10px}
 .tabs{display:grid;gap:6px;flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;min-height:0;padding-right:4px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}.tabs button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;border-radius:9px;padding:11px 12px;color:var(--muted);font-size:13px}.tabs button[aria-selected=true]{background:var(--field);color:var(--ink)}.tabs button[aria-selected=true] svg{color:var(--accent)}.aside-footer{margin-top:auto;padding:10px;color:var(--muted);font-size:11px;line-height:1.8}.aside-footer b{display:block;color:var(--ink);font-weight:400;font-size:12px}
-#settings-query{width:100%;min-width:0;box-sizing:border-box;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:inherit;font-size:12px;margin-bottom:8px}#settings-query:focus-visible{outline:2px solid var(--accent);outline-offset:2px}#settings-search-status{margin:0 0 8px;color:var(--muted);font-size:11px;line-height:1.5}#settings-search-status:empty{display:none}.settings-matches{min-height:0;max-height:min(360px,40vh);overflow:auto;display:grid;gap:4px}.settings-match{display:flex;flex-direction:column;gap:4px;text-align:left;padding:10px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:12px;cursor:pointer;overflow-wrap:anywhere}.settings-match:hover,.settings-match:focus-visible{background:var(--field);outline:2px solid var(--accent);outline-offset:-2px}.settings-match small{color:var(--muted);font-size:10px}
+#settings-query{width:100%;min-width:0;box-sizing:border-box;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:inherit;font-size:12px;margin-bottom:8px}#settings-query:focus-visible{outline:2px solid var(--accent);outline-offset:2px}#settings-search-status{margin:0 0 8px;color:var(--muted);font-size:11px;line-height:1.5}#settings-search-status:empty{display:none}.settings-matches{min-height:0;max-height:min(360px,40vh);overflow:auto;display:grid;gap:4px}.settings-egg span{color:var(--accent)}.settings-match{display:flex;flex-direction:column;gap:4px;text-align:left;padding:10px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:12px;cursor:pointer;overflow-wrap:anywhere}.settings-match:hover,.settings-match:focus-visible{background:var(--field);outline:2px solid var(--accent);outline-offset:-2px}.settings-match small{color:var(--muted);font-size:10px}
 main{padding:34px 36px;overflow:auto;position:relative;scrollbar-width:thin;scrollbar-color:var(--muted) var(--bg)}#dismiss{position:absolute;right:22px;top:22px;background:var(--field);color:var(--muted);border:0;width:28px;height:28px;border-radius:50%;font:20px/1 sans-serif}
 h2{font-size:23px;font-weight:400;letter-spacing:-.5px;margin:0 0 6px}p.subtitle{font-size:12px;color:var(--muted);margin:0 0 25px;line-height:1.8;max-width:90%}.section-label{font-size:10px;color:var(--muted);letter-spacing:1px;margin:25px 0 11px}
 .themes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.theme{background:none;border:1px solid var(--line);border-radius:10px;padding:8px 8px 10px;text-align:left;font-size:12px}.theme[aria-pressed=true]{border-color:var(--accent)}.theme span{display:block;padding:9px 3px 0}.mini{height:68px;border-radius:5px;background:#fafafa;display:flex;padding:9px;gap:7px}.mini.dark{background:#151517}.mini.auto{background:linear-gradient(90deg,#fafafa 50%,#151517 50%)}.mini i{width:17%;background:#92929e35;border-radius:3px}.mini em{flex:1;background:#92929e25;border-radius:3px;margin-top:13px;position:relative}.mini em:before{content:'';position:absolute;top:-13px;left:0;width:40%;height:6px;border-radius:3px;background:#92929e35}
@@ -873,17 +1442,34 @@ h2{font-size:23px;font-weight:400;letter-spacing:-.5px;margin:0 0 6px}p.subtitle
 input[type=checkbox]{appearance:none;width:34px;height:20px;border-radius:12px;background:#77778070;position:relative;cursor:pointer;flex-shrink:0;margin:0}input[type=checkbox]:before{content:'';width:14px;height:14px;position:absolute;top:3px;left:3px;border-radius:50%;background:#fff;transition:transform 130ms ease-out}input[type=checkbox]:checked{background:var(--accent)}input[type=checkbox]:checked:before{transform:translateX(14px)}input[type=color]{width:34px;height:28px;cursor:pointer;border:1px solid var(--line);border-radius:6px;background:var(--field);padding:3px}
 input[type=range]{width:130px;accent-color:var(--accent)}.range{display:flex;align-items:center;gap:10px}.range output{font:11px Consolas,monospace;width:36px;color:var(--muted)}
 .preview{height:88px;background:#111113;border-radius:10px;margin-top:18px;position:relative;color:#fff;overflow:hidden}.preview:before{content:'进度条预览';position:absolute;left:18px;top:14px;font-size:11px;color:#c0c0c8}.track{height:var(--height);position:absolute;bottom:20px;left:18px;right:18px;background:#ffffff25;border-radius:var(--radius)}.buffer{position:absolute;inset:0 20% 0 0;background:#ffffff30;border-radius:inherit}.played{position:absolute;inset:0 42% 0 0;background:var(--progress);border-radius:inherit}.thumb{position:absolute;right:0;top:50%;width:10px;height:10px;background:var(--progress);border-radius:50%;transform:translate(50%,-50%)}
-.note{padding:12px 15px;background:var(--field);border-radius:8px;color:var(--muted);font-size:11px;line-height:1.9;margin-top:20px}.note strong{color:var(--ink);font-weight:400}.link{background:none;border:0;padding:0;color:var(--accent);font-size:12px}.actions{display:flex;gap:20px;align-items:center;margin-top:22px}.status{font-size:11px;color:var(--muted)}#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--panel);color:var(--ink);padding:13px 22px;border-radius:10px;border:1px solid var(--line);box-shadow:0 8px 32px #0003;max-width:80vw;font-size:12px;pointer-events:auto}
+.note{padding:12px 15px;background:var(--field);border-radius:8px;color:var(--muted);font-size:11px;line-height:1.9;margin-top:20px}.note strong{color:var(--ink);font-weight:400}.link{background:none;border:0;padding:0;color:var(--accent);font-size:12px}.actions{display:flex;gap:20px;align-items:center;margin-top:22px}
+#settings .dialog .compact-tab .row{min-height:46px;padding-block:8px;gap:14px}#settings .dialog .compact-tab .actions{margin:8px 0 4px}#settings .dialog .compact-tab .section-label{margin:16px 0 2px;padding-top:0}#settings .dialog .compact-tab #plugins44-panel .hint{margin:4px 0}.compact-tab h2{margin-bottom:6px}.compact-tab input:disabled{opacity:.55;cursor:not-allowed}#plugins44-panel .hint:empty{display:none}
+#plugins44-panel .actions{margin-top:12px;flex-wrap:wrap;gap:14px}#plugins44-panel .primary{border:0;border-radius:9px;padding:8px 14px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 3px 10px color-mix(in srgb,var(--accent) 28%,transparent)}#plugins44-panel .primary:active{scale:.97}#plugins44-panel .plugin-card{margin:12px 0;padding:2px 16px 12px;border-radius:12px;background:var(--field);box-shadow:0 2px 10px #0000000d}#plugins44-panel .plugin-card .row{border-bottom-color:color-mix(in srgb,var(--line) 70%,transparent)}#plugins44-panel .plugin-card .row:last-of-type{border-bottom:0}#plugins44-panel .plugin-setting{min-height:48px;padding-block:10px}#plugins44-panel .plugin-error{color:#e5484d}#plugins44-panel .link.danger{color:#e5484d}.status{font-size:11px;color:var(--muted)}#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--panel);color:var(--ink);padding:13px 22px;border-radius:10px;border:1px solid var(--line);box-shadow:0 8px 32px #0003;max-width:80vw;font-size:12px;pointer-events:auto}
 .chip-actions{display:flex;gap:18px;margin:0 0 16px}.chip-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.chip{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;cursor:pointer;background:var(--panel);pointer-events:auto}.chip input{margin:0;pointer-events:auto}.chip:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
 @media(max-width:1050px){.chip-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:1050px){nav{gap:14px}.header-left,.header-right{gap:12px}header{gap:12px}.dialog{grid-template-columns:170px 1fr}main{padding:30px 25px}}
+@media(max-width:1050px){nav{gap:14px}.header-left,.header-right{gap:12px}header{gap:12px}.dialog{grid-template-columns:calc(170px * var(--bs-settings-zoom,1)) 1fr}main{padding:30px 25px}}
 @media(max-width:800px){header{grid-template-rows:58px 44px;column-gap:10px;row-gap:0;padding:0 16px}.header-right{grid-column:1/-1;grid-row:2}.header-left nav{flex-shrink:1;min-width:0;overflow-x:auto;scrollbar-width:none}.header-left nav a{flex-shrink:0}.search{max-width:none;min-width:96px}.lights{margin-right:0}}
 @media(max-width:1050px){.nav-lane{overflow:visible}.category-links{position:fixed;top:var(--bs-header-height,58px);left:16px;width:calc(100vw - 32px);height:auto;max-height:220px;overflow:auto;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px 12px;padding:16px 20px;background:var(--bg);border:1px solid var(--line);border-radius:0 0 12px 12px;box-shadow:0 12px 28px #0003;mask-image:none;transform:translateY(-8px)}.header-left[data-categories=true] .category-links{transform:translateY(0)}.nav-lane .primary-nav{transform:none!important}}
 @media(max-width:620px){.scrim{padding:12px}.dialog{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);height:calc(100vh - 24px);width:100%;min-height:0}.dialog aside{padding:10px;min-height:0}.dialog aside h1,.dialog aside .eyebrow,.dialog .aside-footer{display:none}.dialog .tabs{display:flex;overflow:auto;gap:4px}.dialog .tabs button{width:auto;white-space:nowrap;padding:10px;font-size:12px}.dialog main{padding:24px 18px}.dialog #dismiss{right:8px;top:4px;width:22px;height:22px}.chip-grid{grid-template-columns:repeat(2,minmax(0,1fr))}header{column-gap:8px;padding:0 12px}.header-left,.header-right{gap:8px}.lights{gap:6px}nav{gap:10px}nav a{font-size:12px}.search{min-width:70px}.account{max-width:38px;overflow:hidden;font-size:10px}}
 .dialog[data-compact=true]{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}.dialog[data-compact=true] aside{padding:10px;min-height:0}.dialog[data-compact=true] aside h1,.dialog[data-compact=true] aside .eyebrow,.dialog[data-compact=true] .aside-footer{display:none}.dialog[data-compact=true] .settings-matches{max-height:180px}.dialog[data-compact=true] .tabs{display:flex;overflow:auto;gap:4px}.dialog[data-compact=true] .tabs button{width:auto;white-space:nowrap;padding:10px;font-size:12px}.dialog[data-compact=true] main{padding:24px 18px}.dialog[data-compact=true] .chip-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-height:480px){.scrim{padding:12px}.dialog{height:calc(100vh - 24px);min-height:0}.dialog aside{padding:12px}.dialog .aside-footer,.dialog aside h1,.dialog aside .eyebrow{display:none}.dialog main{padding:24px 18px}}
-.update-notice-layer{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.24);pointer-events:auto}.update-notice{width:min(460px,100%);padding:28px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--ink);box-shadow:0 24px 70px #0003}.update-notice h2{font-size:21px;margin:0 0 16px}.update-notice ul{padding-left:20px;max-height:220px;overflow:auto;font-size:13px;line-height:1.8;color:var(--muted)}.update-notice .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap}.update-primary{border:0;border-radius:8px;background:var(--accent);color:white;padding:9px 16px;font-size:13px}.update-notice .link{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:transparent}
+.update-notice-layer{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.24);pointer-events:auto}.update-notice{width:min(460px,100%);padding:28px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--ink);box-shadow:0 24px 70px #0003}.update-notice h2{font-size:21px;margin:0 0 16px}.update-notice ul{padding-left:20px;max-height:220px;overflow:auto;font-size:13px;line-height:1.8;color:var(--muted)}.update-notice .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap}.update-primary{border:0;border-radius:8px;background:var(--accent);color:white;padding:9px 16px;font-size:13px}.update-notice .link{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:transparent}.fb-layer{position:fixed;inset:0;z-index:135;display:grid;place-items:center;padding:24px;background:rgba(10,10,14,.36);pointer-events:auto}.fb-card{width:min(520px,100%);max-height:calc(100vh - 48px);overflow:auto;box-sizing:border-box;display:grid;gap:16px;padding:24px 26px 22px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.28)}.fb-card header{display:flex;align-items:center;justify-content:space-between;padding:0!important;margin:0!important;border:0!important;background:none!important}.fb-card h2{margin:0;font-size:20px;font-weight:600;letter-spacing:-.2px}.fb-close{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:var(--muted);cursor:pointer}.fb-close:hover{background:var(--field);color:var(--ink)}.fb-close svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.fb-kinds{display:flex;gap:8px}.fb-kinds button{flex:1;height:36px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font:inherit;font-size:13px;cursor:pointer;transition:border-color .2s,background .2s,color .2s}.fb-kinds button:hover{background:var(--field)}.fb-kinds [aria-checked=true]{border-color:var(--accent);background:var(--field);color:var(--accent)}.fb-field{display:grid;gap:6px;font-size:13px}.fb-field>span{color:var(--muted)}.fb-field small{color:var(--muted);font-size:12px}.fb-count{justify-self:end}.fb-field textarea,.fb-field input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--ink);font:inherit;font-size:14px;line-height:1.6;resize:vertical;outline:0;transition:border-color .2s}.fb-field textarea{min-height:120px}.fb-field :is(textarea,input):focus{border-color:var(--accent)}.fb-check{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);cursor:pointer}.fb-check input{accent-color:var(--accent);margin-top:2px}.fb-status{margin:0;min-height:18px;font-size:13px;color:var(--muted)}.fb-status[data-tone=error]{color:#e5484d}.fb-card footer{display:flex;justify-content:flex-end;gap:10px}.fb-card footer button{height:38px;padding:0 18px;border-radius:10px;font:inherit;font-size:14px;cursor:pointer;transition:transform .2s cubic-bezier(.32,.72,0,1),opacity .2s}.fb-ghost{border:1px solid var(--line);background:transparent;color:var(--ink)}.fb-primary{border:0;background:var(--accent);color:#fff;font-weight:500}.fb-primary:disabled{opacity:.6;cursor:default}.fb-card footer button:active{transform:scale(.97)}.fb-card :is(button,input,textarea):focus-visible{outline:2px solid var(--accent);outline-offset:2px}@media (prefers-reduced-motion:reduce){.fb-card *{transition:none!important}}.wn-layer{position:fixed;inset:0;z-index:138;display:grid;place-items:center;padding:24px;background:rgba(10,10,14,.42);pointer-events:auto}.wn-card{width:min(720px,100%);max-height:calc(100vh - 48px);overflow:auto;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr);gap:16px;padding:22px 24px 20px;border-radius:22px;border:1px solid var(--line);background:var(--bg);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.3)}.wn-card header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:0!important;margin:0!important;border:0!important;background:none!important}.wn-eyebrow{margin:0 0 4px;font-size:12px;color:var(--accent);font-weight:600;letter-spacing:.3px}.wn-card h2{margin:0;font-size:22px;font-weight:650;letter-spacing:-.3px}.wn-close{flex:none;width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:var(--muted);cursor:pointer}.wn-close:hover{background:var(--field);color:var(--ink)}.wn-close svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.wn-stage{display:grid;grid-template-columns:minmax(0,1fr)}.wn-slide{grid-area:1/1;display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:10px;align-content:start;visibility:hidden}.wn-slide.wn-show{visibility:visible}.wn-list{aspect-ratio:16/9;box-sizing:border-box;margin:0;padding:22px 26px;list-style:none;display:flex;flex-direction:column;justify-content:center;gap:14px;border-radius:14px;background:var(--field);border:1px solid var(--line)}.wn-list li{position:relative;padding-left:30px;font-size:14px;line-height:1.5;color:var(--ink)}.wn-list li::before{content:'';position:absolute;left:0;top:2px;width:18px;height:18px;border-radius:50%;background:color-mix(in srgb,var(--accent) 18%,transparent)}.wn-list li::after{content:'';position:absolute;left:6px;top:6px;width:6px;height:9px;border:solid var(--accent);border-width:0 2px 2px 0;transform:rotate(45deg)}.wn-media,.wn-list{width:min(100%,calc((100vh - 330px) * 16 / 9));margin-inline:auto}.wn-media{aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:var(--field);border:1px solid var(--line)}.wn-media :is(img,video){width:100%;height:100%;object-fit:cover;display:block}.wn-slide h3{margin:6px 0 0;font-size:16px;font-weight:600}.wn-slide p{margin:0;font-size:13.5px;line-height:1.65;color:var(--muted)}.wn-card footer{display:flex;align-items:center;gap:10px}.wn-gap{flex:1}.wn-dots{display:flex;gap:6px}.wn-dots button{width:7px;height:7px;padding:0;border:0;border-radius:4px;background:var(--line);cursor:pointer;transition:width .3s cubic-bezier(.32,.72,0,1),background .2s}.wn-dots [aria-selected=true]{width:20px;background:var(--accent)}.wn-card footer :is(.wn-ghost,.wn-primary){height:36px;padding:0 18px;border-radius:10px;font:inherit;font-size:14px;cursor:pointer;transition:transform .2s cubic-bezier(.32,.72,0,1)}.wn-ghost{border:1px solid var(--line);background:transparent;color:var(--ink)}.wn-primary{border:0;background:var(--accent);color:#fff;font-weight:500}.wn-card footer button:active{transform:scale(.97)}.wn-card :is(button):focus-visible{outline:2px solid var(--accent);outline-offset:2px}.ob-layer{position:fixed;inset:0;z-index:140;display:grid;place-items:center;padding:24px;background:rgba(10,10,14,.32);pointer-events:auto}@supports (backdrop-filter:blur(1px)){.ob-layer{backdrop-filter:blur(26px) saturate(1.15)}}.ob-card{position:relative;width:min(940px,100%);height:min(600px,calc(100vh - 48px));display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:20px;padding:28px 32px 24px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.3);overflow:hidden;will-change:transform}.ob-progress{display:flex;gap:6px}.ob-progress i{height:4px;width:22px;border-radius:2px;background:var(--line);transition:background .36s cubic-bezier(.2,.8,.2,1),width .42s cubic-bezier(.32,.72,0,1)}.ob-progress i.ob-done{background:var(--accent);width:34px}.ob-stage{position:relative;min-height:0}.ob-step{position:absolute;inset:0;display:none;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:40px;align-items:center;outline:0}.ob-step.ob-show{display:grid}.ob-step.ob-final{grid-template-columns:1fr}.ob-copy{min-width:0}.ob-center{text-align:center;justify-self:center;max-width:460px}.ob-eyebrow{margin:0 0 10px;font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--accent)}.ob-card h2{margin:0 0 12px;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:-.01em}.ob-body{margin:0;font-size:15px;line-height:1.7;color:var(--muted);max-width:30em}.ob-points{margin:20px 0 0;padding:0;list-style:none;display:grid;gap:10px}.ob-points li{position:relative;padding-left:18px;font-size:14px;line-height:1.5}.ob-points li::before{content:'';position:absolute;left:0;top:.55em;width:7px;height:7px;border-radius:50%;background:var(--accent)}.ob-visual{min-width:0}.ob-gallery{margin:0;display:grid;gap:10px}.ob-frame{position:relative;aspect-ratio:16/10;border-radius:12px;border:1px solid var(--line);overflow:hidden;background:var(--field)}.ob-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top left;opacity:0;transform:scale(1.03);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform 5s linear}.ob-frame img.ob-on{opacity:1;transform:none}.ob-gallery figcaption{display:flex;gap:10px;align-items:baseline;font-size:13px;min-height:20px}.ob-gallery figcaption b{font-weight:600}.ob-gallery figcaption span{color:var(--muted)}.ob-dots{display:flex;gap:6px}.ob-dots button{width:8px;height:8px;padding:0;border:0;border-radius:4px;background:var(--line);cursor:pointer;transition:width .36s cubic-bezier(.32,.72,0,1),background .2s}.ob-dots button[aria-selected=true]{width:22px;background:var(--accent)}.ob-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.ob-choices.ob-two{grid-template-columns:repeat(2,minmax(0,1fr))}.ob-card .ob-choice{display:grid;justify-items:center;gap:12px;padding:14px;border:1.5px solid var(--line);border-radius:16px;background:transparent;color:var(--ink);font:inherit;cursor:pointer;scale:none!important;transition:border-color .24s,background .24s,transform .24s cubic-bezier(.32,.72,0,1)}.ob-card .ob-choice:hover{background:var(--field)}.ob-card .ob-choice:active{transform:scale(.98)}.ob-card .ob-choice[aria-pressed=true]{border-color:var(--accent);background:var(--field)}.ob-choice-label{font-size:14px;font-weight:500}.ob-mock{position:relative;display:block;width:100%;aspect-ratio:4/3;border-radius:10px;border:1px solid var(--line);overflow:hidden}.ob-mock b{position:absolute;inset:0 0 auto;height:18%}.ob-mock em{position:absolute;top:28%;width:38%;height:28%;border-radius:4px}.ob-mock em+em{left:auto;right:8%}.ob-mock em:first-of-type{left:8%}.ob-light{background:#f4f5f7}.ob-light b{background:#fff}.ob-light em{background:#e4e6ea}.ob-dark{background:#17171a}.ob-dark b{background:#232327}.ob-dark em{background:#2c2c32}.ob-system{background:linear-gradient(90deg,#f4f5f7 50%,#17171a 50%)}.ob-system b{background:linear-gradient(90deg,#fff 50%,#232327 50%)}.ob-system em:first-of-type{background:#e4e6ea}.ob-system em+em{background:#2c2c32}.ob-accent-stage{display:grid;gap:22px}.ob-accent-preview{display:grid;gap:18px;padding:22px;border-radius:16px;border:1px solid var(--line);background:var(--field)}.ob-tabs{display:flex;gap:22px;font-size:15px;color:var(--muted)}.ob-tab-on{color:var(--ink);font-weight:600;box-shadow:inset 0 -3px 0 var(--accent);padding-bottom:6px;transition:box-shadow .3s}.ob-bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.ob-bar i{display:block;width:62%;height:100%;border-radius:3px;background:var(--accent);transition:background .3s}.ob-preview-row{display:flex;align-items:center;justify-content:space-between}.ob-fake-button{padding:8px 18px;border-radius:9px;background:var(--accent);color:#fff;font-size:13px;transition:background .3s}.ob-fake-switch{position:relative;width:44px;height:26px;border-radius:13px;background:var(--accent);transition:background .3s}.ob-fake-switch i{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff}.ob-swatches{display:flex;gap:12px;flex-wrap:wrap}.ob-card .ob-swatch{width:36px;height:36px;padding:0;border-radius:50%;border:0;background:var(--c);cursor:pointer;scale:none!important;box-shadow:0 0 0 3px var(--bg),0 0 0 3px transparent;transition:box-shadow .24s,transform .24s cubic-bezier(.32,.72,0,1)}.ob-card .ob-swatch:hover{transform:scale(1.08)}.ob-card .ob-swatch[aria-pressed=true]{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--c)}.ob-sample{display:grid;place-items:center;width:100%;aspect-ratio:4/3;border-radius:10px;background:var(--field);font-style:normal;font-size:26px;line-height:1.35;font-weight:700}.ob-demo{display:grid;place-items:center;width:100%;aspect-ratio:4/3;border-radius:10px;background:var(--field);font-style:normal;font-size:14px}.ob-demo span{padding:9px 22px;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:500}.ob-choice:hover .ob-demo-bounce span{animation:ob-bounce .52s cubic-bezier(.3,1.5,.5,1)}@keyframes ob-bounce{0%{transform:scale(1)}40%{transform:scale(1.06)}70%{transform:scale(.98)}100%{transform:scale(1)}}.ob-zoom-stage{display:grid;gap:22px}.ob-zoom-preview{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-radius:16px;border:1px solid var(--line);background:var(--field);zoom:var(--z,1)}.ob-zoom-preview b{display:block;font-size:14px}.ob-zoom-preview small{display:block;margin-top:3px;font-size:12px;color:var(--muted)}.ob-zoom-preview .ob-fake-switch{flex:none}.ob-range{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}.ob-range input{flex:1;accent-color:var(--accent)}.ob-range output{width:44px;text-align:right;font-variant-numeric:tabular-nums}.ob-chips{display:flex;flex-wrap:wrap;gap:10px;align-content:center}.ob-card .ob-chip{height:40px;padding:0 16px;border-radius:20px;border:1.5px solid var(--line);background:transparent;color:var(--muted);font:inherit;font-size:14px;cursor:pointer;scale:none!important;transition:border-color .24s,background .24s,color .24s}.ob-card .ob-chip[aria-pressed=true]{border-color:var(--accent);color:var(--ink);background:var(--field)}.ob-choices.ob-four{grid-template-columns:repeat(4,minmax(0,1fr))}.ob-grid{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:4px;width:100%;aspect-ratio:4/3;padding:10px;box-sizing:border-box;border-radius:10px;background:var(--field)}.ob-grid b{border-radius:3px;background:var(--line)}.ob-page-preview{display:grid;gap:6px;padding:18px 20px;border-radius:16px;border:1px solid var(--line);background:var(--field);zoom:var(--p,1)}.ob-page-preview b{font-size:15px}.ob-page-preview small{font-size:12px;color:var(--muted)}.ob-icon{display:grid;place-items:center;width:100%;aspect-ratio:4/3;border-radius:10px;background:var(--field);font-style:normal;font-size:34px;color:var(--accent)}.ob-icon.ob-muted{color:var(--muted)}.ob-wave{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;aspect-ratio:4/3;border-radius:10px;background:var(--field)}.ob-wave b{width:10px;border-radius:5px;background:var(--accent)}.ob-wave b:nth-child(1){height:20%}.ob-wave b:nth-child(2){height:70%}.ob-wave b:nth-child(3){height:30%}.ob-wave b:nth-child(4){height:85%}.ob-wave b:nth-child(5){height:15%}.ob-wave.ob-even b{height:42%!important}.ob-check{width:68px;height:68px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;background:var(--accent)}.ob-check svg{width:34px;height:34px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24}.ob-final.ob-show .ob-check svg{animation:ob-draw .6s .3s cubic-bezier(.32,.72,0,1) forwards}@keyframes ob-draw{to{stroke-dashoffset:0}}.ob-foot{display:flex;align-items:center;gap:10px}.ob-gap{flex:1}.ob-card .ob-primary,.ob-card .ob-ghost{height:40px;padding:0 20px;border-radius:10px;font:inherit;font-size:14px;font-weight:500;cursor:pointer;scale:none!important;transition:background .2s,transform .16s cubic-bezier(.2,.8,.2,1)}.ob-card .ob-primary{border:0;background:var(--accent);color:#fff}.ob-card .ob-ghost{border:1px solid var(--line);background:transparent;color:var(--ink)}.ob-card .ob-primary:active,.ob-card .ob-ghost:active{transform:scale(.97)}.ob-card :is(button,input):focus-visible{outline:2px solid var(--accent);outline-offset:3px}@media (max-width:760px){.ob-card{padding:22px 20px 18px;height:calc(100vh - 32px)}.ob-step{grid-template-columns:1fr;align-content:start;overflow:auto;gap:20px}.ob-card h2{font-size:24px}.ob-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (prefers-reduced-motion:reduce){.ob-frame img,.ob-progress i,.ob-dots button,.ob-choice,.ob-swatch{transition:none}.ob-check svg{animation:none!important;stroke-dashoffset:0}.ob-choice:hover .ob-demo-bounce span{animation:none}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.dialog main{--settings-close-top:34px;--settings-close-right:36px}.dialog #dismiss{top:calc(var(--settings-close-top) + .8px);right:var(--settings-close-right);width:28px;height:28px;padding:0;display:grid;place-items:center;line-height:0}.dialog #dismiss svg{display:block;width:16px;height:16px}
+@media(max-width:1050px){.dialog main{--settings-close-top:30px;--settings-close-right:25px}}@media(max-width:620px),(max-height:480px){.dialog main{--settings-close-top:24px;--settings-close-right:18px}}.dialog[data-compact=true] main{--settings-close-top:24px;--settings-close-right:18px}
+/* Compact, aligned header actions; account management uses an unboxed symbol. */
+.header-right{gap:10px}.header-right :is(.favorites-wrap,.account-wrap){height:36px;display:flex;align-items:center;flex:0 0 36px}.header-right :is(.favorites,.messages,.account){width:36px;height:36px;min-width:36px;display:grid;place-items:center}.header-right :is(.favorites,.messages){padding:0;line-height:0}.header-right :is(.favorites,.messages)>svg{display:block;width:22px;height:22px;flex:none}.header-right .account .account-face{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:30px;height:30px}.header-right .account .account-pendant{inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:40px;height:40px}.header-right .account .account-vip-badge{right:0;bottom:0}
+:host([data-frost]) #chrome #account-card .account-switch{background:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;color:var(--muted)}:host([data-frost]) #chrome #account-card .account-switch:hover{color:var(--accent)}
+/* Soft, borderless surfaces; transparent borders retain the existing control geometry. */
+:host{--elevation-control:0 3px 10px #0003,0 0 9px #ffffff06;--elevation-panel:0 18px 48px #0005,0 0 22px #ffffff04;--surface-sheen:linear-gradient(#ffffff03,#ffffff03)}
+:host([data-theme=light]){--elevation-control:0 3px 12px #2020270c,0 0 8px #ffffff80;--elevation-panel:0 18px 48px #20202720,0 0 20px #ffffff70;--surface-sheen:linear-gradient(#ffffff04,#ffffff04)}
+:is(.dialog,.account-card,.favorites-panel,.search-panel,.account-manager){border-color:transparent!important}
+:is(.dialog,.account-card,.favorites-panel,.search-panel){box-shadow:var(--elevation-panel)!important;background-image:var(--surface-sheen)}
+:is(#settings-trigger,.upload,.account-switch,.account-manager-actions button,.video-link,.chip,.theme,.search input,#settings-query,.dialog select,.favorites-retry,.favorites-more){border-color:transparent!important;box-shadow:var(--elevation-control)!important;background-image:var(--surface-sheen)}
+:is(.dialog aside,.favorites-folders,.favorites-heading,.account-manager,.dialog .row,.dialog .section-label,.window-actions){border-color:transparent!important}
+.theme[aria-pressed=true] span{color:var(--accent);font-weight:600}
+#chrome{border-bottom-color:transparent!important;box-shadow:0 5px 16px #00000010}
+
 `;
 
 const icon = (name) => {
@@ -899,6 +1485,8 @@ function proxyState(next){
   const select=shadow&&$('#proxy-node',shadow);
   if(select&&Array.isArray(proxyInfo.nodes))fillProxyNodes(select);
 }
+// Text from outside the client (proxy node names and messages from a subscription) must never become markup.
+const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function proxyLine(){
   if(proxyInfo.running)return `运行中 · 127.0.0.1:${proxyInfo.port||'—'} · 节点 ${proxyInfo.node||'自动'}${proxyInfo.message?' · '+proxyInfo.message:''}`;
   return proxyInfo.enabled?'已开启但未运行：'+(proxyInfo.message||'等待重启'):(proxyInfo.message||'已关闭，直连');
@@ -926,18 +1514,35 @@ async function checkProxyRegion(){
     out.textContent=`当前出口：${data.country||'未知'}${data.city?' · '+data.city:''}${data.addr?' · '+data.addr:''} — ${mainland?'大陆出口；是否能播放仍受版权、账号权限等限制':'不能解锁“仅限中国大陆”的番剧'}`;
   }catch(e){out.textContent='检测失败：'+e.message+'（直连也可能被网站拒绝）';}
 }
-const tabs={downloads:['下载任务','plugins'],blocklist:['拉黑管理','plugins'],community:['观看记录','sparkles'],categories:['分区选择','progress'],network:['客户端代理','plugins'],appearance:['个性化','appearance'],clean:['页面净化','clean'],play:['播放与画质','sparkles'],plugins:['扩展插件','plugins'],about:['关于与更新','plugins']};
+const tabs={downloads:['下载任务','plugins'],blocklist:['拉黑管理','plugins'],community:['观看记录','sparkles'],categories:['分区选择','progress'],network:['客户端代理','plugins'],appearance:['个性化','appearance'],clean:['页面净化','clean'],play:['播放与画质','sparkles'],plugins:['扩展插件','plugins'],feedback:['反馈','sparkles'],about:['关于与更新','plugins']};
+if(NATIVE_PLATFORM!=='windows'){for(const tab of ['downloads','network','plugins'])delete tabs[tab];}
+
 const toggle=(key,title,hint)=>`<div class="row"><label for="pref-${key}">${title}${hint?`<span class="hint">${hint}</span>`:''}</label><input id="pref-${key}" data-pref="${key}" type="checkbox" ${PREFS[key]?'checked':''}></div>`;
 const range=(key,title,min,max,unit)=>`<div class="row"><label for="pref-${key}">${title}</label><div class="range"><input id="pref-${key}" type="range" data-pref="${key}" min="${min}" max="${max}" value="${PREFS[key]}"><output>${PREFS[key]}${unit}</output></div></div>`;
 let clientUpdate={status:'idle',message:'尚未检查更新'};
 let updateNoticeVersion='';
+function confirmFullscreenMotion(input){
+  if(!shadow||$('#motion-confirm',shadow))return;
+  const previous=input||shadow.activeElement,layer=document.createElement('div');layer.id='motion-confirm';layer.className='update-notice-layer';
+  layer.innerHTML='<section class="update-notice" role="alertdialog" aria-modal="true" aria-labelledby="motion-confirm-title" aria-describedby="motion-confirm-description"><h2 id="motion-confirm-title">开启实验性全屏动画？</h2><p id="motion-confirm-description">进出全屏时，视频会从原来的位置放大到全屏、退出时缩回原位。这个功能仍在测试：在部分电脑上或快速切换时，可能出现闪烁、画面跳动或动画不触发。随时可以在这里关闭。</p><div class="actions"><button type="button" id="motion-confirm-cancel" class="link">取消</button><button type="button" id="motion-confirm-apply" class="update-primary">仍然开启</button></div></section>';
+  const close=()=>{layer.remove();previous?.focus?.();};
+  $('#motion-confirm-cancel',layer).onclick=close;
+  $('#motion-confirm-apply',layer).onclick=()=>{if(!layer.isConnected)return;close();update({experimentalFullscreenMotion:true});if(input)input.checked=true;};
+  layer.addEventListener('click',event=>{if(event.target===layer)close();});
+  layer.addEventListener('keydown',event=>{
+    if(event.isComposing)return;
+    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();}
+    if(event.key==='Tab'){event.preventDefault();event.stopPropagation();const buttons=$$('button',layer),i=buttons.indexOf(shadow.activeElement);buttons[(i+(event.shiftKey?-1:1)+buttons.length)%buttons.length].focus();}
+  });
+  shadow.append(layer);$('#motion-confirm-cancel',layer).focus();
+}
 function showResetConfirmation(){
   if(!shadow||$('#reset-confirm',shadow))return;
   const previous=$('#reset',shadow)||shadow.activeElement,layer=document.createElement('div');layer.id='reset-confirm';layer.className='update-notice-layer';
   layer.innerHTML='<section class="update-notice" role="alertdialog" aria-modal="true" aria-labelledby="reset-confirm-title" aria-describedby="reset-confirm-description"><h2 id="reset-confirm-title">恢复默认设置？</h2><p id="reset-confirm-description">将重置主题、布局与播放偏好。</p><div class="actions"><button type="button" id="reset-confirm-cancel" class="link">取消</button><button type="button" id="reset-confirm-apply" class="update-primary">恢复默认</button></div></section>';
   const close=()=>{layer.remove();previous?.focus?.();};
   $('#reset-confirm-cancel',layer).onclick=close;
-  $('#reset-confirm-apply',layer).onclick=()=>{if(!layer.isConnected)return;close();update({...DEFAULTS,categorySelection:DEFAULTS.categorySelection.slice()});window.BiliCommunity44?.resetSettings();toast('已恢复默认设置');};
+  $('#reset-confirm-apply',layer).onclick=()=>{if(!layer.isConnected)return;close();update({...DEFAULTS,categorySelection:DEFAULTS.categorySelection.slice(),onboardingSeen:true,whatsNewSeen:PREFS.whatsNewSeen});window.BiliCommunity44?.resetSettings();toast('已恢复默认设置');};
   layer.addEventListener('click',event=>{if(event.target===layer)close();});
   layer.addEventListener('keydown',event=>{
     if(event.isComposing)return;
@@ -947,7 +1552,8 @@ function showResetConfirmation(){
   shadow.append(layer);$('#reset-confirm-cancel',layer).focus();
 }
 function showUpdateNotice(value){
-  if(!shadow||!value.prompt||!value.available||value.ignored||value.required||value.version===updateNoticeVersion||$('#update-notice',shadow))return;
+  // Under the header layer the notice opens there, once; the page's hidden copy of the client stays quiet.
+  if(CONTENT_VIEW||!shadow||!value.prompt||!value.available||value.ignored||value.required||value.version===updateNoticeVersion||$('#update-notice',shadow))return;
   updateNoticeVersion=value.version;const previous=shadow.activeElement,layer=document.createElement('div');layer.className='update-notice-layer';layer.id='update-notice';
   const dialog=document.createElement('section');dialog.className='update-notice';dialog.setAttribute('role','alertdialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','update-notice-title');
   const title=document.createElement('h2');title.id='update-notice-title';title.textContent='发现新版本 '+String(value.version||'');
@@ -959,6 +1565,230 @@ function showUpdateNotice(value){
   dialog.append(title,notes,actions);layer.append(dialog);shadow.append(layer);primary.focus();
   layer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}else if(e.key==='Tab'){const buttons=$$('button',layer),i=buttons.indexOf(shadow.activeElement),next=(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length;e.preventDefault();buttons[next].focus();}});
   native('updates',{action:'notice-shown',version:value.version});
+}
+// ---- Welcome tour: a showcase, then one setting per page with a live preview, then the way into Personalization.
+// Shown once: a first install gets "欢迎", an update from an older version gets "大翻新" (and may keep everything as it is).
+const ONBOARDING_SHOTS=[
+  ['current-home.webp','全新的首页','顶栏、分区和推荐流重新设计，切换和展开都更跟手'],
+  ['player.webp','专注的视频页','播放器、弹幕和推荐排得更清楚，看视频不被打扰'],
+  ['pip.webp','画中画','缩成小窗边看边做别的事，弹幕也一起跟着'],
+  ['customize.webp','可以自己定的外观','主题、强调色、字号、顶栏项目，都能按你的习惯来']
+];
+const ONBOARDING_ACCENTS=[['#fb7299','B站粉'],['#00aeec','天蓝'],['#20b486','青绿'],['#8b6cf5','藕紫'],['#ff8a3d','橘橙'],['#e5484d','朱红']];
+let onboardingTimer,onboardingTries=0;
+function onboardingAsset(name){return (typeof RUNTIME!=='undefined'&&['macos','linux'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+'onboarding/'+name;}
+// While the welcome tour is open the page behind it is blurred and dimmed (the tour lives in the header view, which
+// cannot blur another view); closing it lets the blur go slowly so the configured client comes into view.
+function tourBackdrop(on){if(CHROME_VIEW)return;const html=document.documentElement;if(on){html.classList.add('bs-tour-blur');return;}
+  if(!html.classList.contains('bs-tour-blur'))return;html.classList.remove('bs-tour-blur');
+  // An explicit animation, so the blur always runs down rather than snapping off.
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&document.body)document.body.animate([{filter:'blur(26px) saturate(1.15) brightness(.78)'},{filter:'blur(0px) saturate(1) brightness(1)'}],{duration:1100,easing:'cubic-bezier(.32,.72,0,1)'});}
+function scheduleOnboarding(delay=900){
+  if(PREFS.onboardingSeen||CONTENT_VIEW||typeof RUNTIME==='undefined')return;
+  clearTimeout(onboardingTimer);onboardingTimer=setTimeout(()=>{
+    if(PREFS.onboardingSeen||!shadow||$('#onboarding',shadow))return;
+    const page=String((CHROME_VIEW?chromeLocation:location.href)||'');
+    const busy=document.visibilityState!=='visible'||!/^https:\/\/[^/]*bilibili\.com\//.test(page)||$('#update-notice',shadow)||$('#settings:not([hidden])',shadow);
+    if(busy){if(++onboardingTries<300)scheduleOnboarding(1000);return;}
+    showOnboarding();
+  },delay);
+}
+// Feedback: opened from the tray menu or Settings → About. The note goes to the project site, which mails it to the
+// developer; an address is optional and only there so the developer can answer.
+const FEEDBACK_KINDS=[['bug','遇到问题'],['idea','功能建议'],['other','其他']];
+let feedbackBusy=false;
+function openFeedback(){
+  if(!CHROME_VIEW||!shadow)return;if($('#feedback',shadow)){$('#feedback textarea',shadow)?.focus();return;}
+  closeSettings();const previous=shadow.activeElement,layer=document.createElement('div');layer.id='feedback';layer.className='fb-layer';
+  let draft={};try{draft=JSON.parse(localStorage.getItem('bs-feedback-draft')||'{}');}catch{}
+  layer.innerHTML=`<form class="fb-card" role="dialog" aria-modal="true" aria-labelledby="fb-title" novalidate>
+<header><h2 id="fb-title">反馈</h2><button type="button" class="fb-close" data-fb="close" aria-label="关闭"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+<div class="fb-kinds" role="radiogroup" aria-label="类型">${FEEDBACK_KINDS.map(([v,t])=>`<button type="button" role="radio" data-kind="${v}" aria-checked="${(draft.kind||'bug')===v}">${t}</button>`).join('')}</div>
+<label class="fb-field"><span>想说的话</span><textarea name="text" rows="6" maxlength="4000" required placeholder="遇到了什么、在哪个页面、怎么操作会出现……写得越具体越好">${escapeHtml(draft.text||'')}</textarea><small class="fb-count"></small></label>
+<label class="fb-field"><span>邮箱（可选）</span><input name="email" type="email" maxlength="254" autocomplete="email" placeholder="name@example.com" value="${escapeHtml(draft.email||'')}"><small>不填也能提交，但开发者就没法回复你。</small></label>
+<label class="fb-check"><input type="checkbox" name="diag" checked><span>附带版本号和系统信息（不含账号、Cookie 和浏览记录）</span></label>
+<p class="fb-status" role="status" aria-live="polite"></p>
+<footer><button type="button" class="fb-ghost" data-fb="close">取消</button><button type="submit" class="fb-primary">提交反馈</button></footer></form>`;
+  shadow.append(layer);reportChromeLayout();
+  const form=$('form',layer),text=$('textarea',form),email=$('input[name=email]',form),diag=$('input[name=diag]',form),count=$('.fb-count',form),status=$('.fb-status',form),send=$('.fb-primary',form);
+  const kind=()=>$('[aria-checked=true]',form)?.dataset.kind||'other';
+  const save=()=>{try{localStorage.setItem('bs-feedback-draft',JSON.stringify({kind:kind(),text:text.value,email:email.value}));}catch{}};
+  const counted=()=>{count.textContent=`${text.value.length} / 4000`;};counted();
+  const say=(message,tone='')=>{status.dataset.tone=tone;status.textContent=message;};
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!still){layer.animate([{opacity:0},{opacity:1}],{duration:220,easing:'ease-out'});form.animate([{opacity:0,transform:'translateY(12px) scale(.98)'},{opacity:1,transform:'none'}],{duration:360,easing:'cubic-bezier(.32,.72,0,1)'});}
+  const close=()=>{if(!layer.isConnected||layer.dataset.closing)return;layer.dataset.closing='1';const done=()=>{layer.remove();reportChromeLayout();previous?.focus?.();};
+    if(still)done();else{form.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(8px) scale(.98)'}],{duration:200,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});layer.animate([{opacity:1},{opacity:0}],{duration:240,easing:'ease-in',fill:'forwards'}).onfinish=done;}};
+  layer.addEventListener('click',e=>{if(e.target===layer||e.target.closest('[data-fb=close]')){close();return;}const k=e.target.closest('[data-kind]');if(k){$$('[data-kind]',form).forEach(b=>b.setAttribute('aria-checked',String(b===k)));save();}});
+  layer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();close();}});
+  form.addEventListener('input',()=>{counted();save();say('');});
+  form.addEventListener('submit',e=>{e.preventDefault();if(feedbackBusy)return;
+    const note=text.value.trim(),mail=email.value.trim();
+    if(note.length<4){say('再多写几个字吧。','error');text.focus();return;}
+    if(mail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)){say('邮箱格式好像不对，也可以留空。','error');email.focus();return;}
+    feedbackBusy=true;send.disabled=true;send.textContent='正在发送…';say('');
+    feedbackDone=result=>{feedbackBusy=false;send.disabled=false;send.textContent='提交反馈';
+      if(result?.ok){try{localStorage.removeItem('bs-feedback-draft');}catch{}close();toast(mail?'已收到，开发者会通过邮箱回复你':'已收到，谢谢你的反馈');}
+      else say(result?.message||'发送失败，请稍后再试。内容已保留。','error');};
+    native('feedback',{kind:kind(),text:note,email:mail,diag:diag.checked,page:diag.checked?pageKind(chromeLocation||location):''});});
+  requestAnimationFrame(()=>text.focus());
+}
+let feedbackDone=null;
+function feedbackResult(result){if(!CHROME_VIEW)return;const done=feedbackDone;feedbackDone=null;done?.(result);}
+// What's new: each release ships assets/whats-new/whats-new.json (and its pictures or clips) for its own version. The
+// first launch of that version shows it once, after the welcome tour if that is still to come; Settings → About can
+// show it again. Pages turn with the buttons, the dots or ←/→; × and Esc close it.
+let whatsNewTimer=0,whatsNewTries=0;
+function loadWhatsNew(){return fetch(localAsset('whats-new/whats-new.json')).then(r=>r.ok?r.json():null).catch(()=>null);}
+function scheduleWhatsNew(delay=1200){
+  if(CONTENT_VIEW||typeof RUNTIME==='undefined'||PREFS.whatsNewSeen===APP_META.version)return;
+  clearTimeout(whatsNewTimer);whatsNewTimer=setTimeout(async()=>{
+    if(PREFS.whatsNewSeen===APP_META.version||!shadow||$('#whats-new',shadow))return;
+    const page=String((CHROME_VIEW?chromeLocation:location.href)||'');
+    const busy=!PREFS.onboardingSeen||$('#onboarding',shadow)||document.visibilityState!=='visible'||!/^https:\/\/[^/]*bilibili\.com\//.test(page)||$('#update-notice',shadow)||$('#settings:not([hidden])',shadow)||$('#feedback',shadow);
+    if(busy){if(++whatsNewTries<300)scheduleWhatsNew(1000);return;}
+    const data=await loadWhatsNew();if(!data||data.version!==APP_META.version||!Array.isArray(data.slides)||!data.slides.length){update({whatsNewSeen:APP_META.version});return;}
+    showWhatsNew(data);
+  },delay);
+}
+async function openWhatsNew(){const data=await loadWhatsNew();if(data?.slides?.length)showWhatsNew(data);else toast('这个版本没有更新公告');}
+function showWhatsNew(data){
+  if(!CHROME_VIEW||!shadow||$('#whats-new',shadow))return;
+  const slides=data.slides.slice(0,12),last=slides.length-1,still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const media=item=>{const src=item.media?localAsset('whats-new/'+String(item.media).replace(/[^\w.-]/g,'')):'';if(!src)return '';
+    return /\.(mp4|webm)$/i.test(src)?`<video src="${src}" muted loop playsinline preload="auto" aria-hidden="true"></video>`:`<img src="${src}" alt="" draggable="false">`;};
+  const layer=document.createElement('div');layer.id='whats-new';layer.className='wn-layer';const previous=shadow.activeElement;
+  layer.innerHTML=`<section class="wn-card" role="dialog" aria-modal="true" aria-labelledby="wn-title">
+<header><div><p class="wn-eyebrow">${escapeHtml(data.eyebrow||('Bili-Space '+APP_META.version))}</p><h2 id="wn-title">${escapeHtml(data.title||'更新了什么')}</h2></div><button type="button" class="wn-close" data-wn="close" aria-label="关闭"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+<div class="wn-stage">${slides.map((item,i)=>`<article class="wn-slide${i?'':' wn-show'}" data-slide="${i}" aria-hidden="${i?'true':'false'}">${media(item)?`<div class="wn-media">${media(item)}</div>`:Array.isArray(item.items)?`<ul class="wn-list">${item.items.slice(0,8).map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>`:''}<h3>${escapeHtml(item.title||'')}</h3>${item.text?`<p>${escapeHtml(item.text)}</p>`:''}</article>`).join('')}</div>
+<footer><div class="wn-dots" role="tablist" aria-label="页面">${slides.map((_,i)=>`<button type="button" role="tab" data-wn-dot="${i}" aria-label="第 ${i+1} 页" aria-selected="${!i}"></button>`).join('')}</div><span class="wn-gap"></span><button type="button" class="wn-ghost" data-wn="back" hidden>上一页</button><button type="button" class="wn-primary" data-wn="next">${last?'下一页':'知道了'}</button></footer></section>`;
+  shadow.append(layer);reportChromeLayout();
+  const card=$('.wn-card',layer),items=$$('.wn-slide',layer),dots=$$('[data-wn-dot]',layer),back=$('[data-wn=back]',layer),next=$('[data-wn=next]',layer);
+  let step=0,motions=[];
+  const playMedia=()=>items.forEach((el,i)=>{const v=$('video',el);if(!v)return;if(i===step){v.currentTime=0;v.play().catch(()=>{});}else v.pause();});
+  const render=()=>{dots.forEach((d,i)=>d.setAttribute('aria-selected',String(i===step)));back.hidden=step===0;next.textContent=step===last?'知道了':'下一页';items.forEach((el,i)=>el.setAttribute('aria-hidden',String(i!==step)));playMedia();};
+  const go=to=>{
+    if(to===step||to<0||to>last)return;const from=items[step],into=items[to],dir=to>step?1:-1;
+    motions.forEach(m=>m.finish());motions=[];into.getAnimations({subtree:true}).forEach(m=>{if(!(m instanceof CSSAnimation))m.cancel();});
+    step=to;into.classList.add('wn-show');render();
+    if(still){from.classList.remove('wn-show');return;}
+    const out=from.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateX(${-28*dir}px)`}],{duration:220,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+    out.finished.then(()=>{if(items[step]!==from)from.classList.remove('wn-show');out.cancel();},()=>{});motions.push(out);
+    [...into.children].forEach((part,k)=>motions.push(part.animate([{opacity:0,transform:`translateX(${36*dir}px)`},{opacity:1,transform:'none'}],{duration:440,delay:70+k*50,easing:'cubic-bezier(.32,.72,0,1)',fill:'backwards'})));
+  };
+  let closed=false;
+  const close=()=>{if(closed)return;closed=true;update({whatsNewSeen:APP_META.version});items.forEach(el=>$('video',el)?.pause());
+    const done=()=>{layer.remove();reportChromeLayout();previous?.focus?.();};
+    if(still)done();else{card.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(8px) scale(.97)'}],{duration:220,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});layer.animate([{opacity:1},{opacity:0}],{duration:280,easing:'ease-in',fill:'forwards'}).onfinish=done;}};
+  layer.addEventListener('click',e=>{if(e.target===layer){close();return;}const a=e.target.closest('[data-wn]')?.dataset.wn;
+    if(a==='close')close();else if(a==='back')go(step-1);else if(a==='next'){if(step<last)go(step+1);else close();}
+    const dot=e.target.closest('[data-wn-dot]');if(dot)go(Number(dot.dataset.wnDot));});
+  layer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}
+    else if(e.key==='ArrowRight'){e.preventDefault();go(step+1);}else if(e.key==='ArrowLeft'){e.preventDefault();go(step-1);}
+    else if(e.key==='Tab'){const f=$$('button:not([hidden])',card);const i=f.indexOf(shadow.activeElement);e.preventDefault();f[(i+(e.shiftKey?-1:1)+f.length)%f.length]?.focus();}});
+  if(!still){layer.animate([{opacity:0},{opacity:1}],{duration:240,easing:'ease-out'});card.animate([{opacity:0,transform:'translateY(14px) scale(.97)'},{opacity:1,transform:'none'}],{duration:440,easing:'cubic-bezier(.32,.72,0,1)'});}
+  render();requestAnimationFrame(()=>next.focus({preventScroll:true}));
+}
+function showOnboarding(){
+  const renewed=!(typeof RUNTIME!=='undefined'&&RUNTIME.firstRun);
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches,EASE='cubic-bezier(.32,.72,0,1)';
+  const previous=shadow.activeElement,layer=document.createElement('div');layer.id='onboarding';layer.className='ob-layer';
+  const card=document.createElement('section');card.className='ob-card';card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');
+  const zoom=Number(PREFS.settingsZoom)||100;
+  const choice=(attr,value,pressed,inner,label)=>`<button type="button" class="ob-choice" ${attr}="${value}" aria-pressed="${pressed}">${inner}<span class="ob-choice-label">${label}</span></button>`;
+  const copy=(eyebrow,title,body,extra='')=>`<div class="ob-copy"><p class="ob-eyebrow">${eyebrow}</p><h2>${title}</h2><p class="ob-body">${body}</p>${extra}</div>`;
+  const pages=[
+    copy(renewed?APP_META.version+' · 大翻新':'欢迎',renewed?'Bili-Space 大翻新':'欢迎使用 Bili-Space',
+      renewed?'顶栏、动画和设置都重新做了一遍。先看看有哪些变化，再一项一项把常用的设好。':'一个更安静、更顺手的 B 站桌面客户端。花半分钟，把它调成你喜欢的样子。',
+      renewed?`<ul class="ob-points"><li>重做的顶栏和更跟手的动画</li><li>设置界面字号可以随意拖动</li><li>插件可以加按钮、面板，甚至接入 AI</li></ul>`:'')+
+    `<figure class="ob-gallery ob-visual"><div class="ob-frame">${ONBOARDING_SHOTS.map(([f,t],i)=>`<img src="${onboardingAsset(f)}" alt="${t}" decoding="async" class="${i?'':'ob-on'}">`).join('')}</div>
+     <figcaption><b>${ONBOARDING_SHOTS[0][1]}</b><span>${ONBOARDING_SHOTS[0][2]}</span></figcaption>
+     <div class="ob-dots" role="tablist" aria-label="界面展示">${ONBOARDING_SHOTS.map(([,t],i)=>`<button type="button" role="tab" aria-label="${t}" aria-selected="${!i}" data-shot="${i}"></button>`).join('')}</div></figure>`,
+    copy('主题','选一个主题','深色看久了不累眼，浅色更清爽。跟随系统会随 Windows 的设置自动切换。')+
+    `<div class="ob-visual ob-choices">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,t])=>choice('data-theme-choice',id,PREFS.theme===id,`<i class="ob-mock ob-${id}"><b></b><em></em><em></em></i>`,t)).join('')}</div>`,
+    copy('强调色','挑一个强调色','按钮、进度条、选中的标签和开关都会用它。')+
+    `<div class="ob-visual ob-accent-stage"><div class="ob-accent-preview" aria-hidden="true"><div class="ob-tabs"><span class="ob-tab-on">首页</span><span>动态</span><span>历史</span></div><div class="ob-bar"><i></i></div><div class="ob-preview-row"><span class="ob-fake-button">关注</span><span class="ob-fake-switch"><i></i></span></div></div>
+     <div class="ob-swatches">${ONBOARDING_ACCENTS.map(([c,n])=>`<button type="button" class="ob-swatch" data-accent="${c}" style="--c:${c}" aria-label="${n}" title="${n}" aria-pressed="${PREFS.accent===c}"></button>`).join('')}</div></div>`,
+    copy('字体','选一种字体','抖音美好体更圆润耐看，系统字体更紧凑。只影响客户端自己的界面。')+
+    `<div class="ob-visual ob-choices ob-two">${choice('data-font-choice','true',!!PREFS.font,'<i class="ob-sample" style="font-family:BiliDouyin,sans-serif">看视频<br>更舒服</i>','抖音美好体')}${choice('data-font-choice','false',!PREFS.font,'<i class="ob-sample" style="font-family:\'Microsoft YaHei UI\',sans-serif">看视频<br>更舒服</i>','系统字体')}</div>`,
+    copy('动效','按钮要不要弹一下','弹性按钮会在鼠标移上去时轻轻弹一下。把鼠标放到左边的按钮上试试。')+
+    `<div class="ob-visual ob-choices ob-two">${choice('data-bounce-choice','true',!!PREFS.experimentalBounce,'<i class="ob-demo ob-demo-bounce"><span>移上来</span></i>','弹性')}${choice('data-bounce-choice','false',!PREFS.experimentalBounce,'<i class="ob-demo"><span>移上来</span></i>','安静')}</div>`,
+    copy('顶栏','顶栏放哪些按钮','点一下切换显示或隐藏，以后在「个性化 → 顶栏」里还能调顺序以外的更多细节。')+
+    `<div class="ob-visual ob-chips">${HEADER_ITEMS.map(([key,label])=>`<button type="button" class="ob-chip" data-pref-toggle="${key}" aria-pressed="${PREFS[key]!==false}">${label}</button>`).join('')}</div>`,
+    copy('首页','首页每行放几个视频','自动会随窗口宽度变化；固定数量时，窗口变宽也至少放这么多。')+
+    `<div class="ob-visual ob-choices ob-four">${[[0,'自动'],[4,'4 个'],[5,'5 个'],[6,'6 个']].map(([n,t])=>choice('data-pref-choice',`feedColumns:${n}`,Number(PREFS.feedColumns)===n,`<i class="ob-grid" style="--n:${n||4}">${'<b></b>'.repeat((n||4)*2)}</i>`,t)).join('')}</div>`,
+    copy('页面缩放','页面里的字大一点','B 站页面整体放大或缩小。最大化和全屏时客户端还会自动放大，这里调的是基础大小。')+
+    `<div class="ob-visual ob-zoom-stage"><div class="ob-page-preview" style="--p:${(Number(PREFS.zoom)||100)/100}" aria-hidden="true"><b>【4K】城市夜景延时摄影</b><small>UP 主 · 3.2 万播放 · 2 小时前</small></div>
+     <div class="ob-range"><span>小</span><input type="range" min="75" max="150" step="5" value="${Number(PREFS.zoom)||100}" data-ob-page-zoom aria-label="页面缩放"><span>大</span><output>${Number(PREFS.zoom)||100}%</output></div></div>`,
+    copy('字号','设置界面的字号','觉得设置里的字太小就拉大一点，只影响设置窗口。')+
+    `<div class="ob-visual ob-zoom-stage"><div class="ob-zoom-preview" style="--z:${zoom/100}" aria-hidden="true"><div><b>弹性按钮</b><small>鼠标移到客户端按钮上时轻轻弹一下</small></div><span class="ob-fake-switch ob-on"><i></i></span></div>
+     <div class="ob-range"><span>小</span><input type="range" min="80" max="160" step="5" value="${zoom}" data-ob-zoom aria-label="设置界面字号"><span>大</span><output>${zoom}%</output></div></div>`,
+    copy('页面净化','要不要屏蔽广告','屏蔽首页和视频页里的推广卡片、广告位，推荐流更干净。')+
+    `<div class="ob-visual ob-choices ob-two">${choice('data-pref-choice','hideAds:true',PREFS.hideAds!==false,'<i class="ob-icon">✓</i>','屏蔽广告')}${choice('data-pref-choice','hideAds:false',PREFS.hideAds===false,'<i class="ob-icon ob-muted">—</i>','保留原样')}</div>`,
+    copy('声音','让每个视频音量差不多','声音平衡会把特别响和特别小声的视频拉到接近的音量，切换视频不用再调音量。')+
+    `<div class="ob-visual ob-choices ob-two">${choice('data-pref-choice','soundBalance:true',PREFS.soundBalance!==false,'<i class="ob-wave ob-even"><b></b><b></b><b></b><b></b><b></b></i>','开启平衡')}${choice('data-pref-choice','soundBalance:false',PREFS.soundBalance===false,'<i class="ob-wave"><b></b><b></b><b></b><b></b><b></b></i>','保持原声')}</div>`,
+    copy('关闭窗口','点关闭按钮时','最小化到托盘可以继续在后台收到消息和更新；直接退出会完全关掉客户端。')+
+    `<div class="ob-visual ob-choices ob-two">${choice('data-pref-choice','closeAction:=tray',PREFS.closeAction!=='exit','<i class="ob-icon">⌄</i>','最小化到托盘')}${choice('data-pref-choice','closeAction:=exit',PREFS.closeAction==='exit','<i class="ob-icon">×</i>','直接退出')}</div>`,
+    `<div class="ob-copy ob-center"><div class="ob-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><p class="ob-eyebrow">完成</p><h2>一切就绪</h2>
+     <p class="ob-body">更多外观、顶栏、首页和播放的选项，都在「个性化」里等你慢慢调。</p></div>`
+  ];
+  const last=pages.length-1;
+  card.innerHTML=`<div class="ob-progress" aria-hidden="true">${pages.map(()=>'<i></i>').join('')}</div>
+<div class="ob-stage">${pages.map((html,i)=>`<div class="ob-step${i?'':' ob-show'}${i===last?' ob-final':''}" data-step="${i}" tabindex="-1">${html}</div>`).join('')}</div>
+<footer class="ob-foot"><button type="button" class="ob-ghost" data-ob="skip">${renewed?'还是现在好':'跳过'}</button><span class="ob-gap"></span><button type="button" class="ob-ghost" data-ob="back" hidden>上一步</button><button type="button" class="ob-ghost" data-ob="finish" hidden>开始使用</button><button type="button" class="ob-primary" data-ob="next">开始设置</button></footer>`;
+  layer.append(card);shadow.append(layer);native('tour-backdrop',{on:true});
+  const steps=$$('.ob-step',card),bars=$$('.ob-progress i',card),next=$('[data-ob=next]',card),back=$('[data-ob=back]',card),skip=$('[data-ob=skip]',card),finish=$('[data-ob=finish]',card);
+  let step=0,motions=[];
+  // Gallery: crossfades every 4.5 s, pauses while the pointer is on it; the dots pick a shot.
+  const shots=$$('.ob-frame img',card),dots=$$('.ob-dots button',card),caption=$('figcaption',card);let shot=0,cycle=0;
+  const showShot=i=>{shot=(i+shots.length)%shots.length;shots.forEach((im,k)=>im.classList.toggle('ob-on',k===shot));dots.forEach((d,k)=>d.setAttribute('aria-selected',String(k===shot)));caption.firstChild.textContent=ONBOARDING_SHOTS[shot][1];caption.lastChild.textContent=ONBOARDING_SHOTS[shot][2];};
+  const play=()=>{clearInterval(cycle);if(!still&&step===0)cycle=setInterval(()=>showShot(shot+1),4500);};
+  dots.forEach(d=>d.addEventListener('click',()=>{showShot(Number(d.dataset.shot));play();}));
+  const gallery=$('.ob-gallery',card);gallery.addEventListener('pointerenter',()=>clearInterval(cycle));gallery.addEventListener('pointerleave',play);play();
+  const render=()=>{bars.forEach((b,i)=>b.classList.toggle('ob-done',i<=step));back.hidden=step===0;skip.hidden=step===last;finish.hidden=step!==last;
+    next.textContent=step===0?'开始设置':step===last?'打开个性化':'下一步';card.setAttribute('aria-label',$('h2',steps[step])?.textContent||'');};
+  // One page out, the next in: they slide a little in the reading direction and cross-fade; the new page's copy and
+  // visual arrive a beat apart. Only transform and opacity move. A new turn finishes the previous one at once.
+  const go=to=>{
+    if(to===step||to<0||to>last)return;const from=steps[step],into=steps[to],dir=to>step?1:-1;
+    motions.forEach(m=>m.finish());motions=[];steps.forEach(x=>{if(x!==from)x.classList.remove('ob-show');});
+    // A page that left earlier may still hold its exit pose; clear the script motions (CSS ones restart on display).
+    into.getAnimations({subtree:true}).forEach(m=>{if(!(m instanceof CSSAnimation))m.cancel();});
+    step=to;render();play();into.classList.add('ob-show');
+    if(still){from.classList.remove('ob-show');}
+    else{
+      const out=from.animate([{opacity:1,transform:'none'},{opacity:0,transform:`translateX(${-36*dir}px)`}],{duration:240,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+      out.finished.then(()=>{if(steps[step]!==from)from.classList.remove('ob-show');out.cancel();},()=>{});motions.push(out);
+      for(const [k,part] of [...into.children].entries())motions.push(part.animate([{opacity:0,transform:`translateX(${44*dir}px)`},{opacity:1,transform:'none'}],{duration:420,delay:90+k*60,easing:EASE,fill:'backwards'}));
+    }
+    into.focus({preventScroll:true});
+  };
+  let closed=false;
+  const close=openPersonal=>{if(closed)return;closed=true;clearInterval(cycle);update({onboardingSeen:true});scheduleWhatsNew(1600);native('tour-backdrop',{on:false});
+    const done=()=>{layer.remove();if(openPersonal){currentTab='appearance';openSettings();}else previous?.focus?.();};
+    // The card leaves first; the veil over the client then lifts slowly while the page behind un-blurs.
+    if(still)done();else{card.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(8px) scale(.96)'}],{duration:260,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});layer.animate([{opacity:1},{opacity:0}],{duration:900,delay:120,easing:'cubic-bezier(.32,.72,0,1)',fill:'forwards'}).onfinish=done;}};
+  const press=(selector,chosen)=>$$(selector,card).forEach(b=>b.setAttribute('aria-pressed',String(b===chosen)));
+  card.addEventListener('click',e=>{const action=e.target.closest('[data-ob]')?.dataset.ob;
+    if(action==='next'){if(step<last)go(step+1);else close(true);}
+    else if(action==='back')go(step-1);
+    else if(action==='skip'||action==='finish'){close(false);if(action==='skip'&&renewed)toast('已保留你现在的设置');}
+    const theme=e.target.closest('[data-theme-choice]');if(theme){update({theme:theme.dataset.themeChoice});press('[data-theme-choice]',theme);}
+    const swatch=e.target.closest('[data-accent]');if(swatch){update({accent:swatch.dataset.accent,progressColor:swatch.dataset.accent});press('[data-accent]',swatch);}
+    const font=e.target.closest('[data-font-choice]');if(font){update({font:font.dataset.fontChoice==='true'});press('[data-font-choice]',font);}
+    const bounce=e.target.closest('[data-bounce-choice]');if(bounce){update({experimentalBounce:bounce.dataset.bounceChoice==='true'});press('[data-bounce-choice]',bounce);}
+    const pick=e.target.closest('[data-pref-choice]');if(pick){const [key,raw]=pick.dataset.prefChoice.split(/:(.*)/s);update({[key]:raw.startsWith('=')?raw.slice(1):JSON.parse(raw)});$$('[data-pref-choice]',card).filter(b=>b.dataset.prefChoice.startsWith(key+':')).forEach(b=>b.setAttribute('aria-pressed',String(b===pick)));}
+    const toggle=e.target.closest('[data-pref-toggle]');if(toggle){const on=toggle.getAttribute('aria-pressed')!=='true';toggle.setAttribute('aria-pressed',String(on));update({[toggle.dataset.prefToggle]:on});}});
+  card.addEventListener('input',e=>{if(e.target.matches('[data-ob-page-zoom]')){const v=Number(e.target.value);e.target.parentElement.querySelector('output').textContent=v+'%';$('.ob-page-preview',card).style.setProperty('--p',String(v/100));return;}if(!e.target.matches('[data-ob-zoom]'))return;const v=Number(e.target.value);e.target.parentElement.querySelector('output').textContent=v+'%';$('.ob-zoom-preview',card).style.setProperty('--z',String(v/100));});
+  card.addEventListener('change',e=>{if(e.target.matches('[data-ob-zoom]'))update({settingsZoom:Number(e.target.value)});if(e.target.matches('[data-ob-page-zoom]'))update({zoom:Number(e.target.value)});});
+  layer.addEventListener('keydown',e=>{if(e.isComposing)return;
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close(false);}
+    else if((e.key==='ArrowRight'||e.key==='ArrowLeft')&&!e.target.matches?.('input')){e.preventDefault();go(step+(e.key==='ArrowRight'?1:-1));}
+    else if(e.key==='Tab'){const items=$$('button:not([hidden]),input',steps[step]).concat($$('.ob-foot button:not([hidden])',card));e.preventDefault();e.stopPropagation();if(!items.length)return;const i=items.indexOf(shadow.activeElement);items[(i+(e.shiftKey?-1:1)+items.length)%items.length].focus();}});
+  render();
+  if(!still){layer.animate([{opacity:0},{opacity:1}],{duration:260,easing:'ease-out'});card.animate([{opacity:0,transform:'translateY(16px) scale(.97)'},{opacity:1,transform:'none'}],{duration:440,easing:EASE});
+    [...steps[0].children].forEach((part,k)=>part.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:440,delay:120+k*80,easing:EASE,fill:'backwards'}));}
+  steps[0].focus({preventScroll:true});
 }
 function renderUpdatePanel(){
   if(!shadow)return;const line=$('#client-update-status',shadow);if(!line)return;
@@ -974,11 +1804,18 @@ function acceptUpdateStatus(value){
   clientUpdate={...value};renderUpdatePanel();showUpdateNotice(value);
   const trigger=$('#settings-trigger',shadow);if(trigger){trigger.dataset.updateAvailable=String(!!value.available&&!value.ignored);trigger.title=value.available&&!value.ignored?'发现新版本 · 客户端设置':'客户端设置 · Ctrl+,';}
 }
+// Super-resolution and frame interpolation need WebGPU on Windows 10/11; elsewhere they are forced off, so their rows are left out.
+function withoutVideoAi(html){if(NATIVE_PLATFORM==='windows'&&!(typeof RUNTIME!=='undefined'&&RUNTIME.legacyWin7))return html;
+  const t=document.createElement('template');t.innerHTML=html;t.content.querySelector('.note[role=note]')?.remove();
+  for(const id of ['srMode','srModel','srScale','fiMode','fiFps'])t.content.querySelector('#pref-'+id)?.closest('.row')?.remove();
+  t.content.querySelector('#fi-status')?.remove();
+  const box=document.createElement('div');box.append(t.content);return box.innerHTML;}
 function tabContent(tab=currentTab){
-  if(tab==='downloads')return '<h2>下载任务</h2><div class="row"><label for="pref-downloadConnections">下载连接数</label><select id="pref-downloadConnections" data-pref="downloadConnections"><option value="1">1 · 单连接</option><option value="4">4</option><option value="8">8</option><option value="16">16</option><option value="32">32</option><option value="64">64</option><option value="128">128 · 极限</option></select></div><div id="downloads44-panel" tabindex="-1" data-setting-keywords="下载 任务队列 多P 合集 暂停 继续 断点续传"></div>';
+  if(tab==='downloads')return '<h2>下载任务</h2><div class="row"><label for="pref-downloadConnections">下载连接数</label><select id="pref-downloadConnections" data-pref="downloadConnections"><option value="1">1 · 单连接</option><option value="4">4</option><option value="8">8</option><option value="16">16</option><option value="32">32</option><option value="64">64</option><option value="128">128</option><option value="256">256 · 默认</option><option value="512">512 · 极限</option></select></div><div id="downloads44-panel" tabindex="-1" data-setting-keywords="下载 任务队列 多P 合集 暂停 继续 断点续传"></div>';
   if(tab==='blocklist')return '<h2>拉黑管理</h2><div id="blacklist44-panel" tabindex="-1" data-setting-keywords="拉黑 黑名单 取消拉黑 UP主"></div>';
   if(tab==='community')return '<h2>观看记录</h2><div id="community44-panel" tabindex="-1" data-setting-keywords="观看统计 周报 订阅提醒"></div>';
-  if(tab==='about')return `<h2>Bili-Space</h2><div class="row"><span>版本号</span><strong id="app-version"></strong></div><div class="row"><span>作者</span><strong id="app-author"></strong></div><p class="subtitle">更新源 · bili.gvqi.top</p><div class="section-label">更新 / UPDATES</div><p id="client-update-status" role="status" aria-live="polite"></p><strong id="update-version"></strong><ul id="update-notes"></ul><div class="actions"><button class="link" data-update="check">检查更新</button><button class="link" data-update="download" hidden>下载更新</button><button class="link" data-update="ignore" hidden>忽略此版本</button><button class="link" data-update="install" hidden>安装并重启</button><button class="link" data-update="log">查看检查日志</button></div><div class="note">下载完成后可在此安装并重启，保留登录和设置。</div>`;
+  if(tab==='feedback')return `<h2>反馈</h2><p class="subtitle">遇到问题、想要新功能，都可以直接告诉开发者。</p><div class="row"><label>写一条反馈<span class="hint">邮箱可选，不填开发者就没法回复你；不会附带账号、Cookie 和浏览记录</span></label><button id="feedback-open" class="link" type="button">写反馈</button></div><div class="note">也可以在托盘图标的右键菜单里选「反馈问题…」。</div>`;
+  if(tab==='about')return `<h2>Bili-Space</h2><div class="row"><span>版本号</span><strong id="app-version"></strong></div><div class="row"><span>作者</span><strong id="app-author"></strong></div><p class="subtitle">更新源 · bili.gvqi.top</p><div class="section-label">更新 / UPDATES</div><p id="client-update-status" role="status" aria-live="polite"></p><strong id="update-version"></strong><ul id="update-notes"></ul><div class="actions"><button class="link" data-update="check">检查更新</button><button class="link" data-update="download" hidden>下载更新</button><button class="link" data-update="ignore" hidden>忽略此版本</button><button class="link" data-update="install" hidden>安装并重启</button><button class="link" data-update="log">查看检查日志</button><button class="link" id="whats-new-open">查看更新公告</button></div><div class="note">下载完成后可在此安装并重启，保留登录和设置。</div>`;
 
   if(tab==='categories'){
     const total=CATEGORIES.length,chosen=PREFS.categorySelection.length;
@@ -986,25 +1823,35 @@ function tabContent(tab=currentTab){
   }
   if(tab==='network'){
     const on=Boolean(proxyInfo.running||PREFS.proxy);
-    return `<h2>网络代理</h2><p class="subtitle">Mihomo · 仅代理客户端</p><div class="row"><label for="proxy-switch">代理开关<span class="hint">更改后重启客户端</span></label><input id="proxy-switch" type="checkbox" data-action="proxy-toggle" ${on?'checked':''}></div><div class="note" id="proxy-status">${proxyLine()}</div><div class="row"><label for="proxy-node">当前节点</label><select id="proxy-node" aria-label="代理节点"></select></div>${toggle('proxyAll','全局代理','所有客户端流量通过代理')}<div class="actions"><button class="link" id="proxy-free">用内置免费节点</button><button class="link" id="proxy-import">导入 Clash 配置…</button><button class="link" id="proxy-check">检测出口地区</button></div><div class="note" id="proxy-region">尚未检测</div><div class="note">节点出口需符合番剧授权地区。免费节点来源不受信任，请勿用于敏感账户。</div>`;
+    return `<h2>网络代理</h2><p class="subtitle">Mihomo · 仅代理客户端</p><div class="row"><label for="proxy-switch">代理开关<span class="hint">更改后重启客户端</span></label><input id="proxy-switch" type="checkbox" data-action="proxy-toggle" ${on?'checked':''}></div><div class="note" id="proxy-status">${escapeHtml(proxyLine())}</div><div class="row"><label for="proxy-node">当前节点</label><select id="proxy-node" aria-label="代理节点"></select></div>${toggle('proxyAll','全局代理','所有客户端流量通过代理')}<div class="actions"><button class="link" id="proxy-free">用内置免费节点</button><button class="link" id="proxy-import">导入 Clash 配置…</button><button class="link" id="proxy-check">检测出口地区</button></div><div class="note" id="proxy-region">尚未检测</div><div class="note">节点出口需符合番剧授权地区。免费节点来源不受信任，请勿用于敏感账户。</div>`;
   }
   if(tab==='header')return `<h2>顶部栏</h2>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,'')).join('')}<div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>`;
-  if(tab==='appearance')return `<h2>个性化</h2><div class="section-label">顶部栏与投稿</div>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,'')).join('')}<div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>${toggle('logoAutoHide','自动隐藏 Logo','只在首页显示')}<div class="row"><label for="pref-feedColumns">首页每行视频数</label><select id="pref-feedColumns" data-pref="feedColumns"><option value="0">自动适应窗口</option>${[2,3,4,5,6,7,8].map(n=>`<option value="${n}">${n} 个</option>`).join('')}</select></div>${toggle('trafficLights','使用红绿灯窗口按钮','')}${toggle('showClock','显示时间','Logo 左侧')}${toggle('pipDanmaku','画中画弹幕','')}${range('pipDanmakuMinWidth','弹幕显示最小宽度',320,1200,'px')}<div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W</label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="row"><label for="pref-videoLoadingMode">加载动画结束时机</label><select id="pref-videoLoadingMode" data-pref="videoLoadingMode"><option value="page">页面就绪</option><option value="video">视频画面就绪</option></select></div>${toggle('clipboardAutoOpen','剪贴板 BV 自动跳转','读取新复制的 BV 号或视频链接')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色</label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">数值越小，界面越大</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div>${tabContent('progress')}`;
+  if(tab==='appearance')return `<h2>个性化</h2><div class="section-label">顶部栏与投稿</div>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,'')).join('')}<div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>${toggle('showChannels','显示网页分区导航栏','网页原有的动态、热门、番剧等分区；开启磨砂后同步适配')}${toggle('logoAutoHide','自动隐藏 Logo','只在首页显示')}<div class="row"><label for="pref-feedColumns">首页每行最少视频数<span class="hint">窗口变宽时仍会自动增加</span></label><select id="pref-feedColumns" data-pref="feedColumns"><option value="0">自动适应窗口</option>${[2,3,4,5,6,7,8].map(n=>`<option value="${n}">至少 ${n} 个</option>`).join('')}</select></div>${toggle('trafficLights','使用红绿灯窗口按钮','')}${toggle('showClock','显示时间','Logo 左侧')}${toggle('videoLinkButton','视频页显示复制链接','顶栏 Logo 左侧，点击复制当前视频链接')}${toggle('videoLinkCompact','复制链接变小','只显示圆角链接图标，不显示网址')}${NATIVE_PLATFORM==='windows'?toggle('officialVideoStyle','官方视频播放样式','不显示右侧视频栏，点开视频直接在当前页面播放，返回键回到上一页'):''}${toggle('pipDanmaku','画中画弹幕','')}${range('pipDanmakuMinWidth','弹幕显示最小宽度',320,1200,'px')}<div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W</label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="row"><label for="pref-videoLoadingMode">加载动画结束时机</label><select id="pref-videoLoadingMode" data-pref="videoLoadingMode"><option value="page">页面就绪</option><option value="video">视频画面就绪</option></select></div>${toggle('clipboardAutoOpen','剪贴板视频提示','检测新复制的 BV 号或视频链接，确认后跳转')}${toggle('experimentalFrost','测试版磨砂','按钮与主页卡片使用跟随主题和强调色的磨砂材质')}${toggle('experimentalBounce','弹性按钮','鼠标移到客户端按钮上时轻轻弹一下')}${toggle('experimentalFullscreenMotion','全屏动画（实验性）','进出全屏时视频从原位放大、缩回；仍可能闪烁')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色</label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','')}${range('settingsZoom','设置界面字号',80,160,'%')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">数值越小，界面越大</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div>${tabContent('progress')}`;
   if(tab==='progress')return `<h2>进度条</h2><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','')}${toggle('progressAlways','始终显示播放控制条','')}`;
-  if(tab==='clean')return `<h2>页面净化</h2>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('showChannels','显示首页频道分区','')}<div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
-  if(tab==='play')return `<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">Anime4K · WebGPU</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srFps">超分目标帧率<span class="hint">调度上限，不增加源帧数</span></label><select id="pref-srFps" data-pref="srFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">RIFE AI 光流</option></select></div><div class="row"><label for="pref-fiFps">补帧目标</label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option></select></div><div class="row"><label for="pref-fiFlowScale">光流规模</label><select id="pref-fiFlowScale" data-pref="fiFlowScale"><option value="25">25% · 性能</option><option value="50">50% · 均衡</option><option value="100">100% · 质量</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`;
-  return `<h2>扩展</h2>${toggle('btr','Bilibili 线程撕裂者','更改后刷新页面')}<div class="actions"><button id="btr-settings" class="link">打开线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器 / DOWNLOAD</div>${toggle('downloader','视频页显示下载按钮','')}<div class="note">支持 AVC / AAC 单视频下载；暂不支持批量、多段与番剧。</div><div class="section-label">插件 / PLUGINS</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本"></div>`;
+  if(tab==='clean')return `<h2>页面净化</h2>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}<div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`;
+  if(tab==='play')return withoutVideoAi(`<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">WebGPU · 每个源帧只计算一次</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srModel">超分模型<span class="hint">自动：番剧、国创、动画区用动画模型，其余用通用模型</span></label><select id="pref-srModel" data-pref="srModel"><option value="auto">自动识别</option><option value="anime">动画（Anime4K）</option><option value="general">通用</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">画面补帧（Lossless Scaling 式）</option></select></div><div class="row"><label for="pref-fiFps">补帧上限<span class="hint">不超过屏幕刷新率</span></label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option><option value="144">144 fps</option><option value="240">240 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`);
+  return `<div class="compact-tab"><h2>扩展</h2><div class="row"><label for="pref-btr">Bilibili 线程撕裂者<span class="hint">多线路并发加速视频缓冲 · 始终开启</span></label><input id="pref-btr" type="checkbox" checked disabled aria-describedby="btr-locked"></div><div class="actions"><button id="btr-settings" class="link">线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器</div>${toggle('downloader','视频页显示下载按钮','支持 AVC / AAC 单视频下载，暂不支持批量、多段与番剧')}<div class="section-label">插件</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本 主题"></div></div>`;
+}
+const settingsGroupsOpen=new Map();
+function organizeSettings(panel){
+ if(currentTab!=='appearance')return;
+ const definitions=[['外观',['theme','accent','font','settingsZoom','experimentalFrost','experimentalBounce','experimentalFullscreenMotion']],['顶部栏与首页',['header','feedColumns','showChannels','logoAutoHide','showClock','videoLinkButton','videoLinkCompact']],['窗口与缩放',['trafficLights','closeAction','zoom','autoZoom','autoZoomTarget']],['播放与小窗',['officialVideoStyle','pipDanmaku','pipDanmakuMinWidth','videoLoadingMode']],['剪贴板',['clipboardAutoOpen']],['播放进度条',['progress']]];
+ const buckets=definitions.map(()=>[]),heading=panel.querySelector('h2');
+ for(const el of [...panel.children]){if(el===heading)continue;if(el.matches('h2,.section-label')){el.remove();continue;}const key=el.querySelector('[data-pref]')?.dataset.pref||(el.matches('.themes')?'theme':el.querySelector('#header-reset')?'headerReset':el.matches('.preview')?'progressPreview':'');const index=definitions.findIndex(([,keys])=>keys.some(k=>key===k||['header','progress'].includes(k)&&key.startsWith(k)));buckets[index<0?0:index].push(el);}
+ buckets.forEach((nodes,i)=>{if(!nodes.length)return;const group=document.createElement('details'),summary=document.createElement('summary');group.className='settings-group';group.dataset.group=String(i);group.open=settingsGroupsOpen.get(i)??i===0;summary.textContent=definitions[i][0];const count=document.createElement('small');count.textContent=String(nodes.filter(n=>n.matches('.row,.themes')).length)+' 项';summary.append(count);group.append(summary,...nodes);group.ontoggle=()=>settingsGroupsOpen.set(i,group.open);panel.append(group);});
 }
 function renderSettings(){
   if(!shadow)return;
   const panel=$('#tab-content',shadow);if(!panel)return;
+  // Resetting settings belongs to the settings pages, not to the feedback page.
+  const reset=$('#reset',shadow);if(reset)reset.hidden=currentTab==='feedback';
   // Preserve the active slider while dragging rather than replacing its DOM node.
   if(panel.contains(shadow.activeElement)&&shadow.activeElement?.matches('input[type=range],input[type=color]')){
     const input=shadow.activeElement;
     if(input.type==='range')input.nextElementSibling.textContent=PREFS[input.dataset.pref]+(['zoom','volumeBoost'].includes(input.dataset.pref)?'%':'px');
     const preview=$('.preview',panel);if(preview){preview.style.setProperty('--height',PREFS.progressHeight+'px');preview.style.setProperty('--radius',PREFS.progressRadius+'px');preview.style.setProperty('--progress',PREFS.progressColor);}return;
   }
-  panel.innerHTML=tabContent();renderUpdatePanel();
+  panel.innerHTML=tabContent();organizeSettings(panel);renderUpdatePanel();
   if(currentTab==='downloads')window.BiliDesktop44?.renderDownloads($('#downloads44-panel',panel));
   if(currentTab==='blocklist')window.BiliDesktop44?.renderBlacklist($('#blacklist44-panel',panel));
   if(currentTab==='community')window.BiliCommunity44?.render($('#community44-panel',panel));
@@ -1031,13 +1878,32 @@ function searchSettingEntries(){
   }}finally{currentTab=selected;}
   settingsIndex=entries;return entries;
 }
+/* Related words people use for the same setting; any member of a group finds the others. */
+const SETTING_SYNONYMS=[['主题','外观','深色','浅色','暗色','黑色','夜间','白天','亮色','皮肤','配色'],['强调色','颜色','主色','粉色','色彩'],['磨砂','毛玻璃','玻璃','透明','模糊','亚克力'],['字体','字','文字','抖音美好体'],['缩放','放大','缩小','大小','尺寸','zoom','比例'],['音量','声音','响度','静音','200%'],['下载','保存','离线','导出'],['进度条','进度','拖动条','滑块'],['弹幕','评论','字幕'],['画中画','小窗','悬浮','浮窗','pip','置顶'],['顶部栏','顶栏','导航','标题栏','菜单栏','头部'],['每行','列数','几个','视频数','卡片','网格'],['代理','网络','节点','加速','vpn','梯子'],['更新','版本','升级','新版'],['关闭','退出','托盘','最小化','后台'],['时间','时钟','几点'],['logo','标志','品牌','图标'],['插件','扩展','脚本','油猴'],['超分','画质','清晰','增强','anime4k','4k','超分辨率'],['插帧','帧率','流畅','60帧','fps','补帧'],['动画','弹性','q弹','回弹','动效','弹跳','实验'],['剪贴板','复制','链接','bv'],['账号','登录','账户','切换账号','多账号'],['窗口','红绿灯','按钮','最大化']];
+function settingScore(item,words){
+  const label=item.label.normalize('NFKC').toLocaleLowerCase();let total=0;
+  for(const word of words){
+    if(label.includes(word)){total+=3;continue;}if(item.text.includes(word)){total+=2;continue;}
+    const related=SETTING_SYNONYMS.filter(group=>group.some(term=>term.includes(word)||word.includes(term))).flat();
+    if(related.some(term=>label.includes(term))){total+=1.5;continue;}if(related.some(term=>item.text.includes(term))){total+=1;continue;}
+    // Characters typed in order, such as 进条 for 进度条, still find a loose match.
+    let at=0;for(const ch of item.text){if(ch===word[at])at++;if(at===word.length)break;}
+    if(word.length>=2&&at===word.length){total+=.5;continue;}
+    return 0;
+  }
+  return total;
+}
 function renderSettingsSearch(){
   const query=$('#settings-query',shadow),list=$('#settings-matches',shadow),status=$('#settings-search-status',shadow);
   const words=query.value.normalize('NFKC').toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);
   $('.tabs',shadow).hidden=words.length>0;list.hidden=words.length===0;list.replaceChildren();status.textContent='';
   if(!words.length)return;
-  const matches=searchSettingEntries().filter(item=>words.every(word=>item.text.includes(word)));
-  status.textContent=matches.length?'找到 '+matches.length+' 项设置':'没有找到匹配设置';
+  // A small secret: "GUQI" offers a switch that makes the stuck-category scene play every time, until the client restarts.
+  if(words.join(' ')==='guqi'){status.textContent='发现了一个彩蛋';const egg=document.createElement('button');egg.type='button';egg.className='settings-match settings-egg';egg.dataset.egg='category';
+    const title=document.createElement('span'),note=document.createElement('small');title.textContent=categoryEggForced?'分区彩蛋已开启':'开启分区彩蛋';note.textContent=categoryEggForced?'收起分区时必定触发 · 重启客户端后失效':'收起分区时，总有一个分区字会卡住 · 重启后失效';egg.append(title,note);list.append(egg);return;}
+  const ranked=searchSettingEntries().map(item=>({item,score:settingScore(item,words)})).filter(r=>r.score>0).sort((a,b)=>b.score-a.score);
+  const matches=ranked.map(r=>r.item),loose=ranked.length&&ranked.every(r=>r.score<words.length*2);
+  status.textContent=matches.length?(loose?'找到 '+matches.length+' 项相近设置':'找到 '+matches.length+' 项设置'):'没有找到匹配设置';
   for(const item of matches){
     const button=document.createElement('button');button.type='button';button.className='settings-match';button.dataset.settingTab=item.tab;button.dataset.settingTarget=item.target;
     const title=document.createElement('span'),category=document.createElement('small');title.textContent=item.label;category.textContent=item.category;button.append(title,category);list.append(button);
@@ -1047,23 +1913,50 @@ function clearSettingsSearch(){const query=$('#settings-query',shadow);query.val
 function closeSettings(){
   if(!shadow)return;$('#settings',shadow).hidden=true;lastFocus?.focus();
 }
-function openSettings(){
+// Settings belong to the header layer: a page (Ctrl+, or a link inside it) asks the native host to open them there.
+function openSettings(tab,local=false){if(CONTENT_VIEW&&!local){native('open-settings',{tab:typeof tab==='string'?tab:''});return;}if(typeof tab==='string'&&tab)currentTab=tab;accountsController?.closeLogin();
   lastFocus=shadow.activeElement||document.activeElement;$('#settings',shadow).hidden=false;settingsIndex=null;clearSettingsSearch();renderSettings();$('#dismiss',shadow).focus();
 }
 function mountShell(){
   root=document.createElement('bili-space-shell');root.id='bili-space-root';shadow=root.attachShadow({mode:'open'});
+  root.dataset.platform=NATIVE_PLATFORM;
   shadow.innerHTML=`<style>${shellCss}
+:host([data-platform=macos]) .header-left{padding-left:78px}:host([data-platform=macos]) .lights,:host([data-platform=macos]) .window-actions,:host([data-platform=linux]) .lights,:host([data-platform=linux]) .window-actions{display:none!important}:host([data-platform=macos]) .row:has([data-pref=trafficLights]),:host([data-platform=linux]) .row:has([data-pref=trafficLights]),:host([data-platform=macos]) .row:has([data-pref=srMode]),:host([data-platform=linux]) .row:has([data-pref=srMode]),:host([data-platform=macos]) .row:has([data-pref=fiMode]),:host([data-platform=linux]) .row:has([data-pref=fiMode]){display:none}
 
-.history-back{display:grid;place-items:center;transition:background 120ms ease,color 120ms ease}.history-back:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg))}.history-back:active{transform:scale(.95)}
+/* Still clipped for its own show/hide, but with room around it so a hovered button's bounce and tint are not cut off. */.history-controls{display:flex;align-items:center;gap:2px;flex:0 0 auto;height:32px;overflow:clip;overflow-clip-margin:10px}.history-controls[hidden],.history-back[hidden],.history-forward[hidden]{display:none!important}.history-controls button:disabled{opacity:.35;cursor:default}.history-controls button:disabled:hover{background:transparent;color:var(--muted)}.history-back,.history-forward{display:grid;place-items:center;transition:background 120ms cubic-bezier(.2,.8,.2,1),color 120ms cubic-bezier(.2,.8,.2,1)}.history-back:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg))}.history-back:active{transform:scale(.95)}
 .favorites-wrap{position:relative;flex:0 0 auto}.favorites{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:var(--muted);cursor:pointer}.favorites svg{width:20px;height:20px;stroke-width:2}.favorites:hover{color:var(--ink);background:var(--field)}.favorites[aria-expanded=true]{background:var(--field)}
-.favorites-panel{position:absolute;right:-44px;top:calc(100% + 16px);width:min(540px,calc(100vw - 48px));background:var(--bg);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 70px #0005;overflow:hidden;z-index:12;user-select:text}.favorites-panel[hidden]{display:none!important}.favorites-heading{display:flex;align-items:center;gap:16px;padding:16px 18px;border-bottom:1px solid var(--line)}.favorites-heading>div{flex:1}.favorites-heading span{font:600 10px/1.4 sans-serif;letter-spacing:1.8px;color:var(--accent)}.favorites-heading h2{font-size:18px;margin:5px 0 0;letter-spacing:-.5px}.favorites-heading button{border:0;background:none;color:var(--muted);font:inherit;cursor:pointer}.favorites-heading .favorites-close{font-size:24px;width:30px;height:30px}.favorites-heading button:hover{color:var(--accent)}.favorites-layout{display:grid;grid-template-columns:125px minmax(0,1fr);height:min(340px,calc(100vh - 190px));min-height:220px}.favorites-folders{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:14px 10px;border-right:1px solid var(--line);overflow:auto;background:var(--panel)}.favorites-folder{display:flex;align-items:center;gap:8px;width:100%;padding:11px 10px;border:0;border-radius:8px;background:none;color:var(--muted);font:inherit;font-size:12px;text-align:left;cursor:pointer;overflow-wrap:anywhere}.favorites-count{margin-left:auto;font-size:10px;font-variant-numeric:tabular-nums}.favorites-folder[aria-pressed=true]{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg))}.favorites-folder:hover{color:var(--ink)}.favorites-body{padding:14px;overflow:auto;overscroll-behavior:contain}.favorites-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px}.favorites-video{display:flex;flex-direction:column;gap:7px;min-width:0;text-decoration:none;color:var(--ink)}.favorites-cover{aspect-ratio:16/9;background:var(--field);border-radius:9px;overflow:hidden}.favorites-cover img{width:100%;height:100%;object-fit:cover;transition:transform 160ms ease-out}.favorites-video:hover img{transform:scale(1.035)}.favorites-video strong{font-size:12px;font-weight:500;line-height:1.5;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.favorites-video:hover strong{color:var(--accent)}.favorites-author{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.favorites-video[aria-disabled=true]{opacity:.5}.favorites-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;gap:20px;color:var(--muted);font-size:13px;text-align:center;line-height:1.8}.favorites-retry,.favorites-more{padding:9px 16px;border:1px solid var(--line);border-radius:9px;color:var(--accent);background:var(--field);font:inherit;font-size:12px;cursor:pointer}.favorites-more{display:block;margin:22px auto 0}
-.search:focus-within{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 9%,transparent)}.search-panel{padding:16px;border-radius:14px;box-shadow:0 18px 50px #0004}.search-panel h2{font-size:11px;letter-spacing:.4px;margin-bottom:12px}.search-row .search-choice{padding:11px 10px!important;border-radius:8px}.search-history-chip{border:1px solid var(--line);background:var(--panel)}
+.favorites-panel{position:absolute;right:-44px;top:calc(100% + 16px);width:min(540px,calc(100vw - 48px));background:var(--bg);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 70px #0005;overflow:hidden;z-index:12;user-select:text}.favorites-panel[hidden]{display:none!important}.favorites-heading{display:flex;align-items:center;gap:16px;padding:16px 18px;border-bottom:1px solid var(--line)}.favorites-heading>div{flex:1}.favorites-heading span{font:600 10px/1.4 sans-serif;letter-spacing:1.8px;color:var(--accent)}.favorites-heading h2{font-size:18px;margin:5px 0 0;letter-spacing:-.5px}.favorites-heading button{border:0;background:none;color:var(--muted);font:inherit;cursor:pointer}.favorites-heading .favorites-close{font-size:24px;width:30px;height:30px}.favorites-heading button:hover{color:var(--accent)}.favorites-layout{display:grid;grid-template-columns:125px minmax(0,1fr);height:min(340px,calc(100vh - 190px));min-height:220px}.favorites-folders{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:14px 10px;border-right:1px solid var(--line);overflow:auto;background:var(--panel)}.favorites-folder{display:flex;align-items:center;gap:8px;width:100%;padding:11px 10px;border:0;border-radius:8px;background:none;color:var(--muted);font:inherit;font-size:12px;text-align:left;cursor:pointer;overflow-wrap:anywhere}.favorites-count{margin-left:auto;font-size:10px;font-variant-numeric:tabular-nums}.favorites-folder[aria-pressed=true]{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg))}.favorites-folder:hover{color:var(--ink)}.favorites-body{padding:14px;overflow:auto;overscroll-behavior:contain}.favorites-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px}.favorites-video{display:flex;flex-direction:column;gap:7px;min-width:0;text-decoration:none;color:var(--ink)}.favorites-cover{aspect-ratio:16/9;background:var(--field);border-radius:9px;overflow:hidden}.favorites-cover-error{display:grid;place-items:center;width:100%;height:100%;font-size:11px;color:var(--muted)}.favorites-cover img{width:100%;height:100%;object-fit:cover;transition:transform 160ms ease-out}.favorites-video:hover img{transform:scale(1.035)}.favorites-video strong{font-size:12px;font-weight:500;line-height:1.5;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.favorites-video:hover strong{color:var(--accent)}.favorites-author{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.favorites-video[aria-disabled=true]{opacity:.5}.favorites-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;gap:20px;color:var(--muted);font-size:13px;text-align:center;line-height:1.8}.favorites-retry,.favorites-more{padding:9px 16px;border:1px solid var(--line);border-radius:9px;color:var(--accent);background:var(--field);font:inherit;font-size:12px;cursor:pointer}.favorites-more{display:block;margin:22px auto 0}
+.search:focus-within{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 9%,transparent)}.search-panel{padding:16px;border-radius:14px;box-shadow:0 18px 50px #0004}.search-panel h2{font-size:11px;letter-spacing:.4px;margin-bottom:12px}.search-row .search-choice{padding:11px 10px!important;border-radius:8px}.search-history-chip{border:1px solid var(--line);background:var(--panel)}#search-panel .search-history-chip{align-items:stretch;overflow:hidden}#search-panel .search-history-chip .search-choice{border-radius:0!important}#search-panel .search-history-chip .search-remove{display:grid;place-items:center;width:26px!important;height:auto!important;padding:0;border-radius:0!important}#search-panel .search-history-chip .search-remove svg{width:10.5px;height:10.5px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
 .dialog aside{background:var(--panel)}.dialog .tabs button{border-radius:9px;margin-bottom:3px}.dialog .tabs button[aria-selected=true]{color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,var(--bg))}.dialog main .section-label{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);color:var(--accent);font-size:11px;letter-spacing:.5px}.dialog main h2{font-size:24px;letter-spacing:-.5px}.dialog .row{padding-block:15px}.dialog .hint{line-height:1.7}.dialog .row label{line-height:1.6}.dialog .row select{max-width:220px;border-radius:8px;padding:8px 10px}
 @media(max-width:800px){.favorites-panel{position:fixed;right:12px;left:auto;top:calc(var(--bs-header-height,58px) + 8px);width:min(540px,calc(100vw - 24px))}.favorites-layout{grid-template-columns:120px minmax(0,1fr)}.favorites-heading{padding:18px}.favorites-body{padding:12px}.favorites-grid{gap:14px 10px}}
 @media(prefers-reduced-motion:reduce){.history-back,.favorites-cover img{transition:none!important}.favorites-video:hover img,.history-back:active{transform:none}}
 
-.scrim{z-index:20!important}.header-left .brand-label{font-family:BiliDouyin,sans-serif;font-size:16px;white-space:nowrap;flex-shrink:0}.header-left .brand-label b{color:var(--accent);font-weight:400}.history-back{flex:none;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--ink);font-size:20px;cursor:pointer}.upload,#settings-trigger{z-index:1}.upload{position:fixed!important;left:20px;bottom:78px;width:44px;min-width:44px;height:44px;padding:10px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:13px;background:var(--bg);color:#fb7299!important;box-shadow:0 4px 18px #0002}.upload svg{width:24px;height:24px}.upload:hover{background:var(--field)}.upload[hidden]{display:none!important}.brand-label[hidden]{display:none!important}
-</style><header id="chrome"><div class="header-left" data-video="false"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><button class="history-back" type="button" data-window="back" aria-label="返回上一页" title="返回 · Alt+←">←</button><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="展开频道分区"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/account/history">历史</a></nav></div></div><div class="brand"><div class="brand-leading"><button type="button" class="video-link" aria-label="复制视频链接" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 .1l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7-.1l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span class="video-link-text"></span></button><time class="header-clock" aria-label="当前时间" hidden></time></div><span class="brand-label">Bili-<b>Space</b></span></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span><section id="search-panel" class="search-panel" aria-label="搜索历史和官方联想" hidden></section></form><div class="favorites-wrap"><button class="favorites" type="button" aria-label="收藏夹" title="我的收藏夹" aria-expanded="false" aria-controls="favorites-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v17l-7-4-7 4z"/></svg></button><section id="favorites-panel" class="favorites-panel" aria-label="我的收藏夹" hidden><div class="favorites-heading"><div><span>YOUR COLLECTION</span><h2>我的收藏夹</h2></div><button type="button" class="favorites-official" title="打开完整收藏夹">全部收藏 ↗</button><button type="button" class="favorites-close" aria-label="关闭收藏夹">×</button></div><div class="favorites-layout"><nav class="favorites-folders" aria-label="收藏夹列表"></nav><div class="favorites-body" aria-live="polite"></div></div></section></div><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><a class="upload" href="https://member.bilibili.com/platform/upload/video/frame" aria-label="投稿" title="投稿到B站"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a><div class="account-wrap"><a class="account" aria-controls="account-card" aria-expanded="false" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a><section id="account-card" class="account-card" role="region" aria-label="我的账户信息" hidden><div class="account-banner" hidden></div><div class="account-identity"><div class="account-portrait" hidden></div><div class="account-card-head"><strong class="account-name"></strong><span class="account-level"></span><span class="account-vip-label" hidden></span></div></div><div class="account-stats"><div><b data-stat="follower">—</b><span>粉丝</span></div><div><b data-stat="following">—</b><span>关注</span></div><div><b data-stat="likes">—</b><span>获赞</span></div></div><p class="account-status"></p></section></div><div class="window-actions" aria-label="窗口控制" hidden><button type="button" data-window="minimize" aria-label="最小化"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button><button type="button" data-window="maximize" aria-label="最大化或还原"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1"/></svg></button><button type="button" data-window="close" aria-label="关闭"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></button></div></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><div class="eyebrow">YOUR SPACE</div><h1 id="settings-title">客户端设置</h1><input id="settings-query" type="search" aria-label="搜索客户端设置" placeholder="搜索设置" maxlength="80" autocomplete="off"><p id="settings-search-status" role="status" aria-live="polite"></p><div id="settings-matches" class="settings-matches" aria-label="匹配的设置" hidden></div><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Bili-Space</b>${APP_META.version}</div></aside><main><button id="dismiss" aria-label="关闭设置">×</button><div id="tab-content" role="tabpanel" tabindex="-1"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
+.scrim{z-index:20!important}#page-pending{position:fixed;inset:58px 0 0;padding:48px max(24px,7vw);background:var(--bg);color:var(--muted);pointer-events:auto;box-sizing:border-box;z-index:0}#page-pending p{font-size:15px;margin:0 0 24px}#page-pending button{border:0;border-radius:9px;padding:10px 18px;background:var(--field);color:var(--ink);cursor:pointer}#page-pending button[hidden]{display:none}.page-placeholder{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.page-placeholder i{height:clamp(90px,13vw,180px);border-radius:10px;background:var(--field);opacity:.45}#page-pending[data-failed=true] .page-placeholder{display:none}
+.brand-slot{display:flex;align-items:center;flex:0 0 auto;min-width:0;height:32px;overflow:hidden}.brand-slot[hidden]{display:none!important}.header-left .brand-label{display:inline-flex;align-items:center;flex:none;height:32px;line-height:20px;padding-top:2px;box-sizing:border-box;font-family:BiliDouyin,sans-serif;font-size:16px;white-space:nowrap;flex-shrink:0}.header-left .brand-label b{color:var(--accent);font-weight:400}.history-back,.history-forward{flex:0 0 32px;width:32px;height:32px;padding:6px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;line-height:0}.history-back svg,.history-forward svg{display:block;width:20px;height:20px;flex:none}.history-back:not(:disabled):hover,.history-forward:not(:disabled):hover{color:var(--ink);background:var(--field)}.upload,#settings-trigger{z-index:1}.upload{position:fixed!important;left:20px;bottom:78px;width:44px;min-width:44px;height:44px;padding:10px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:13px;background:var(--bg);color:#fb7299!important;box-shadow:0 4px 18px #0002}.upload svg{width:24px;height:24px}.upload:hover{background:var(--field)}.upload[hidden]{display:none!important}.brand-label[hidden]{display:none!important}
+.header-left[data-instant=true],.header-left[data-instant=true] *{transition:none!important}.header-left[data-controls=windows] .video-home-top{box-sizing:border-box;overflow:hidden}.header-left[data-controls=windows][data-video=true] .primary-nav a[data-route=home][data-leaving=true]{display:inline-flex}.primary-nav a[data-leaving=true]{clip-path:inset(-12px 0)}.primary-nav a{white-space:nowrap;box-sizing:border-box;transition:color 160ms cubic-bezier(.2,.8,.2,1),background 160ms cubic-bezier(.2,.8,.2,1),scale 160ms cubic-bezier(.32,.72,0,1)}nav a[aria-current=page]:after{transform-origin:center}
+.history-back,.history-forward{transition:background 120ms cubic-bezier(.2,.8,.2,1),color 120ms cubic-bezier(.2,.8,.2,1),opacity 200ms cubic-bezier(.2,.8,.2,1),scale 160ms cubic-bezier(.32,.72,0,1)}.history-back:active{transform:none}.history-controls button:not(:disabled):active,.header-left>.back:active,.video-home-top:active,.primary-nav a:active,.favorites:active,.header-right .messages:active{scale:.92}.header-left>.back{transition:transform 240ms cubic-bezier(.23,1,.32,1),color 200ms cubic-bezier(.2,.8,.2,1),scale 160ms cubic-bezier(.32,.72,0,1)}.video-home-top{transition:opacity 180ms cubic-bezier(.23,1,.32,1),transform 240ms cubic-bezier(.23,1,.32,1),scale 160ms cubic-bezier(.32,.72,0,1)}.header-right .messages{transition:background 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1),scale 160ms cubic-bezier(.32,.72,0,1)}
+.favorites{transition:background 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1),scale 160ms cubic-bezier(.32,.72,0,1)}.favorites svg path{fill:transparent;transition:fill 200ms cubic-bezier(.2,.8,.2,1)}.favorites[aria-expanded=true],:host([data-frost=true]) #chrome .favorites[aria-expanded=true]{color:var(--accent)}.favorites[aria-expanded=true] svg{animation:bs-symbol-bounce 420ms cubic-bezier(.32,.72,0,1)}.favorites[aria-expanded=true] svg path{fill:currentColor}
+.favorites-heading .favorites-close{display:grid;place-items:center;border-radius:50%;line-height:1;transition:background 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1),scale 160ms cubic-bezier(.32,.72,0,1)}.favorites-heading .favorites-close:hover{background:var(--field)}.favorites-heading button:active,.favorites-retry:active,.favorites-more:not(:disabled):active{scale:.96}.favorites-official{transition:color 160ms cubic-bezier(.2,.8,.2,1)}.favorites-retry,.favorites-more{transition:background 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1),opacity 160ms cubic-bezier(.2,.8,.2,1),scale 160ms cubic-bezier(.32,.72,0,1)}.favorites-more:disabled{opacity:.6;cursor:default}
+.favorites-folders{position:relative}.favorites-folder{position:relative;z-index:1;transition:color 160ms cubic-bezier(.2,.8,.2,1),background 160ms cubic-bezier(.2,.8,.2,1),scale 160ms cubic-bezier(.32,.72,0,1)}.favorites-folder:active{scale:.97}.favorites-folder:hover:not([aria-pressed=true]){background:color-mix(in srgb,var(--ink) 5%,transparent)}.favorites-folders:has(.favorites-indicator) .favorites-folder[aria-pressed=true]{background:transparent!important}.favorites-indicator{position:absolute;left:10px;right:10px;top:0;z-index:0;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,var(--bg));pointer-events:none}.favorites-folder-ghost{display:block;flex:none;height:38px;border-radius:8px;background:var(--field);animation:bs-breathe 1.4s ease-in-out infinite}.favorites-folder-ghost:nth-child(2){animation-delay:120ms}.favorites-folder-ghost:nth-child(3){animation-delay:240ms}
+.favorites-skeleton,.favorites-empty{animation:bs-fade 220ms ease-out both}.favorites-ghost{display:flex;flex-direction:column;gap:7px}.favorites-ghost i{display:block;border-radius:5px;background:var(--field);animation:bs-breathe 1.4s ease-in-out calc(var(--i,0)*90ms) infinite}.favorites-ghost i:first-child{aspect-ratio:16/9;border-radius:9px}.favorites-ghost i:nth-child(2){height:12px;width:88%}.favorites-ghost i:nth-child(3){height:10px;width:46%}
+.favorites-video{animation:bs-rise 420ms cubic-bezier(.32,.72,0,1) calc(var(--i,0)*28ms) both}.favorites-cover{transition:scale 160ms cubic-bezier(.32,.72,0,1)}.favorites-video:active .favorites-cover{scale:.98}.favorites-cover img{opacity:0;transition:opacity 280ms cubic-bezier(.2,.8,.2,1),transform 240ms cubic-bezier(.32,.72,0,1)}.favorites-cover img[data-ready=true]{opacity:1}.favorites-video strong{transition:color 160ms cubic-bezier(.2,.8,.2,1)}
+.search input{transition:border-color 160ms cubic-bezier(.2,.8,.2,1),background-color 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1)}#chrome .search input:focus,#chrome .search input:focus-visible{outline:none}.search:focus-within{box-shadow:none}#chrome .search input:focus{border-color:color-mix(in srgb,var(--accent) 62%,var(--line))!important;background-color:color-mix(in srgb,var(--accent) 4%,var(--field))!important;box-shadow:var(--elevation-control)!important}:host([data-frost=true]) #chrome .header-right>.search{border-radius:9px;background:color-mix(in srgb,var(--ink) 6%,transparent)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 13%,transparent),0 3px 14px #0000000a!important;transition:box-shadow 160ms cubic-bezier(.2,.8,.2,1)}:host([data-frost=true]) #chrome .header-right>.search:focus-within{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 50%,transparent),0 3px 14px #0000000a!important}:host([data-frost=true]) #chrome .search input:focus{border-color:transparent!important;background:transparent!important;box-shadow:none!important}:host([data-frost=true]) #chrome .search>button{background:transparent!important;background-image:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+@keyframes bs-message-dot{0%,56%,100%{transform:scale(1)}24%{transform:scale(1.75)}}.messages svg path:not(:first-child){transform-box:fill-box;transform-origin:center}.messages:hover svg path:not(:first-child){animation:bs-message-dot 1.15s cubic-bezier(.45,0,.35,1) infinite}.messages:hover svg path:nth-child(4){animation-delay:0s}.messages:hover svg path:nth-child(2){animation-delay:.16s}.messages:hover svg path:nth-child(3){animation-delay:.32s}@media (prefers-reduced-motion:reduce){.messages:hover svg path:not(:first-child){animation:none}}.account .account-face.account-spin-ghost{pointer-events:none;border-color:transparent;will-change:transform,opacity}.page-top{bottom:22px}.feed-roll{bottom:80px}:is(.feed-roll,.page-top){position:fixed;right:18px;z-index:1;width:40px;padding:11px 0 10px;display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);box-shadow:0 4px 18px #0002;font:500 12px/1.15 var(--font,sans-serif);cursor:pointer;transition:color 140ms cubic-bezier(.2,.8,.2,1),border-color 140ms cubic-bezier(.2,.8,.2,1),opacity .24s cubic-bezier(.32,.72,0,1),transform .24s cubic-bezier(.32,.72,0,1)}:is(.feed-roll,.page-top)[hidden]{display:none}.feed-roll svg{width:17px;height:17px}.feed-roll span{writing-mode:vertical-rl;letter-spacing:2px}.page-top{padding:7px 0 8px;gap:2px}.page-top svg{width:16px;height:16px}:is(.feed-roll,.page-top):hover{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}:is(.feed-roll,.page-top):active{transform:scale(.96)}:is(.feed-roll,.page-top):focus-visible{outline:2px solid var(--accent);outline-offset:3px}.messages-menu{position:fixed;z-index:13;height:auto;bottom:auto;right:auto;display:flex;flex-direction:column;gap:2px;width:168px;padding:6px;box-sizing:border-box;background:var(--panel);color:var(--ink);border-radius:14px;box-shadow:var(--elevation-panel),inset 0 0 0 1px color-mix(in srgb,var(--ink) 7%,transparent);transform-origin:50% 0}.messages-menu[hidden]{display:none!important}.messages-item{display:flex;align-items:center;gap:8px;height:36px;padding:0 10px 0 12px;border-radius:8px;color:var(--ink);font-size:13px;line-height:20px;text-decoration:none;transition:background 140ms cubic-bezier(.2,.8,.2,1),color 140ms cubic-bezier(.2,.8,.2,1),scale 160ms cubic-bezier(.32,.72,0,1)}.messages-item span{flex:1;min-width:0;white-space:nowrap}.messages-item:hover,.messages-item:focus-visible{background:var(--field);color:var(--ink)}.messages-item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}.messages-item:active{scale:.97}.messages-count{flex:none;display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:var(--accent);color:#fff;font:600 11px/1 var(--font,sans-serif);font-variant-numeric:tabular-nums}.messages-count[hidden]{display:none}.messages-count[data-kind=dot]{min-width:8px;width:8px;height:8px;padding:0;border-radius:50%}:host([data-frost=true]) #chrome .header-right>.search{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}:host([data-frost=true]) #chrome :is(#account-card,#search-panel,#favorites-panel),:host([data-frost=true]) #messages-menu{background:var(--frost-tint)!important;background-image:linear-gradient(160deg,#ffffff0c,transparent 55%)!important;border-color:transparent!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 10%,transparent),var(--frost-shadow)!important;backdrop-filter:var(--frost-filter)!important;-webkit-backdrop-filter:var(--frost-filter)!important}:host([data-frost=true]) #chrome #search-panel .search-history-chip{background:color-mix(in srgb,var(--ink) 7%,transparent)!important;border-color:transparent!important}:host([data-frost=true]) #messages-menu .messages-item:hover{background:color-mix(in srgb,var(--ink) 9%,transparent)}@media(prefers-reduced-motion:reduce){.messages-item:active{scale:none}}
+/* Digits are centred on their cap height and baseline, not on the font's descender-padded line box. */.message-unread[data-kind=count]{display:grid;place-items:center;box-sizing:border-box;font-variant-numeric:tabular-nums;line-height:1}.message-unread[data-kind=count],.messages-count[data-kind=count]{text-box:trim-both cap alphabetic}@supports not (text-box:trim-both cap alphabetic){.message-unread[data-kind=count]{padding-top:1px}}/* The menu's count reads 1px high in its pill; 2px of top padding moves the digit (not the pill) down by 1px. */.messages-count[data-kind=count]{padding-top:2px}@supports not (text-box:trim-both cap alphabetic){.messages-count[data-kind=count]{padding-top:3px}}
+.primary-nav a .route-text{display:inline-block;transition:opacity 160ms cubic-bezier(.2,.8,.2,1),transform 260ms cubic-bezier(.32,.72,0,1)}.route-refresh{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;opacity:0;transform:rotate(-120deg) scale(.6);transition:opacity 160ms cubic-bezier(.2,.8,.2,1),transform 360ms cubic-bezier(.32,.72,0,1);pointer-events:none}@media(hover:hover){.header-left:not([data-settling]) .primary-nav a[aria-current=page]:hover .route-text{opacity:0;transform:scale(.8)}.header-left:not([data-settling]) .primary-nav a[aria-current=page]:hover .route-refresh{opacity:1;transform:none}}.primary-nav a[aria-current=page]:focus-visible .route-text{opacity:0;transform:scale(.8)}.primary-nav a[aria-current=page]:focus-visible .route-refresh{opacity:1;transform:none}.header-left:not([data-settling]) .primary-nav a[aria-current=page]:hover,.primary-nav a[aria-current=page]:focus-visible{color:var(--accent)}.route-refresh[data-spin=true]{opacity:1;animation:bs-refresh-spin 640ms cubic-bezier(.32,.72,0,1) both}.primary-nav a:has(.route-refresh[data-spin=true]) .route-text{opacity:0}@keyframes bs-refresh-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.route-refresh,.primary-nav a .route-text{transition:opacity 160ms cubic-bezier(.2,.8,.2,1)!important;transform:none!important}.route-refresh[data-spin=true]{animation:none}}
+header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(--bs-ui-scale,1))}/* Fixed layers inside the zoomed header are positioned in its zoomed coordinates. */.search[aria-busy=true]:after{top:calc((var(--bs-header-height,58px) - 1px) / var(--bs-ui-scale,1))}@media(max-width:1050px){.category-links{top:calc(var(--bs-header-height,58px) / var(--bs-ui-scale,1))!important;left:calc(16px / var(--bs-ui-scale,1))!important;width:calc((100vw - 32px) / var(--bs-ui-scale,1))!important}}@media(max-width:800px){.favorites-panel{top:calc((var(--bs-header-height,58px) + 8px) / var(--bs-ui-scale,1))!important;right:calc(12px / var(--bs-ui-scale,1))!important;width:calc(min(540px,100vw - 24px) / var(--bs-ui-scale,1))!important}}
+/* Channel links read exactly like the main nav items they replace. */.category-links{gap:0}.header-left .category-links a{display:inline-flex;align-items:center;justify-content:center;height:32px;min-width:48px;padding:0 10px;border-radius:10px;font-size:14px;line-height:20px;color:var(--muted);background:none;box-sizing:border-box;transition:color 160ms cubic-bezier(.2,.8,.2,1)}.header-left .category-links a:hover,.header-left .category-links a:focus-visible{color:var(--accent);background:none}.brand-leading{transition:opacity 180ms cubic-bezier(.2,.8,.2,1)}header:has(.header-left[data-categories=true]) .brand-leading{opacity:0;pointer-events:none}
+.history-controls:not([hidden])+.back{margin-left:-10px}.history-controls{gap:0}:host([data-frost=true]) #chrome{background:var(--bg)!important;box-shadow:0 5px 16px #00000010!important}:host([data-frost=true]) #chrome::before{display:none!important}:host([data-frost=true]) :is(#settings-trigger,.upload){border-color:transparent!important;background:var(--frost-tint)!important;background-image:linear-gradient(140deg,#ffffff10,transparent 70%)!important;box-shadow:var(--frost-shadow)!important;backdrop-filter:var(--frost-filter)!important;-webkit-backdrop-filter:var(--frost-filter)!important}/* Experimental: every client control bounces once on hover. *//* A damped spring (damping 0.35): about two visible swings, sampled into linear() so it stays smooth and interruptible. */:host([data-bounce=true]) :is(button,a,.search,.account){transition:scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) :is(button,a,.search,.account):not(:disabled):hover{scale:1.16}
+/* Rows in dropdowns and menus bounce too, but only by 3%: a full-width row then stays inside its panel's padding instead of being clipped. Neighbouring rows stay still. */:host([data-bounce=true]) :is(#search-panel,#messages-menu,#favorites-panel,#account-card,.account-manager) :is(button,a,.search-choice):not(:disabled){scale:none!important}:host([data-bounce=true]) :is(#search-panel,#messages-menu,#favorites-panel,#account-card,.account-manager) :is(button,a,.search-choice):not(:disabled):hover{scale:1.03!important}:host([data-bounce=true]) #settings :is(button,a):not(:disabled){scale:none!important}:host([data-bounce=true]) :is(#search-panel,#messages-menu,#favorites-panel,#account-card,.account-manager) :is(button,a,.search-choice){transition:background 140ms cubic-bezier(.2,.8,.2,1),color 140ms cubic-bezier(.2,.8,.2,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)!important}/* A history word and its × are one chip: the chip bounces as a whole; the word and the × inside it stay still. */:host([data-bounce=true]) #search-panel .search-history-chip :is(.search-choice,.search-remove):not(:disabled):hover{scale:none!important}:host([data-bounce=true]) #search-panel .search-history-chip :is(.search-choice,.search-remove){scale:none!important}:host([data-bounce=true]) #search-panel .search-history-chip{transition:scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) #search-panel .search-history-chip:hover{scale:1.06}@media (prefers-reduced-motion:reduce){:host([data-bounce=true]) #search-panel .search-history-chip{transition:none}:host([data-bounce=true]) #search-panel .search-history-chip:hover{scale:none}}/* Nav items bounce their label and refresh glyph, not the link box, so the current-page underline stays put. */:host([data-bounce=true]) .primary-nav a[data-route]{scale:none!important}:host([data-bounce=true]) .primary-nav a[data-route] .route-text{transition:opacity 160ms cubic-bezier(.2,.8,.2,1),transform 260ms cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) .primary-nav a[data-route] .route-refresh{transition:opacity 160ms cubic-bezier(.2,.8,.2,1),transform 360ms cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) .primary-nav a[data-route]:hover :is(.route-text,.route-refresh){scale:1.16}:host([data-bounce=true]) .primary-nav a[data-route]:has(+ a[data-route]:hover) .route-text,:host([data-bounce=true]) .primary-nav a[data-route]:hover+a[data-route] .route-text{scale:1.03}
+/* The search field is several times wider than a button, so the same scale would look enormous on it. */:host([data-bounce=true]) .search:not(:disabled):hover{scale:1.03}:host([data-bounce=true]) :is(button,a):not(:hover):has(+ :is(button,a):hover),:host([data-bounce=true]) :is(button,a):hover+:is(button,a):not(:hover){scale:1.03}:host([data-bounce=true]) :is(.messages-item,.favorites-video,.favorites-folder,.search-choice):hover{animation:none}@media(prefers-reduced-motion:reduce){:host([data-bounce=true]) *{animation:none!important}}
+.settings-group{margin:0 0 14px;padding:0 18px;border:0;border-radius:14px;background:color-mix(in srgb,var(--panel) 82%,var(--bg));box-shadow:0 1px 2px #0000000c,0 6px 20px #00000014;interpolate-size:allow-keywords}.settings-group>summary{padding:15px 0;gap:10px;font-size:15px;letter-spacing:-.1px}.settings-group>summary small{padding:2px 8px;border-radius:999px;background:var(--field);font-variant-numeric:tabular-nums}.settings-group>summary::after{content:'';width:8px;height:8px;border:solid var(--muted);border-width:0 1.8px 1.8px 0;transform:translateY(-2px) rotate(45deg);transition:transform 240ms cubic-bezier(.32,.72,0,1)}.settings-group[open]>summary::after{transform:translateY(2px) rotate(-135deg)}.settings-group>summary:hover{color:var(--accent)}.settings-group::details-content{block-size:0;overflow:hidden;transition:block-size 320ms cubic-bezier(.32,.72,0,1),content-visibility 320ms allow-discrete}.settings-group[open]::details-content{block-size:auto}.settings-group .row+.row{border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent)}.settings-group .row{border-bottom:0!important}.settings-match{border-radius:10px;transition:background 140ms cubic-bezier(.2,.8,.2,1)}@media(prefers-reduced-motion:reduce){.settings-group::details-content,.settings-group>summary::after{transition:none}}
+#page-pending{animation:bs-pending-in 220ms ease-out 800ms both}#page-pending .page-placeholder{display:none}@keyframes bs-pending-in{from{opacity:0}}
+#home-bubble{position:fixed;left:50%;top:calc(var(--bs-header-height,58px) + 14px);transform:translate(-50%,0);z-index:30;padding:11px 18px;border-radius:18px;background:#fff;color:#1d1d22;font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;box-shadow:0 2px 6px #00000014,0 12px 32px #0000002b;pointer-events:none}#home-bubble::before{content:'';position:absolute;left:50%;top:-6px;width:14px;height:14px;margin-left:-7px;border-radius:3px;background:#fff;transform:rotate(45deg)}#home-bubble[hidden]{display:none}
+/* Right-hand header controls read as one set: same icon family, 22px glyphs, 1.8 stroke, 28px avatar. */.header-right :is(.favorites,.messages)>svg{width:22px!important;height:22px!important;stroke-width:1.8!important}.header-right .account .account-face{width:28px;height:28px;border:0;box-shadow:0 0 0 .5px #0000001f,0 1px 3px #00000033}.header-right .account{translate:4px 0}/* The avatar frame (挂件) keeps Bilibili's proportion to the face: about 1.65× its width, centred on it. */.header-right .account .account-pendant{display:block!important;inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:46px;height:46px;z-index:1}.header-right .account .account-vip-badge{width:12px;height:12px;right:2px;bottom:2px;z-index:2}.header-right .account-wrap:not(:has(.account-face)){flex:0 0 auto}.header-right .account:not(:has(.account-face)){width:auto;max-width:none;min-width:0;height:28px;padding:0 11px;border-radius:14px;background:var(--field);color:var(--ink);font-size:12px;font-weight:600;line-height:28px;display:inline-flex;align-items:center;box-shadow:0 1px 2px #0000000f,0 2px 8px #00000014;transition:background 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1)}.header-right .account:not(:has(.account-face)):hover{color:var(--accent)}
+:host([data-mode=content]) :is(#chrome,#settings-trigger,.upload,#messages-menu){display:none!important}:host([data-mode=chrome]) :is(#page-pending){display:none!important}
+@keyframes bs-symbol-bounce{0%{transform:scale(1)}35%{transform:scale(.84)}70%{transform:scale(1.06)}100%{transform:scale(1)}}@keyframes bs-breathe{0%,100%{opacity:.5}50%{opacity:1}}@keyframes bs-fade{from{opacity:0}}@keyframes bs-rise{from{opacity:0;transform:translateY(8px)}}
+@media(prefers-reduced-motion:reduce){.favorites-video,.favorites-skeleton,.favorites-empty,.favorites[aria-expanded=true] svg{animation:none!important}.favorites-ghost i,.favorites-folder-ghost{animation:none!important;opacity:.7}.history-controls button:active,.header-left>.back:active,.video-home-top:active,.primary-nav a:active,.favorites:active,.header-right .messages:active,.favorites-folder:active,.favorites-video:active .favorites-cover,.favorites-heading button:active,.favorites-retry:active,.favorites-more:active{scale:none}.favorites-cover img{transition:opacity 200ms cubic-bezier(.2,.8,.2,1)}}
+</style><header id="chrome"><div class="header-left" data-video="false"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><div class="history-controls" role="group" aria-label="页面历史导航"><button class="history-back" type="button" data-window="back" aria-label="返回上一页" title="返回 · Alt+←"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button><button class="history-forward" type="button" data-window="forward" aria-label="前进下一页" title="前进"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="展开频道分区"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/history">历史</a></nav></div></div><div class="brand"><div class="brand-leading"><button type="button" class="video-link" aria-label="复制视频链接" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 .1l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7-.1l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span class="video-link-text"></span></button><time class="header-clock" aria-label="当前时间" hidden></time></div><span class="brand-label">Bili-<b>Space</b></span></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span><section id="search-panel" class="search-panel" aria-label="搜索历史和官方联想" hidden></section></form><div class="favorites-wrap"><button class="favorites" type="button" aria-label="收藏夹" title="我的收藏夹" aria-expanded="false" aria-controls="favorites-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></button><section id="favorites-panel" class="favorites-panel" aria-label="我的收藏夹" hidden><div class="favorites-heading"><div><span>YOUR COLLECTION</span><h2>我的收藏夹</h2></div><button type="button" class="favorites-official" title="打开完整收藏夹">全部收藏 ↗</button><button type="button" class="favorites-close" aria-label="关闭收藏夹">×</button></div><div class="favorites-layout"><nav class="favorites-folders" aria-label="收藏夹列表"></nav><div class="favorites-body" aria-live="polite"></div></div></section></div><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><div id="messages-menu" class="messages-menu" role="navigation" aria-label="消息分类" hidden><a class="messages-item" data-kind="reply" href="https://message.bilibili.com/#/reply"><span>回复我的</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="at" href="https://message.bilibili.com/#/at"><span>@我的</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="love" href="https://message.bilibili.com/#/love"><span>收到的赞</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="system" href="https://message.bilibili.com/#/system"><span>系统消息</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="whisper" href="https://message.bilibili.com/#/whisper"><span>我的消息</span><b class="messages-count" hidden></b></a></div><a class="upload" href="https://member.bilibili.com/platform/upload/video/frame" aria-label="投稿" title="投稿到B站"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a><div class="account-wrap"><a class="account" aria-controls="account-card" aria-expanded="false" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a><section id="account-card" class="account-card" role="region" aria-label="我的账户信息" hidden><div class="account-banner" hidden></div><div class="account-identity"><div class="account-portrait" hidden></div><div class="account-card-head"><strong class="account-name"></strong><span class="account-level"></span><span class="account-vip-label" hidden></span></div></div><div class="account-stats"><div><b data-stat="follower">—</b><span>粉丝</span></div><div><b data-stat="following">—</b><span>关注</span></div><div><b data-stat="likes">—</b><span>获赞</span></div></div><p class="account-status"></p></section></div><div class="window-actions" aria-label="窗口控制" hidden><button type="button" data-window="minimize" aria-label="最小化"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button><button type="button" data-window="maximize" aria-label="最大化或还原"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1"/></svg></button><button type="button" data-window="close" aria-label="关闭"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></button></div></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><h1 id="settings-title">客户端设置</h1><input id="settings-query" type="search" aria-label="搜索客户端设置" placeholder="搜索设置" maxlength="80" autocomplete="off"><p id="settings-search-status" role="status" aria-live="polite"></p><div id="settings-matches" class="settings-matches" aria-label="匹配的设置" hidden></div><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Bili-Space</b>${APP_META.version}</div></aside><main><button id="dismiss" aria-label="关闭设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><div id="tab-content" role="tabpanel" tabindex="-1"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
   const updateCss=document.createElement('style');updateCss.textContent='#settings-trigger[data-update-available=true]::after{content: "";position:absolute;right:7px;top:7px;width:7px;height:7px;border-radius:50%;background:#fb7299}#update-notes{padding-left:20px;line-height:1.9;overflow-wrap:anywhere;max-height:220px;overflow:auto}';shadow.append(updateCss);
   document.documentElement.append(root);
   renderMessageUnread();
@@ -1073,7 +1966,8 @@ function mountShell(){
     const b=e.target.closest('button');
     if(['check','download','ignore','install','log'].includes(b?.dataset.update)){native('updates',{action:b.dataset.update});return;}
     if(b?.classList.contains('video-link')){copyCurrentVideoLink(e.shiftKey);return;}
-    if(b?.dataset.settingTab){currentTab=b.dataset.settingTab;const id=b.dataset.settingTarget;clearSettingsSearch();renderSettings();const control=id?shadow.getElementById(id):$('#tab-content',shadow);control?.focus();if(control&&typeof control.scrollIntoView==='function')control.scrollIntoView({block:'nearest'});return;}
+    if(b?.dataset.egg==='category'){categoryEggForced=true;renderSettingsSearch();toast('彩蛋已开启：去展开再收起分区试试');return;}
+    if(b?.dataset.settingTab){currentTab=b.dataset.settingTab;const id=b.dataset.settingTarget;clearSettingsSearch();renderSettings();const control=id?shadow.getElementById(id):$('#tab-content',shadow);if(control){for(let p=control.parentElement;p&&p!==shadow.host;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;}control?.focus();if(control&&typeof control.scrollIntoView==='function')control.scrollIntoView({block:'nearest'});return;}
     if(b?.dataset.window){native('window',{action:b.dataset.window});return;}
     if(b?.classList.contains('back')){setCategories(b.getAttribute('aria-expanded')!=='true',e.detail===0);return;}
     if(b?.id==='settings-trigger')openSettings();
@@ -1091,7 +1985,7 @@ function mountShell(){
     if(b?.id==='reset')showResetConfirmation();
     if(b?.id==='header-reset'){update(Object.fromEntries(HEADER_ITEMS.map(([key])=>[key,true])));toast('已恢复顶部默认布局');}
     if(b?.id==='rescan'){markAds();renderSettings();}
-    if(b?.id==='btr-settings'){closeSettings();if(!PREFS.btr)toast('请先开启线程撕裂者并刷新页面');else document.dispatchEvent(new CustomEvent('btr-userscript-open-settings'));}
+    if(b?.id==='feedback-open'){openFeedback();return;}if(b?.id==='whats-new-open'){closeSettings();openWhatsNew();return;}if(b?.id==='btr-settings'){closeSettings();if(!PREFS.btr)toast('请先开启线程撕裂者并刷新页面');else document.dispatchEvent(new CustomEvent('btr-userscript-open-settings'));}
     if(b?.id==='reload')native('window',{action:'reload'});
     if(b?.id==='pip-action'){closeSettings();requestPip();}
     if(b?.id==='downloader-check'){native('downloader',{action:'status'});}
@@ -1099,6 +1993,7 @@ function mountShell(){
     if(b?.id==='downloader-open')native('downloader',{action:'open'});
     if(b?.id==='downloader-browse')native('downloader',{action:'browse'});
   });
+  shadow.addEventListener('change',e=>{if(e.target?.dataset?.pref==='settingsZoom')update({settingsZoom:Math.min(160,Math.max(80,Math.round(Number(e.target.value)||100)))});});
   shadow.addEventListener('input',e=>{
     const el=e.target;
     if(el.id==='settings-query'){if(!e.isComposing)renderSettingsSearch();return;}
@@ -1114,14 +2009,19 @@ function mountShell(){
     }
     if(el.dataset.category!==undefined){const selected=new Set(PREFS.categorySelection);if(el.checked)selected.add(Number(el.dataset.category));else selected.delete(Number(el.dataset.category));update({categorySelection:[...selected].sort((a,b)=>a-b),categoryPreset:1});return;}
     const key=el.dataset.pref;if(!key)return;
-    let v=el.type==='checkbox'?el.checked:['range','number'].includes(el.type)||['srScale','srFps','fiFps','fiFlowScale','autoZoomTarget','downloadConnections','feedColumns'].includes(key)?Number(el.value):el.value;
+    // The settings window scales with this slider, so it follows on release; while dragging only the number moves.
+    if(key==='settingsZoom'){const out=el.parentElement?.querySelector('output');if(out)out.textContent=el.value+'%';return;}
+    // The experimental fullscreen motion asks first; the switch stays off unless the warning is accepted.
+    if(key==='experimentalFullscreenMotion'&&el.checked&&!PREFS.experimentalFullscreenMotion){el.checked=false;confirmFullscreenMotion(el);return;}
+    let v=el.type==='checkbox'?el.checked:['range','number'].includes(el.type)||['srScale','srFps','fiFps','fiFlowScale','autoZoomTarget','downloadConnections','feedColumns','settingsZoom'].includes(key)?Number(el.value):el.value;
     update({[key]:v});
     if(key==='btr')toast('刷新页面后生效');
     if(key==='proxyAll')toast('重启后生效');
   });
-  installSearchPanel();favoritesController=window.installBiliFavorites?.({shadow,native,closeSearch:closeSearchPanel});
+  accountsController=window.installBiliAccounts?.({shadow,native,refreshAccount,hideAccountCard,toast});
+  installSearchPanel();favoritesController=window.installBiliFavorites?.({shadow,native,closeSearch:closeSearchPanel});installMessagesMenu();installSearchQuips();installAvatarSpin();installFeedRoll();installRouteRefresh();installVideoLinkDrag();installChromeView();
   $('.search',shadow).addEventListener('submit',e=>{e.preventDefault();submitSearch();});
-  $('#chrome',shadow).addEventListener('mousedown',e=>{if(e.button===0&&!e.target.closest('button,a,input,form'))native('window',{action:'drag'});});
+  $('#chrome',shadow).addEventListener('mousedown',e=>{if(e.button===0&&!e.target.closest('button,a,input,form'))native('window',{action:'drag',screenX:e.screenX,screenY:e.screenY});});
   $('#chrome',shadow).addEventListener('dblclick',e=>{if(!e.target.closest('button,a,input'))native('window',{action:'maximize'});});
   shadow.addEventListener('compositionend',e=>{if(e.target.id==='settings-query')renderSettingsSearch();});
   shadow.addEventListener('keydown',e=>{
@@ -1139,9 +2039,20 @@ function mountShell(){
       if(!e.shiftKey&&shadow.activeElement===items.at(-1)){e.preventDefault();items[0].focus();}
     }
   });
-  const accountWrap=$('.account-wrap',shadow);accountWrap.addEventListener('pointerenter',e=>{if(e.pointerType&&e.pointerType!=='mouse')return;clearTimeout(accountHideTimer);accountShowTimer=setTimeout(showAccountCard,150);});accountWrap.addEventListener('pointerleave',()=>{clearTimeout(accountShowTimer);accountHideTimer=setTimeout(hideAccountCard,160);});accountWrap.addEventListener('focusin',()=>showAccountCard(false));accountWrap.addEventListener('focusout',e=>{if(!accountWrap.contains(e.relatedTarget))hideAccountCard();});
+  const accountWrap=$('.account-wrap',shadow);accountWrap.addEventListener('pointerenter',e=>{if(e.pointerType&&e.pointerType!=='mouse')return;clearTimeout(accountHideTimer);if(accountProfile)accountShowTimer=setTimeout(showAccountCard,150);});accountWrap.addEventListener('pointerleave',()=>{clearTimeout(accountShowTimer);accountHideTimer=setTimeout(hideAccountCard,160);});accountWrap.addEventListener('focusin',()=>{clearTimeout(accountHideTimer);const card=$('#account-card',shadow);if(accountProfile&&(card.hidden||card.dataset.open!=='true'))showAccountCard(false);});accountWrap.addEventListener('focusout',e=>{if(!accountWrap.contains(e.relatedTarget))hideAccountCard();});
   const trigger=$('.back',shadow),left=$('.header-left',shadow),lane=$('.nav-lane',shadow);
-  $('#header-categories',shadow).addEventListener('wheel',e=>{const links=e.currentTarget;if(innerWidth>1050&&links.scrollWidth>links.clientWidth&&!e.ctrlKey){links.scrollLeft+=e.deltaY||e.deltaX;e.preventDefault();}},{passive:false});
+  // Mouse wheel notches glide the channel strip toward an accumulated target each frame; touchpads already scroll smoothly and pass straight through.
+  // Chromium never routes a real pointerleave through ancestors, so the root watches the bubbling pointerout and
+  // treats it as a leave once the pointer is outside the whole button; this survives the caption buttons being rebuilt.
+  // Only a deliberate hover (at least 150ms) earns the flourish; sweeping past the buttons stays quiet.
+  const captionEntered=new WeakMap(),captionButton=e=>e.target.closest?.('.window-actions [data-window]');
+  shadow.addEventListener('pointerover',e=>{const button=captionButton(e);if(button&&!button.contains(e.relatedTarget))captionEntered.set(button,performance.now());});
+  shadow.addEventListener('pointerout',e=>{const button=captionButton(e);if(!button||button.contains(e.relatedTarget))return;const since=captionEntered.get(button);captionEntered.delete(button);if(since!==undefined&&performance.now()-since>=150)windowLeaveMotion(e,button);});
+  {let target=null,frame=0;const links=$('#header-categories',shadow);
+   const glide=()=>{const left=links.scrollLeft,step=(target-left)*.2;if(Math.abs(target-left)<.5){links.scrollLeft=target;target=null;frame=0;return;}links.scrollLeft=left+step;frame=requestAnimationFrame(glide);};
+   links.addEventListener('wheel',e=>{if(innerWidth<=1050||links.scrollWidth<=links.clientWidth||e.ctrlKey)return;e.preventDefault();const delta=(e.deltaY||e.deltaX)*(e.deltaMode===1?40:1),max=links.scrollWidth-links.clientWidth;
+     if(e.deltaMode===0&&Math.abs(delta)<40&&!frame){links.scrollLeft+=delta;return;}
+     target=Math.max(0,Math.min(max,(target??links.scrollLeft)+delta*1.2));if(!frame)frame=requestAnimationFrame(glide);},{passive:false});}
   left.addEventListener('focusout',()=>setTimeout(()=>{if(!left.contains(shadow.activeElement))setCategories(false);},0));
   left.addEventListener('keydown',e=>{if(e.key==='Escape'){setCategories(false,true);trigger.focus();e.stopPropagation();}if(e.target===trigger&&e.key==='ArrowDown'){e.preventDefault();setCategories(true,true);$('#header-categories a:not([hidden])',shadow)?.focus();}});
   document.addEventListener('pointerdown',e=>{if(!e.composedPath().includes(left))setCategories(false);},{passive:true});
@@ -1175,307 +2086,260 @@ function restoreVideo(video,exclude){
   video.style.opacity=active.some(p=>p.frames>0&&p.canvas.width>0&&p.canvas.style.visibility!=='hidden')?'0':originalVideoOpacity.get(video)||'';
   if(!active.length&&video.parentElement)video.parentElement.style.position=originalHostPosition.get(video.parentElement)||'';
 }
-class PresentationClock {
-  constructor(){this.queue=[];this.current=null;this.delay=null;this.presented=-Infinity;this.lastPhase=0;}
-  enqueue(pair){if(this.delay===null)this.delay=Math.min(100,Math.max(32,pair.interval*2.5));this.queue.push(pair);if(this.queue.length>6)this.queue.shift();}
-  sample(now){
-    const target=now-(this.delay||0);let next;
-    while(this.queue.length&&this.queue[0].time-this.queue[0].interval<=target){const pair=this.queue.shift();if(pair.time>=this.presented)next=pair;}
-    if(next)this.current=next;if(!this.current)return null;
-    const pair=this.current,start=pair.time-pair.interval,raw=Math.max(0,Math.min(1,(target-start)/pair.interval));
-    // RIFE predicts the midpoint: do not invent quarter-phase optical flow.
-    const phase=raw<.25?0:raw<.75?.5:1,time=start+phase*pair.interval;
-    if(time<this.presented)return null;this.presented=time;this.lastPhase=phase;return {pair,phase,time};
-  }
-}
+/* Video enhancement runs as one WebGPU pipeline on one canvas, so super-resolution and frame generation can never
+   fight over what is on screen:
 
-class FrameInterpolator {
-  constructor(video,fps,automatic=true){
-    if(!navigator.gpu||typeof ort==='undefined')throw Error('AI 光流补帧需要 WebGPU');
-    this.video=video;this.fps=fps;this.frames=0;this.generated=0;this.inferences=0;this.dropped=0;this.stopped=false;this.ready=false;this.status='加载本地 RIFE AI 光流模型…';this.clock=new PresentationClock();this.uploadedPair=null;this.clockHistory=[];this.lastDraw=-Infinity;this.epoch=0;
-    this.oldOpacity=rememberVideo(video);this.parent=video.parentElement;this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas bs-fi-canvas';this.canvas.style.visibility='hidden';
-    this.gl=this.canvas.getContext('webgl',{alpha:false,antialias:false,preserveDrawingBuffer:true});if(!this.gl)throw Error('WebGL 重投影不可用');
-    const gl=this.gl;if(!gl.getExtension('OES_texture_float'))throw Error('显卡不支持光流浮点纹理');
-    const shader=(type,code)=>{const sh=gl.createShader(type);gl.shaderSource(sh,code);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh));return sh;};
-    const vs=shader(gl.VERTEX_SHADER,'attribute vec2 p;varying vec2 uv;void main(){uv=(p+1.)*.5;gl_Position=vec4(p,0.,1.);}');
-    const fs=shader(gl.FRAGMENT_SHADER,`precision highp float;varying vec2 uv;uniform sampler2D a;uniform sampler2D b;uniform sampler2D motion;uniform sampler2D mask;uniform float phase;uniform vec2 flowSize;
-      vec4 field(sampler2D t,vec2 v){vec2 p=v*flowSize-.5;vec2 f=fract(p);vec2 q=(floor(p)+.5)/flowSize;vec2 d=1./flowSize;return mix(mix(texture2D(t,q),texture2D(t,q+vec2(d.x,0.)),f.x),mix(texture2D(t,q+vec2(0.,d.y)),texture2D(t,q+d),f.x),f.y);}
-      void main(){if(phase<=.001){gl_FragColor=texture2D(a,uv);return;}if(phase>=.999){gl_FragColor=texture2D(b,uv);return;}
-      vec2 fuv=vec2(uv.x,1.-uv.y);vec4 flow=field(motion,fuv);float m=field(mask,fuv).r;
-      vec2 pa=uv+vec2(flow.r,-flow.g)*(2.*phase)/flowSize;vec2 pb=uv+vec2(flow.b,-flow.a)*(2.*(1.-phase))/flowSize;
-      float weight=(1.-phase)*m/max(.00001,(1.-phase)*m+phase*(1.-m));gl_FragColor=mix(texture2D(b,pb),texture2D(a,pa),weight);}`);
-    this.program=gl.createProgram();gl.attachShader(this.program,vs);gl.attachShader(this.program,fs);gl.linkProgram(this.program);gl.deleteShader(vs);gl.deleteShader(fs);if(!gl.getProgramParameter(this.program,gl.LINK_STATUS))throw Error('光流着色器链接失败');gl.useProgram(this.program);
-    this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);const loc=gl.getAttribLocation(this.program,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    this.textures=[0,1,2,3].map(i=>{const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,i<2?gl.LINEAR:gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,i<2?gl.LINEAR:gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;});
-    ['a','b','motion','mask'].forEach((n,i)=>gl.uniform1i(gl.getUniformLocation(this.program,n),i));this.phase=gl.getUniformLocation(this.program,'phase');this.flowSize=gl.getUniformLocation(this.program,'flowSize');
-    this.work=document.createElement('canvas');this.workCtx=this.work.getContext('2d',{willReadFrequently:true});
-    if(getComputedStyle(this.parent).position==='static')this.parent.style.position='relative';this.parent.append(this.canvas);
-    this.lost=e=>{e.preventDefault();this.fail('AI 光流 GPU 上下文丢失，已恢复原始画面');};this.canvas.addEventListener('webglcontextlost',this.lost);
-    this.reset=()=>{this.epoch++;this.clock=new PresentationClock();this.uploadedPair=null;this.ready=false;this.lastFrame=null;this.pending=null;this.canvas.style.visibility='hidden';restoreVideo(this.video,this);};video.addEventListener('seeking',this.reset);video.addEventListener('ratechange',this.reset);
-    this.capture=this.capture.bind(this);this.render=this.render.bind(this);this.automatic=automatic;
-    if(automatic){this.queueCapture();this.raf=requestAnimationFrame(this.render);}
-    localRifeSession().then(()=>{if(!this.stopped&&this.inferences===0){this.status='RIFE 已就绪，等待相邻真实帧';this.showStatus();}}).catch(e=>this.fail('AI 光流不可用：'+e.message));
-  }
-  queueCapture(){if(this.stopped)return;this.captureHandle=this.video.requestVideoFrameCallback?this.video.requestVideoFrameCallback(this.capture):requestAnimationFrame(this.capture);}
-  capture(now){if(this.stopped)return;if(!this.video.isConnected){this.stop();scheduleScan();return;}if(!document.hidden&&!this.video.paused&&!this.video.seeking&&this.video.readyState>=2)this.push(this.video,now);this.queueCapture();}
-  push(source,now){
-    if(this.stopped||this.video.seeking)return;
-    try{
-      const w=source.videoWidth||source.width,h=source.videoHeight||source.height;if(!w||!h)return;if(w*h>4.2e6)throw Error('光流呈现支持至约 4MP');
-      const current=document.createElement('canvas');current.width=w;current.height=h;current.getContext('2d',{alpha:false}).drawImage(source,0,0);
-      const previous=this.lastFrame;this.lastFrame={canvas:current,time:now};if(!previous||previous.canvas.width!==w||previous.canvas.height!==h||now-previous.time>250||now<=previous.time)return;
-      if(this.pending)this.dropped++;this.pending={previous:previous.canvas,current,time:now,interval:now-previous.time,epoch:this.epoch};this.process();
-    }catch(e){this.fail('AI 光流未启用：'+e.message);}
-  }
-  async process(){
-    if(this.stopped||this.busy||!this.pending)return;this.busy=true;const pair=this.pending;this.pending=null;
-    try{await this.prepare(pair);}catch(e){if(!this.stopped)this.fail('AI 光流未启用：'+e.message);}
-    finally{this.busy=false;if(!this.stopped&&this.pending)this.process();}
-  }
-  async prepare(pair,force=false){
-    const w=pair.current.width,h=pair.current.height,scale=Math.min(PREFS.fiFlowScale/100,640/w,384/h);
-    const fw=Math.max(64,Math.min(640,Math.ceil(w*scale/64)*64)),fh=Math.max(64,Math.min(384,Math.ceil(h*scale/64)*64));
-    if(this.work.width!==fw||this.work.height!==fh){this.work.width=fw;this.work.height=fh;}
-    this.workCtx.drawImage(pair.previous,0,0,fw,fh);const first=this.workCtx.getImageData(0,0,fw,fh).data;
-    this.workCtx.drawImage(pair.current,0,0,fw,fh);const second=this.workCtx.getImageData(0,0,fw,fh).data;
-    const result=await inferRife(first,second,fw,fh);
-    if(this.stopped||pair.epoch!==this.epoch)return;
-    this.inferences++;this.inferenceMs=result.ms;this.estimate=[fw,fh];
-    if(!force&&performance.now()-pair.time>250){this.status='RIFE 模型预热完成，正在同步最新帧';this.showStatus();return;}
-    if(result.width!==fw||result.height!==fh)throw Error('RIFE 光流尺寸与输入不匹配');
-    const prepared={...pair,result,fw,fh};if(force)this.upload(prepared);else this.clock.enqueue(prepared);
-  }
-  upload(pair){
-    const {result,fw,fh}=pair,w=pair.current.width,h=pair.current.height;
-    const gl=this.gl;if(Math.max(w,h)>gl.getParameter(gl.MAX_TEXTURE_SIZE))throw Error('呈现尺寸超出显卡限制');
-    if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;gl.viewport(0,0,w,h);}
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
-    [pair.previous,pair.current].forEach((frame,i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,this.textures[i]);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,frame);});
-    const count=fw*fh,field=new Float32Array(count*4);for(let i=0,j=0;i<count;i++,j+=4){field[j]=result.flow[i];field[j+1]=result.flow[count+i];field[j+2]=result.flow[2*count+i];field[j+3]=result.flow[3*count+i];}
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,this.textures[2]);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,fw,fh,0,gl.RGBA,gl.FLOAT,field);
-    gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,this.textures[3]);gl.texImage2D(gl.TEXTURE_2D,0,gl.LUMINANCE,fw,fh,0,gl.LUMINANCE,gl.FLOAT,result.mask);
-    if(gl.getError()!==gl.NO_ERROR)throw Error('光流 / 遮挡纹理上传失败');gl.useProgram(this.program);gl.uniform2f(this.flowSize,fw,fh);this.lastInput=pair.time-pair.interval;this.interval=pair.interval;this.ready=true;this.uploadedPair=pair;
-  }
-  draw(phase){const gl=this.gl;gl.useProgram(this.program);this.textures.forEach((t,i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,t);});gl.uniform1f(this.phase,phase);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);if(gl.getError()!==gl.NO_ERROR)throw Error('光流重投影失败');}
-  render(now){
-    if(this.stopped)return;if(this.video.paused||document.hidden){this.canvas.style.visibility='hidden';restoreVideo(this.video,this);}
-    if(!document.hidden&&!this.video.paused&&!this.video.seeking&&now-this.lastDraw>=1000/this.fps-2){
-      try{const sample=this.clock.sample(now);if(sample){if(sample.pair!==this.uploadedPair)this.upload(sample.pair);const phase=sample.phase;this.draw(phase);this.clockHistory.push(sample.time);if(this.clockHistory.length>120)this.clockHistory.shift();this.lastDraw=now;this.frames++;if(phase>.01&&phase<.99)this.generated++;this.canvas.style.visibility='visible';this.video.style.opacity='0';this.status=`RIFE AI 光流 · ${this.estimate.join('×')} 估计 · ${this.inferenceMs.toFixed(0)}ms · 中间帧 ${this.generated} · AI ×2 / 目标 ${this.fps}Hz`;this.showStatus();}}catch(e){this.fail(e.message);return;}
+     each decoded frame  → GPU copy (no CPU readback) → super-resolution once (Anime4K for anime, sharpened bicubic
+                           for everything else) → block motion between this frame and the previous one
+     each display frame  → warp the two upscaled frames along that motion to the moment being shown (frame
+                           generation in the manner of Lossless Scaling, one source frame behind) → canvas
+
+   The canvas stays up from its first frame until the enhancer stops; pausing and seeking only change what it draws. */
+// Where between the previous source frame (0) and the newest one (1) the display is, one source frame behind.
+function enhancePhase(now,previousTime,currentTime){
+  const interval=currentTime-previousTime;if(!(interval>2&&interval<120))return 1;
+  return Math.max(0,Math.min(1,(now-interval-previousTime)/interval));
+}
+/* Anime is told by the page's own data: bangumi seasons of type 番剧/国创, and videos filed under the animation,
+   bangumi and guochuang zones or tagged as hand-drawn, MAD/MMD or virtual-idol work. */
+const ANIME_ZONES=new Set([1,24,25,27,47,253,13,33,32,51,152,167,153,168,169,195,170]);
+function animeFromVideoInfo(info){
+  if(!info||typeof info!=='object')return false;
+  if(info.seasonType!=null)return [1,4].includes(Number(info.seasonType));
+  if(ANIME_ZONES.has(Number(info.tid))||ANIME_ZONES.has(Number(info.tidParent)))return true;
+  return /动画|番剧|国创|动漫|MAD|AMV|MMD|手书|虚拟UP|VUP|二次元/i.test(String(info.tname||'')+' '+String(info.tags||''));
+}
+const animeCache=new Map();
+async function videoIsAnime(){
+  const model=PREFS.srModel||'auto';if(model==='anime')return true;if(model==='general')return false;
+  const path=location.pathname,key=(path.match(/\/(?:video\/(BV[0-9A-Za-z]+|av\d+)|bangumi\/play\/((?:ep|ss)\d+))/)||[])[0]||path;
+  if(animeCache.has(key))return animeCache.get(key);
+  let anime=false;
+  try{
+    const state=window.__INITIAL_STATE__||{},nextData=window.__NEXT_DATA__?.props?.pageProps?.dehydratedState;
+    const season=state.mediaInfo?.season_type??state.mediaInfo?.ssType??state.epInfo?.season_type;
+    if(/\/bangumi\/play\//.test(path)){
+      let type=season;
+      if(type==null){const id=key.match(/(ep|ss)(\d+)/);if(id){const r=await fetch('https://api.bilibili.com/pgc/view/web/season?'+(id[1]==='ep'?'ep_id=':'season_id=')+id[2],{credentials:'include'});type=(await r.json())?.result?.type;}}
+      anime=animeFromVideoInfo({seasonType:type??(nextData?1:null)});
+    }else{
+      let video=state.videoData;
+      if(!video?.tid){const id=key.match(/BV[0-9A-Za-z]+|av\d+/)?.[0];if(id){const r=await fetch('https://api.bilibili.com/x/web-interface/view?'+(id.startsWith('BV')?'bvid=':'aid=')+id.replace(/^av/,''),{credentials:'include'});video=(await r.json())?.data;}}
+      anime=animeFromVideoInfo({tid:video?.tid,tidParent:video?.tid_v2_parent??video?.tidv2_parent,tname:video?.tname||video?.tname_v2,tags:(state.tags||[]).map(t=>t.tag_name).join(' ')});
     }
-    this.raf=requestAnimationFrame(this.render);
+  }catch{}
+  animeCache.set(key,anime);return anime;
+}
+let aiLibrariesPromise;
+function loadAiLibraries(){
+  if(window['anime4k-webgpu'])return Promise.resolve();
+  if(!aiLibrariesPromise)aiLibrariesPromise=new Promise((resolve,reject)=>{native('load-ai');const start=performance.now();const check=()=>{if(window['anime4k-webgpu'])resolve();else if(performance.now()-start>15000){aiLibrariesPromise=null;reject(Error('超分组件加载超时'));}else setTimeout(check,40);};check();});
+  return aiLibrariesPromise;
+}
+const ENHANCE_SHADERS={
+  // Full-screen triangle shared by the render passes.
+  vertex:`struct Out{@builtin(position) pos:vec4f,@location(0) uv:vec2f};
+    @vertex fn vs(@builtin(vertex_index) i:u32)->Out{var p=array<vec2f,3>(vec2f(-1.,-1.),vec2f(3.,-1.),vec2f(-1.,3.));var o:Out;o.pos=vec4f(p[i],0.,1.);o.uv=vec2f((p[i].x+1.)*.5,(1.-p[i].y)*.5);return o;}`,
+  // General upscaling: Catmull-Rom bicubic from nine bilinear taps, then contrast-adaptive sharpening that never
+  // overshoots the local range (no halos).
+  general:`@group(0) @binding(0) var src:texture_2d<f32>;@group(0) @binding(1) var samp:sampler;@group(0) @binding(2) var<uniform> u:vec4f;
+    fn bicubic(uv:vec2f)->vec3f{let size=u.xy;let p=uv*size-.5;let f=fract(p);let base=floor(p)+.5;
+      let w0=f*(-.5+f*(1.-.5*f));let w1=1.+f*f*(-2.5+1.5*f);let w2=f*(.5+f*(2.-1.5*f));let w3=f*f*(-.5+.5*f);
+      let w12=w1+w2;let t0=(base-1.)/size;let t3=(base+2.)/size;let t12=(base+w2/w12)/size;
+      var c=vec3f(0.);
+      c+=textureSampleLevel(src,samp,vec2f(t0.x,t0.y),0.).rgb*w0.x*w0.y;c+=textureSampleLevel(src,samp,vec2f(t12.x,t0.y),0.).rgb*w12.x*w0.y;c+=textureSampleLevel(src,samp,vec2f(t3.x,t0.y),0.).rgb*w3.x*w0.y;
+      c+=textureSampleLevel(src,samp,vec2f(t0.x,t12.y),0.).rgb*w0.x*w12.y;c+=textureSampleLevel(src,samp,vec2f(t12.x,t12.y),0.).rgb*w12.x*w12.y;c+=textureSampleLevel(src,samp,vec2f(t3.x,t12.y),0.).rgb*w3.x*w12.y;
+      c+=textureSampleLevel(src,samp,vec2f(t0.x,t3.y),0.).rgb*w0.x*w3.y;c+=textureSampleLevel(src,samp,vec2f(t12.x,t3.y),0.).rgb*w12.x*w3.y;c+=textureSampleLevel(src,samp,vec2f(t3.x,t3.y),0.).rgb*w3.x*w3.y;
+      return c;}
+    @fragment fn fs(@location(0) uv:vec2f)->@location(0) vec4f{
+      let px=1./u.xy;let c=bicubic(uv);
+      let n=textureSampleLevel(src,samp,uv+vec2f(0.,-px.y),0.).rgb;let s=textureSampleLevel(src,samp,uv+vec2f(0.,px.y),0.).rgb;
+      let e=textureSampleLevel(src,samp,uv+vec2f(px.x,0.),0.).rgb;let w=textureSampleLevel(src,samp,uv+vec2f(-px.x,0.),0.).rgb;
+      let lo=min(min(min(n,s),min(e,w)),c);let hi=max(max(max(n,s),max(e,w)),c);
+      let amount=u.z*sqrt(clamp(min(lo,1.-hi)/max(hi,vec3f(.001)),vec3f(0.),vec3f(1.)));
+      let sharp=c+(c-(n+s+e+w)*.25)*amount*2.;
+      return vec4f(clamp(sharp,lo,hi),1.);}`,
+  // Block motion: for each block of the newest frame, the offset d with  newest(x) ≈ previous(x + d), in source pixels.
+  // A coarse pass searches widely on 32 px blocks; the fine pass refines 16 px blocks from the coarse neighbours.
+  motion:`@group(0) @binding(0) var a:texture_2d<f32>;@group(0) @binding(1) var b:texture_2d<f32>;@group(0) @binding(2) var samp:sampler;
+    @group(0) @binding(3) var coarseIn:texture_2d<f32>;@group(0) @binding(4) var outField:texture_storage_2d<rgba16float,write>;@group(0) @binding(5) var<uniform> u:vec4f;
+    fn luma(t:texture_2d<f32>,p:vec2f)->f32{return dot(textureSampleLevel(t,samp,p/u.xy,0.).rgb,vec3f(.299,.587,.114));}
+    fn cost(center:vec2f,size:f32,d:vec2f)->f32{var s=0.;let step=size/6.;
+      for(var y=0;y<6;y++){for(var x=0;x<6;x++){let o=center+(vec2f(f32(x),f32(y))-2.5)*step;s+=abs(luma(b,o)-luma(a,o+d));}}
+      return s/36.+length(d)*.0004;}
+    @compute @workgroup_size(8,8) fn coarse(@builtin(global_invocation_id) id:vec3u){
+      let dims=textureDimensions(outField);if(id.x>=dims.x||id.y>=dims.y){return;}
+      let center=(vec2f(id.xy)+.5)*32.;var best=vec2f(0.);var bestCost=cost(center,32.,best);
+      for(var y=-8;y<=8;y++){for(var x=-8;x<=8;x++){let d=vec2f(f32(x),f32(y))*8.;let c=cost(center,32.,d);if(c<bestCost){bestCost=c;best=d;}}}
+      let still=cost(center,32.,vec2f(0.));if(bestCost>still-.004){best=vec2f(0.);bestCost=still;}
+      textureStore(outField,id.xy,vec4f(best,bestCost,1.));}
+    @compute @workgroup_size(8,8) fn fine(@builtin(global_invocation_id) id:vec3u){
+      let dims=textureDimensions(outField);if(id.x>=dims.x||id.y>=dims.y){return;}
+      let center=(vec2f(id.xy)+.5)*16.;let cdims=vec2i(textureDimensions(coarseIn));let cid=vec2i(id.xy/2u);
+      var mean=vec2f(0.);for(var y=-1;y<=1;y++){for(var x=-1;x<=1;x++){mean+=textureLoad(coarseIn,clamp(cid+vec2i(x,y),vec2i(0),cdims-1),0).xy;}}mean/=9.;
+      var best=vec2f(0.);var bestCost=cost(center,16.,best)+length(mean)*.004;
+      for(var y=-1;y<=1;y++){for(var x=-1;x<=1;x++){let q=clamp(cid+vec2i(x,y),vec2i(0),cdims-1);let d=textureLoad(coarseIn,q,0).xy;let c=cost(center,16.,d)+length(d-mean)*.004;if(c<bestCost){bestCost=c;best=d;}}}
+      for(var r=0;r<2;r++){let stepSize=select(1.,4.,r==0);let around=best;
+        for(var y=-2;y<=2;y++){for(var x=-2;x<=2;x++){let d=around+vec2f(f32(x),f32(y))*stepSize;let c=cost(center,16.,d)+length(d-mean)*.004;if(c<bestCost){bestCost=c;best=d;}}}}
+      let still=cost(center,16.,vec2f(0.));if(bestCost>still-.003){best=vec2f(0.);bestCost=still;}
+      textureStore(outField,id.xy,vec4f(best,bestCost,1.));}`,
+  // Frame generation: both frames move along the motion to the shown moment and are blended; where the match is poor
+  // (occlusion, scene change) the nearer real frame is shown instead of a guess.
+  present:`@group(0) @binding(0) var ua:texture_2d<f32>;@group(0) @binding(1) var ub:texture_2d<f32>;@group(0) @binding(2) var field:texture_2d<f32>;
+    @group(0) @binding(3) var samp:sampler;@group(0) @binding(4) var<uniform> u:vec4f;
+    @fragment fn fs(@location(0) uv:vec2f)->@location(0) vec4f{
+      let t=u.z;let b=textureSampleLevel(ub,samp,uv,0.);
+      if(u.w<.5||t>=.999){return vec4f(b.rgb,1.);}
+      let a=textureSampleLevel(ua,samp,uv,0.);if(t<=.001){return vec4f(a.rgb,1.);}
+      let m=textureSampleLevel(field,samp,uv,0.);let d=m.xy/u.xy;
+      let wa=textureSampleLevel(ua,samp,uv+t*d,0.).rgb;let wb=textureSampleLevel(ub,samp,uv-(1.-t)*d,0.).rgb;
+      let warped=mix(wa,wb,t);let nearest=select(b.rgb,a.rgb,t<.5);
+      let trust=(1.-smoothstep(.03,.09,m.z))*(1.-smoothstep(.05,.16,length(wa-wb)));
+      return vec4f(mix(nearest,warped,trust),1.);}`
+};
+class VideoEnhancer {
+  constructor(video){
+    if(!navigator.gpu)throw Error('需要 WebGPU 显卡支持');
+    this.video=video;this.frames=0;this.generated=0;this.sourceFrames=0;this.stopped=false;this.shown=false;
+    this.sr=PREFS.srMode!=='off';this.fi=PREFS.fiMode!=='off';this.anime=null;this.slots=[];this.current=-1;this.history=0;
+    rememberVideo(video);this.parent=video.parentElement;
+    this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas bs-enhance-canvas';this.canvas.style.visibility='hidden';
+    if(getComputedStyle(this.parent).position==='static')this.parent.style.position='relative';this.parent.append(this.canvas);
+    this.onFrame=this.onFrame.bind(this);this.onDisplay=this.onDisplay.bind(this);
+    this.start().catch(e=>this.fail(e.message));
   }
-  showStatus(){$$('.bs-fi-status').forEach(el=>el.textContent=this.status);const el=shadow&&$('#fi-status',shadow);if(el)el.textContent=this.status;}
-  fail(message){this.stop();this.status=message;this.showStatus();diagnostic(message);}
-  stop(){if(this.stopped)return;this.stopped=true;this.epoch++;this.pending=null;this.lastFrame=null;this.clock=new PresentationClock();this.uploadedPair=null;cancelAnimationFrame(this.raf);if(this.video.cancelVideoFrameCallback&&this.captureHandle!=null)this.video.cancelVideoFrameCallback(this.captureHandle);else cancelAnimationFrame(this.captureHandle);this.video.removeEventListener('seeking',this.reset);this.video.removeEventListener('ratechange',this.reset);this.canvas.removeEventListener('webglcontextlost',this.lost);this.canvas.remove();const gl=this.gl;this.textures.forEach(t=>gl.deleteTexture(t));gl.deleteBuffer(this.buffer);gl.deleteProgram(this.program);restoreVideo(this.video,this);}
-}
-function startInterpolation(){
-  interpolator?.stop();interpolator=null;if(PREFS.fiMode==='off')return;const video=playbackVideo();if(!video)return;
-  try{interpolator=new FrameInterpolator(video,PREFS.fiFps);}catch(e){diagnostic(e.message);toast('AI 光流不可用：'+e.message);}
-}
-
-// ESPCN's learned luminance network runs locally; no frame or tensor leaves this process.
-let aiSessionPromise,rifeSessionPromise,gpuRuntimePromise;
-// ORT's Asyncify backend owns shared WASM state; SR and flow must never enter it concurrently.
-let inferenceQueue=Promise.resolve();
-function exclusiveGpu(task){const run=inferenceQueue.then(task,task);inferenceQueue=run.catch(()=>{});return run;}
-async function runLocalSession(session,feeds){return exclusiveGpu(async()=>{const tensors=await session.run(feeds);try{return Object.fromEntries(Object.entries(tensors).map(([name,t])=>[name,{dims:[...t.dims],data:t.data.slice()}]));}finally{Object.values(tensors).forEach(t=>t.dispose());}});}
-
-async function ensureGpuRuntime(){
-  if(!navigator.gpu||typeof ort==='undefined')throw Error('本地 AI 需要 WebGPU；已保留原生播放');
-  if(!gpuRuntimePromise)gpuRuntimePromise=(async()=>{
-    const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('找不到 WebGPU 显卡');
-    ort.env.webgpu.adapter=adapter;ort.env.wasm.wasmPaths='https://bili-space.local/ai/';ort.env.wasm.numThreads=1;ort.env.wasm.proxy=false;
-  })().catch(e=>{gpuRuntimePromise=null;throw e;});
-  return gpuRuntimePromise;
-}
-async function loadLocalModel(path){await ensureGpuRuntime();const r=await fetch('https://bili-space.local/ai/'+path);if(!r.ok)throw Error('本地模型读取失败 HTTP '+r.status);const bytes=await r.arrayBuffer();return exclusiveGpu(()=>ort.InferenceSession.create(bytes,{executionProviders:['webgpu'],graphOptimizationLevel:'all'}));}
-async function localAiSession(){if(!aiSessionPromise)aiSessionPromise=loadLocalModel('espcn-x3-dynamic.onnx').catch(e=>{aiSessionPromise=null;throw e;});return aiSessionPromise;}
-async function localRifeSession(){if(!rifeSessionPromise)rifeSessionPromise=loadLocalModel('rife49-flow.onnx').catch(e=>{rifeSessionPromise=null;throw e;});return rifeSessionPromise;}
-async function inferRife(frame0,frame1,w,h){
-  const session=await localRifeSession(),pixels=w*h;
-  const planar=rgba=>{const rgb=new Float32Array(pixels*3);for(let i=0,j=0;i<pixels;i++,j+=4){rgb[i]=rgba[j]/255;rgb[pixels+i]=rgba[j+1]/255;rgb[2*pixels+i]=rgba[j+2]/255;}return rgb;};
-  const input0=new ort.Tensor('float32',planar(frame0),[1,3,h,w]),input1=new ort.Tensor('float32',planar(frame1),[1,3,h,w]),time=new ort.Tensor('float32',Float32Array.of(.5),[1]);let result;
-  const begin=performance.now();
-  try{result=await runLocalSession(session,{img0:input0,img1:input1,timestep:time});const flow=result[session.outputNames[0]],mask=result[session.outputNames[1]];return {flow:flow.data.slice(),mask:mask.data.slice(),width:flow.dims[3],height:flow.dims[2],ms:performance.now()-begin};}
-  finally{input0.dispose();input1.dispose();time.dispose();}
-}
-const SR_MAX_IN_PX=1920*1080, SR_MAX_OUT_PX=4.2e6, SR_HARD_CAP=3;
-class AIScaler {
-  constructor(video,mode,scale){
-    if(!navigator.gpu||typeof ort==='undefined')throw Error('WebGPU 本地 AI 不可用；已保留原生播放');
-    this.video=video;this.mode=mode;this.scale=scale;this.frames=0;this.last=-Infinity;this.stopped=false;
-    this.interval=1000/(PREFS.srFps===120?120:60);this.stamps=[];this.epoch=0;
-    this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas';this.canvas.style.visibility='hidden';
-    this.ctx=this.canvas.getContext('2d',{alpha:false,desynchronized:true});
-    this.input=document.createElement('canvas');this.inputCtx=this.input.getContext('2d',{willReadFrequently:true,alpha:false});
-    this.output=document.createElement('canvas');this.outputCtx=this.output.getContext('2d',{alpha:false});
-    this.oldOpacity=rememberVideo(video);this.parent=video.parentElement;this.oldPosition=this.parent.style.position;
-    if(getComputedStyle(this.parent).position==='static'){this.parent.style.position='relative';this.changedPosition=true;}
-    this.parent.append(this.canvas);this.tick=this.tick.bind(this);
-    this.seekReset=()=>{this.epoch++;this.canvas.style.visibility='hidden';restoreVideo(this.video,this);};video.addEventListener('seeking',this.seekReset);
-    status='正在加载本地 ESPCN ×3 / WebGPU…';updateStatus();
-    localAiSession().then(session=>{if(this.stopped)return;this.session=session;this.schedule();}).catch(e=>this.fail(e.message));
-  }
-  schedule(){if(this.stopped)return;this.frame=this.video.requestVideoFrameCallback?this.video.requestVideoFrameCallback(this.tick):requestAnimationFrame(this.tick);}
-  // Output size follows what is actually on screen: a 1080p source in a small player is left
-  // alone, a 360p/480p/720p source gets real inference, and the pixel budget caps the rest.
-  plan(){
-    const w=this.video.videoWidth,h=this.video.videoHeight;
-    if(!w||!h)return null;
-    if(w*h>SR_MAX_IN_PX)return {reason:`源 ${w}×${h} 超出本地推理上限，已保留原生播放`};
-    const box=this.video.getBoundingClientRect();
-    const dpr=Math.min(devicePixelRatio||1,2);
-    const shown=Math.max((box.width||0)*dpr,(box.height||0)*dpr*(w/h||1),1);
-    let factor=Math.min(this.scale,SR_HARD_CAP,shown/w,Math.sqrt(SR_MAX_OUT_PX/(w*h)));
-    if(!Number.isFinite(factor)||factor<1.02)return {reason:'画面已经不比源更大，AI 推理不会带来可见提升'};
-    return {w,h,factor,outW:Math.round(w*factor),outH:Math.round(h*factor)};
-  }
-  async tick(now){
+  async start(){
+    if(this.sr){this.anime=await Promise.race([videoIsAnime(),new Promise(r=>setTimeout(()=>r(false),1500))]);if(this.anime)await loadAiLibraries();}
     if(this.stopped)return;
+    const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('找不到 WebGPU 显卡');
+    this.device=await adapter.requestDevice();if(this.stopped){this.device.destroy();return;}
+    this.device.addEventListener('uncapturederror',e=>{e.preventDefault();if(!this.stopped)this.fail(e.error.message);});
+    this.device.lost.then(info=>{if(!this.stopped)this.fail('显卡已重置：'+info.message);});
+    this.context=this.canvas.getContext('webgpu');if(!this.context)throw Error('WebGPU 画布不可用');
+    this.format=navigator.gpu.getPreferredCanvasFormat();this.context.configure({device:this.device,format:this.format,alphaMode:'opaque'});
+    const d=this.device,module=code=>d.createShaderModule({code:ENHANCE_SHADERS.vertex+code});
+    this.sampler=d.createSampler({magFilter:'linear',minFilter:'linear',addressModeU:'clamp-to-edge',addressModeV:'clamp-to-edge'});
+    this.uniform=d.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    this.presentUniform=d.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    this.presentPipeline=d.createRenderPipeline({layout:'auto',vertex:{module:module(ENHANCE_SHADERS.present),entryPoint:'vs'},fragment:{module:module(ENHANCE_SHADERS.present),entryPoint:'fs',targets:[{format:this.format}]},primitive:{topology:'triangle-list'}});
+    this.generalPipeline=d.createRenderPipeline({layout:'auto',vertex:{module:module(ENHANCE_SHADERS.general),entryPoint:'vs'},fragment:{module:module(ENHANCE_SHADERS.general),entryPoint:'fs',targets:[{format:'rgba16float'}]},primitive:{topology:'triangle-list'}});
+    const motion=d.createShaderModule({code:ENHANCE_SHADERS.motion});
+    this.coarsePipeline=d.createComputePipeline({layout:'auto',compute:{module:motion,entryPoint:'coarse'}});
+    this.finePipeline=d.createComputePipeline({layout:'auto',compute:{module:motion,entryPoint:'fine'}});
+    this.frameHandle=this.video.requestVideoFrameCallback(this.onFrame);
+    if(this.fi)this.raf=requestAnimationFrame(this.onDisplay);
+    this.setStatus(this.sr?(this.anime?'超分：动画模型（Anime4K）':'超分：通用模型')+' · 等待视频帧':'补帧已就绪，等待视频帧');
+  }
+  // Source size and output size; output follows what the player actually shows, capped near 4 megapixels.
+  plan(){
+    const w=this.video.videoWidth,h=this.video.videoHeight;if(!w||!h)return null;
+    let factor=1;
+    if(this.sr){const box=this.video.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),shown=Math.max(box.width*dpr/w,box.height*dpr/h);
+      factor=Math.min(Number(PREFS.srScale)||2,Math.max(1,shown),Math.sqrt(4.2e6/(w*h)));if(factor<1.05)factor=1;
+      if(w*h>1920*1080)return {w,h,outW:w,outH:h,upscale:false,key:w+'x'+h+'@native'};
+      if(this.anime)factor=2;}
+    return {w,h,outW:Math.round(w*factor),outH:Math.round(h*factor),upscale:this.sr,key:w+'x'+h+'@'+factor.toFixed(2)};
+  }
+  build(plan){
+    this.releaseSlots();const d=this.device,{w,h,outW,outH}=plan;this.plan_=plan;
+    const usage=GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.RENDER_ATTACHMENT;
+    for(let i=0;i<3;i++){
+      const src=d.createTexture({size:[w,h],format:'rgba16float',usage});let up=src,anime=null;
+      if(plan.upscale&&this.anime){const lib=window['anime4k-webgpu'];anime=new (PREFS.srMode==='quality'?lib.CNNx2UL:lib.CNNx2M)({device:d,inputTexture:src});up=anime.getOutputTexture();}
+      else if(plan.upscale)up=d.createTexture({size:[outW,outH],format:'rgba16float',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.RENDER_ATTACHMENT});
+      this.slots.push({src,up,anime,time:0,media:0});
+    }
+    if(plan.upscale&&!this.anime){d.queue.writeBuffer(this.uniform,0,new Float32Array([w,h,PREFS.srMode==='quality'?1.:.7,0]));
+      for(const slot of this.slots)slot.general=d.createBindGroup({layout:this.generalPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:slot.src.createView()},{binding:1,resource:this.sampler},{binding:2,resource:{buffer:this.uniform}}]});}
+    const fieldUsage=GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.STORAGE_BINDING;
+    this.coarse=d.createTexture({size:[Math.ceil(w/32),Math.ceil(h/32)],format:'rgba16float',usage:fieldUsage});
+    // Three frames and the motion into each: the display runs 1.5 source frames behind, so an early or late frame still
+    // falls inside a pair that can be interpolated.
+    this.fields=[0,1,2].map(()=>d.createTexture({size:[Math.ceil(w/16),Math.ceil(h/16)],format:'rgba16float',usage:fieldUsage}));this.field=this.fields[0];
+    this.motionUniform=this.motionUniform||d.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});d.queue.writeBuffer(this.motionUniform,0,new Float32Array([w,h,0,0]));
+    // Motion is always measured from the slot just written (b) back to the other one (a).
+    this.motionGroups=[0,1,2].map(i=>{const b=this.slots[i].src.createView(),a=this.slots[(i+2)%3].src.createView();const entries=(pipeline,coarseIn,out)=>d.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:a},{binding:1,resource:b},{binding:2,resource:this.sampler},...(coarseIn?[{binding:3,resource:coarseIn.createView()}]:[]),{binding:4,resource:out.createView()},{binding:5,resource:{buffer:this.motionUniform}}]});
+      return {coarse:entries(this.coarsePipeline,null,this.coarse),fine:entries(this.finePipeline,this.coarse,this.fields[i])};});
+    this.presentGroups=[0,1,2].map(i=>d.createBindGroup({layout:this.presentPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:this.slots[(i+2)%3].up.createView()},{binding:1,resource:this.slots[i].up.createView()},{binding:2,resource:this.fields[i].createView()},{binding:3,resource:this.sampler},{binding:4,resource:{buffer:this.presentUniform}}]}));
+    this.canvas.width=outW;this.canvas.height=outH;this.current=-1;this.history=0;
+  }
+  releaseSlots(){
+    for(const slot of this.slots){if(slot.anime){const seen=new Set(),visit=o=>{if(!o||typeof o!=='object'||seen.has(o))return;seen.add(o);if(typeof o.destroy==='function'&&typeof o.createView==='function'){if(o!==slot.src)o.destroy();return;}if(Array.isArray(o))o.forEach(visit);else for(const [k,v] of Object.entries(o))if(k!=='device')visit(v);};visit(slot.anime);}else if(slot.up!==slot.src)slot.up.destroy();slot.src.destroy();}
+    this.slots=[];this.coarse?.destroy();this.fields?.forEach(f=>f.destroy());this.coarse=this.field=this.fields=null;
+  }
+  onFrame(now,meta){
+    if(this.stopped)return;this.frameHandle=this.video.requestVideoFrameCallback(this.onFrame);
     if(!this.video.isConnected){this.stop();scheduleScan();return;}
-    if(document.hidden||this.video.readyState<2){this.schedule();return;}
-    if(!this.session){this.schedule();return;}
-    if(now-this.last<this.interval-1){this.schedule();return;}
-    const plan=this.plan();
-    if(!plan){this.schedule();return;}
-    if(!plan.outW){this.idle(plan.reason);this.schedule();return;}
     try{
-      const {w,h,outW,outH,factor}=plan,begin=performance.now(),epoch=this.epoch;
-      if(this.input.width!==w||this.input.height!==h){this.input.width=w;this.input.height=h;this.luma=null;}
-      this.inputCtx.drawImage(this.video,0,0,w,h);
-      const rgba=this.inputCtx.getImageData(0,0,w,h).data,len=w*h;
-      if(!this.luma||this.luma.length!==len)this.luma=new Float32Array(len);
-      const y=this.luma;
-      for(let i=0,j=0;i<len;i++,j+=4)y[i]=(rgba[j]*0.299+rgba[j+1]*0.587+rgba[j+2]*0.114)*(1/255);
-      const input=new ort.Tensor('float32',y,[1,1,h,w]);let result;
-      try{result=await runLocalSession(this.session,{[this.session.inputNames[0]]:input});}finally{input.dispose();}
-      const tensor=result[this.session.outputNames[0]];
-      if(this.stopped||epoch!==this.epoch){if(!this.stopped)this.schedule();return;}
-      const oh=tensor.dims[2],ow=tensor.dims[3],values=tensor.data;
-      if(ow!==w*3||oh!==h*3){throw Error('AI 模型输出尺寸错误');}
-      const out=this.output;
-      if(out.width!==ow||out.height!==oh){out.width=ow;out.height=oh;this.pixels=null;}
-      if(!this.pixels)this.pixels=this.outputCtx.createImageData(ow,oh);
-      const pixels=this.pixels.data;
-      // Fill 3×3 blocks per source pixel: the learned luminance replaces Y and keeps the
-      // original chroma offsets, so colour is untouched and no per-output-pixel division runs.
-      for(let yy=0,row=0;yy<h;yy++,row+=w){
-        const baseY=yy*3;
-        for(let xx=0;xx<w;xx++){
-          const k=(row+xx)*4;
-          const oldY=rgba[k]*0.299+rgba[k+1]*0.587+rgba[k+2]*0.114;
-          const dr=rgba[k]-oldY,dg=rgba[k+1]-oldY,db=rgba[k+2]-oldY;
-          for(let dy=0;dy<3;dy++){
-            let p=((baseY+dy)*ow+xx*3)*4, s=(baseY+dy)*ow+xx*3;
-            for(let dx=0;dx<3;dx++){
-              const v=values[s+dx]*255;
-              pixels[p]=v+dr;pixels[p+1]=v+dg;pixels[p+2]=v+db;pixels[p+3]=255;p+=4;
-            }
-          }
-        }
-      }
-      this.outputCtx.putImageData(this.pixels,0,0);
-      if(this.canvas.width!==outW||this.canvas.height!==outH){this.canvas.width=outW;this.canvas.height=outH;}
-      this.ctx.imageSmoothingEnabled=true;this.ctx.imageSmoothingQuality='high';
-      this.ctx.drawImage(out,0,0,outW,outH);
-      this.canvas.style.visibility='visible';
-      this.video.style.opacity='0';this.frames++;this.last=now;this.inferenceMs=performance.now()-begin;
-      this.stamps.push(now);while(this.stamps.length&&now-this.stamps[0]>1500)this.stamps.shift();
-      const fps=this.stamps.length>1?Math.round((this.stamps.length-1)*1000/(now-this.stamps[0])):0;
-      status=`本地 AI ESPCN ×3 · ${w}×${h} → ${outW}×${outH}（${factor.toFixed(2)}×）· ${this.inferenceMs.toFixed(0)}ms/帧 · ${fps?fps+'fps':'统计中'}`;
-      updateStatus();if(this.frames===1)diagnostic(status);
-    }catch(e){this.fail('AI 未启用：'+e.message+'；已恢复原生播放');return;}
-    this.schedule();
+      const plan=this.plan();if(!plan)return;const rebuilt=!this.plan_||plan.key!==this.plan_.key;if(rebuilt)this.build(plan);
+      const d=this.device,next=this.current<0?0:(this.current+1)%3,slot=this.slots[next],media=meta?.mediaTime??this.video.currentTime,shown=meta?.expectedDisplayTime??now;
+      // Seeking, a stall or a backwards jump starts a fresh pair instead of generating frames across the gap.
+      const previous=this.current<0?null:this.slots[this.current],gap=previous?media-previous.media:0;
+      if(!previous||gap<=0||gap>.25||this.video.seeking)this.history=0;
+      d.queue.copyExternalImageToTexture({source:this.video},{texture:slot.src},[plan.w,plan.h]);
+      const encoder=d.createCommandEncoder();
+      if(plan.upscale){if(slot.anime)slot.anime.pass(encoder);else{const pass=encoder.beginRenderPass({colorAttachments:[{view:slot.up.createView(),loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});pass.setPipeline(this.generalPipeline);pass.setBindGroup(0,slot.general);pass.draw(3);pass.end();}}
+      if(this.fi&&this.history>0){const groups=this.motionGroups[next];
+        const c=encoder.beginComputePass();c.setPipeline(this.coarsePipeline);c.setBindGroup(0,groups.coarse);c.dispatchWorkgroups(Math.ceil(this.coarse.width/8),Math.ceil(this.coarse.height/8));
+        c.setPipeline(this.finePipeline);c.setBindGroup(0,groups.fine);c.dispatchWorkgroups(Math.ceil(this.field.width/8),Math.ceil(this.field.height/8));c.end();}
+      d.queue.submit([encoder.finish()]);
+      // Display times are snapped to the screen's refresh; media times are exact. Map one to the other with a slowly
+      // corrected offset so generated frames advance evenly.
+      const offset=media-shown*(this.video.playbackRate||1)/1000;this.clockOffset=this.history===0||this.clockOffset==null?offset:this.clockOffset+(offset-this.clockOffset)*.08;
+      slot.time=shown;slot.media=media;this.current=next;this.history=Math.min(3,this.history+1);this.sourceFrames++;
+      // Without frame generation (or while paused) each source frame is shown as it arrives.
+      if(!this.fi||this.video.paused||rebuilt)this.present(1);
+    }catch(e){this.fail(e.message);}
   }
-  idle(reason){
-    this.canvas.style.visibility='hidden';restoreVideo(this.video,this);
-    if(this.canvas.width){this.canvas.width=0;this.canvas.height=0;}
-    if(status!==reason){status=reason;updateStatus();diagnostic(reason);}
+  onDisplay(now){
+    if(this.stopped)return;this.raf=requestAnimationFrame(this.onDisplay);
+    if(this.current<0||this.video.paused||document.hidden)return;
+    // Cap at the chosen rate: on a fast display some refreshes are skipped evenly.
+    const cap=1000/(Number(PREFS.fiFps)||60);if(now-(this.lastPresent||0)<cap*.8)return;this.lastPresent=now;
+    if(this.history<2){this.present(1,this.current);return;}
+    const newest=this.current,b=this.slots[newest],a=this.slots[(newest+2)%3],dur=b.media-a.media;
+    if(!(dur>.002&&dur<.12)){this.present(1,newest);return;}
+    const target=now*(this.video.playbackRate||1)/1000+(this.clockOffset||0)-1.5*dur;
+    let pair=newest;if(target<a.media&&this.history>=3)pair=(newest+2)%3;
+    const nb=this.slots[pair],na=this.slots[(pair+2)%3];
+    this.present(Math.max(0,Math.min(1,(target-na.media)/Math.max(.001,nb.media-na.media))),pair);
   }
-  fail(text){if(this.stopped)return;this.stop();status=text;updateStatus();toast(text);diagnostic(text);}
-  stop(){if(this.stopped)return;this.stopped=true;if(this.video.cancelVideoFrameCallback&&this.frame!=null)this.video.cancelVideoFrameCallback(this.frame);else cancelAnimationFrame(this.frame);this.video.removeEventListener('seeking',this.seekReset);restoreVideo(this.video,this);this.canvas.remove();this.pixels=null;this.luma=null;}
-}
-async function benchScale(w,h,runs=6){
-  const session=await localAiSession();
-  const data=new Float32Array(w*h);for(let i=0;i<data.length;i++)data[i]=((i*37)%255)/255;
-  const input=new ort.Tensor('float32',data,[1,1,h,w]);
-  let result;
-  const begin=performance.now();
-  for(let i=0;i<runs;i++){result=await runLocalSession(session,{[session.inputNames[0]]:input});}
-  const ms=(performance.now()-begin)/runs;
-  input.dispose();
-  return {w,h,ms:Math.round(ms*10)/10,fps:Math.round(10000/ms)/10};
+  present(phase,pair=this.current){
+    const d=this.device,plan=this.plan_;if(!plan||this.current<0)return;
+    d.queue.writeBuffer(this.presentUniform,0,new Float32Array([plan.w,plan.h,phase,this.fi&&this.history>1?1:0]));
+    const encoder=d.createCommandEncoder(),pass=encoder.beginRenderPass({colorAttachments:[{view:this.context.getCurrentTexture().createView(),loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});
+    pass.setPipeline(this.presentPipeline);pass.setBindGroup(0,this.presentGroups[pair]);pass.draw(3);pass.end();d.queue.submit([encoder.finish()]);
+    this.frames++;if(phase>.001&&phase<.999)this.generated++;
+    if(typeof RUNTIME!=='undefined'&&RUNTIME.testing){{const b=this.slots[pair],o=this.slots[(pair+2)%3];(this.trace||(this.trace=[])).push([performance.now(),o.media+phase*(b.media-o.media),b.media-o.media,phase]);}if(this.trace.length>240)this.trace.shift();}
+    if(!this.shown){this.shown=true;this.canvas.style.visibility='visible';}
+    // The player resets the element's inline style now and then; keep the raw video from compositing under the canvas.
+    if(this.video.style.opacity!=='0')this.video.style.opacity='0';
+    if(this.frames%30===1){const parts=[];if(plan.upscale)parts.push((this.anime?'动画模型 Anime4K':'通用模型')+` ${plan.w}×${plan.h} → ${plan.outW}×${plan.outH}`);else if(this.sr)parts.push('超分待机（画面不比源大）');if(this.fi)parts.push(`补帧 ${this.generated} 帧 · 上限 ${PREFS.fiFps}fps`);this.setStatus(parts.join(' · '));}
+  }
+  setStatus(text){status=text;updateStatus();this.status=text;const el=shadow&&$('#fi-status',shadow);if(el)el.textContent=text;}
+  fail(message){if(this.stopped)return;this.stop();this.setStatus('画面增强已关闭：'+message+'；已恢复原生播放');toast('画面增强不可用，已恢复原生播放：'+message);diagnostic(status);}
+  stop(){
+    if(this.stopped)return;this.stopped=true;cancelAnimationFrame(this.raf);if(this.frameHandle!=null)this.video.cancelVideoFrameCallback?.(this.frameHandle);
+    try{this.releaseSlots();this.context?.unconfigure();this.device?.destroy();}catch{}
+    this.canvas.remove();restoreVideo(this.video,this);
+  }
 }
 function updateStatus(){
   const label=shadow&&$('#gpu-status',shadow);if(label)label.textContent=status;
   $$('.bs-player-tool[data-kind=sr] output').forEach(el=>el.textContent=status);
 }
-
-class Anime4KScaler {
-  constructor(video,mode,scale){
-    if(!navigator.gpu||!window['anime4k-webgpu'])throw Error('Anime4K WebGPU 不可用');
-    this.video=video;this.mode=mode;this.scale=scale;this.frames=0;this.stopped=false;this.last=-Infinity;
-    rememberVideo(video);this.canvas=document.createElement('canvas');this.canvas.className='bs-gpu-canvas bs-anime4k-canvas';this.canvas.style.zIndex='4';this.canvas.style.visibility='hidden';
-    if(getComputedStyle(video.parentElement).position==='static')video.parentElement.style.position='relative';video.parentElement.append(this.canvas);
-    this.loop=this.loop.bind(this);this.init().then(()=>{if(!this.stopped)this.raf=requestAnimationFrame(this.loop);}).catch(e=>this.fail(e.message));
-  }
-  async init(){
-    const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('无 WebGPU 显卡');
-    this.device=await adapter.requestDevice();if(this.stopped){this.device.destroy();return;}
-    this.device.addEventListener('uncapturederror',e=>{e.preventDefault();if(!this.stopped)this.fail(e.error.message);});
-    this.device.lost.then(info=>{if(!this.stopped)this.fail('GPU 已丢失：'+info.message);});
-    this.context=this.canvas.getContext('webgpu');if(!this.context)throw Error('WebGPU 画布不可用');
-    this.format=navigator.gpu.getPreferredCanvasFormat();this.context.configure({device:this.device,format:this.format,alphaMode:'opaque'});
-    const code=`@group(0) @binding(0) var image:texture_2d<f32>; @group(0) @binding(1) var samp:sampler;
-      struct Out{@builtin(position) pos:vec4f,@location(0) uv:vec2f};
-      @vertex fn vs(@builtin(vertex_index) i:u32)->Out{var pts=array<vec2f,3>(vec2f(-1.,-1.),vec2f(3.,-1.),vec2f(-1.,3.));var o:Out;o.pos=vec4f(pts[i],0.,1.);o.uv=vec2f((pts[i].x+1.)*.5,(1.-pts[i].y)*.5);return o;}
-      @fragment fn fs(o:Out)->@location(0) vec4f{return vec4f(textureSample(image,samp,o.uv).rgb,1.);}`;
-    const module=this.device.createShaderModule({code});this.present=this.device.createRenderPipeline({layout:'auto',vertex:{module,entryPoint:'vs'},fragment:{module,entryPoint:'fs',targets:[{format:this.format}]},primitive:{topology:'triangle-list'}});
-    this.sampler=this.device.createSampler({magFilter:'linear',minFilter:'linear'});
-  }
-  setup(w,h){
-    if(this.w===w&&this.h===h)return;
-    // Input-size changes discard all intermediate textures instead of leaking them.
-    if(this.input)this.releaseTextures();this.w=w;this.h=h;
-    this.input=this.device.createTexture({size:[w,h],format:'rgba16float',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST|GPUTextureUsage.RENDER_ATTACHMENT});
-    const lib=window['anime4k-webgpu'];this.pipeline=new (this.mode==='quality'?lib.CNNx2UL:lib.CNNx2M)({device:this.device,inputTexture:this.input});
-    this.bind=this.device.createBindGroup({layout:this.present.getBindGroupLayout(0),entries:[{binding:0,resource:this.pipeline.getOutputTexture().createView()},{binding:1,resource:this.sampler}]});
-  }
-  releaseTextures(){
-    const seen=new Set();const visit=o=>{if(!o||typeof o!=='object'||seen.has(o))return;seen.add(o);if(typeof o.destroy==='function'&&typeof o.createView==='function'){o.destroy();return;}if(Array.isArray(o))o.forEach(visit);else if(o!==this.device)for(const [key,v] of Object.entries(o))if(key!=='device')visit(v);};visit(this.pipeline);this.input?.destroy();this.input=null;this.pipeline=null;
-  }
-  async loop(now){
-    if(this.stopped)return;
-    try{
-      if(!this.video.isConnected){this.stop();return;}
-      const fi=interpolator&&!interpolator.stopped&&interpolator.ready&&interpolator.canvas.style.visibility==='visible'?interpolator:null;
-      const source=fi?fi.canvas:this.video,w=source.videoWidth||source.width,h=source.videoHeight||source.height;
-      const stamp=fi?fi.frames:this.video.currentTime;
-      if(this.video.readyState>=2&&!this.video.paused&&!document.hidden&&w&&h&&this.scale>1&&stamp!==this.lastStamp&&now-this.last>=1000/PREFS.srFps-1){
-        this.setup(w,h);const rect=this.video.getBoundingClientRect();const factor=Math.min(this.scale,Math.max(1,rect.width*devicePixelRatio/w,rect.height*devicePixelRatio/h),Math.sqrt(4.2e6/(w*h)));
-        this.canvas.width=Math.max(1,Math.round(w*factor));this.canvas.height=Math.max(1,Math.round(h*factor));
-        const begin=performance.now();this.device.queue.copyExternalImageToTexture({source},{texture:this.input},[w,h]);
-        const encoder=this.device.createCommandEncoder();this.pipeline.pass(encoder);
-        const pass=encoder.beginRenderPass({colorAttachments:[{view:this.context.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:1},loadOp:'clear',storeOp:'store'}]});pass.setPipeline(this.present);pass.setBindGroup(0,this.bind);pass.draw(3);pass.end();this.device.queue.submit([encoder.finish()]);
-        await this.device.queue.onSubmittedWorkDone();if(this.stopped)return;
-        this.frames++;this.last=now;this.lastStamp=stamp;this.canvas.style.visibility='visible';this.video.style.opacity='0';
-        this.inferenceMs=performance.now()-begin;status=`Anime4K CNN ×2 · ${w}×${h} · ${this.inferenceMs.toFixed(1)}ms · 目标 ${PREFS.srFps}fps`;updateStatus();
-      }
-      if(this.scale<=1){this.canvas.style.visibility='hidden';restoreVideo(this.video,this);}
-    }catch(e){this.fail(e.message);return;}
-    this.raf=requestAnimationFrame(this.loop);
-  }
-  fail(message){this.stop();status='Anime4K 未启用：'+message+'；恢复原生播放';updateStatus();diagnostic(status);}
-  stop(){if(this.stopped)return;this.stopped=true;cancelAnimationFrame(this.raf);this.releaseTextures();this.context?.unconfigure();this.device?.destroy();this.canvas.remove();restoreVideo(this.video,this);}
-}
-
-function startGpu(){
-  gpu?.stop();gpu=null;
-  if(PREFS.srMode==='off'){status='未开启';updateStatus();return;}
+// One enhancer serves both settings; `gpu` and `interpolator` stay as names for the rest of the page script.
+function startEnhancer(){
+  gpu?.stop();gpu=interpolator=null;if(CHROME_VIEW)return;
+  if(PREFS.srMode==='off'&&PREFS.fiMode==='off'){status='未开启';updateStatus();return;}
   const video=playbackVideo();if(!video){status='等待视频';updateStatus();return;}
-  try{status='等待可读取的视频帧';gpu=new Anime4KScaler(video,PREFS.srMode,PREFS.srScale);updateStatus();}
-  catch(e){status=e.message;updateStatus();toast('增强不可用，原生播放不受影响：'+e.message);diagnostic(status);}
+  if(!navigator.gpu){status='需要 WebGPU 显卡支持，已保留原生播放';updateStatus();return;}
+  if(!video.requestVideoFrameCallback){status='此系统不支持逐帧处理，已保留原生播放';updateStatus();return;}
+  try{gpu=interpolator=new VideoEnhancer(video);}
+  catch(e){status=e.message;updateStatus();toast('画面增强不可用，原生播放不受影响：'+e.message);diagnostic(status);}
 }
+function startGpu(){startEnhancer();}
+function startInterpolation(){if(!gpu||gpu.stopped||gpu.video!==playbackVideo()||gpu.fi!==(PREFS.fiMode!=='off'))startEnhancer();}
 
 let volumeDrag=null;const volumeWatched=new WeakSet(),volumeTracks=new WeakSet(),volumeIntents=new WeakMap(),volumeObserved=new WeakMap();
 function playerVolumePercent(){const video=playbackVideo();return video?Math.round((video.muted?0:video.volume)*Math.max(1,Math.min(2,Number(PREFS.volumeBoost||100)/100))*100):0;}
@@ -1492,7 +2356,7 @@ let volumeHintTimer;
 function showPlayerVolumeHint(){
   const player=$('.bpx-player-video-wrap')||$('.bpx-player-container');if(!player)return;
   let hint=$('[data-bs-volume-hint]',player);
-  if(!hint){hint=document.createElement('div');hint.dataset.bsVolumeHint='';hint.setAttribute('role','status');hint.setAttribute('aria-live','polite');hint.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:90;pointer-events:none;padding:12px 20px;border-radius:10px;background:rgba(0,0,0,.65);color:#fff;font:500 18px/1.4 sans-serif;transition:opacity 150ms ease';player.append(hint);}
+  if(!hint){hint=document.createElement('div');hint.dataset.bsVolumeHint='';hint.setAttribute('role','status');hint.setAttribute('aria-live','polite');hint.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:90;pointer-events:none;padding:12px 20px;border-radius:10px;background:rgba(0,0,0,.65);color:#fff;font:500 18px/1.4 sans-serif;transition:opacity 150ms cubic-bezier(.2,.8,.2,1)';player.append(hint);}
   hint.textContent='音量 '+playerVolumePercent()+'%';hint.style.opacity='1';clearTimeout(volumeHintTimer);volumeHintTimer=setTimeout(()=>{hint.style.opacity='0';},1100);
 }
 function installPlayerInteractions(){
@@ -1514,6 +2378,16 @@ function soundBalanceStep(rms,db,seconds){
   const target=Math.max(-15,Math.min(12,20*Math.log10(.08/rms))),dt=Math.max(0,Math.min(.25,seconds));
   return db+(target-db)*(1-Math.exp(-dt/(target<db ? .18 : 1.8)));
 }
+/* Program loudness: the mean square of non-silent audio, averaged over about three seconds (it rises in under a
+   second so a loud video is caught quickly, and falls over four). Returns the matching RMS level, or 0 until enough
+   sound has been heard. */
+function soundBalanceLoudness(graph,square,seconds){
+  const dt=Math.max(0,Math.min(.25,seconds));
+  if(!Number.isFinite(square)||square<1e-5)return graph.heard>1?Math.sqrt(graph.energy):0;
+  if(!graph.energy){graph.energy=square;graph.heard=0;}
+  graph.heard+=dt;graph.energy+=(square-graph.energy)*(1-Math.exp(-dt/(square>graph.energy?.8:4)));
+  return graph.heard>.6?Math.sqrt(graph.energy):0;
+}
 function audioParamValue(param,value,time=.12){if(param.setTargetAtTime){param.cancelScheduledValues(audioContext.currentTime);param.setTargetAtTime(value,audioContext.currentTime,time);}else param.value=value;}
 function configureSoundBalance(video,graph){
   const enabled=!!PREFS.soundBalance&&!!graph.level;
@@ -1528,8 +2402,9 @@ function configureSoundBalance(video,graph){
     const now=performance.now(),dt=(now-graph.balanceLast)/1000;graph.balanceLast=now;
     if(!PREFS.soundBalance||video!==playbackVideo()||!video.isConnected||video.paused||video.muted||video.seeking||video.volume<.01||video.readyState<2||document.hidden)return;
     graph.analyser.getFloatTimeDomainData(graph.samples);let sum=0;for(const sample of graph.samples)sum+=sample*sample;
-    // Measure before automatic/manual gain and compensate the media element volume, not the user's volume choice.
-    const rms=Math.sqrt(sum/graph.samples.length)/Math.max(.01,video.volume);graph.balanceDb=soundBalanceStep(rms,graph.balanceDb,dt);audioParamValue(graph.level.gain,10**(graph.balanceDb/20),.12);
+    // Measured before the balance and boost stages, compensating the element volume rather than the user's choice.
+    const square=sum/graph.samples.length/Math.max(1e-4,video.volume*video.volume);
+    graph.balanceDb=soundBalanceStep(soundBalanceLoudness(graph,square,dt),graph.balanceDb,dt);audioParamValue(graph.level.gain,10**(graph.balanceDb/20),.25);
   },100);
 }
 function applyAudioBoost(){
@@ -1548,14 +2423,17 @@ function applyAudioBoost(){
       if(audioContext.state!=='running'){
         video.dataset.bsAudio='pending-gesture';if(!audioStarting.has(video)){audioStarting.add(video);audioContext.resume().then(()=>{audioStarting.delete(video);if(audioContext.state==='running')applyAudioBoost();}).catch(()=>audioStarting.delete(video));}return;
       }
-      let level,analyser,compressor;
-      if(audioContext.createAnalyser&&audioContext.createDynamicsCompressor){analyser=audioContext.createAnalyser();analyser.fftSize=2048;level=audioContext.createGain();level.gain.value=10**(-4/20);compressor=audioContext.createDynamicsCompressor();}
+      /* source → analyser → level (balance) → compressor (balance) → gain (user boost) → limiter → speakers.
+         The boost comes after the balance stage so it really is louder, and the limiter only catches peaks above
+         -1 dBFS so a 200% boost does not crackle. */
+      let level,analyser,compressor,limiter;
+      if(audioContext.createAnalyser&&audioContext.createDynamicsCompressor){analyser=audioContext.createAnalyser();analyser.fftSize=2048;level=audioContext.createGain();level.gain.value=10**(-4/20);compressor=audioContext.createDynamicsCompressor();limiter=audioContext.createDynamicsCompressor();limiter.threshold.value=-1;limiter.knee.value=0;limiter.ratio.value=20;limiter.attack.value=.002;limiter.release.value=.12;}
       const gain=audioContext.createGain(),source=audioContext.createMediaElementSource(video);
-      if(level){source.connect(analyser);analyser.connect(level);level.connect(gain);gain.connect(compressor);compressor.connect(audioContext.destination);}else{source.connect(gain);gain.connect(audioContext.destination);}
-      graph={source,gain,level,analyser,compressor,balanceDb:-4,samples:new Float32Array(2048)};audioGraphs.set(video,graph);
+      if(level){source.connect(analyser);analyser.connect(level);level.connect(compressor);compressor.connect(gain);gain.connect(limiter);limiter.connect(audioContext.destination);}else{source.connect(gain);gain.connect(audioContext.destination);}
+      graph={source,gain,level,analyser,compressor,limiter,balanceDb:-4,energy:0,heard:0,samples:new Float32Array(2048)};audioGraphs.set(video,graph);if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.__bsAudioGraph=graph;
       video.addEventListener('play',()=>{audioContext?.resume().catch(()=>{});applyAudioBoost();});
       video.addEventListener('pause',()=>{if(audioVideo===video)stopSoundBalance();});
-      for(const type of ['emptied','loadstart'])video.addEventListener(type,()=>{graph.balanceDb=-4;if(graph.level)audioParamValue(graph.level.gain,PREFS.soundBalance?10**(-4/20):1,.03);});
+      for(const type of ['emptied','loadstart'])video.addEventListener(type,()=>{graph.balanceDb=-4;graph.energy=0;graph.heard=0;if(graph.level)audioParamValue(graph.level.gain,PREFS.soundBalance?10**(-4/20):1,.03);});
     }catch(e){diagnostic('音量增益不可用，保留原声：'+e.message);return;}
   }
   graph.gain.gain.value=amount;video.dataset.bsAudio='gain-'+Math.round(amount*100);configureSoundBalance(video,graph);audioContext.resume().catch(()=>{});
@@ -1572,11 +2450,112 @@ function beginClose(){
   setTimeout(()=>native('window',{action:'close-ready'}),reduced?0:240);
 }
 
-function prepareShell(){if(root||!document.documentElement)return;style=document.createElement('style');style.id='bili-space-style';style.textContent=pageCss;document.documentElement.append(style);mountShell();warmProfileMediaCache();applyHeaderPreferences();const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);root.dataset.theme=dark?'dark':'light';document.documentElement.dataset.bsTheme=dark?'dark':'light';root.style.setProperty('--accent',PREFS.accent);if(pageKind()==='search')setLoading(true);surfaceRevealed();}
+let pagePendingTimer=0,pagePendingStart=0;
+function updatePagePending(failed=false){
+  const panel=shadow?.querySelector('#page-pending');if(!panel)return;
+  clearTimeout(pagePendingTimer);const body=document.body;
+  const rendered=body&&(((typeof body.innerText==='string'?body.innerText:body.textContent)||'').trim().length>24||[...body.querySelectorAll('img')].some(img=>img.complete&&img.naturalWidth>0&&img.getBoundingClientRect().width>80));
+  if(rendered){panel.remove();document.documentElement.dataset.bsContentState='ready';return;}
+  if(failed||performance.now()-pagePendingStart>12000){panel.dataset.failed='true';panel.querySelector('p').textContent='页面暂未加载完成，请重试';panel.querySelector('button').hidden=false;document.documentElement.dataset.bsContentState='failed';return;}
+  pagePendingTimer=setTimeout(updatePagePending,80);
+}
+function startPagePending(){
+  if(pageKind()==='video'||!shadow)return;
+  const panel=document.createElement('section');panel.id='page-pending';panel.setAttribute('role','status');
+  const title=document.createElement('p');title.textContent='正在加载'+({home:'首页',dynamic:'动态',history:'历史记录',search:'搜索结果',space:'个人空间',messages:'消息'}[pageKind()]||'页面')+'…';
+  const retry=document.createElement('button');retry.type='button';retry.textContent='重新加载';retry.hidden=true;retry.onclick=()=>location.reload();panel.append(title,retry);shadow.append(panel);pagePendingStart=performance.now();document.documentElement.dataset.bsContentState='pending';updatePagePending();
+  window.addEventListener('pagehide',()=>clearTimeout(pagePendingTimer),{once:true});
+}
+/* The header grows in small windows and the gain eases off as the window widens: 1240px gives about 20%, 2000px about 8%, 2560px about 5%. */
+// The scale lives in its own stylesheet: Bilibili rewrites the root element's inline style while it loads.
+function applyUiScale(){const html=document.documentElement;if(!html)return;const width=Math.max(320,innerWidth||1240),scale=Math.round(Math.min(1.28,Math.max(1,1+.2*Math.pow(1240/width,2)))*1000)/1000;
+  let sheet=document.getElementById('bs-ui-scale');if(!sheet){sheet=document.createElement('style');sheet.id='bs-ui-scale';html.append(sheet);}
+  const auto=width<=800?2:width<=1100?3:width>=1600?5:4,floor=Number.isInteger(PREFS.feedColumns)&&PREFS.feedColumns>=2&&PREFS.feedColumns<=8?PREFS.feedColumns:0;
+  const css='html:root{--bs-ui-scale:'+scale+';--bs-header-height:'+Math.round((width<=800?102:58)*scale)+'px;--bs-feed-columns:'+Math.max(auto,floor)+'}';if(sheet.textContent!==css)sheet.textContent=css;if(!sheet.isConnected)html.append(sheet);}
+let uiScaleFrame;window.addEventListener('resize',()=>{cancelAnimationFrame(uiScaleFrame);uiScaleFrame=requestAnimationFrame(applyUiScale);});
+/* Video pages tell the native host their title and cover so the video dock can label them. */
+let tabInfoSent='',tabInfoTimer;
+function reportTabInfo(){clearTimeout(tabInfoTimer);tabInfoTimer=setTimeout(()=>{if(typeof RUNTIME==='undefined'||pageKind()!=='video')return;
+  const heading=document.querySelector('h1.video-title,.video-title,.media-title,h1')?.textContent?.trim();
+  const title=(heading||document.title.replace(/_哔哩哔哩_bilibili$|_bilibili$/,'')).trim().slice(0,200);
+  const meta=document.querySelector('meta[itemprop=image],meta[property="og:image"],meta[itemprop=thumbnailUrl]')?.content||'';const cover=/^(https?:)?\/\/[a-z0-9.-]+\.hdslb\.com\//i.test(meta)?meta:'';
+  const key=title+'|'+cover;if(!title||key===tabInfoSent)return;tabInfoSent=key;native('tab-info',{title,cover});},400);}
+function homeBubble(text='你已经在主页啦！'){
+  if(!shadow)return;let bubble=$('#home-bubble',shadow);if(!bubble){bubble=document.createElement('div');bubble.id='home-bubble';bubble.setAttribute('role','status');shadow.append(bubble);}
+  bubble.textContent=text;clearTimeout(homeBubble.timer);bubble.hidden=false;bubble.dataset.leaving='false';
+  if(bubble.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches)bubble.animate([{opacity:0,transform:'translate(-50%,-10px) scale(.86)'},{opacity:1,offset:.35},{opacity:1,transform:'translate(-50%,0) scale(1)'}],{duration:460,easing:'cubic-bezier(.3,1.3,.5,1)'});
+  homeBubble.timer=setTimeout(()=>{const done=()=>{if(bubble.dataset.leaving==='true')bubble.hidden=true;};bubble.dataset.leaving='true';if(bubble.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches)bubble.animate([{opacity:1,transform:'translate(-50%,0) scale(1)'},{opacity:0,transform:'translate(-50%,-6px) scale(.94)'}],{duration:200,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'}).onfinish=done;else done();},1700);
+}
+function ctrlHome(){if(pageKind()==='home')homeBubble();else location.href='https://www.bilibili.com/';}
+/* Header view: the native host reports the visible page's address (also the moment a navigation starts), so the
+   header moves on click instead of waiting for the next page to load. */
+let chromePending=null,chromeDirection=null,chromeHoldControls=false,chromeAssume={};
+// Back/forward started outside the header (mouse side buttons, Alt+arrows) announce their direction the same way a header click does.
+function chromeStep(d){if(!CHROME_VIEW||(d!=='back'&&d!=='forward'))return;chromeDirection=d;setTimeout(()=>{if(chromeDirection===d)chromeDirection=null;},1500);}
+function chromeActive(state){
+  if(!CHROME_VIEW||!state?.url)return;let next;try{next=new URL(state.url);}catch{return;}
+  // While a navigation is under way the page still reports its old address (history updates, state reads); those
+  // reports must not pull the header back. The destination's own report, or 8s without one, ends the wait.
+  const kind=pageKind(next);
+  const previewed=chromePending?.kind===kind?chromePending.previewed:0;
+  if(state.starting)chromePending={kind,until:Date.now()+8000,previewed};
+  else if(chromePending){if(kind!==chromePending.kind&&Date.now()<chromePending.until)return;chromePending=null;}
+  /* A starting navigation already tells what history it ends with, so back/forward move once, with the logo and the
+     underline, instead of waiting for the page to load and moving again. */
+  if(state.starting){
+    chromeAssume=chromeDirection==='back'?{forward:true}:chromeDirection==='forward'?{back:true}:{};
+    // Anything that is not a back/forward step is a new page: it can go back and has nothing ahead.
+    const was=navigationState||{back:false,forward:false};
+    navigationState=chromeDirection?{back:was.back||!!chromeAssume.back,forward:was.forward||!!chromeAssume.forward}:{back:true,forward:false};chromeHoldControls=false;
+    chromeDirection=null;
+  }else{navigationState={back:!!state.back||!!chromeAssume.back,forward:!!state.forward||!!chromeAssume.forward};chromeHoldControls=false;}chromeLocation=next;syncRoute();syncNavigationControls();reportChromeLayout();
+}
+let chromeLayoutKey='',chromeLayoutFrame,webFullscreen=false;
+// The player's web fullscreen fills the page; the floating buttons of the header would cover its controls.
+function watchWebFullscreen(){if(!CONTENT_VIEW)return;let was=false;const check=()=>{const on=!!document.querySelector('.bpx-player-container[data-screen=web],.bpx-player-container[data-screen=full]');if(on!==was){was=on;native('web-fullscreen',{on});}};
+  new MutationObserver(check).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['data-screen']});check();
+  // The tab that comes to the front tells the header its own state.
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){was=null;check();}});}
+function setWebFullscreen(on){if(!CHROME_VIEW||!shadow)return;webFullscreen=!!on;shadow.host.toggleAttribute('data-web-full',webFullscreen);reportChromeLayout();}
+function reportChromeLayout(){
+  if(!CHROME_VIEW||!shadow)return;cancelAnimationFrame(chromeLayoutFrame);chromeLayoutFrame=requestAnimationFrame(()=>{
+    const rects=[],scale=devicePixelRatio||1;
+    const add=el=>{if(!el||el.hidden||!el.isConnected)return;const look=getComputedStyle(el);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)return;const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)rects.push([Math.floor(r.left*scale),Math.floor(r.top*scale),Math.ceil(r.right*scale),Math.ceil(r.bottom*scale)]);};
+    add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories',...(webFullscreen?[]:['#settings-trigger','.upload','#feed-roll','#page-top']),'#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));for(const p of $$('.bs-plugin-panel',shadow))add(p);
+    // Windows that other scripts open in this document (the login panel, the thread ripper's settings dialog) sit
+    // outside the shadow root; without their rectangles the clicks would land on the page underneath.
+    let foreignModal=false;
+    for(const el of document.querySelectorAll('html>*:not(head):not(body),body>*')){if(el.id==='bili-space-root'||el.matches('style,script,link,meta,iframe,template,dialog:not([open])'))continue;
+      if(el.matches('dialog[open]')&&el.matches(':modal')){foreignModal=true;continue;}if(getComputedStyle(el).pointerEvents!=='none')add(el);}
+    const modal=foreignModal||!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow)||!!$('#plugin-dialog',shadow)||!!$('#onboarding',shadow)||!!$('#feedback',shadow)||!!$('#whats-new',shadow);
+    const key=JSON.stringify([rects,modal]);if(key===chromeLayoutKey)return;chromeLayoutKey=key;native('chrome-layout',{rects,modal});
+  });
+}
+function installChromeView(){
+  if(!CHROME_VIEW||!shadow)return;
+  // Links in the header open on the visible page, never inside the header view.
+  shadow.addEventListener('click',e=>{const step=e.composedPath().find(n=>n.dataset?.window==='back'||n.dataset?.window==='forward');if(step&&!step.disabled){const d=chromeDirection=step.dataset.window;setTimeout(()=>{if(chromeDirection===d)chromeDirection=null;},1500);}},true);
+  shadow.addEventListener('click',e=>{if(e.defaultPrevented||e.button)return;const a=e.composedPath().find(n=>n.tagName==='A'&&n.href);if(a&&/^https?:/i.test(a.href)){e.preventDefault();native('navigate',{url:a.href});}});
+  // Reported when something can have changed, not on a timer: DOM changes (plus one late check for the motion that
+  // follows them), finished transitions and animations, and window resizes.
+  let settle;const changed=()=>{reportChromeLayout();clearTimeout(settle);settle=setTimeout(reportChromeLayout,450);};
+  new MutationObserver(changed).observe(shadow,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','style','data-open','aria-expanded','data-categories']});
+  new MutationObserver(changed).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['open','hidden','class','style']});
+  for(const type of ['transitionend','animationend','animationcancel'])shadow.addEventListener(type,reportChromeLayout,true);
+  addEventListener('resize',changed);
+  // Ctrl+wheel over the header zooms the page and the header together, one step per notch.
+  let zoomWheelAt=0;addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const now=performance.now();if(now-zoomWheelAt<90||!e.deltaY)return;zoomWheelAt=now;native('zoom-step',{dir:e.deltaY<0?1:-1});},{passive:false});
+  surfaceRevealed();acceptRouteOrigin('');native('navigation-state',{action:'read'});reportChromeLayout();
+}
+let resumeMedia=[];
+function tabShown(){reportTabInfo();refreshMessageUnread?.(true);const media=resumeMedia.filter(m=>m.isConnected);resumeMedia=[];for(const m of media)m.play?.().catch(()=>{});}
+function tabHidden(){resumeMedia=[...document.querySelectorAll('video,audio')].filter(m=>!m.paused&&!m.ended);for(const m of resumeMedia)m.pause();closeSearchPanel?.();favoritesController?.close();hideMessageMenu?.(true);}
+window.addEventListener('load',()=>{reportTabInfo();const title=document.querySelector('title');if(title)new MutationObserver(reportTabInfo).observe(title,{childList:true,characterData:true,subtree:true});},{once:true});
+function prepareShell(){if(root||!document.documentElement)return;applyUiScale();style=document.createElement('style');style.id='bili-space-style';style.textContent=pageCss;document.documentElement.append(style);mountShell();warmProfileMediaCache();applyHeaderPreferences();const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);root.dataset.theme=dark?'dark':'light';document.documentElement.dataset.bsTheme=dark?'dark':'light';root.style.setProperty('--accent',PREFS.accent);if(pageKind()==='search')setLoading(true);startPagePending();surfaceRevealed();}
 function boot(){
   prepareShell();native('app-visibility');installWheelInertia();installPlayerInteractions();
   if(pageKind()==='video'){beginVideoLoading();settleVideoLoading();}
-  document.addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;const link=e.composedPath().find(el=>el?.matches?.('a[href]'));if(!link)return;try{const url=new URL(link.href,location.href);if(/(^|\.)bilibili\.com$/i.test(url.hostname)&&/\/video\/BV[a-z0-9]{10}/i.test(url.pathname))beginVideoLoading(url.href);}catch{}},true);
+  document.addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;const link=e.composedPath().find(el=>el?.matches?.('a[href]'));if(!link)return;const opened=link.target&&link.target!=='_self';const download=link.hasAttribute('download');try{const url=new URL(link.href,location.href);if(/(^|\.)bilibili\.com$/i.test(url.hostname)&&/\/video\/BV[a-z0-9]{10}/i.test(url.pathname))beginVideoLoading(url.href);}catch{}},true);
   // One-time migration: profiles that never touched the category list still carry all 18.
   if(!Number(INITIAL.categoryPreset)&&Array.isArray(PREFS.categorySelection)&&PREFS.categorySelection.length===CATEGORIES.length)update({categorySelection:DEFAULT_CATEGORIES.slice(),categoryPreset:1});
   if(!PREFS.experimentalControlsV1)update({srMode:'off',fiMode:'off',experimentalControlsV1:true});
@@ -1595,8 +2574,11 @@ function boot(){
   }
   window.addEventListener('popstate',()=>{syncRoute();scheduleScan();});
   window.addEventListener('hashchange',syncRoute);
+  // Danmaku and live-chat lines arrive many times a second and never need a page scan (ads, links, player tools).
+  const SCAN_QUIET='#bili-space-root,.bs-player-tool,.bs-gpu-canvas,.bili-danmaku-x-dm,.b-danmaku,#chat-items';
   const observer=new MutationObserver(records=>{
-    if(records.some(r=>(r.type==='attributes'&&r.target.closest?.('.bili-feed4-layout')&&r.target.matches?.('.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card'))||((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info,.bili-video-card__stats--text,.bili-video-card__info--text-ad,[data-ad-label]'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.('#bili-space-root,.bs-player-tool,.bs-gpu-canvas')))){scheduleScan();}
+    const home=document.documentElement.dataset.bsPage==='home';
+    if(records.some(r=>(r.type==='attributes'&&home&&r.target.matches?.('.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card')&&r.target.closest?.('.bili-feed4-layout'))||((r.type==='characterData'||r.type==='childList')&&(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('.basic-desc-info,.desc-info-text,#v_desc .info,.bili-video-card__stats--text,.bili-video-card__info--text-ad,[data-ad-label]'))||[...r.addedNodes].some(n=>n.nodeType===1&&!n.closest?.(SCAN_QUIET)))){scheduleScan();}
   });observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','style']});
   mediaTheme.addEventListener('change',applyPreferences);
   document.addEventListener('pointerdown',applyAudioBoost,{passive:true});document.addEventListener('keydown',applyAudioBoost);document.addEventListener('loadedmetadata',applyAudioBoost,true);window.addEventListener('pagehide',stopSoundBalance);window.addEventListener('pageshow',applyAudioBoost);
@@ -1604,21 +2586,21 @@ function boot(){
   document.body.append(controls);$('button',controls).onclick=()=>native('window',{action:'pip'});$('.bs-pip-play',controls).onclick=()=>{const v=playbackVideo();if(v){if(v.paused)v.play().catch(()=>{});else v.pause();}syncPipPlayback();};
   for(const type of ['play','pause','ended','emptied'])document.addEventListener(type,()=>{syncPipPlayback();if(pipDanmaku.timer)pipDanmaku.tick();},true);document.addEventListener('loadedmetadata',()=>{if(pipActive)syncPipPresentation();},true);
   window.addEventListener('resize',()=>{layoutHeaderLeading();syncPipPresentation();});
-  updateHeaderClock();setInterval(updateHeaderClock,1000);syncPipPlayback();
+  scheduleHeaderClock();syncPipPlayback();watchWebFullscreen();watchPageScroll();
   document.addEventListener('keydown',e=>{
     if(e.ctrlKey&&e.key.toLowerCase()==='w'){e.preventDefault();e.stopImmediatePropagation();native('window',{action:'close'});return;}
     if(e.ctrlKey&&e.key===','){e.preventDefault();openSettings();}
     if(e.key==='Escape'){if(!$('#settings',shadow).hidden)closeSettings();if(pipActive)native('window',{action:'pip'});}
     if(e.key==='F5'){e.preventDefault();native('window',{action:'reload'});}
   });
-  document.addEventListener('mousedown',e=>{if(pipActive&&e.button===0&&!e.target.closest('button'))native('window',{action:'drag'});});
+  document.addEventListener('mousedown',e=>{if(pipActive&&e.button===0&&!e.target.closest('button'))native('window',{action:'drag',screenX:e.screenX,screenY:e.screenY});});
   document.addEventListener('click',e=>{
     const button=e.target.closest?.('#bili-space-video-download');
     const cancel=e.target.closest?.('#bili-space-download-cancel');if(cancel){e.preventDefault();e.stopPropagation();if(cancel.disabled)return;downloadCancelling=true;cancel.disabled=true;cancel.textContent='取消中';const label=$('#bili-space-download-progress');if(label)label.textContent='正在取消下载…';native('downloader',{action:'cancel'});return;}
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,beginClose,proxyStatus,proxyState,proxyToast(text){toast(text);},bench:benchScale,
+  window.BiliSpace={fullReadyAt,tourBackdrop,offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};
@@ -1628,6 +2610,9 @@ function boot(){
     acceptDownloadQueue(value){window.BiliDesktop44?.acceptQueue(value);},
     resolveQueuedDownload(item){return window.BiliDesktop44?.resolveQueuedDownload(item);},
     mediaCommand(command){window.BiliDesktop44?.mediaCommand(command);},
+    openLoginPanel(){accountsController?.openLogin();},
+    closeLoginPanel(){accountsController?.closeLogin();},
+    acceptAccountState(state){if(state.event==='login'||state.event==='signed-out'){accountRequest?.abort();accountRequest=null;accountChecked=0;accountProfile=null;renderAccountCard();}accountsController?.accept(state);},
     acceptCommunityState(state){window.BiliCommunity44?.acceptState(state);},
     downloadProgress,
     downloadPhase(text){const button=$('#bili-space-video-download');if(!downloadCancelling&&button?.dataset.state==='busy'){$('span',button).textContent=String(text||'下载中');downloadDisplay(text==='合并中'?'下载完成 · 正在合并音视频…':String(text||'下载中'));}},
@@ -1644,31 +2629,19 @@ function boot(){
         for(const [el,[value,priority]] of pipHiddenHosts){if(value)el.style.setProperty('display',value,priority);else el.style.removeProperty('display');}pipHiddenHosts.clear();
       }
     },
-    setFullscreen(on){fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
+    setWebFullscreen,openFeedback,feedbackResult,openWhatsNew,rollFeed,setPageScrolled,scrollPageTop,
+    setFullscreen(on){if(!on)holdPlayer(false);fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
     emitPipDanmaku(items,time){for(const item of items)pipDanmaku.emit(item,time);},
-    get state(){return {pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{inferences:interpolator.inferences,inferenceMs:interpolator.inferenceMs,estimate:interpolator.estimate,dropped:interpolator.dropped,frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status,presentationTimes:[...interpolator.clockHistory],presentationDelay:interpolator.clock.delay}:null};}
+    get state(){return {headerBrand:{shown:brandShown,moving:brandMotion.length>0},pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status}:null};}
   };
   const route44=()=>({url:currentVideoLink(),title:$('.video-title,h1')?.textContent||document.title});
   window.BiliDesktop44?.install({native,getVideo:playbackVideo,getRoute:route44,getAccountId:()=>String(accountProfile?.mid||''),wbiQuery:downloadWbiQuery,chooseStreams:chooseDownloadStreams});
-  window.BiliSpacePlugins?.start({getVideo:playbackVideo,getPrefs:()=>PREFS,toast});
+  window.BiliSpacePlugins?.start({getVideo:playbackVideo,getPrefs:()=>PREFS,toast,update,getShadow:()=>shadow,view:CHROME_VIEW?'header':'page',navigate:url=>{if(CHROME_VIEW)native('navigate',{url});else location.href=url;}});
   window.BiliCommunity44?.install({native,getVideo:playbackVideo,getRoute:route44,getAccountId:()=>String(accountProfile?.mid||''),parseDanmaku:parsePipDanmaku,wbiQuery:downloadWbiQuery,disableDanmaku:true});
   window.addEventListener('pagehide',()=>{window.BiliDesktop44?.stop();window.BiliCommunity44?.stop();});
-  window.addEventListener('pageshow',()=>{window.BiliDesktop44?.start();window.BiliCommunity44?.start();});
-  if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.testInterpolation=async()=>{
-    const stage=new FrameInterpolator(playbackVideo(),60,false),w=192,h=128;
-    const frame=(x,y=32)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.fillStyle='rgb(32,32,32)';ctx.fillRect(0,0,w,h);ctx.fillStyle='white';ctx.fillRect(x,y,48,64);return c;};
-    const previous=frame(48,24),current=frame(64,40);await stage.prepare({previous,current,time:performance.now(),interval:33,epoch:stage.epoch},true);stage.draw(.5);
-    const pixels=new Uint8Array(w*h*4);stage.gl.readPixels(0,0,w,h,stage.gl.RGBA,stage.gl.UNSIGNED_BYTE,pixels);
-    let aiError=0,blendError=0;
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const truth=x>=56&&x<104&&y>=32&&y<96?255:32;const blend=((x>=48&&x<96&&y>=32&&y<96?255:32)+(x>=64&&x<112&&y>=32&&y<96?255:32))/2;const v=pixels[(y*w+x)*4];aiError+=(v-truth)**2;blendError+=(blend-truth)**2;}
-    const result={aiMse:aiError/(w*h),blendMse:blendError/(w*h),oldEdge:pixels[(64*w+50)*4],newEdge:pixels[(64*w+100)*4],inferences:stage.inferences,estimate:stage.estimate,ms:stage.inferenceMs};stage.stop();return result;
-  };
-  if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.testRife=async(w=192,h=128)=>{
-    const a=document.createElement('canvas'),b=document.createElement('canvas');a.width=b.width=w;a.height=b.height=h;
-    const paint=(c,offset)=>{const x=c.getContext('2d');x.fillStyle='#202020';x.fillRect(0,0,w,h);x.fillStyle='white';x.fillRect(w/4+offset,h/4,w/4,h/2);return x.getImageData(0,0,w,h).data;};
-    const r=await inferRife(paint(a,0),paint(b,16),w,h);return {flow:[r.width,r.height],maxMotion:r.flow.reduce((v,n)=>Math.max(v,Math.abs(n)),0),maskRange:[r.mask.reduce((v,n)=>Math.min(v,n),1),r.mask.reduce((v,n)=>Math.max(v,n),0)],ms:r.ms};
-  };
-  native('updates',{action:'status'});
+  window.addEventListener('pageshow',e=>{if(e.persisted){brandMotion.forEach(a=>{a.onfinish=null;a.cancel();});brandMotion=[];brandShown=undefined;brandStateRequested=false;syncHeaderBrand();categoryMotion.forEach(a=>{a.onfinish=null;a.cancel();});categoryMotion=[];categoryShown=undefined;syncCategoryVisibility();navigationMotion.forEach(a=>{a.onfinish=null;a.cancel();});navigationMotion=[];navigationState=undefined;navigationMask=undefined;navigationRequested=false;syncNavigationControls();}native('navigation-state',{action:'read'});window.BiliDesktop44?.start();window.BiliCommunity44?.start();});
+  if(typeof RUNTIME!=='undefined'&&RUNTIME.testing)window.BiliSpace.enhancer=()=>gpu&&{trace:gpu.trace,frames:gpu.frames,generated:gpu.generated,sourceFrames:gpu.sourceFrames,anime:gpu.anime,plan:gpu.plan_,shown:gpu.shown,stopped:gpu.stopped,status:gpu.status};
+  native('updates',{action:'status'});scheduleOnboarding();scheduleWhatsNew();
   loadOfficialSearchHistory();
   if(document.readyState==='complete')window.__bsPaintReady?.();
   diagnostic('Bili-Space ready');

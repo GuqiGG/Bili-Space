@@ -1,0 +1,403 @@
+
+@font-face {
+  font-family: 'freshspace-zpjpp3aqht';
+  src:
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht-colrv0.woff') format("woff"),
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht.ttf') format('truetype');
+  src:
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht.woff2') format("woff2") tech(color-COLRv1),
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht-colrv0.woff') format("woff"),
+    url('https://s1.hdslb.com/bfs/svg-next/font/2025-10-27/freshspace-zpjpp3aqht.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+.sic-BDC-plus_add_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e000';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-more_vertical_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e001';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-house_home_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e002';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-windmill_moments_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e003';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-star_favorite_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e004';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-heart_collect_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e005';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-nut_setting_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e006';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-male_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e007';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-female_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e008';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-magnifier_search_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e009';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_expand_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e00a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-copy_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e00b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_follow_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e00c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_user_info_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e00d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_following_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e00e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_forward_right_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e00f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_forward_right_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e010';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-eye_browse_off_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e011';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-eye_browse_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e012';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-checkmark_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e013';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-menu_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e014';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-playdata_square_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e015';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-uploader_name_square_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e016';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_square_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e017';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_play_next_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e018';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-play_fav_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e019';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-submission_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e01a';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-school_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e01b';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-tag_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e01c';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-job_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e01d';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-cake_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e01e';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-uid_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e01f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-xmark_close_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e020';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-live_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e021';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_upload_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e022';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bell_reserve_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e023';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bell_live_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e024';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-gift_lottery_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e025';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-playtime_square_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e026';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-hand_thumbsup_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e027';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-clock_history_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e028';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_refresh_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e029';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-folder_add_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e02a';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-play_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e02b';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-grid_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e02c';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-list_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e02d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-video_archive_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e02e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-topic_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e02f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_topic_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e030';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-trash_delete_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e031';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_collapse_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e032';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-headset_audio_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e033';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_back_left_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e034';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-battery_charge_simple_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e035';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-star_favorite_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e036';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-hand_thumbsup_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e037';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-tshirt_theme_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e038';
+  text-rendering: geometricPrecision;
+}
+.sic-fsp-fav_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e039';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-tag_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e03a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-xmark_close_circle_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e03b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-lock_locked_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e03c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-book_classroom_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e03d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_up_triangle_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e03e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_share_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e03f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-star_grade_half2_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e040';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-lock_locked_fill::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e041';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC_svg-user_level_0::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e042';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC_svg-user_level_1::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e043';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC_svg-user_level_2::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e044';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC_svg-user_level_3::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e045';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC_svg-user_level_4::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e046';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC_svg-user_level_5::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e047';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC_svg-user_level_6::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e048';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC_svg-user_level_6_flash::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e049';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-warning_report_triangle_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e04a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_share_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e04b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-warning_report_circle_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e04c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-question_help_circle_line::after {
+  font-family: 'freshspace-zpjpp3aqht';
+  content: '\e04d';
+  text-rendering: geometricPrecision;
+}

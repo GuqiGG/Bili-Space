@@ -1,0 +1,45 @@
+#pragma once
+#include <ctime>
+#include <map>
+// Immutable public site resources. Private page state continues to come from the official APIs.
+namespace localShell {
+json manifest;bool loaded=false;
+void load(){if(loaded)return;loaded=true;try{manifest=json::parse(read(root/L"assets/web-copy/manifest.json"));}catch(...){manifest=json::object();}}
+std::string entry(const std::string& url){
+ load();if(manifest.contains("resources")&&manifest["resources"].contains(url))return url;
+ std::string clean=url.substr(0,url.find_first_of("?#")),route;
+ if(clean=="https://www.bilibili.com/"||clean=="https://www.bilibili.com/zh-Hans"||clean=="https://www.bilibili.com/zh-Hans/")route="home";
+ else if(clean=="https://t.bilibili.com/"||clean=="https://t.bilibili.com/zh-Hans"||clean=="https://t.bilibili.com/zh-Hans/")route="dynamic";
+ else if(clean=="https://www.bilibili.com/history"||clean=="https://www.bilibili.com/account/history"||clean=="https://www.bilibili.com/zh-Hans/history")route="history";
+ if(!route.empty()&&manifest.contains("pages"))return manifest["pages"].value(route,std::string{});return {};
+}
+// Bundled assets are read from disk once and then served from memory, so page loads do not block the UI thread on file reads.
+std::map<std::string,std::string> assetCache;size_t assetCacheBytes=0;
+const std::string& cachedAsset(const std::string& relative){
+ auto hit=assetCache.find(relative);if(hit!=assetCache.end())return hit->second;
+ auto bytes=read(root/L"assets/web-copy"/wide(relative));if(assetCacheBytes+bytes.size()>96u*1024*1024){static std::string scratch;scratch=std::move(bytes);return scratch;}
+ assetCacheBytes+=bytes.size();return assetCache.emplace(relative,std::move(bytes)).first->second;
+}
+bool serve(ICoreWebView2WebResourceRequestedEventArgs* args,ICoreWebView2Environment* env){
+ ICoreWebView2WebResourceRequest* request{};args->get_Request(&request);if(!request)return false;LPWSTR raw{};request->get_Uri(&raw);std::string uri=raw?utf8(raw):"";CoTaskMemFree(raw);request->Release();auto key=entry(uri);if(key.empty())return false;const auto& record=manifest["resources"][key];auto relative=record.value("file",std::string{});if(relative.empty()||relative.find("..")!=std::string::npos||fs::path(relative).is_absolute())return false;
+ COREWEBVIEW2_WEB_RESOURCE_CONTEXT context{};args->get_ResourceContext(&context);if(record.value("type",std::string{})=="Document")return false;
+ const std::string& bytes=cachedAsset(relative);if(bytes.empty())return false;IStream* stream{};if(FAILED(CreateStreamOnHGlobal(nullptr,TRUE,&stream)))return false;ULONG written{};stream->Write(bytes.data(),ULONG(bytes.size()),&written);LARGE_INTEGER zero{};stream->Seek(zero,STREAM_SEEK_SET,nullptr);ICoreWebView2WebResourceResponse* response{};auto headers=wide("Content-Type: "+record.value("mime",std::string("application/octet-stream"))+"\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-cache\r\n");auto hr=env->CreateWebResourceResponse(stream,200,L"OK",headers.c_str(),&response);stream->Release();if(SUCCEEDED(hr)){args->put_Response(response);response->Release();return true;}return false;
+}
+// Pages open from the account's local copy (up to 30 days) and the page refetches it in the background, so the next visit is current.
+// Personal space shells and the message centre are private per account, so they share the scoped document cache.
+bool spacePage(const std::string& clean){const std::string prefix="https://space.bilibili.com/";if(clean.rfind(prefix,0)!=0)return false;auto id=clean.substr(prefix.size());if(id.rfind("zh-Hans/",0)==0)id=id.substr(8);if(!id.empty()&&id.back()=='/')id.pop_back();return !id.empty()&&id.size()<=20&&id.find_first_not_of("0123456789")==std::string::npos;}
+bool page(const std::string& uri){auto clean=uri.substr(0,uri.find_first_of("?#"));return spacePage(clean)||clean=="https://message.bilibili.com/"||clean=="https://message.bilibili.com"||clean=="https://www.bilibili.com/"||clean=="https://www.bilibili.com/zh-Hans"||clean=="https://www.bilibili.com/zh-Hans/"||clean=="https://t.bilibili.com/"||clean=="https://t.bilibili.com/zh-Hans"||clean=="https://www.bilibili.com/history"||clean=="https://www.bilibili.com/account/history"||clean=="https://www.bilibili.com/zh-Hans/history";}
+fs::path cachePath(const std::string& uri,const std::string& scope){UpdateHash hash;hash.start();hash.add(uri.data(),DWORD(uri.size()));return dataPath/L"web-cache"/wide(scope)/wide(hash.finish()+".html");}
+void handle(ICoreWebView2WebResourceRequestedEventArgs* args,ICoreWebView2Environment* env){
+ if(serve(args,env))return;COREWEBVIEW2_WEB_RESOURCE_CONTEXT context{};args->get_ResourceContext(&context);if(context!=COREWEBVIEW2_WEB_RESOURCE_CONTEXT_DOCUMENT)return;
+ ICoreWebView2WebResourceRequest* request{};args->get_Request(&request);if(!request)return;LPWSTR raw{};request->get_Uri(&raw);std::string uri=raw?utf8(raw):"";CoTaskMemFree(raw);request->Release();if(!page(uri))return;
+ ICoreWebView2Deferral* deferral{};if(FAILED(args->GetDeferral(&deferral)))return;args->AddRef();env->AddRef();account50::readJar([args,env,deferral,uri](json jar){try{auto scope=account50::mid(jar);bool authenticated=false;for(const auto& c:jar)if(c.value("name",std::string{})=="SESSDATA"&&!c.value("value",std::string{}).empty())authenticated=true;if(scope.empty()||!authenticated)scope="guest";auto path=cachePath(uri,scope);std::error_code error;auto age=fs::exists(path,error)?fs::file_time_type::clock::now()-fs::last_write_time(path,error):std::chrono::hours(24*31);
+ if(!error&&age<std::chrono::hours(24*30)){auto bytes=read(path);if(!bytes.empty()&&bytes.size()<8*1024*1024){IStream* stream{};if(SUCCEEDED(CreateStreamOnHGlobal(nullptr,TRUE,&stream))){ULONG written{};stream->Write(bytes.data(),ULONG(bytes.size()),&written);LARGE_INTEGER zero{};stream->Seek(zero,STREAM_SEEK_SET,nullptr);ICoreWebView2WebResourceResponse* response{};if(SUCCEEDED(env->CreateWebResourceResponse(stream,200,L"OK",L"Content-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nX-Bili-Space-Cache: hit\r\n",&response))){args->put_Response(response);response->Release();if(testing)log("official HTML cache hit");}stream->Release();}}}
+ }catch(...){}deferral->Complete();deferral->Release();env->Release();args->Release();});
+}
+void observe(ICoreWebView2WebResourceResponseReceivedEventArgs* args){
+ ICoreWebView2WebResourceRequest* request{};args->get_Request(&request);if(!request)return;LPWSTR raw{};request->get_Uri(&raw);std::string uri=raw?utf8(raw):"";CoTaskMemFree(raw);ICoreWebView2HttpRequestHeaders* requestHeaders{};request->get_Headers(&requestHeaders);std::string cookies;if(requestHeaders){LPWSTR value{};requestHeaders->GetHeader(L"Cookie",&value);if(value)cookies=utf8(value);CoTaskMemFree(value);requestHeaders->Release();}request->Release();if(!page(uri))return;std::string scope="guest";auto uid=cookies.find("DedeUserID=");if(cookies.find("SESSDATA=")!=std::string::npos&&uid!=std::string::npos){uid+=11;auto end=cookies.find(';',uid);auto candidate=cookies.substr(uid,end-uid);if(!candidate.empty()&&candidate.find_first_not_of("0123456789")==std::string::npos)scope=candidate;}ICoreWebView2WebResourceResponseView* response{};args->get_Response(&response);if(!response)return;ICoreWebView2HttpResponseHeaders* headers{};response->get_Headers(&headers);if(headers){LPWSTR hit{};headers->GetHeader(L"X-Bili-Space-Cache",&hit);bool cached=hit&&std::wstring(hit)==L"hit";CoTaskMemFree(hit);headers->Release();if(cached){response->Release();return;}}int status{};response->get_StatusCode(&status);if(status!=200){response->Release();return;}
+ auto h=callback<ICoreWebView2WebResourceResponseViewGetContentCompletedHandler,HRESULT,IStream*>([uri,scope](HRESULT hr,IStream* stream){if(FAILED(hr)||!stream)return S_OK;std::string bytes;char buffer[16384];ULONG count{};while(SUCCEEDED(stream->Read(buffer,sizeof(buffer),&count))&&count){bytes.append(buffer,count);if(bytes.size()>8*1024*1024)return S_OK;}if(bytes.find("<html")==std::string::npos&&bytes.find("<!DOCTYPE")==std::string::npos)return S_OK;try{auto path=cachePath(uri,scope);fs::create_directories(path.parent_path());auto temp=path;temp+=L".tmp";{std::ofstream file(temp,std::ios::binary);file.write(bytes.data(),bytes.size());}MoveFileExW(temp.c_str(),path.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH);if(testing)log("official HTML cache stored");}catch(...){}return S_OK;});response->GetContent(h);h->Release();response->Release();
+}
+
+}

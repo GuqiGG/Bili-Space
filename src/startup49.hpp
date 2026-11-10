@@ -15,7 +15,7 @@ bool prepareAppData(){
     if(writableAppData(original))return true;
     if(!writableAppData(portable))return false;
     dataPath=portable;log("startup: original data directory is not writable; using local profile");
-    const std::vector<std::wstring> files={L"settings.json",L"accounts.json",L"community44.json",L"download-queue.json",L"proxy-enabled"};
+    const std::vector<std::wstring> files={L"settings.json",L"accounts.json",L"accounts50.json",L"community44.json",L"download-queue.json",L"proxy-enabled"};
     std::error_code error;
     for(const auto& name:files){fs::copy_file(original/name,portable/name,fs::copy_options::skip_existing,error);error.clear();}
     for(const auto& name:{L"WebView2",L"mihomo"}){

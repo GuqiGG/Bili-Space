@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head><!--310243--><script>window._GreyResult = {method:"direct",versionId:"310243"}</script>
+    <script type="module" crossorigin src="//s1.hdslb.com/bfs/static/shanks/history-record/assets/polyfills-2aed4887.js"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="spm_prefix" content="333.1391" />
+    <link
+      rel="icon"
+      type="image/vnd.microsoft.icon"
+      href="//www.bilibili.com/favicon.ico"
+    />
+    <link rel="apple-touch-icon" href="//www.bilibili.com/favicon.ico" />
+    <link
+      rel="stylesheet"
+      href="//s1.hdslb.com/bfs/svg-next/font/2025-02-18/historyrecord-bw7nfmj9eo.css"
+    />
+    <link
+      rel="stylesheet"
+      href="//s1.hdslb.com/bfs/static/jinkela/long/font/regular.css"
+      media="all"
+    />
+    <link
+      rel="stylesheet"
+      href="//s1.hdslb.com/bfs/static/jinkela/long/font/medium.css"
+      media="all"
+    />
+    <title>bilibili</title>
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      #biliMainHeader,
+      #app,
+      #biliMainFooter {
+        max-width: 2560px;
+        margin: 0 auto;
+        background-color: var(--bg1);
+      }
+    </style>
+    <!--preload-links-->
+    <!--initial-data-->
+    <script>
+      // bili-mirror 告警上报
+      window.__MIRROR_CONFIG__ = {
+        origin: "main",
+        module: "history-record",
+        spmId: "333.1391",
+        config: {
+          isAutoInit: true,
+          whiteScreen: {
+            maxLoop: 10,
+            checkDom: [".history-record"],
+            callback: (status) => {
+              console.log("白屏检测是否正常", status);
+            },
+            isSkeleton: false,
+          },
+        },
+      };
+    </script>
+    <script src="//s1.hdslb.com/bfs/seed/jinkela/short/b-mirror/biliMirror.umd.mini.js"></script>
+    <script src="//s1.hdslb.com/bfs/seed/jinkela/short/bmg/register/fallback.js"></script>
+    <script type="module" crossorigin src="//s1.hdslb.com/bfs/static/shanks/history-record/assets/index-d270e984.js"></script>
+    <link rel="stylesheet" href="//s1.hdslb.com/bfs/static/shanks/history-record/assets/index-eb133f4e.css">
+    <script type="module">import.meta.url;import("_").catch(()=>1);async function* g(){};if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
+    <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+  </head>
+  <body style="background-color: var(--bg3)">
+    <script>
+      if (/(Mac|iPhone|iPod|iPad)/i.test(window.navigator.platform)) {
+        document.body.classList.add("mac");
+      } else {
+        document.body.classList.add("win");
+      }
+    </script>
+    <header id="biliMainHeader" style="min-height: 64px"></header>
+    <div id="app" style="min-height: calc(100vh - 64px)"><!--app-html--></div>
+    <footer id="biliMainFooter"></footer>
+    
+    <script
+      type="text/javascript"
+      src="//s1.hdslb.com/bfs/seed/laputa-header/bili-header.umd.js"
+    ></script>
+    <script>
+      if (typeof BiliHeader !== "undefined") {
+        const el = document.querySelector("#biliMainHeader");
+        const header = new BiliHeader({
+          config: {
+            headerType: "mini",
+            forceVersion: 3,
+            langSwitch: true,
+            siteSwitch: true,
+            disableSticky: true,
+            tokenSupport: true,
+          },
+        });
+        header.init(el);
+      }
+    </script>
+    <script
+      type="text/javascript"
+      src="//s1.hdslb.com/bfs/seed/laputa-footer/bili-footer.umd.js"
+      version="3"
+    ></script>
+    <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+    <script nomodule crossorigin id="vite-legacy-polyfill" src="//s1.hdslb.com/bfs/static/shanks/history-record/assets/polyfills-legacy-03f3a79e.js"></script>
+    <script nomodule crossorigin id="vite-legacy-entry" data-src="//s1.hdslb.com/bfs/static/shanks/history-record/assets/index-legacy-5c0726dd.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+  </body>
+</html>

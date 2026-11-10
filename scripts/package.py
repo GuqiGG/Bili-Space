@@ -5,13 +5,16 @@ out=ROOT/'releases';out.mkdir(exist_ok=True)
 version=json.loads((ROOT/'package.json').read_text())['version']
 target=out/f'Bili-Space-{version}-win64.zip'
 files=[ROOT/'dist/Bili-Space.exe',ROOT/'dist/WebView2Loader.dll']
-files+=list((ROOT/'dist/assets').rglob('*'))
+# Package current source assets; stale files from earlier incremental builds must not return.
+# Windows needs neither the WebKit/portable stylesheet copies (macOS and Linux) nor the large PNG used to make their icons.
+files+=[f for f in (ROOT/'assets').rglob('*') if not f.name.endswith(('.portable.css','.webkit.css')) and f!=ROOT/'assets/branding/bili-space.png']
 files+=list((ROOT/'dist/runtime').rglob('*'))
-files+=[ROOT/'vendor/mihomo.LICENSE',ROOT/'vendor/onnxruntime.LICENSE',ROOT/'vendor/espcn.LICENSE',ROOT/'vendor/rife.LICENSE',ROOT/'vendor/anime4k.LICENSE',ROOT/'vendor/anime4k-source.json',ROOT/'vendor/rife-model.json',ROOT/'vendor/runtime.lock.json',ROOT/'vendor/free-nodes-sources.json']
+files+=[ROOT/'vendor/mihomo.LICENSE',ROOT/'vendor/anime4k.LICENSE',ROOT/'vendor/anime4k-source.json',ROOT/'vendor/runtime.lock.json',ROOT/'vendor/free-nodes-sources.json']
 files+=[ROOT/'vendor/iana-tlds.txt',ROOT/'vendor/iana-tlds-source.json']
 files+=[ROOT/'vendor/DouyinSans.OFL.txt',ROOT/'vendor/douyin-font-source.json']
 files+=[ROOT/'vendor/btr.LICENSE',ROOT/'vendor/blocker.LICENSE',ROOT/'vendor/plugins.lock.json',ROOT/'vendor/WebView2.LICENSE.txt',ROOT/'vendor/WebView2.NOTICE.txt',ROOT/'vendor/json.LICENSE',ROOT/'README.md',ROOT/'LICENSE',ROOT/'THIRD_PARTY_NOTICES.md',ROOT/'UPDATE-SITE.md']
-files+=list((ROOT/'docs').rglob('*'))
+# Only the written documents ship with the app; the project website and README screenshots stay in the repository.
+files+=[f for f in (ROOT/'docs').rglob('*') if not f.is_relative_to(ROOT/'docs/website') and not f.is_relative_to(ROOT/'docs/images')]
 with zipfile.ZipFile(target,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as z:
  for f in files:
   if f.is_file():

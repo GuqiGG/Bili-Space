@@ -1,0 +1,1780 @@
+
+@font-face {
+  font-family: 'BDC-erj847ivanq';
+  src:
+    url("https://s1.hdslb.com/bfs/svg-next/font/2024-08-21/BDC-erj847ivanq.woff2") format("woff2"),
+    url("https://s1.hdslb.com/bfs/svg-next/font/2024-08-21/BDC-erj847ivanq.woff") format("woff"),
+    url("https://s1.hdslb.com/bfs/svg-next/font/2024-08-21/BDC-erj847ivanq.ttf") format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+.sic-BDC-envelope_message_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e000';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_back_left_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e001';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_forward_right_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e002';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_collapse_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e003';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_expand_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e004';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_left_narrow_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e005';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_right_narrow_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e006';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_up_narrow_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e007';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_down_narrow_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e008';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_left_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e009';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_right_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e00a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_up_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e00b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_down_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e00c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_left_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e00d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_right_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e00e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_up_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e00f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_down_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e010';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bell_live_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e011';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-emoji_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e012';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-image_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e013';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_left_narrow_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e014';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_right_narrow_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e015';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_up_narrow_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e016';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_down_narrow_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e017';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_left_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e018';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_right_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e019';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_up_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e01a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_down_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e01b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_exchange_horizontal_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e01c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_sort_vertical_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e01d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_undo_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e01e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_refresh_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e01f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_replay_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e020';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_to_top_up_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e021';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_to_top_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e022';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_download_down_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e023';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_collapse_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e024';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_expand_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e025';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_upload_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e026';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_exit_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e027';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_collapse_fullscreen_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e028';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_expand_fullscreen_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e029';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_collapse_vertical_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e02a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_expand_vertical_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e02b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_expand_quadruple_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e02c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_fullscreen_windows_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e02d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_fullscreen_windows_exit_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e02e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_widescreen_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e02f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_widescreen_exit_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e030';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-plus_add_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e031';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-plus_add_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e032';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-scan_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e033';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-keyboard_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e034';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-checkmark_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e035';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-xmark_close_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e036';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-minus_reduce_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e037';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-menu_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e038';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-nut_setting_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e039';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-more_vertical_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e03a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-more_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e03b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-copy_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e03c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-magnifier_search_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e03d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-funnel_filter_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e03e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-blocked_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e03f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-info_help_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e040';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-list_select_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e041';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-trash_delete_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e042';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-chain_link_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e043';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-eye_browse_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e044';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-eye_browse_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e045';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-clock_history_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e046';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-question_help_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e047';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-gamepad_game_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e048';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-shopping_cart_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e049';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-calendar_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e04a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-calendar_mark_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e04b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-shutdown_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e04c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-clock_timeoff_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e04d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_error_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e04e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-column_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e04f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bigmember_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e050';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_tvmember_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e051';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bell_reserve_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e052';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-loudspeaker_promote_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e053';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-ticket_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e054';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-at_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e055';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-vote_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e056';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-playerscan_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e057';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-gift_lottery_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e058';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-video_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e059';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-female_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e05a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-male_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e05b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-topic_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e05c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-cap_campus_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e05d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bag_commodity_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e05e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-qrcode_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e05f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-emoji_circle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e060';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-video_archive_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e061';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-video_archive_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e062';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-xmark_close_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e063';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-xmark_close_circle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e064';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_topic_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e065';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_topic_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e066';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_qatopic_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e067';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_qatopic_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e068';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-tag_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e069';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-tag_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e06a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-location_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e06b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-location_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e06c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-palette_theme_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e06d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-fontsize_text_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e06e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bubble_comment_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e06f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bubble_comment_setting_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e070';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bubble_comment_locked_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e071';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-tv_airplay_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e072';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-panoramic_360_text_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e073';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-fontcolor_text_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e074';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-tshirt_theme_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e075';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-moon_dark_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e076';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-sun_light_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e077';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-headset_audio_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e078';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-closed_caption_text_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e079';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-closed_caption_cn_text_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e07a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-closed_caption_cn_text_square_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e07b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-sound_quality_sq_text_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e07c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-crop_resize_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e07d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-text_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e07e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-headset_flash_aduio_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e07f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-flip_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e080';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-audio_play_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e081';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-playsetting_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e082';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_setting_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e083';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-miniplayer_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e084';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-autoplay_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e085';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-autoplay_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e086';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-lock_locked_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e087';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-lock_unlock_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e088';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-wand_effects_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e089';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-image_quality_hd_text_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e08a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_back10s_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e08b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_forward10s_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e08c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_autoplay_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e08d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_reverseplay_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e08e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_shuffleplay_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e08f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_singleplay_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e090';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-wand_change_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e091';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-vibrate_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e092';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-mic_singer_setting_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e093';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-mic_singer_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e094';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-mic_singer_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e095';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-mic_singer_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e096';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-mic_singer_off_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e097';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speaker_sound_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e098';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speaker_sound_off_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e099';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speaker_sound_on_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e09a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speaker_sound_on_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e09b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speaker_notice_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e09c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speaker_notice_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e09d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-fastfoward_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e09e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-rewind_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e09f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-play_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a0';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-pause_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a1';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-previous_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a2';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-next_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a3';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-pen_write_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a4';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-battery_charge_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a5';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-folder_add_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a6';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-folder_null_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a7';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-folder_download_success_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a8';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-phone_desktop_shortcuts_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0a9';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-shop_store_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0aa';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-fire_trending_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ab';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_play_next_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ac';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bubble_chat_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ad';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-screenshot_long_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ae';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-note_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0af';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-feedback_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b0';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-detail_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b1';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-lyric_share_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b2';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-image_edit_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b3';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-camera_shot_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b4';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-camera_switch_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b5';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_user_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b6';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_follow_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b7';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_blacklist_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b8';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_user_info_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0b9';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_unfollow_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ba';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_following_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0bb';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_me_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0bc';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-camera_record_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0bd';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_address_book_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0be';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-compass_browser_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0bf';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-key_password_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c0';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-umbrella_protect_on_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c1';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-umbrella_protect_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c2';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-tv_data_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c3';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-paper_plane_send_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c4';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-paper_plane_send_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c5';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-warning_report_triangle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c6';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-warning_report_triangle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c7';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-watchtogether_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c8';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-watchtogether_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0c9';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bubble_comment_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ca';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bubble_comment_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0cb';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-star_favorite_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0cc';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-star_favorite_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0cd';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-folder_download_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ce';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-folder_download_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0cf';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-hand_thumbsup_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d0';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-hand_thumbsup_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d1';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-hand_thumbsdown_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d2';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-hand_thumbsdown_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d3';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-heart_collect_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d4';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-heart_collect_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d5';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-heart_collect2_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d6';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-heart_collect2_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d7';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-coin_text_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d8';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-coin_text_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0d9';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_share_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0da';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_share_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0db';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-dislike_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0dc';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-dislike_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0dd';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-warning_report_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0de';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-warning_report_circle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0df';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-wechat_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e0';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-wechat_moments_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e1';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-qq_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e2';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-qzone_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e3';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-weibo_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e4';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-star_grade_half_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e5';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_down_triangle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e6';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_up_triangle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e7';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_right_triangle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e8';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_left_triangle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0e9';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_up_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ea';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-lock_locked_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0eb';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bell_reserve_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ec';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-playdata_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ed';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-uploader_name_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ee';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ef';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-ranking_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f0';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_hot_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f1';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-list_sort_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f2';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_play_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f3';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_pause_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f4';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_defaultimage_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f5';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_defaultavatar_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f6';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_null_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f7';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speed_line_square::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f8';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speed_150_line_square::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0f9';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speed_75_line_square::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0fa';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speed_50_line_square::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0fb';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speed_100_line_square::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0fc';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speed_125_line_square::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0fd';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-speed_200_line_square::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0fe';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bell_reserve_forward_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e0ff';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_download_down_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e100';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_text_size_larger_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e101';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_text_size_smaller_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e102';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_text_locked_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e103';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_special_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e104';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_special_off_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e105';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_top_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e106';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_top_off_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e107';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_top_locked_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e108';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_bottom_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e109';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_bottom_off_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e10a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_bottom_locked_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e10b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_flying_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e10c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_flying_off_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e10d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_repeat_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e10e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_repeat_off_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e10f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_color_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e110';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_color_off_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e111';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_back_left_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e112';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_forward_right_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e113';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_collapse_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e114';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_expand_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e115';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-insert_content_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e116';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-scissors_screenshot_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e117';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_collapse_mirror_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e118';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_expand_mirror_double_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e119';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-envelope_message_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e11a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-windmill_moments_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e11b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-windmill_moments_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e11c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-order_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e11d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-playtime_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e11e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-more_horizontal_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e11f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-star_grade_half2_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e120';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bag_member_shop_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e121';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-commodity_jd_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e122';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-commodity_taobao_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e123';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-headset_customer_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e124';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-partition_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e125';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_normal_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e126';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brush_clear_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e127';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_addtopic_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e128';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-battery_charge_simple_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e129';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-battery_charge_simple_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e12a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-wechat_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e12b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-wechat_moments_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e12c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-qq_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e12d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-phone_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e12e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-qzone_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e12f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-weibo_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e130';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_rotate_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e131';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-checkmark_circle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e132';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-checkmark_circle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e133';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-info_help_circle_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e134';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-business_order_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e135';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-house_home_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e136';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-red_envelope_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e137';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-red_envelope_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e138';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-envelope_historical_message_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e139';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-annotation_cn_text_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e13a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-list_sort_positive_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e13b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-list_sort_renew_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e13c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-list_sort_overallrank_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e13d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-folder_add_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e13e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-minus_reduce_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e13f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-leaf_care_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e140';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-heart_collect_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e141';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-star_favorite_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e142';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-magnifier_search_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e143';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-skip_beginning_end_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e144';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-caption_change_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e145';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-progress_backtracking_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e146';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-clarity_circle_ine::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e147';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_danmu_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e148';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_danmu_setting_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e149';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-next_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e14a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-previous_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e14b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-fastfoward_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e14c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-rewind_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e14d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-brandtv_danmu_on_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e14e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-arrow_cycle_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e14f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-color_filter_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e150';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-grabber_two_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e151';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-partition_square_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e152';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-pad_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e153';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-computer_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e154';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-television_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e155';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-livephotos_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e156';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-livephotos_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e157';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-person_special_following_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e158';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-lock_free_password_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e159';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_count_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e15a';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-danmu_count_off_square_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e15b';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-pen_edit_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e15c';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-book_classroom_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e15d';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-calendar_video_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e15e';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-video_pgc_archive_fill::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e15f';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-video_pgc_archive_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e160';
+  text-rendering: geometricPrecision;
+}
+.sic-BDC-bell_reserve_off_line::after {
+  font-family: 'BDC-erj847ivanq';
+  content: '\e161';
+  text-rendering: geometricPrecision;
+}
