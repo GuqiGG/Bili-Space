@@ -469,7 +469,7 @@ void applyZoom(){
         if(target<800)target=1280;
         z=std::max(z,std::min(2.5,dip/target));
     }
-    zoomBase=z;z=std::clamp(z*manualZoom,.25,5.0);zoomApplied=z;controller->put_ZoomFactor(z);if(!full)chromeZoom(zoomBase);
+    zoomBase=z;z=std::clamp(z*manualZoom,.25,5.0);zoomApplied=z;controller->put_ZoomFactor(z);if(!full)chromeZoom(z);
 }
 void fit(){chromePlace();if(controller){RECT rc;GetClientRect(windowHandle,&rc);controller->put_Bounds(rc);applyZoom();}}
 void toggleFull(bool on);
@@ -682,6 +682,12 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="community"){communityAction(m);
         }else if(type=="open-settings"){const auto tab=m.value("tab",std::string{});const auto call="window.BiliSpace?.openSettings?.("+json(tab).dump()+",true)";if(!chromeOpenSettings(call))execute(call);
         }else if(type=="fullscreen-start"){startRect.clear();if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()>=4&&m["rect"].size()<=6)for(const auto& v:m["rect"])if(v.is_number())startRect.push_back(v.get<double>());startRectAt=GetTickCount64();startGrow();
+        }else if(type=="zoom-step"){
+            // Ctrl+wheel over the header zooms the page (and with it the header) in the browser's own steps.
+            static const double steps[]{.25,.33,.5,.67,.75,.8,.9,1,1.1,1.25,1.5,1.75,2,2.5,3,4,5};const int dir=m.value("dir",0);double next=zoomApplied;
+            if(dir>0){for(double s:steps)if(s>zoomApplied+.001){next=s;break;}}else if(dir<0){for(int i=int(std::size(steps))-1;i>=0;--i)if(steps[i]<zoomApplied-.001){next=steps[i];break;}}
+            // Header messages run with the header's controller in scope; the zoom belongs to the visible page.
+            if(dir&&zoomBase>0&&!full&&!pip&&activeTab&&activeTab->controller){auto* scoped=controller;controller=activeTab->controller;manualZoom=std::clamp(next/zoomBase,.25,5.0);applyZoom();controller=scoped;}
         }else if(type=="feedback"){sendFeedback(m);
         }else if(type=="web-fullscreen"){executeEverywhere(std::string("window.BiliSpace?.setWebFullscreen?.(")+(m.value("on",false)?"true":"false")+")");
         }else if(type=="tour-backdrop"){executeEverywhere(std::string("window.BiliSpace?.tourBackdrop?.(")+(m.value("on",false)?"true":"false")+")");
@@ -802,7 +808,7 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
             // A zoom change the client did not make is the user's own: remember it relative to the client's zoom.
             auto zoomed=callback<ICoreWebView2ZoomFactorChangedEventHandler,ICoreWebView2Controller*,IUnknown*>([](ICoreWebView2Controller* sender,IUnknown*){
                 if(sender!=controller)return S_OK;double now=1;sender->get_ZoomFactor(&now);
-                if(std::abs(now-zoomApplied)>.001&&zoomBase>0){manualZoom=std::clamp(now/zoomBase,.25,5.0);zoomApplied=now;}
+                if(std::abs(now-zoomApplied)>.001&&zoomBase>0){manualZoom=std::clamp(now/zoomBase,.25,5.0);zoomApplied=now;if(!full)chromeZoom(now);}
                 return S_OK;});c->add_ZoomFactorChanged(zoomed,&zoomToken);zoomed->Release();}
             EventRegistrationToken acceleratorToken;
             auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller* sender,auto args){ViewScope scope(sender);
