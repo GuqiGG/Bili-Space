@@ -4,3 +4,9 @@ vendor/DouyinSans.OFL.txt -text
 
 # Preserve captured HTTP response bytes and manifest hashes.
 assets/web-copy/** -text
+
+# Language statistics on GitHub count only the project's own code: the early rollback script (base64 snapshots of
+# 0.1.0–0.1.3), captured Bilibili page scripts and third-party files are left out.
+verification/** linguist-generated
+assets/web-copy/** linguist-vendored
+vendor/** linguist-vendored
