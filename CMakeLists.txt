@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(BetterBiliSpace VERSION 0.1.62 LANGUAGES CXX)
+project(BetterBiliSpace VERSION 0.1.63 LANGUAGES CXX)
 if(APPLE)
   enable_language(OBJCXX)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0")
