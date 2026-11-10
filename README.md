@@ -5,6 +5,12 @@
 <p align="center"><strong>你的最后一款B站客户端</strong></p>
 <p align="center">熟悉的 B 站，属于你的空间。</p>
 <p align="center">
+  <a href="https://github.com/GuqiGG/Bili-Space/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/GuqiGG/Bili-Space?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&color=fb7299"></a>
+  <a href="https://github.com/GuqiGG/Bili-Space/releases"><img alt="下载次数" src="https://img.shields.io/github/downloads/GuqiGG/Bili-Space/total?label=%E4%B8%8B%E8%BD%BD&color=00a1d6"></a>
+  <img alt="平台" src="https://img.shields.io/badge/%E5%B9%B3%E5%8F%B0-Windows%20%7C%20macOS%20%7C%20Linux-555">
+  <a href="LICENSE"><img alt="许可" src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF-PolyForm%20Noncommercial-555"></a>
+</p>
+<p align="center">
   <a href="../../releases">下载客户端</a> ·
   <a href="https://bili.gvqi.top">官方网站</a> ·
   <a href="#界面一览">界面一览</a> ·
