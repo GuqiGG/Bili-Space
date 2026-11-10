@@ -1180,7 +1180,7 @@ nav{display:flex;flex-shrink:0;gap:4px;height:100%;align-items:center}nav a{font
 .search-panel{position:absolute;top:calc(100% + 9px);left:0;right:0;max-height:min(460px,calc(100vh - var(--bs-header-height,58px) - 24px));overflow:auto;overscroll-behavior:contain;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 12px 32px #0004;pointer-events:auto;text-align:left}.search-panel[hidden]{display:none}.search-panel h2{position:relative;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0 9px;font-size:12px;color:var(--muted);font-weight:500}.search-panel p{font-size:12px;color:var(--muted);margin:12px 2px}.search-history-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.search-history-chip{display:inline-flex;align-items:center;max-width:100%;min-width:0;background:var(--field);border-radius:6px}.search-history-chip .search-choice{flex:0 1 auto!important;max-width:200px;padding:6px 8px!important;font-size:12px!important}.search-history-chip .search-remove{width:22px!important;height:24px!important;font-size:16px!important}.search-row{display:flex;align-items:center;min-width:0;border-radius:7px}.search-panel button{border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}.search-panel .search-choice{flex:1;min-width:0;text-align:left;padding:9px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;border-radius:7px}.search-choice:hover,.search-choice.selected{background:var(--field);color:var(--accent)}.search-panel .search-remove{flex:none;width:28px;height:28px;color:var(--muted);font-size:19px;border-radius:6px}.search-remove:hover,.search-panel .search-clear:hover{color:var(--accent);background:var(--field)}.search-panel .search-clear{padding:3px 5px;color:var(--muted);font-size:11px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @keyframes bs-search-spin{to{transform:rotate(360deg)}}@keyframes bs-search-progress{0%{transform:scaleX(.1)}70%{transform:scaleX(.85)}100%{transform:scaleX(1);opacity:.35}}
-#settings-trigger{position:fixed;bottom:22px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
+:host([data-web-full]) :is(#settings-trigger,.upload){opacity:0!important;transform:translateY(8px)!important;pointer-events:none!important}:is(#settings-trigger,.upload){transition:opacity .24s cubic-bezier(.32,.72,0,1),transform .24s cubic-bezier(.32,.72,0,1)}#settings-trigger{position:fixed;bottom:22px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
 #settings-trigger svg{width:23px;height:23px}#settings-trigger circle,#settings-trigger path{stroke:currentColor}
 .scrim{position:fixed;inset:0;background:#08080c80;display:grid;place-items:center;padding:40px;pointer-events:auto}
 .dialog{width:min(940px,100%);height:min(660px,calc(100vh - 80px));min-height:260px;min-width:min(360px,100%);max-width:100%;max-height:100%;resize:both;display:grid;grid-template-columns:calc(210px * var(--bs-settings-zoom,1)) 1fr;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 32px 100px #0006;overflow:hidden}#settings .dialog>:is(aside,main){zoom:var(--bs-settings-zoom,1)}
@@ -2153,13 +2153,24 @@ function chromeActive(state){
     chromeDirection=null;
   }else{navigationState={back:!!state.back||!!chromeAssume.back,forward:!!state.forward||!!chromeAssume.forward};chromeHoldControls=false;}chromeLocation=next;syncRoute();syncNavigationControls();reportChromeLayout();
 }
-let chromeLayoutKey='',chromeLayoutFrame;
+let chromeLayoutKey='',chromeLayoutFrame,webFullscreen=false;
+// The player's web fullscreen fills the page; the floating buttons of the header would cover its controls.
+function watchWebFullscreen(){if(!CONTENT_VIEW)return;let was=false;const check=()=>{const on=!!document.querySelector('.bpx-player-container[data-screen=web],.bpx-player-container[data-screen=full]');if(on!==was){was=on;native('web-fullscreen',{on});}};
+  new MutationObserver(check).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['data-screen']});check();
+  // The tab that comes to the front tells the header its own state.
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){was=null;check();}});}
+function setWebFullscreen(on){if(!CHROME_VIEW||!shadow)return;webFullscreen=!!on;shadow.host.toggleAttribute('data-web-full',webFullscreen);reportChromeLayout();}
 function reportChromeLayout(){
   if(!CHROME_VIEW||!shadow)return;cancelAnimationFrame(chromeLayoutFrame);chromeLayoutFrame=requestAnimationFrame(()=>{
     const rects=[],scale=devicePixelRatio||1;
     const add=el=>{if(!el||el.hidden||!el.isConnected)return;const look=getComputedStyle(el);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)return;const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)rects.push([Math.floor(r.left*scale),Math.floor(r.top*scale),Math.ceil(r.right*scale),Math.ceil(r.bottom*scale)]);};
-    add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories','#settings-trigger','.upload','#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));for(const p of $$('.bs-plugin-panel',shadow))add(p);
-    const modal=!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow)||!!$('#plugin-dialog',shadow)||!!$('#onboarding',shadow);
+    add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories',...(webFullscreen?[]:['#settings-trigger','.upload']),'#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));for(const p of $$('.bs-plugin-panel',shadow))add(p);
+    // Windows that other scripts open in this document (the login panel, the thread ripper's settings dialog) sit
+    // outside the shadow root; without their rectangles the clicks would land on the page underneath.
+    let foreignModal=false;
+    for(const el of document.querySelectorAll('html>*:not(head):not(body),body>*')){if(el.id==='bili-space-root'||el.matches('style,script,link,meta,iframe,template,dialog:not([open])'))continue;
+      if(el.matches('dialog[open]')&&el.matches(':modal')){foreignModal=true;continue;}if(getComputedStyle(el).pointerEvents!=='none')add(el);}
+    const modal=foreignModal||!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow)||!!$('#plugin-dialog',shadow)||!!$('#onboarding',shadow);
     const key=JSON.stringify([rects,modal]);if(key===chromeLayoutKey)return;chromeLayoutKey=key;native('chrome-layout',{rects,modal});
   });
 }
@@ -2172,6 +2183,7 @@ function installChromeView(){
   // follows them), finished transitions and animations, and window resizes.
   let settle;const changed=()=>{reportChromeLayout();clearTimeout(settle);settle=setTimeout(reportChromeLayout,450);};
   new MutationObserver(changed).observe(shadow,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','class','style','data-open','aria-expanded','data-categories']});
+  new MutationObserver(changed).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['open','hidden','class','style']});
   for(const type of ['transitionend','animationend','animationcancel'])shadow.addEventListener(type,reportChromeLayout,true);
   addEventListener('resize',changed);
   surfaceRevealed();acceptRouteOrigin('');native('navigation-state',{action:'read'});reportChromeLayout();
@@ -2215,7 +2227,7 @@ function boot(){
   document.body.append(controls);$('button',controls).onclick=()=>native('window',{action:'pip'});$('.bs-pip-play',controls).onclick=()=>{const v=playbackVideo();if(v){if(v.paused)v.play().catch(()=>{});else v.pause();}syncPipPlayback();};
   for(const type of ['play','pause','ended','emptied'])document.addEventListener(type,()=>{syncPipPlayback();if(pipDanmaku.timer)pipDanmaku.tick();},true);document.addEventListener('loadedmetadata',()=>{if(pipActive)syncPipPresentation();},true);
   window.addEventListener('resize',()=>{layoutHeaderLeading();syncPipPresentation();});
-  scheduleHeaderClock();syncPipPlayback();
+  scheduleHeaderClock();syncPipPlayback();watchWebFullscreen();
   document.addEventListener('keydown',e=>{
     if(e.ctrlKey&&e.key.toLowerCase()==='w'){e.preventDefault();e.stopImmediatePropagation();native('window',{action:'close'});return;}
     if(e.ctrlKey&&e.key===','){e.preventDefault();openSettings();}
@@ -2258,6 +2270,7 @@ function boot(){
         for(const [el,[value,priority]] of pipHiddenHosts){if(value)el.style.setProperty('display',value,priority);else el.style.removeProperty('display');}pipHiddenHosts.clear();
       }
     },
+    setWebFullscreen,
     setFullscreen(on){if(!on)holdPlayer(false);fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
     emitPipDanmaku(items,time){for(const item of items)pipDanmaku.emit(item,time);},
     get state(){return {headerBrand:{shown:brandShown,moving:brandMotion.length>0},pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status}:null};}

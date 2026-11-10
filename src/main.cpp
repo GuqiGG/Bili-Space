@@ -654,6 +654,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="community"){communityAction(m);
         }else if(type=="open-settings"){const auto tab=m.value("tab",std::string{});const auto call="window.BiliSpace?.openSettings?.("+json(tab).dump()+",true)";if(!chromeOpenSettings(call))execute(call);
         }else if(type=="fullscreen-start"){startRect.clear();if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()>=4&&m["rect"].size()<=6)for(const auto& v:m["rect"])if(v.is_number())startRect.push_back(v.get<double>());startRectAt=GetTickCount64();startGrow();
+        }else if(type=="web-fullscreen"){executeEverywhere(std::string("window.BiliSpace?.setWebFullscreen?.(")+(m.value("on",false)?"true":"false")+")");
         }else if(type=="tour-backdrop"){executeEverywhere(std::string("window.BiliSpace?.tourBackdrop?.(")+(m.value("on",false)?"true":"false")+")");
         }else if(type=="fullscreen-ready"){std::vector<double> rect;if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()>=4&&m["rect"].size()<=6)for(const auto& v:m["rect"])if(v.is_number())rect.push_back(v.get<double>());fullscreenReady(rect);
         }else if(type=="plugins"){pluginsAction(m);

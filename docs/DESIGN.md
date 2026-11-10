@@ -30,6 +30,8 @@
 - **WebView2 composition 宿主**：
   - 用 DirectComposition 组合两层视图：顶栏层 `CHROME_VIEW`（`https://www.bilibili.com/__bili_space_chrome__`，透明，负责顶栏、设置、弹窗、引导）和页面层 `CONTENT_VIEW`（B 站页面，可多个标签）。
   - 点击由 `chrome-layout` 上报的矩形和 modal 状态决定落到哪一层。
+  - 顶栏层只有报告过的区域能接到点击，其余地方会穿透到网页。凡是在顶栏页面里显示的东西都要报告，包括不在客户端界面里、由别的脚本打开的窗口（登录面板、线程撕裂者设置等）；模态 `<dialog>` 按整窗处理，已关闭的 dialog 要跳过。
+  - 视频网页全屏时，左下角的设置、上传悬浮按钮要隐藏，不能挡住播放器控制栏。
   - 文字缩放 = RasterizationScale × Windows「文本大小」(TextScaleFactor)，实时跟随系统设置。
 - **客户端脚本 `assets/enhance.js`**：
   - 同一份脚本同时注入两层视图，用 `CHROME_VIEW` 和 `CONTENT_VIEW` 区分。
