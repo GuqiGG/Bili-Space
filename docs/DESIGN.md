@@ -105,7 +105,9 @@
   2. `git mv .github/workflows/platforms-<旧>.yml platforms-<新>.yml`，并替换文件里的版本号。
   3. 写 `docs/RELEASE-<版本>.md`。
   4. 更新公告：改 `assets/whats-new/whats-new.json` 的 `version` 为新版本，并写好每一页（`title`、`text`，`media` 可以是 mp4/webm/gif/png/webp，或者用 `items` 列一组要点）；配图放在同一目录，可以用 `scripts/record_whats_new.py` 从测试窗口录。版本号对不上时公告不会弹出。
-  5. 提交信息带 `[release-<版本>]`。
+  5. 提交信息带 `[release-<版本>]`，推送到 `codex/navigation-accounts-platforms`，等 GitHub 上的构建和发布全部完成。
+  6. 发布完成后，把发布分支合并进 master（`git merge --no-ff`），再推送 master。master 是仓库首页显示的分支，发布脚本会往 master 写每个版本的更新清单，所以必须等发布结束再合并；合并时保留 master 上的 `update-site/public/updates/windows-x64.json`。这样首页的源码始终是最新版。
+  7. 只改文档、不需要构建的提交，在提交信息里加 `[skip ci]`。
 - 不要改动 `D:\Bili-Space`（用户自己装的那份），除非用户要求。
 - 测试绝不发送系统级键鼠输入（keybd_event、mouse_event、SetCursorPos），只用 CDP 操作测试窗口。用户在玩游戏时不要弹出测试窗口。
 - 不打印、不保存 GitHub token。不要使用裸 `git stash`。
