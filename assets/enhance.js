@@ -1024,6 +1024,11 @@ html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(.l
 html[data-bs-page=video] :is(.video-info-container,.video-title,.up-info-container,.video-desc-container,.video-toolbar-container,.video-toolbar-left,.video-toolbar-right){min-width:0!important;max-width:100%!important;box-sizing:border-box!important;overflow-wrap:anywhere}
 html[data-bs-page=video] .video-title{white-space:normal!important;height:auto!important}
 html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(#bilibili-player,#bilibili-player-wrap,#playerWrap,.bpx-player-container:not([data-screen=mini]):not(.bpx-state-mini):not(.bpx-state-miniscreen),.bpx-player-sending-bar){width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+/* Bilibili fixes the player wrapper's height for its own column width; once the client widens the column (a maximized
+   window), the 16:9 player with its danmaku bar outgrows that height and the bar slides over the like/coin row. The
+   wrappers take their height from their width instead and still grow to fit. They keep that height while the player
+   floats (mini, web fullscreen) so the page does not jump; only the wide mode keeps Bilibili's own size. */
+html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(#playerWrap,#bilibili-player,.bpx-docker):not(:has(.bpx-player-container[data-screen=wide])){height:auto!important;aspect-ratio:16/9}
 html[data-bs-page=video] .video-toolbar-container{flex-wrap:wrap!important;gap:12px!important}
 /* Keep each recommendation metric intact; wrap whole metrics, never the unit suffix. */
 html[data-bs-page=video] .video-page-card-small .playinfo{display:flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;column-gap:8px!important;row-gap:4px!important;height:auto!important;min-width:0!important;line-height:18px!important}
