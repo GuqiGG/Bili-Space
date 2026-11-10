@@ -946,10 +946,12 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);
     WNDCLASSW wc{};wc.hIcon=LoadIconW(instance,MAKEINTRESOURCEW(1));wc.lpfnWndProc=proc;wc.hInstance=instance;wc.lpszClassName=L"BetterBiliSpace";wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.hbrBackground=CreateSolidBrush(RGB(20,20,22));RegisterClassW(&wc);
     // Keep DWM's standard taskbar transitions; WM_NCCALCSIZE hides only the title bar.
-    // First launch (no remembered placement): 1440×900 at the system scale, at most 88% of the work area, centred.
+    // First launch (no remembered placement): 1192×812 at the system scale, centred; on a work area too small for it, the
+    // whole window shrinks to 88% of the work area at the same proportions.
     RECT work{};SystemParametersInfoW(SPI_GETWORKAREA,0,&work,0);
     using SystemDpi=UINT(WINAPI*)();static auto systemDpi=reinterpret_cast<SystemDpi>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetDpiForSystem"));const int dpiNow=systemDpi?int(systemDpi()):96;
-    const int workW=work.right-work.left,workH=work.bottom-work.top,initialW=std::min(MulDiv(1440,dpiNow,96),workW*88/100),initialH=std::min(MulDiv(900,dpiNow,96),workH*88/100);
+    const int workW=work.right-work.left,workH=work.bottom-work.top,wantW=MulDiv(1192,dpiNow,96),wantH=MulDiv(812,dpiNow,96);
+    const double fitScale=std::min({1.0,workW*.88/wantW,workH*.88/wantH});const int initialW=int(wantW*fitScale),initialH=int(wantH*fitScale);
     windowHandle=CreateWindowExW(0,wc.lpszClassName,testing?L"Bili-Space [test]":L"Bili-Space",WS_OVERLAPPEDWINDOW,work.left+(workW-initialW)/2,work.top+(workH-initialH)/2,initialW,initialH,nullptr,nullptr,instance,nullptr);
     SetWindowPos(windowHandle,nullptr,0,0,0,0,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
     DWORD borderColor=0xFFFFFFFE;DwmSetWindowAttribute(windowHandle,34,&borderColor,sizeof(borderColor));
