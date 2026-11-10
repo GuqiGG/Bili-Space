@@ -434,14 +434,117 @@ function setPrimaryNavHidden(nav,hide,instant){
 let headerSettleTimer;
 // The current nav item only offers refresh 1.5s after the header last moved, and only once the pointer moves again.
 function settleHeader(ms=1500){const left=shadow&&$('.header-left',shadow);if(!left)return;left.dataset.settling='true';clearTimeout(headerSettleTimer);headerSettleTimer=setTimeout(()=>{const release=()=>{delete left.dataset.settling;};left.addEventListener('pointermove',release,{once:true});},ms);}
+// Samples an underdamped spring: `step` settles 0→1 with overshoot, `kick` starts and ends at rest and swings around 0 (peak 1).
+function springCurve(stiffness,damping,steps=60){
+  const w=Math.sqrt(stiffness),z=Math.min(.95,damping/(2*w)),wd=w*Math.sqrt(1-z*z),decay=t=>Math.exp(-z*w*t);
+  let end=.1;while(end<4&&decay(end)>.003)end+=.02;
+  const at=i=>i/steps*end,raw=[...Array(steps+1).keys()].map(i=>decay(at(i))*Math.sin(wd*at(i))),peak=Math.max(...raw.map(Math.abs))||1;
+  return{duration:Math.round(end*1000),step:[...Array(steps+1).keys()].map(i=>{const t=at(i);return i===steps?1:1-decay(t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t));}),kick:raw.map((v,i)=>i===steps?0:v/peak)};
+}
+// Pointer-leave flourishes for the Windows caption buttons; each glyph ends exactly where it started.
+const WINDOW_LEAVE_MOTION={
+  close(svg,button,from=0){
+    // A replay picks the spin up from the current angle and still lands on a whole turn.
+    const to=from+1080+((360-from%360)%360),timing={duration:1350,easing:'cubic-bezier(.07,.83,.16,1)'};
+    svg.animate([{transform:`rotate(${from}deg)`,filter:'blur(.8px)'},{filter:'blur(.45px)',offset:.3},{transform:`rotate(${to}deg)`,filter:'blur(0px)'}],timing);
+    // Trailing copies lag by an angle that shrinks with progress, so the smear tightens as the spin slows.
+    for(const [lag,alpha] of [[30,.5],[60,.3],[90,.16],[120,.07]]){
+      const ghost=svg.cloneNode(true);ghost.classList.add('motion-ghost');ghost.setAttribute('aria-hidden','true');button.append(ghost);
+      ghost.animate([{transform:`rotate(${from-lag}deg)`,opacity:alpha,filter:'blur(1.1px)'},{opacity:alpha*.35,offset:.32},{opacity:0,offset:.62},{transform:`rotate(${to}deg)`,opacity:0,filter:'blur(0px)'}],timing).finished.catch(()=>{}).finally(()=>ghost.remove());
+    }
+  },
+  maximize(svg){
+    const {duration,step,kick}=springCurve(240,10),n=kick.length-1;
+    svg.animate(step.map((v,i)=>{const k=kick[i],lead=kick[Math.min(n,i+4)],s=1+k*.2;return{transform:`rotate(${v*90}deg) scale(${s*(1+lead*.14)},${s*(1-lead*.14)})`};}),{duration:duration+120});
+  },
+  minimize(svg,button,from,e){
+    const path=svg.querySelector('path'),r=svg.getBoundingClientRect();
+    if(!path||!r.width||!CSS.supports?.('d','path("M0 0")')){const {duration,kick}=springCurve(300,9);svg.animate(kick.map(k=>({transform:`translateY(${k*3}px) scale(${1+k*.5},${1-k*.3})`})),{duration});return;}
+    // The line is a rubber band the pointer drags as it leaves: the near end stretches and the middle bows toward it, then it springs back.
+    const k=16/r.width,mx=(e.clientX-r.left)*k-8,my=(e.clientY-r.top)*k-8,len=Math.hypot(mx,my)||1,ux=mx/len,uy=my/len,f=n=>n.toFixed(2);
+    const shape=p=>{const x1=3+ux*p*(ux>0?.8:2.8),x2=13+ux*p*(ux>0?2.8:.8),y=8+uy*p*.9;return{d:`path("M${f(x1)} ${f(y)}Q${f(8+ux*p*1.8)} ${f(8+uy*p*5.5)} ${f(x2)} ${f(y)}")`};};
+    const grab=130,{duration,step}=springCurve(380,7),total=grab+duration,a=grab/total;
+    const frames=[{...shape(0),offset:0,easing:'cubic-bezier(.2,.9,.35,1)'},{...shape(1),offset:a},...step.slice(1).map((v,i)=>({...shape(1-v),offset:a+(1-a)*(i+1)/(step.length-1)}))];
+    path.animate(frames,{duration:total});
+  }
+};
+function windowLeaveMotion(e,button){
+  const svg=button.querySelector('svg:not(.motion-ghost)'),play=WINDOW_LEAVE_MOTION[button.dataset.window];
+  if(e.pointerType!=='mouse'||!play||!svg?.animate||headerMotionReduced())return;
+  // Every leave replays from the top; the close spin continues from wherever it currently points.
+  const m=getComputedStyle(svg).transform.match(/matrix\(([^,]+),([^,]+)/),angle=m?(Math.atan2(+m[2],+m[1])*180/Math.PI+360)%360:0;
+  svg.getAnimations({subtree:true}).forEach(a=>a.cancel());button.querySelectorAll('.motion-ghost').forEach(g=>g.remove());
+  play(svg,button,Math.round(angle),e);
+}
+let categoryLinkMotion=[],categoryHoldTimer,categoryNavTimer=0;
+// Keeps the strip visible while links leave on their own; the CSS fade would otherwise hide them after 180ms.
+function holdCategoryStrip(links,hold){clearTimeout(categoryHoldTimer);links.style.opacity=hold?'1':'';links.style.transform=hold?'none':'';links.style.transition=hold?'none':'';}
+// Rare collapse: one channel snags, strains toward the trigger like rubber, snaps free the wrong way, hangs out there, then dashes home.
+function stuckCategoryFrames(dx,dy){
+  const side=dx<=0?1:-1,out=side*150;
+  return[
+    {transform:'none',easing:'linear'},
+    {transform:'translate(0px,0px) rotate(0deg)',offset:.08},
+    {transform:`translate(${-side*2}px,0px) rotate(${-side*4}deg)`,offset:.12},{transform:`translate(${side*2}px,0px) rotate(${side*3}deg)`,offset:.16},
+    {transform:`translate(${-side*3}px,0px) rotate(${-side*5}deg)`,offset:.2},{transform:`translate(${side}px,0px) rotate(${side*2}deg)`,offset:.24},
+    {transform:`translate(${-side*4}px,0px) rotate(${-side*6}deg)`,offset:.28,easing:'cubic-bezier(.3,0,.7,1)'},
+    {transform:`translate(${(dx*.14).toFixed(1)}px,${(dy*.14).toFixed(1)}px) scale(1.75,.62)`,offset:.46,easing:'cubic-bezier(.15,0,.2,1)'},
+    {transform:`translate(${out*.35}px,-2px) rotate(${-side*14}deg) scale(.86,1.18)`,offset:.52,easing:'cubic-bezier(.1,.7,.3,1)'},
+    {transform:`translate(${out}px,-6px) rotate(${-side*26}deg) scale(.9)`,offset:.64,opacity:1,easing:'ease-in-out'},
+    {transform:`translate(${out*.96}px,-2px) rotate(${-side*18}deg) scale(.92)`,offset:.72,easing:'ease-in-out'},
+    {transform:`translate(${out}px,-5px) rotate(${-side*22}deg) scale(.9)`,offset:.78,easing:'cubic-bezier(.3,1.6,.6,1)'},
+    {transform:`translate(${out*.97}px,-3px) rotate(${side*10}deg) scale(1.12,.9)`,offset:.83,opacity:1,easing:'cubic-bezier(.6,0,.9,.4)'},
+    {transform:`translate(${((out+dx)/2).toFixed(1)}px,${(dy/2).toFixed(1)}px) rotate(0deg) scale(1.7,.68)`,offset:.93,opacity:.85,filter:'blur(1.5px)'},
+    {transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(.25,.45)`,opacity:0,filter:'blur(4px)'}
+  ];
+}
+function animateCategoryLinks(links,open){
+  categoryLinkMotion.forEach(m=>m.cancel());categoryLinkMotion=[];holdCategoryStrip(links,false);
+  if(!links.animate||headerMotionReduced())return;
+  const items=$$(':scope>a:not([hidden]),:scope>.category-empty',links),dropdown=getComputedStyle(links).position==='fixed';
+  const away=d=>dropdown?`translateY(${(d*-14).toFixed(2)}px)`:`translateX(${(d*-34).toFixed(2)}px)`;
+  if(open){
+    // Each link springs out from the trigger a beat after its left neighbour, overshoots, and wobbles like jelly as it lands.
+    const {duration,step,kick}=springCurve(320,11),n=kick.length-1,gap=Math.min(32,420/Math.max(1,items.length));
+    const frames=step.map((v,i)=>{const wobble=kick[Math.min(n,i+3)]*.12,s=.7+.3*v;return{transform:`${away(1-v)} scale(${(s*(1+wobble)).toFixed(4)},${(s*(1-wobble)).toFixed(4)})`,opacity:Math.min(1,v*1.8).toFixed(3),filter:`blur(${(Math.max(0,1-v)*6).toFixed(2)}px)`};});
+    categoryLinkMotion=items.map((item,i)=>item.animate(frames,{duration,delay:i*gap,fill:'backwards'}));
+  }else{
+    // Links wind up away from the trigger, then get sucked into it, stretching on the way; the nearest goes first.
+    const trigger=$('.back',shadow),aim=trigger?.getBoundingClientRect(),zoom=headerZoom(),gap=Math.min(24,160/Math.max(1,items.length));
+    if(!aim||!items.length)return;
+    const tx=aim.left+aim.width/2,ty=aim.top+aim.height/2,stuck=items.length>1&&Math.random()<.01?Math.floor(Math.random()*items.length):-1;
+    holdCategoryStrip(links,true);
+    categoryLinkMotion=items.map((item,i)=>{
+      const r=item.getBoundingClientRect(),dx=(tx-(r.left+r.width/2))/zoom,dy=(ty-(r.top+r.height/2))/zoom,wind=dx<0?6:-6;
+      if(i===stuck)return item.animate(stuckCategoryFrames(dx,dy),{duration:2300,delay:i*gap,fill:'forwards'});
+      return item.animate([
+        {transform:'none',easing:'cubic-bezier(.3,0,.5,1)'},
+        {transform:`translate(${wind}px,0px) scale(1.06,.94)`,offset:.28,easing:'cubic-bezier(.6,0,.9,.5)'},
+        {transform:`translate(${(dx*.55).toFixed(1)}px,${(dy*.55).toFixed(1)}px) scale(1.45,.72)`,offset:.72,opacity:.9,filter:'blur(1px)'},
+        {transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(.25,.45)`,opacity:0,filter:'blur(4px)'}
+      ],{duration:300,delay:i*gap,fill:'forwards'});
+    });
+    const timing=categoryLinkMotion.map(m=>m.effect.getTiming()),last=Math.max(...timing.map(t=>(t.delay||0)+t.duration));
+    categoryHoldTimer=setTimeout(()=>holdCategoryStrip(links,false),last+20);
+    // Hand the lane back to the main nav as the last channel is swallowed (for the snag, as it dashes home).
+    return Math.max(...timing.map((t,i)=>(t.delay||0)+t.duration*(i===stuck?.97:.8)));
+  }
+  return 0;
+}
 function setCategories(open,keyboard=false){
   if(!shadow)return;
   const trigger=$('.back',shadow),links=$('#header-categories',shadow),lane=$('.nav-lane',shadow),nav=$('.primary-nav',shadow);
   open=Boolean(open&&PREFS.headerBack);
+  let navDelay=0;
+  if(trigger.getAttribute('aria-expanded')!==String(open)){clearTimeout(categoryNavTimer);categoryNavTimer=0;if(keyboard){categoryLinkMotion.forEach(m=>m.cancel());categoryLinkMotion=[];holdCategoryStrip(links,false);}else navDelay=animateCategoryLinks(links,open)||0;}
   if(!keyboard&&trigger.getAttribute('aria-expanded')!==String(open))settleHeader();trigger.dataset.instant=String(keyboard);trigger.setAttribute('aria-expanded',String(open));links.inert=!open;
   trigger.setAttribute('aria-label',open?'返回主导航':'展开分区');
   $('.header-left',shadow).dataset.categories=String(open);
-  setPrimaryNavHidden(nav,open||!$$('a',nav).some(a=>!a.hidden),keyboard);nav.inert=open;
+  // The main nav waits until the channels have been pulled back in, so the two never share the lane.
+  const hideNav=open||!$$('a',nav).some(a=>!a.hidden);
+  if(!hideNav&&navDelay)categoryNavTimer=setTimeout(()=>{categoryNavTimer=0;if(trigger.getAttribute('aria-expanded')!=='true')setPrimaryNavHidden(nav,false,false);},navDelay);
+  else if(hideNav||!categoryNavTimer){clearTimeout(categoryNavTimer);categoryNavTimer=0;setPrimaryNavHidden(nav,hideNav,keyboard);}
+  nav.inert=open;
   lane.style.setProperty('--category-space','100%');
   nav.style.transform='none';
   if(keyboard)lane.classList.add('instant');else lane.classList.remove('instant');
@@ -1073,6 +1176,7 @@ html[data-bs-theme=dark] :is(.roll-btn,.feed-roll-btn,.floor-single-card,.bili-l
 html[data-bs-theme] :is(.roll-btn,.feed-roll-btn),html[data-bs-theme][data-bs-page] .feed-roll-btn :is(button,.primary-btn,.roll-btn){border-radius:12px!important}html[data-bs-page=home] .feed-roll-btn{margin-top:44px!important}.bpx-player-top-issue,.bpx-player-top-feedback,.bpx-player-ctrl-feedback,[class*=bpx-player-top-issue]{display:none!important}.bpx-player-top-logo,.bpx-player-video-logo,.bpx-player-top-left-logo{opacity:.35!important}html[data-bs-theme] :is(.roll-btn,.feed-roll-btn){border-color:transparent!important;outline:0!important;box-shadow:0 4px 14px rgba(0,0,0,.12),0 1px 3px rgba(0,0,0,.06)!important}
 html[data-bs-theme][data-bs-page] .feed-roll-btn :is(button,.primary-btn,.roll-btn){border-color:transparent!important;outline:0!important;box-shadow:none!important}
 html[data-bs-theme=dark] :is(.roll-btn,.feed-roll-btn){box-shadow:0 5px 18px rgba(0,0,0,.3),0 1px 4px rgba(0,0,0,.16)!important}
+html[data-bs-page=home] :is(.feedback-btn,.customer-service-btn){display:none!important}
 
 html[data-bs-page=messages] #message-pc-header{display:none!important;height:0!important;min-height:0!important}
 html[data-bs-page=messages] .message-layout{width:calc(100% - 48px)!important;max-width:1440px!important;margin:16px auto!important;height:calc(100vh - var(--bs-header-height) - 32px)!important;min-height:0!important;border-radius:12px;overflow:hidden}
@@ -1156,6 +1260,9 @@ const shellCss=`
 :host([data-frost=true]) #chrome{position:relative;background:transparent!important;box-shadow:0 8px 22px #00000008!important;isolation:isolate}
 :host([data-frost=true]) #chrome::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(to bottom,#ffffff0c,transparent),linear-gradient(to bottom,var(--frost-tint) 0%,var(--frost-tint) 70%,transparent 100%);backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:var(--frost-filter);mask-image:linear-gradient(#000 0%,#000e 65%,#000a 85%,transparent 100%);-webkit-mask-image:linear-gradient(#000 0%,#000e 65%,#000a 85%,transparent 100%)}
 @media(prefers-reduced-transparency:reduce){:host{--frost-base:var(--panel);--frost-filter:none}}
+/* Corner buttons float over the page, so they keep a hairline edge even when frosted. */
+:host :is(.upload,#settings-trigger){border:1px solid #ffffff1f!important;box-shadow:0 1px 3px #0000004d,0 6px 18px #00000040!important}
+:host([data-theme=light]) :is(.upload,#settings-trigger){border-color:#0000001c!important;box-shadow:0 1px 3px #0000001f,0 6px 18px #0000001a!important}
 
 :host{all:initial;font-family:var(--font,BiliDouyin,"Microsoft YaHei UI",sans-serif);color:#f5f5f7;--accent:#fb7299;--bg:#202023;--panel:#27272b;--ink:#f5f5f7;--muted:#adadb7;--line:#ffffff12;--field:#333338;position:fixed;inset:0;z-index:2147483646;pointer-events:none;font-size:14px}
 :host{color-scheme:dark}:host([data-theme=light]){color-scheme:light;--bg:#f8f8fa;--panel:#fff;--ink:#25252a;--muted:#696973;--line:#00000012;--field:#ededf1;color:var(--ink)}
@@ -1170,7 +1277,8 @@ header{height:var(--bs-header-height,58px);display:grid;grid-template-columns:mi
 .back{flex-shrink:0}.nav-lane{position:relative;flex:1;min-width:0;height:100%;display:flex;align-items:center;overflow:hidden}.nav-lane .primary-nav{transition:transform 240ms cubic-bezier(0.23,1,0.32,1);will-change:transform}
 .category-links{position:absolute;left:0;top:0;height:100%;width:var(--category-space,0px);display:flex;align-items:center;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 16px),transparent);opacity:0;transform:translateX(-12px);transition:opacity 180ms cubic-bezier(.2,.8,.2,1),transform 240ms cubic-bezier(0.23,1,0.32,1);pointer-events:none}.category-links::-webkit-scrollbar{display:none}
 .category-links a{flex-shrink:0;font-size:15px;white-space:nowrap;color:var(--muted);padding:6px 8px}.category-links a:hover,.category-links a:focus-visible{color:var(--accent)}.header-left[data-categories=true] .category-links{opacity:1;transform:translateX(0);pointer-events:auto}.back{transition:transform 180ms cubic-bezier(.2,.8,.2,1)}.header-left[data-categories=true] .back{color:var(--accent);transform:translateX(var(--header-home-shift,0px))}.nav-lane.instant .primary-nav,.nav-lane.instant .category-links{transition:none}
-.back svg{transform:rotate(0deg);transition:transform 360ms cubic-bezier(.4,0,.2,1)}.back[aria-expanded=true] svg{transform:rotate(180deg)}.back[data-instant=true] svg{transition:none}@media(prefers-reduced-motion:reduce){.back svg{transition:none!important}}
+.window-actions button>svg{grid-area:1/1;transform-origin:50% 50%}.window-actions .motion-ghost{pointer-events:none}
+.back svg{transform:rotate(0deg);transition:transform 560ms cubic-bezier(.34,1.56,.64,1)}.back[aria-expanded=true] svg{transform:rotate(180deg)}.back[data-instant=true] svg{transition:none}@media(prefers-reduced-motion:reduce){.back svg{transition:none!important}}
 .lights{display:flex;align-items:center;flex:0 0 auto;gap:9px;margin-right:0}.lights .light{display:block;flex:0 0 14px;width:14px;height:14px;min-width:14px;border:0;border-radius:50%;padding:0;position:relative;line-height:0;appearance:none}.light.close{background:#ff5f57}.light.min{background:#febc2e}.light.max{background:#28c840}.lights .light svg{display:block;position:absolute;inset:3px;width:8px;height:8px;fill:none;stroke:#111a;stroke-width:1.4;stroke-linecap:round;opacity:1;pointer-events:none;transition:opacity 150ms cubic-bezier(.2,.8,.2,1)}.lights:hover svg,.lights .light:focus-visible svg{opacity:1}
 .lights .light:before{content:'';position:absolute;inset:-5px;border-radius:50%}
 .video-link{display:inline-flex;align-items:center;gap:6px;flex:0 1 210px;min-width:36px;max-width:210px;height:32px;padding:0 9px;margin-left:auto;overflow:hidden;border:1px solid color-mix(in srgb,var(--muted) 45%,transparent);border-radius:7px;background:transparent;color:var(--muted);text-align:left;cursor:pointer}.video-link svg{width:15px;height:15px;flex:0 0 15px}.video-link-text{font:12px/18px Consolas,"Cascadia Mono",monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.video-link:hover,.video-link[data-copied=true]{border-color:var(--accent);color:var(--accent)}.header-left[data-video=true]>.video-link{transform:translateX(80px)}.header-left[data-controls=windows][data-video=true]>.video-link{transform:none}.header-left:has(.video-link:not([hidden]))>.nav-lane{flex:0 1 auto}.header-left:has(.video-link:not([hidden])) .primary-nav{flex-shrink:0}.video-link:focus-visible{outline:2px solid var(--accent);outline-offset:3px}@media(max-width:1050px){.video-link{flex-basis:100px;max-width:100px}}@media(max-width:600px){.video-link{flex-basis:36px;max-width:36px}.video-link-text{display:none}}
@@ -1741,6 +1849,12 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
   const accountWrap=$('.account-wrap',shadow);accountWrap.addEventListener('pointerenter',e=>{if(e.pointerType&&e.pointerType!=='mouse')return;clearTimeout(accountHideTimer);if(accountProfile)accountShowTimer=setTimeout(showAccountCard,150);});accountWrap.addEventListener('pointerleave',()=>{clearTimeout(accountShowTimer);accountHideTimer=setTimeout(hideAccountCard,160);});accountWrap.addEventListener('focusin',()=>{clearTimeout(accountHideTimer);const card=$('#account-card',shadow);if(accountProfile&&(card.hidden||card.dataset.open!=='true'))showAccountCard(false);});accountWrap.addEventListener('focusout',e=>{if(!accountWrap.contains(e.relatedTarget))hideAccountCard();});
   const trigger=$('.back',shadow),left=$('.header-left',shadow),lane=$('.nav-lane',shadow);
   // Mouse wheel notches glide the channel strip toward an accumulated target each frame; touchpads already scroll smoothly and pass straight through.
+  // Chromium never routes a real pointerleave through ancestors, so the root watches the bubbling pointerout and
+  // treats it as a leave once the pointer is outside the whole button; this survives the caption buttons being rebuilt.
+  // Only a deliberate hover (at least 150ms) earns the flourish; sweeping past the buttons stays quiet.
+  const captionEntered=new WeakMap(),captionButton=e=>e.target.closest?.('.window-actions [data-window]');
+  shadow.addEventListener('pointerover',e=>{const button=captionButton(e);if(button&&!button.contains(e.relatedTarget))captionEntered.set(button,performance.now());});
+  shadow.addEventListener('pointerout',e=>{const button=captionButton(e);if(!button||button.contains(e.relatedTarget))return;const since=captionEntered.get(button);captionEntered.delete(button);if(since!==undefined&&performance.now()-since>=150)windowLeaveMotion(e,button);});
   {let target=null,frame=0;const links=$('#header-categories',shadow);
    const glide=()=>{const left=links.scrollLeft,step=(target-left)*.2;if(Math.abs(target-left)<.5){links.scrollLeft=target;target=null;frame=0;return;}links.scrollLeft=left+step;frame=requestAnimationFrame(glide);};
    links.addEventListener('wheel',e=>{if(innerWidth<=1050||links.scrollWidth<=links.clientWidth||e.ctrlKey)return;e.preventDefault();const delta=(e.deltaY||e.deltaX)*(e.deltaMode===1?40:1),max=links.scrollWidth-links.clientWidth;
