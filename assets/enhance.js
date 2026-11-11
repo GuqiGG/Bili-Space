@@ -948,14 +948,25 @@ function installSearchGrip(){
   grip.addEventListener('pointerup',end);grip.addEventListener('pointercancel',end);
   grip.addEventListener('dblclick',()=>{goal=width=0;apply(0);update({searchWidth:0});if(!still()){vy-=2;run();}reportChromeLayout();});
 }
-// Pressing 稍后再看 spins the clock's hands (the face stays still): the minute hand races four quick turns and the hour
-// hand one, both slowing down and swinging back to where they were, the minute hand with a little overshoot.
+// A quiet easter egg: the 稍后再看 clock tells the real time. The hour hand is drawn pointing at 12 and the minute hand
+// at 3; both turn from there, updated every second so the minute hand creeps instead of jumping. Pressing the button
+// spins the hands (the face stays still): the minute hand races four quick turns and the hour hand one, both coming
+// back to the current time, the minute hand with a little overshoot.
+let clockHandsTimer=0;
+function clockAngles(){const now=new Date(),m=now.getMinutes()+now.getSeconds()/60+now.getMilliseconds()/60000;return {minute:m*6-90,hour:(now.getHours()%12+m/60)*30};}
+function syncClockHands(){
+  clearTimeout(clockHandsTimer);if(!CHROME_VIEW||!shadow)return;const link=$('.watchlater',shadow);if(!link)return;
+  const {minute,hour}=clockAngles();$('.wl-minute',link)?.style.setProperty('rotate',minute.toFixed(2)+'deg');$('.wl-hour',link)?.style.setProperty('rotate',hour.toFixed(2)+'deg');
+  if(!document.hidden&&!link.hidden)clockHandsTimer=setTimeout(syncClockHands,1000-new Date().getMilliseconds()+5);
+}
 function installWatchlaterSpin(){
-  const link=$('.watchlater',shadow);if(!link||link.dataset.spin)return;link.dataset.spin='ready';
-  link.addEventListener('click',()=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const minute=$('.wl-minute',link),hour=$('.wl-hour',link);
+  const link=$('.watchlater',shadow);if(!link||link.dataset.spin)return;link.dataset.spin='ready';syncClockHands();
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncClockHands();});
+  link.addEventListener('click',()=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const minute=$('.wl-minute',link),hour=$('.wl-hour',link),at=clockAngles();
     for(const hand of [minute,hour])hand?.getAnimations().forEach(a=>{if(!(a instanceof CSSAnimation))a.cancel();});
-    minute?.animate([{rotate:'0deg'},{rotate:'1452deg',offset:.8},{rotate:'1432deg',offset:.92},{rotate:'1440deg'}],{duration:1150,easing:'cubic-bezier(.16,.84,.3,1)'});
-    hour?.animate([{rotate:'0deg'},{rotate:'360deg'}],{duration:1050,easing:'cubic-bezier(.2,.8,.25,1)'});});
+    const m=at.minute,h=at.hour;
+    minute?.animate([{rotate:m+'deg'},{rotate:(m+1452)+'deg',offset:.8},{rotate:(m+1432)+'deg',offset:.92},{rotate:(m+1440)+'deg'}],{duration:1150,easing:'cubic-bezier(.16,.84,.3,1)'});
+    hour?.animate([{rotate:h+'deg'},{rotate:(h+360)+'deg'}],{duration:1050,easing:'cubic-bezier(.2,.8,.25,1)'});});
 }
 function installMessagesMenu(){
   const link=$('.messages',shadow),menu=$('#messages-menu',shadow);if(!link||!menu)return;shadow.append(menu);link.setAttribute('aria-haspopup','true');link.setAttribute('aria-controls','messages-menu');link.setAttribute('aria-expanded','false');
