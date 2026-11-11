@@ -43,6 +43,8 @@
   - 从最大化窗口进入视频全屏时，先去掉 `WS_MAXIMIZE`，否则任务栏会露出来；退出后再恢复最大化。
   - 「全屏动画」只是**实验性**选项：默认关闭，开启时有警告弹窗。
 - **其他平台**：Linux（`src/linux_main.py`）和 macOS（`src/macos_main.mm`）尽量跟随 Windows 的功能，版本号同步。
+- **安卓**（`android/`，`scripts/build_android.ps1` 生成 `dist/Bili-Space-<版本>-android.apk`）：WebView 打开电脑版 B 站（桌面 UA、宽视口），注入和 Linux 同一份 `renderer.js`，`window.chrome.webview` 由 JS 接口模拟。客户端自带文件从 APK 里以 `https://bili-space.local/` 提供。软件内更新读 GitHub 最新 Release 里的 `.apk`，下载后交给系统安装器。版本号跟随 `assets/app-info.json`。暂用 debug 签名，换签名会导致无法覆盖安装。
+- **鸿蒙**：鸿蒙 NEXT 需要 DevEco Studio 和 ArkTS 工程，尚未开始；老鸿蒙（2–4）可以直接装安卓 APK。
 - **测试**：
   - `npm test` 是 node 单元测试。
   - `Bili-Space.exe --test` 会打开 CDP 端口 9223。它从 `bili-space.local/fixture.html` 启动，需要真实页面的检查要先导航到 bilibili.com。

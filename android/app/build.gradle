@@ -1,0 +1,13 @@
+plugins{id 'com.android.application'}
+// Version follows assets/app-info.json, so the Android build ships with the same number as Windows.
+def info=new groovy.json.JsonSlurper().parse(file('../../assets/app-info.json'))
+def parts=info.version.tokenize('.')*.toInteger()
+android{
+    namespace 'top.gvqi.bilispace'
+    compileSdk 34
+    defaultConfig{applicationId 'top.gvqi.bilispace';minSdk 26;targetSdk 34;versionName info.version;versionCode parts[0]*10000+parts[1]*100+parts[2]}
+    // Release builds are signed with the debug key unless a keystore is configured; good enough for sideloading.
+    buildTypes{release{minifyEnabled false;signingConfig signingConfigs.debug}}
+    compileOptions{sourceCompatibility JavaVersion.VERSION_17;targetCompatibility JavaVersion.VERSION_17}
+}
+dependencies{implementation 'androidx.webkit:webkit:1.11.0';implementation 'androidx.core:core:1.13.1'}
