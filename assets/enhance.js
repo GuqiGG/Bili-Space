@@ -910,23 +910,28 @@ function installSearchGrip(){
   const form=$('.search',shadow);if(!form||$('.search-grip',form))return;
   const grip=document.createElement('span');grip.className='search-grip';grip.setAttribute('role','separator');grip.setAttribute('aria-orientation','vertical');grip.setAttribute('aria-label','拖动调整搜索栏宽度');grip.title='拖动调整搜索栏宽度 · 双击恢复';form.prepend(grip);
   const still=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // A damped spring on the vertical stretch: the drag's speed pulls the target down, the spring chases it and overshoots.
-  let y=1,vy=0,target=1,frame=0,last=0;
-  const step=now=>{const dt=Math.min(.034,(now-last)/1000||.016);last=now;vy+=(-260*(y-target)-9*vy)*dt;y+=vy*dt;
-    const sy=Math.max(.72,Math.min(1.18,y)),sx=1+(1-sy)*.5;form.style.transform=`scale(${sx.toFixed(4)},${sy.toFixed(4)})`;
-    if(!dragging&&Math.abs(y-1)<.002&&Math.abs(vy)<.01){form.style.transform='';frame=0;y=1;vy=0;return;}frame=requestAnimationFrame(step);};
-  const spring=()=>{if(still())return;if(!frame){last=performance.now();frame=requestAnimationFrame(step);}};
-  const width=()=>form.getBoundingClientRect().width/(headerZoom?.()||1);
-  const apply=w=>{if(!w){form.style.removeProperty('--search-width');form.removeAttribute('data-sized');return;}form.style.setProperty('--search-width',Math.round(w)+'px');form.dataset.sized='true';};
+  // offsetWidth is the box's own width, free of the header's CSS zoom and of the squash; pointer travel is converted
+  // with the zoom measured when the drag starts.
+  let ratio=1;const measure=()=>form.offsetWidth;
+  const apply=w=>{if(!w){form.style.removeProperty('--search-width');form.removeAttribute('data-sized');return;}form.style.setProperty('--search-width',w.toFixed(1)+'px');form.dataset.sized='true';};
   apply(Number(PREFS.searchWidth)||0);
-  let dragging=false,startX=0,startW=0,lastX=0,lastT=0,settle=0;
-  grip.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();grip.setPointerCapture(e.pointerId);dragging=true;form.dataset.dragging='true';startX=lastX=e.clientX;lastT=performance.now();startW=width();spring();});
-  grip.addEventListener('pointermove',e=>{if(!dragging)return;const now=performance.now(),speed=Math.abs(e.clientX-lastX)/Math.max(8,now-lastT);lastX=e.clientX;lastT=now;
-    apply(Math.max(140,Math.min(640,startW+(startX-e.clientX)/(headerZoom?.()||1))));
-    target=1-Math.min(.22,speed*.12);clearTimeout(settle);settle=setTimeout(()=>{target=1;},70);spring();reportChromeLayout();});
-  const end=()=>{if(!dragging)return;dragging=false;delete form.dataset.dragging;target=1;vy+=1.6;spring();update({searchWidth:Math.round(width())});reportChromeLayout();};
+  // The width chases the pointer at a limited speed (lagging behind is fine); the squash follows how fast the width
+  // actually moves, through a damped spring on the height, so it settles with a wobble when the box catches up.
+  const MAX_SPEED=900;let width=0,goal=0,widthSpeed=0,y=1,vy=0,frame=0,last=0,dragging=false;
+  const step=now=>{const dt=Math.min(.034,(now-last)/1000||.016);last=now;
+    if(goal&&width){const want=Math.max(-MAX_SPEED,Math.min(MAX_SPEED,(goal-width)*14));widthSpeed+=(want-widthSpeed)*Math.min(1,dt*18);const move=widthSpeed*dt;
+      if(Math.abs(goal-width)<.3&&Math.abs(widthSpeed)<6){width=goal;widthSpeed=0;}else width+=Math.abs(move)>Math.abs(goal-width)?goal-width:move;apply(width);}
+    const target=1-Math.min(.2,Math.abs(widthSpeed)/MAX_SPEED*.2);vy+=(-230*(y-target)-8.5*vy)*dt;y+=vy*dt;
+    const sy=Math.max(.76,Math.min(1.14,y)),sx=1+(1-sy)*.45;form.style.transform=`scale(${sx.toFixed(4)},${sy.toFixed(4)})`;
+    const resting=!dragging&&width===goal&&Math.abs(y-1)<.002&&Math.abs(vy)<.01;
+    if(resting){form.style.transform='';frame=0;y=1;vy=0;reportChromeLayout();return;}frame=requestAnimationFrame(step);};
+  const run=()=>{if(!frame){last=performance.now();frame=requestAnimationFrame(step);}};
+  let startX=0,startW=0;
+  grip.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();grip.setPointerCapture(e.pointerId);dragging=true;form.dataset.dragging='true';startX=e.clientX;form.style.transform='';startW=width=goal=measure();ratio=(form.getBoundingClientRect().width/Math.max(1,startW))||1;widthSpeed=0;if(!still())run();});
+  grip.addEventListener('pointermove',e=>{if(!dragging)return;goal=Math.max(140,Math.min(640,startW+(startX-e.clientX)/ratio));if(still()){width=goal;apply(width);}else run();});
+  const end=()=>{if(!dragging)return;dragging=false;delete form.dataset.dragging;update({searchWidth:Math.round(goal)});if(still()){apply(goal);reportChromeLayout();}else{vy+=1.2;run();}};
   grip.addEventListener('pointerup',end);grip.addEventListener('pointercancel',end);
-  grip.addEventListener('dblclick',()=>{apply(0);update({searchWidth:0});target=1;vy-=2.2;spring();reportChromeLayout();});
+  grip.addEventListener('dblclick',()=>{goal=width=0;apply(0);update({searchWidth:0});if(!still()){vy-=2;run();}reportChromeLayout();});
 }
 function installMessagesMenu(){
   const link=$('.messages',shadow),menu=$('#messages-menu',shadow);if(!link||!menu)return;shadow.append(menu);link.setAttribute('aria-haspopup','true');link.setAttribute('aria-controls','messages-menu');link.setAttribute('aria-expanded','false');
