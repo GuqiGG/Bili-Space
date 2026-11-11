@@ -664,12 +664,17 @@ void sendFeedback(const json& m){
     if(m.value("diag",false)){wchar_t locale[LOCALE_NAME_MAX_LENGTH]{};GetUserDefaultLocaleName(locale,LOCALE_NAME_MAX_LENGTH);
         body["os"]=windowsDescription();body["locale"]=utf8(locale);auto page=m.value("page",std::string{});body["page"]=page.substr(0,32);}
     std::thread([body]{
-        try{auto r=nativeHttp({{"url","https://bili.gvqi.top/feedback"},{"method","POST"},{"body",body.dump()},{"headers",{{"Content-Type","application/json"}}},{"timeout",20000}});
-            const int status=r.value("status",0);
-            if(status>=200&&status<300)feedbackReply(true,"");
-            else if(status==429)feedbackReply(false,"提交得太快了，请半分钟后再试。内容已保留。");
-            else feedbackReply(false,"发送失败（"+std::to_string(status)+"），请稍后再试。内容已保留。");
-        }catch(...){feedbackReply(false,"网络连接失败，请检查网络后重试。内容已保留。");}
+        // The site first; when it cannot be reached at all (common on some networks), the second address.
+        const std::pair<const char*,int> routes[]{{"https://bili.gvqi.top/feedback",8000},{"https://ntfy.gvqi.top/feedback",12000}};
+        for(const auto& [url,timeout]:routes){
+            try{auto r=nativeHttp({{"url",url},{"method","POST"},{"body",body.dump()},{"headers",{{"Content-Type","application/json"}}},{"timeout",timeout}});
+                const int status=r.value("status",0);
+                if(status>=200&&status<300){feedbackReply(true,"");return;}
+                if(status==429){feedbackReply(false,"提交得太快了，请半分钟后再试。内容已保留。");return;}
+                if(status>0){feedbackReply(false,"发送失败（"+std::to_string(status)+"），请稍后再试。内容已保留。");return;}
+            }catch(...){}
+        }
+        feedbackReply(false,"offline");
     }).detach();
 }
 void receive(ICoreWebView2WebMessageReceivedEventArgs* args){

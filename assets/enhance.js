@@ -1631,6 +1631,11 @@ function openFeedback(){
   const save=()=>{try{localStorage.setItem('bs-feedback-draft',JSON.stringify({kind:kind(),text:text.value,email:email.value}));}catch{}};
   const counted=()=>{count.textContent=`${text.value.length} / 4000`;};counted();
   const say=(message,tone='')=>{status.dataset.tone=tone;status.textContent=message;};
+  // Both addresses unreachable: the note can still leave by hand.
+  const offerCopy=()=>{if($('.fb-copy',form))return;const b=document.createElement('button');b.type='button';b.className='fb-ghost fb-copy';b.textContent='复制反馈内容';
+    b.onclick=()=>{const kindLabel=FEEDBACK_KINDS.find(([v])=>v===kind())?.[1]||'';const textOut=['【Bili-Space 反馈 · '+kindLabel+' · v'+APP_META.version+'】',text.value.trim(),email.value.trim()?'邮箱：'+email.value.trim():''].filter(Boolean).join('\n');
+      navigator.clipboard.writeText(textOut).then(()=>toast('已复制，可以粘贴发给开发者'),()=>toast('复制失败，请手动选中文字复制'));};
+    $('footer',form).prepend(b);};
   const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(!still){layer.animate([{opacity:0},{opacity:1}],{duration:220,easing:'ease-out'});form.animate([{opacity:0,transform:'translateY(12px) scale(.98)'},{opacity:1,transform:'none'}],{duration:360,easing:'cubic-bezier(.32,.72,0,1)'});}
   const close=()=>{if(!layer.isConnected||layer.dataset.closing)return;layer.dataset.closing='1';const done=()=>{layer.remove();reportChromeLayout();previous?.focus?.();};
@@ -1645,6 +1650,7 @@ function openFeedback(){
     feedbackBusy=true;send.disabled=true;send.textContent='正在发送…';say('');
     feedbackDone=result=>{feedbackBusy=false;send.disabled=false;send.textContent='提交反馈';
       if(result?.ok){try{localStorage.removeItem('bs-feedback-draft');}catch{}close();toast(mail?'已收到，开发者会通过邮箱回复你':'已收到，谢谢你的反馈');}
+      else if(result?.message==='offline'){say('连不上反馈服务器。可以复制内容，换个方式发给开发者。','error');offerCopy();}
       else say(result?.message||'发送失败，请稍后再试。内容已保留。','error');};
     native('feedback',{kind:kind(),text:note,email:mail,diag:diag.checked,page:diag.checked?pageKind(chromeLocation||location):''});});
   requestAnimationFrame(()=>text.focus());
