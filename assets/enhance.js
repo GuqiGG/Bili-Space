@@ -1434,7 +1434,7 @@ html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(#b
    window), the 16:9 player with its danmaku bar outgrows that height and the bar slides over the like/coin row. The
    wrappers take their height from their width instead and still grow to fit. They keep that height while the player
    floats (mini, web fullscreen) so the page does not jump; only the wide mode keeps Bilibili's own size. */
-html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(#playerWrap,#bilibili-player,.bpx-docker):not(:has(.bpx-player-container[data-screen=wide])){height:auto!important;aspect-ratio:16/9}
+html[data-bs-page=video]:not([data-bs-pip=true]):not([data-bs-full=true]) :is(#playerWrap,#bilibili-player,.bpx-docker:not(.bpx-docker-minor)):not(:has(.bpx-player-container[data-screen=wide])){height:auto!important;aspect-ratio:16/9}
 html[data-bs-page=video] .video-toolbar-container{flex-wrap:wrap!important;gap:12px!important}
 /* Keep each recommendation metric intact; wrap whole metrics, never the unit suffix. */
 html[data-bs-page=video] .video-page-card-small .playinfo{display:flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;column-gap:8px!important;row-gap:4px!important;height:auto!important;min-width:0!important;line-height:18px!important}
@@ -2708,6 +2708,8 @@ function reportChromeLayout(){
     const key=JSON.stringify([rects,modal]);if(key===chromeLayoutKey)return;chromeLayoutKey=key;native('chrome-layout',{rects,modal});
   });
 }
+// Ctrl+wheel (over the header or the page) zooms one step per notch; the client animates the step instead of the browser jumping.
+function installZoomWheel(){let at=0;addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const now=performance.now();if(now-at<90||!e.deltaY)return;at=now;native('zoom-step',{dir:e.deltaY<0?1:-1});},{passive:false});}
 function installChromeView(){
   if(!CHROME_VIEW||!shadow)return;
   // Links in the header open on the visible page, never inside the header view.
@@ -2720,8 +2722,7 @@ function installChromeView(){
   new MutationObserver(changed).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['open','hidden','class','style']});
   for(const type of ['transitionend','animationend','animationcancel'])shadow.addEventListener(type,reportChromeLayout,true);
   addEventListener('resize',changed);
-  // Ctrl+wheel over the header zooms the page and the header together, one step per notch.
-  let zoomWheelAt=0;addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const now=performance.now();if(now-zoomWheelAt<90||!e.deltaY)return;zoomWheelAt=now;native('zoom-step',{dir:e.deltaY<0?1:-1});},{passive:false});
+  installZoomWheel();
   surfaceRevealed();acceptRouteOrigin('');native('navigation-state',{action:'read'});reportChromeLayout();
 }
 let resumeMedia=[];
@@ -2822,7 +2823,7 @@ function boot(){
   {let lone=false;document.addEventListener('keydown',e=>{lone=e.code==='ShiftRight'&&!e.repeat;},true);
    document.addEventListener('keyup',e=>{if(e.code!=='ShiftRight'||!lone||!PREFS.clickGui)return;lone=false;const t=e.composedPath()[0];if(t?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
      if(CHROME_VIEW)openClickGui();else native('open-settings',{tab:''});},true);}
-  native('updates',{action:'status'});scheduleOnboarding();scheduleWhatsNew();if(CONTENT_VIEW)native('page-zoom');
+  native('updates',{action:'status'});scheduleOnboarding();scheduleWhatsNew();if(CONTENT_VIEW){native('page-zoom');installZoomWheel();}
   loadOfficialSearchHistory();
   if(document.readyState==='complete')window.__bsPaintReady?.();
   diagnostic('Bili-Space ready');
