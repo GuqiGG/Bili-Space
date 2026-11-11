@@ -948,6 +948,15 @@ function installSearchGrip(){
   grip.addEventListener('pointerup',end);grip.addEventListener('pointercancel',end);
   grip.addEventListener('dblclick',()=>{goal=width=0;apply(0);update({searchWidth:0});if(!still()){vy-=2;run();}reportChromeLayout();});
 }
+// Pressing 稍后再看 spins the clock: a few quick turns that slow down, overshoot a touch and swing back upright,
+// while its minute hand races round twice as fast.
+function installWatchlaterSpin(){
+  const link=$('.watchlater',shadow);if(!link||link.dataset.spin)return;link.dataset.spin='ready';
+  link.addEventListener('click',()=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const icon=$('svg',link),hand=$('.wl-minute',link);if(!icon)return;
+    icon.getAnimations().forEach(a=>a.cancel());hand?.getAnimations().forEach(a=>{if(!(a instanceof CSSAnimation))a.cancel();});
+    icon.animate([{rotate:'0deg'},{rotate:'1090deg',offset:.78},{rotate:'1072deg',offset:.9},{rotate:'1080deg'}],{duration:1100,easing:'cubic-bezier(.16,.84,.3,1)'});
+    hand?.animate([{rotate:'0deg'},{rotate:'2160deg'}],{duration:1000,easing:'cubic-bezier(.2,.8,.25,1)'});});
+}
 function installMessagesMenu(){
   const link=$('.messages',shadow),menu=$('#messages-menu',shadow);if(!link||!menu)return;shadow.append(menu);link.setAttribute('aria-haspopup','true');link.setAttribute('aria-controls','messages-menu');link.setAttribute('aria-expanded','false');
   const enter=e=>{if(e.pointerType&&e.pointerType!=='mouse')return;clearTimeout(messageMenuHideTimer);clearTimeout(messageMenuShowTimer);messageMenuShowTimer=setTimeout(showMessageMenu,90);};
@@ -2085,7 +2094,7 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
     if(key==='proxyAll')toast('重启后生效');
   });
   accountsController=window.installBiliAccounts?.({shadow,native,refreshAccount,hideAccountCard,toast});
-  installSearchPanel();favoritesController=window.installBiliFavorites?.({shadow,native,closeSearch:closeSearchPanel});installMessagesMenu();installSearchQuips();installSearchGrip();installAvatarSpin();installFeedRoll();installRouteRefresh();installVideoLinkDrag();installChromeView();
+  installSearchPanel();favoritesController=window.installBiliFavorites?.({shadow,native,closeSearch:closeSearchPanel});installMessagesMenu();installSearchQuips();installSearchGrip();installWatchlaterSpin();installAvatarSpin();installFeedRoll();installRouteRefresh();installVideoLinkDrag();installChromeView();
   $('.search',shadow).addEventListener('submit',e=>{e.preventDefault();submitSearch();});
   $('#chrome',shadow).addEventListener('mousedown',e=>{if(e.button===0&&!e.target.closest('button,a,input,form'))native('window',{action:'drag',screenX:e.screenX,screenY:e.screenY});});
   $('#chrome',shadow).addEventListener('dblclick',e=>{if(!e.target.closest('button,a,input'))native('window',{action:'maximize'});});
