@@ -932,7 +932,7 @@ function installSearchGrip(){
     if(resting){form.style.transform='';if(input)input.style.borderRadius='';frame=0;y=1;vy=0;lean=0;reportChromeLayout();return;}frame=requestAnimationFrame(step);};
   const run=()=>{if(!frame){last=performance.now();frame=requestAnimationFrame(step);}};
   // The widest the box may get: its left edge stays 24px clear of the rightmost thing on the header's left side.
-  const roomLeft=()=>{const left=form.getBoundingClientRect().left;let edge=0;for(const el of $$('.header-left *',shadow)){if(el.closest('.search'))continue;const r=el.getBoundingClientRect();if(r.width&&r.height&&getComputedStyle(el).visibility!=='hidden'&&r.right<left+4)edge=Math.max(edge,r.right);}
+  const roomLeft=()=>{const left=form.getBoundingClientRect().left;let edge=0;const stripOpen=$('.back',shadow)?.getAttribute('aria-expanded')==='true';for(const el of $$('.header-left :is(a,button,.brand-label)',shadow)){if(el.closest('.search')||(!stripOpen&&el.closest('.category-links')))continue;const r=el.getBoundingClientRect();if(r.width&&r.height&&getComputedStyle(el).visibility!=='hidden'&&r.right<left+4)edge=Math.max(edge,r.right);}
     return Math.max(140,Math.min(640,measure()+(left-edge-24)/ratio));};
   let startX=0,startW=0;
   grip.addEventListener('pointerdown',e=>{if(e.button)return;e.preventDefault();grip.setPointerCapture(e.pointerId);dragging=true;form.dataset.dragging='true';startX=e.clientX;form.style.transform='';startW=width=goal=measure();ratio=(form.getBoundingClientRect().width/Math.max(1,startW))||1;widthSpeed=0;maxWidth=roomLeft();if(!still())run();});
