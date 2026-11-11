@@ -948,14 +948,14 @@ function installSearchGrip(){
   grip.addEventListener('pointerup',end);grip.addEventListener('pointercancel',end);
   grip.addEventListener('dblclick',()=>{goal=width=0;apply(0);update({searchWidth:0});if(!still()){vy-=2;run();}reportChromeLayout();});
 }
-// Pressing 稍后再看 spins the clock: a few quick turns that slow down, overshoot a touch and swing back upright,
-// while its minute hand races round twice as fast.
+// Pressing 稍后再看 spins the clock's hands (the face stays still): the minute hand races four quick turns and the hour
+// hand one, both slowing down and swinging back to where they were, the minute hand with a little overshoot.
 function installWatchlaterSpin(){
   const link=$('.watchlater',shadow);if(!link||link.dataset.spin)return;link.dataset.spin='ready';
-  link.addEventListener('click',()=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const icon=$('svg',link),hand=$('.wl-minute',link);if(!icon)return;
-    icon.getAnimations().forEach(a=>a.cancel());hand?.getAnimations().forEach(a=>{if(!(a instanceof CSSAnimation))a.cancel();});
-    icon.animate([{rotate:'0deg'},{rotate:'1090deg',offset:.78},{rotate:'1072deg',offset:.9},{rotate:'1080deg'}],{duration:1100,easing:'cubic-bezier(.16,.84,.3,1)'});
-    hand?.animate([{rotate:'0deg'},{rotate:'2160deg'}],{duration:1000,easing:'cubic-bezier(.2,.8,.25,1)'});});
+  link.addEventListener('click',()=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const minute=$('.wl-minute',link),hour=$('.wl-hour',link);
+    for(const hand of [minute,hour])hand?.getAnimations().forEach(a=>{if(!(a instanceof CSSAnimation))a.cancel();});
+    minute?.animate([{rotate:'0deg'},{rotate:'1452deg',offset:.8},{rotate:'1432deg',offset:.92},{rotate:'1440deg'}],{duration:1150,easing:'cubic-bezier(.16,.84,.3,1)'});
+    hour?.animate([{rotate:'0deg'},{rotate:'360deg'}],{duration:1050,easing:'cubic-bezier(.2,.8,.25,1)'});});
 }
 function installMessagesMenu(){
   const link=$('.messages',shadow),menu=$('#messages-menu',shadow);if(!link||!menu)return;shadow.append(menu);link.setAttribute('aria-haspopup','true');link.setAttribute('aria-controls','messages-menu');link.setAttribute('aria-expanded','false');
