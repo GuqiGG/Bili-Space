@@ -29,7 +29,16 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
 
 @implementation BiliApp
 - (NSDictionary *)readJSON:(NSURL *)url {NSData *d=[NSData dataWithContentsOfURL:url];id j=d?[NSJSONSerialization JSONObjectWithData:d options:NSJSONReadingMutableContainers error:nil]:nil;return [j isKindOfClass:NSDictionary.class]?j:@{};}
-- (void)save {if(self.selfTest)return;[JSONString(self.state) writeToURL:[self.dataDirectory URLByAppendingPathComponent:@"state.json"] atomically:YES encoding:NSUTF8StringEncoding error:nil];}
+// New pages read their settings from the injected script, so it follows every saved change
+// (otherwise each page started from the launch-time snapshot: onboarding came back, the theme reverted).
+- (WKUserScript *)userScript {
+ NSMutableDictionary *media=NSMutableDictionary.dictionary;if(self.selfTest)for(NSString *name in @[@"avc-aac.mp4",@"avc-mse.mp4"]){NSData *bytes=[NSData dataWithContentsOfURL:[self.resources URLByAppendingPathComponent:[@"assets/media-probe/" stringByAppendingString:name]]];if(bytes)media[name]=[bytes base64EncodedStringWithOptions:0];}
+ NSDictionary *payload=@{@"appInfo":[self readJSON:[self.resources URLByAppendingPathComponent:@"assets/app-info.json"]],@"config":self.state[@"config"],@"gm":self.state[@"gm"],@"runtime":@{@"platform":@"macos",@"testing":@(self.selfTest),@"running":@NO,@"mediaFixtures":media}};
+ NSString *bridge=[NSString stringWithFormat:@"(()=>{if(window.top!==window)return;window.__BILI_NATIVE__=%@;window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(m)};})();\n",JSONString(payload)];
+ return [[WKUserScript alloc]initWithSource:[bridge stringByAppendingString:self.renderer] injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES];
+}
+- (void)refreshScript {WKUserContentController *c=self.web.configuration.userContentController;if(!c||!self.renderer)return;[c removeAllUserScripts];[c addUserScript:[self userScript]];}
+- (void)save {[self refreshScript];if(self.selfTest)return;[JSONString(self.state) writeToURL:[self.dataDirectory URLByAppendingPathComponent:@"state.json"] atomically:YES encoding:NSUTF8StringEncoding error:nil];}
 - (void)runJS:(NSString *)s {[self.web evaluateJavaScript:s completionHandler:nil];}
 - (void)send:(NSString *)method value:(id)value {[self runJS:[NSString stringWithFormat:@"window.BiliSpace?.%@(%@)",method,JSONString(value)]];}
 - (NSMutableDictionary *)currentProfile {for(NSMutableDictionary *p in self.state[@"profiles"])if([p[@"id"] isEqual:self.state[@"activeID"]])return p;return nil;}
@@ -45,10 +54,7 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
  configuration.websiteDataStore=self.selfTest?WKWebsiteDataStore.nonPersistentDataStore:[WKWebsiteDataStore dataStoreForIdentifier:[[NSUUID alloc]initWithUUIDString:identifier]];
  [configuration setURLSchemeHandler:self forURLScheme:@"bili-space"];
  [configuration.userContentController addScriptMessageHandler:self name:@"native"];
- NSMutableDictionary *media=NSMutableDictionary.dictionary;if(self.selfTest)for(NSString *name in @[@"avc-aac.mp4",@"avc-mse.mp4"]){NSData *bytes=[NSData dataWithContentsOfURL:[self.resources URLByAppendingPathComponent:[@"assets/media-probe/" stringByAppendingString:name]]];if(bytes)media[name]=[bytes base64EncodedStringWithOptions:0];}
- NSDictionary *payload=@{@"appInfo":[self readJSON:[self.resources URLByAppendingPathComponent:@"assets/app-info.json"]],@"config":self.state[@"config"],@"gm":self.state[@"gm"],@"runtime":@{@"platform":@"macos",@"testing":@(self.selfTest),@"running":@NO,@"mediaFixtures":media}};
- NSString *bridge=[NSString stringWithFormat:@"(()=>{if(window.top!==window)return;window.__BILI_NATIVE__=%@;window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(m)};})();\n",JSONString(payload)];
- [configuration.userContentController addUserScript:[[WKUserScript alloc]initWithSource:[bridge stringByAppendingString:self.renderer] injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES]];
+ [configuration.userContentController addUserScript:[self userScript]];
  [self.web.configuration.userContentController removeScriptMessageHandlerForName:@"native"];
  [self.web removeFromSuperview];self.web=[[WKWebView alloc]initWithFrame:self.window.contentView.bounds configuration:configuration];self.web.autoresizingMask=NSViewWidthSizable|NSViewHeightSizable;self.web.navigationDelegate=self;self.web.UIDelegate=self;self.web.underPageBackgroundColor=[NSColor colorWithWhite:.09 alpha:1];self.web.allowsBackForwardNavigationGestures=YES;
  self.web.customUserAgent=@"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 BiliSpace/0.1.66";[self.window.contentView addSubview:self.web];if(self.selfTest){NSString *fixture=[NSString stringWithContentsOfURL:[self.resources URLByAppendingPathComponent:@"assets/fixture.html"] encoding:NSUTF8StringEncoding error:nil];NSData *css=[NSData dataWithContentsOfURL:[self.resources URLByAppendingPathComponent:@"assets/cache-probe.css"]],*js=[NSData dataWithContentsOfURL:[self.resources URLByAppendingPathComponent:@"assets/cache-probe.js"]];NSString *tags=[NSString stringWithFormat:@"<link rel=\"stylesheet\" href=\"data:text/css;base64,%@\"><script src=\"data:application/javascript;base64,%@\"></script></head>",[css base64EncodedStringWithOptions:0],[js base64EncodedStringWithOptions:0]];fixture=[fixture stringByReplacingOccurrencesOfString:@"</head>" withString:tags];[self.web loadHTMLString:fixture baseURL:[NSURL URLWithString:@"https://www.bilibili.com/"]];}else [self.web loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://www.bilibili.com/"]]];
