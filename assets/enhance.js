@@ -345,6 +345,7 @@ function syncRoute(){
   mountHomeBanner();
   compactHomeFeed();
   if(!shadow)return;
+  if(CHROME_VIEW&&swipeOn!==(kind==='swipe'))setSwipeActive(kind==='swipe');
   syncVideoLink();syncVideoHome(kind==='video',routeArrived);if(kind!==reportedRoute){reportedRoute=kind;native('navigation-state',{action:'route',route:kind});}
   const formerRoute=$('nav a[aria-current=page]',shadow);
   $$('nav a[data-route]',shadow).forEach(a=>{
@@ -2096,14 +2097,17 @@ async function swipeTriple(){
   const j=await swipeApi('https://api.bilibili.com/x/web-interface/archive/like/triple',{aid:item.aid});if(!swipe)return;
   if(j?.code!==0){toast(j?.message||'三连失败');return;}
   const d=j.data||{},ui=swipe.ui;
-  for(const [k,ok] of [['like',d.like],['coin',d.coin],['fav',d.fav]]){if(!ok)continue;const b=$(`[data-swipe=${k}]`,ui);b.classList.add('on');swipePop(b);swipeSvga(b,k);}
+  for(const [k,ok] of [['like',d.like],['coin',d.coin],['fav',d.fav]]){if(!ok)continue;const b=$(`[data-swipe=${k}]`,ui);swipeMark(item,k,true);swipePop(b);swipeSvga(b,k);}
   if(d.like&&d.coin&&d.fav)swipeSvga($('[data-swipe=coin]',ui),'fireworks','top');
 }
 const SWIPE_FRAME_CSS=`html,body{overflow:hidden!important;background:#000!important}body *{visibility:hidden!important}
 #bilibili-player,#bilibili-player *{visibility:visible!important}
 #bilibili-player{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;z-index:2147483646!important}
 #bilibili-player .bpx-player-container,#bilibili-player .bpx-player-primary-area{width:100%!important;height:100%!important}
-.bpx-player-ending-panel,.bpx-player-ending-wrap,.bpx-player-toast-auto{display:none!important}`;
+.bpx-player-ending-panel,.bpx-player-ending-wrap,.bpx-player-toast-auto{display:none!important}
+.bpx-player-sending-area,.bpx-player-control-wrap,.bpx-player-shadow-progress-area,.bpx-player-top-wrap,.bpx-player-dialog-wrap{display:none!important}
+#bilibili-player .bpx-player-video-area{height:100%!important}
+.bpx-player-state-wrap{left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%) scale(1.25)!important;pointer-events:none!important}`;
 function swipeVideo(slot){try{return slot.frame.contentDocument?.querySelector('#bilibili-player video,video');}catch{return null;}}
 function swipeSlot(i){
   const item=swipe.list[i],el=document.createElement('div');el.className='bs-swipe-slot';
@@ -2121,6 +2125,7 @@ function swipeSlot(i){
     if(!slot.wired&&doc.body){slot.wired=true;swipeWireFrame(slot,frame.contentWindow,doc);}
     const v=swipeVideo(slot);if(!v)return;
     if(!v.dataset.bsSwipe){v.dataset.bsSwipe='1';v.addEventListener('ended',()=>{if(swipe&&swipe.slots.get(swipe.index)===slot)swipeGo(1);});v.addEventListener('play',()=>{if(swipe&&swipe.slots.get(swipe.index)!==slot)v.pause();});}
+    if(swipe.slots.get(swipe.index)===slot){swipeProgress();swipeSyncDanmakuToggle();}
     if(swipe.slots.get(swipe.index)!==slot){if(!v.paused)v.pause();}
     else if(!slot.started&&v.readyState>=2){slot.started=true;v.play().catch(()=>{});}
     if(!slot.ready&&v.readyState>=2&&slot.styled){slot.ready=true;el.classList.add('ready');}
@@ -2157,32 +2162,41 @@ async function swipeRenderInfo(){
   $('.bs-swipe-owner',ui).innerHTML=`<img alt="" referrerpolicy="no-referrer" src="${escapeHtml((o.face||'').replace(/^http:/,'https:'))}@80w_80h_1c.webp"><div><p><b>${escapeHtml(o.name||'')}</b><button type="button" data-swipe="follow" class="bs-swipe-follow">+ 关注</button></p><small class="bs-swipe-fans"></small></div>`;
   $('.bs-swipe-title',ui).innerHTML=`<span>${escapeHtml(item.title||'')}</span><button type="button" data-swipe="more" aria-label="展开简介">⌄</button>`;
   $('.bs-swipe-desc',ui).textContent='';ui.classList.remove('expanded');$('.bs-swipe-season',ui).hidden=true;
-  const counts={like:s.like,coin:s.coin,fav:s.favorite,share:s.share,reply:s.reply??s.danmaku};
-  for(const [k,v] of Object.entries(counts)){const b=$(`[data-swipe=${k}]`,ui);b.classList.remove('on');$('small',b).textContent=v!=null?swipeCount(v):'';}
+  item.counts||={like:s.like,coin:s.coin,fav:s.favorite,share:s.share,reply:s.reply??s.danmaku};
+  for(const k of Object.keys(item.counts)){const b=$(`[data-swipe=${k}]`,ui);b.classList.toggle('on',!!item.on?.[k]);swipeShowCount(item,k);}
+  $('.bs-swipe-follow',ui).hidden=!!item.following;
   const [view,rel]=await Promise.all([swipeApi('https://api.bilibili.com/x/web-interface/view?bvid='+token),swipeApi('https://api.bilibili.com/x/web-interface/archive/relation?bvid='+token)]);
   if(!swipe||ui.dataset.bvid!==token)return;
   const d=view?.data;if(d){item.aid=d.aid;item.mid=d.owner?.mid;const st=d.stat||{};item.likes=st.like;
-    for(const [k,v] of Object.entries({like:st.like,coin:st.coin,fav:st.favorite,share:st.share,reply:st.reply}))$(`[data-swipe=${k}] small`,ui).textContent=swipeCount(v);
+    if(!item.touched)item.counts={like:st.like,coin:st.coin,fav:st.favorite,share:st.share,reply:st.reply};for(const k of Object.keys(item.counts))swipeShowCount(item,k);
     $('.bs-swipe-desc',ui).textContent=d.desc||'';
     if(d.ugc_season){const sea=$('.bs-swipe-season',ui);sea.hidden=false;sea.textContent=`合集 · ${d.ugc_season.title} · ${d.ugc_season.ep_count||''} 个视频 ›`;}
     const card=await swipeApi('https://api.bilibili.com/x/web-interface/card?mid='+d.owner.mid);
-    if(swipe&&ui.dataset.bvid===token&&card?.data){$('.bs-swipe-fans',ui).textContent=`${swipeCount(card.data.follower)}粉丝 · ${swipeCount(card.data.like_num)}点赞`;if(card.data.following)$('.bs-swipe-follow',ui).hidden=true;}}
-  const r=rel?.data;if(r){$('[data-swipe=like]',ui).classList.toggle('on',!!r.like);$('[data-swipe=coin]',ui).classList.toggle('on',!!r.coin);$('[data-swipe=fav]',ui).classList.toggle('on',!!r.favorite);if(r.attention)$('.bs-swipe-follow',ui).hidden=true;}
+    if(swipe&&ui.dataset.bvid===token&&card?.data){$('.bs-swipe-fans',ui).textContent=`${swipeCount(card.data.follower)}粉丝 · ${swipeCount(card.data.like_num)}点赞`;if(card.data.following&&!item.touched){item.following=true;$('.bs-swipe-follow',ui).hidden=true;}}}
+  const r=rel?.data;if(r&&!item.touched){item.on={like:!!r.like,coin:!!r.coin,fav:!!r.favorite};for(const k of ['like','coin','fav'])$(`[data-swipe=${k}]`,ui).classList.toggle('on',item.on[k]);if(r.attention){item.following=true;$('.bs-swipe-follow',ui).hidden=true;}}
 }
+function swipeShowCount(item,k){const b=swipe&&$(`[data-swipe=${k}] small`,swipe.ui);if(b&&swipe.list[swipe.index]===item){const v=item.counts?.[k];b.textContent=v!=null?swipeCount(v):'';}}
+function swipeMark(item,k,on){item.touched=true;item.on||={};if(!!item.on[k]===on)return;item.on[k]=on;if(item.counts?.[k]!=null)item.counts[k]+=on?1:-1;
+  if(swipe?.list[swipe.index]===item){const b=$(`[data-swipe=${k}]`,swipe.ui);b.classList.toggle('on',on);swipeShowCount(item,k);}}
 async function swipeAction(kind,button){
   const item=swipe?.list[swipe.index];if(!item)return;
   if(kind==='detail'||kind==='reply'||kind==='season'){const v=swipeVideo(swipe.slots.get(swipe.index));if(v)v.pause();location.href=`https://www.bilibili.com/video/${item.bvid}/`+(kind==='reply'?'#comment':'');return;}
-  if(kind==='share'){native('copy-video-link',{url:`https://www.bilibili.com/video/${item.bvid}`});toast('已复制视频链接');return;}
+  if(kind==='share'){native('copy-video-link',{url:`https://www.bilibili.com/video/${item.bvid}`});swipePop(button);toast('已复制视频链接');return;}
   if(kind==='more'){swipe.ui.classList.toggle('expanded');return;}
+  if(kind==='dm-toggle'){swipeDanmakuToggle(button);return;}
   if(!swipeCookie('DedeUserID')){toast('请先登录 B站');return;}
-  const aid=item.aid;let j;
-  if(kind==='like'){const on=!button.classList.contains('on');j=await swipeApi('https://api.bilibili.com/x/web-interface/archive/like',{aid,like:on?1:2});if(j?.code===0){button.classList.toggle('on',on);swipePop(button);if(on){const n=item.likes??0;swipeSvga(button,n>=1e3?'thumb':n>=100?'heart':'like',n>=100?'top':'center');}}}
-  else if(kind==='coin'){if(button.classList.contains('on')){toast('这个视频已经投过币了');return;}j=await swipeApi('https://api.bilibili.com/x/web-interface/coin/add',{aid,multiply:1,select_like:0});if(j?.code===0){button.classList.add('on');swipePop(button);swipeSvga(button,'coin');toast('投币成功');}}
-  else if(kind==='fav'){const list=await swipeApi(`https://api.bilibili.com/x/v3/fav/folder/created/list-all?type=2&rid=${aid}&up_mid=${swipeCookie('DedeUserID')}`);const folders=list?.data?.list||[];if(!folders.length){toast('没有找到收藏夹');return;}
-    const on=!button.classList.contains('on'),ids=on?[folders[0].id]:folders.filter(f=>f.fav_state).map(f=>f.id);
-    j=await swipeApi('https://api.bilibili.com/x/v3/fav/resource/deal',{rid:aid,type:2,[on?'add_media_ids':'del_media_ids']:ids.join(',')});if(j?.code===0){button.classList.toggle('on',on);swipePop(button);if(on)swipeSvga(button,'fav');toast(on?'已收藏到默认收藏夹':'已取消收藏');}}
-  else if(kind==='follow'){if(!item.mid)return;j=await swipeApi('https://api.bilibili.com/x/relation/modify',{fid:item.mid,act:1,re_src:11});if(j?.code===0){button.hidden=true;toast('已关注');}}
-  if(j&&j.code!==0)toast(j.message||'操作失败，请稍后再试');
+  const aid=item.aid,fail=j=>{toast(j?.message||'操作失败，请稍后再试');};let j;
+  if(kind==='like'){const on=!item.on?.like;swipeMark(item,'like',on);swipePop(button);if(on){const n=item.counts?.like??0;swipeSvga(button,n>=1e3?'thumb':n>=100?'heart':'like',n>=100?'top':'center');}
+    j=await swipeApi('https://api.bilibili.com/x/web-interface/archive/like',{aid,like:on?1:2});if(j?.code!==0){swipeMark(item,'like',!on);fail(j);}}
+  else if(kind==='coin'){if(item.on?.coin){toast('这个视频已经投过币了');return;}swipeMark(item,'coin',true);swipePop(button);swipeSvga(button,'coin');
+    j=await swipeApi('https://api.bilibili.com/x/web-interface/coin/add',{aid,multiply:1,select_like:0});if(j?.code!==0){swipeMark(item,'coin',false);fail(j);}}
+  else if(kind==='fav'){const on=!item.on?.fav;swipeMark(item,'fav',on);swipePop(button);if(on)swipeSvga(button,'fav');
+    const list=await swipeApi(`https://api.bilibili.com/x/v3/fav/folder/created/list-all?type=2&rid=${aid}&up_mid=${swipeCookie('DedeUserID')}`);const folders=list?.data?.list||[];
+    if(!folders.length){swipeMark(item,'fav',!on);toast('没有找到收藏夹');return;}
+    const ids=on?[folders[0].id]:folders.filter(f=>f.fav_state).map(f=>f.id);
+    j=await swipeApi('https://api.bilibili.com/x/v3/fav/resource/deal',{rid:aid,type:2,[on?'add_media_ids':'del_media_ids']:ids.join(',')});if(j?.code!==0){swipeMark(item,'fav',!on);fail(j);}}
+  else if(kind==='follow'){if(!item.mid)return;item.touched=true;item.following=true;button.hidden=true;
+    j=await swipeApi('https://api.bilibili.com/x/relation/modify',{fid:item.mid,act:1,re_src:11});if(j?.code!==0){item.following=false;if(swipe?.list[swipe.index]===item)button.hidden=false;fail(j);}}
 }
 async function openSwipe(){
   if(swipe||!CONTENT_VIEW||pageKind()!=='home')return;
@@ -2192,6 +2206,8 @@ async function openSwipe(){
  <div class="bs-swipe-edge"></div><div class="bs-swipe-peek"><i></i></div>
  <button type="button" class="bs-swipe-detail" data-swipe="detail">详情页 ›</button>
  <div class="bs-swipe-shade"></div><div class="bs-swipe-nav"><button type="button" data-swipe="prev" aria-label="上一个"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button><button type="button" data-swipe="next" aria-label="下一个"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+ <form class="bs-swipe-dm" autocomplete="off"><button type="button" data-swipe="dm-toggle" class="bs-swipe-dm-toggle" aria-pressed="true" aria-label="弹幕开关">弹</button><input maxlength="100" placeholder="发个友善的弹幕见证当下" aria-label="发弹幕"><button type="submit" class="bs-swipe-dm-send">发送</button></form>
+ <div class="bs-swipe-progress" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" tabindex="-1"><i></i><b></b><span></span></div>
  <div class="bs-swipe-info"><div class="bs-swipe-owner"></div><p class="bs-swipe-title"></p><p class="bs-swipe-desc"></p><button type="button" class="bs-swipe-season" data-swipe="season" hidden></button></div>
  <div class="bs-swipe-actions">${SWIPE_ACTIONS.map(([k,l,box,d])=>`<button type="button" data-swipe="${k}" aria-label="${l}"><span class="bs-swipe-icon">${k==='like'||k==='coin'||k==='fav'?'<svg class="bs-swipe-ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/></svg>':''}<svg viewBox="0 0 ${box} ${box}" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="${d}"/></svg></span><small></small></button>`).join('')}</div>
 </div>`;
@@ -2201,6 +2217,8 @@ async function openSwipe(){
   native('swipe-state',{on:true});
   layer.addEventListener('wheel',e=>{e.preventDefault();swipeWheel(e);},{passive:false});
   layer.addEventListener('pointerdown',swipeHold);
+  $('.bs-swipe-dm',layer).addEventListener('submit',swipeDanmakuSend);$('.bs-swipe-dm input',layer).addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();e.target.blur();}});
+  swipeWireProgress($('.bs-swipe-progress',layer));
   for(const z of layer.querySelectorAll('.bs-swipe-edge,.bs-swipe-peek'))z.addEventListener('pointerenter',()=>native('swipe-header',{show:true}));
   layer.addEventListener('click',e=>{const b=e.target.closest('[data-swipe]');if(!b)return;if(swipe.suppressClick){swipe.suppressClick=false;return;}const k=b.dataset.swipe;if(k==='prev')swipeGo(-1);else if(k==='next')swipeGo(1);else swipeAction(k,b);});
   if(!swipeStill())layer.animate([{opacity:0},{opacity:1}],{duration:260,easing:'ease-out'});
@@ -2209,6 +2227,31 @@ async function openSwipe(){
   swipeEnsure();swipePlace(false);swipeRenderInfo();
 }
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+// The page's own sending box stays hidden; ours fills it and presses its send button, so the danmaku appears at once.
+function swipeFrameDoc(){try{return swipe?.slots.get(swipe.index)?.frame.contentDocument||null;}catch{return null;}}
+function swipeDanmakuSend(e){
+  e.preventDefault();const input=$('input',e.currentTarget),text=input.value.trim();if(!text)return;
+  if(!swipeCookie('DedeUserID')){toast('请先登录 B站');return;}
+  const d=swipeFrameDoc(),box=d?.querySelector('.bpx-player-dm-input'),send=d?.querySelector('.bpx-player-dm-btn-send');if(!box||!send){toast('操作失败，请稍后再试');return;}
+  const w=d.defaultView;w.Object.getOwnPropertyDescriptor(w.HTMLInputElement.prototype,'value').set.call(box,text);box.dispatchEvent(new w.Event('input',{bubbles:true}));
+  send.click();input.value='';
+}
+function swipeDanmakuToggle(button){const sw=swipeFrameDoc()?.querySelector('.bpx-player-dm-switch input');if(!sw)return;sw.click();setTimeout(()=>button.setAttribute('aria-pressed',String(!!sw.checked)),60);}
+function swipeSyncDanmakuToggle(){const sw=swipeFrameDoc()?.querySelector('.bpx-player-dm-switch input'),b=swipe&&$('.bs-swipe-dm-toggle',swipe.ui);if(sw&&b)b.setAttribute('aria-pressed',String(!!sw.checked));}
+function swipeProgress(){
+  if(!swipe)return;const bar=$('.bs-swipe-progress',swipe.ui),v=swipeVideo(swipe.slots.get(swipe.index));if(!bar)return;
+  const d=v&&isFinite(v.duration)?v.duration:0,t=swipe.seeking??(v?.currentTime||0),r=d?Math.min(1,t/d):0;
+  bar.style.setProperty('--p',r);bar.setAttribute('aria-valuenow',String(Math.round(r*100)));
+  const fmt=x=>{x=Math.max(0,Math.floor(x));const h=Math.floor(x/3600),m=Math.floor(x%3600/60),sec=String(x%60).padStart(2,'0');return h?`${h}:${String(m).padStart(2,'0')}:${sec}`:`${m}:${sec}`;};
+  $('span',bar).textContent=d?`${fmt(t)} / ${fmt(d)}`:'';
+}
+function swipeWireProgress(bar){
+  const at=e=>{const r=bar.getBoundingClientRect();return Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));};
+  bar.addEventListener('pointerdown',e=>{const v=swipeVideo(swipe.slots.get(swipe.index));if(!v||!isFinite(v.duration))return;e.preventDefault();bar.setPointerCapture(e.pointerId);bar.classList.add('dragging');swipe.seeking=at(e)*v.duration;swipeProgress();
+    const move=ev=>{swipe.seeking=at(ev)*v.duration;swipeProgress();};
+    const up=ev=>{bar.removeEventListener('pointermove',move);bar.removeEventListener('pointerup',up);bar.removeEventListener('pointercancel',up);bar.classList.remove('dragging');if(swipe){v.currentTime=at(ev)*v.duration;swipe.seeking=null;swipeProgress();}};
+    bar.addEventListener('pointermove',move);bar.addEventListener('pointerup',up);bar.addEventListener('pointercancel',up);});
+}
 function closeSwipe(){
   if(!swipe)return;const s=swipe;swipe=null;for(const slot of s.slots.values()){clearInterval(slot.timer);slot.frame.src='about:blank';}
   delete document.documentElement.dataset.bsSwipe;native('swipe-state',{on:false});
@@ -2221,7 +2264,7 @@ document.addEventListener('keydown',e=>{if(!swipe||e.target?.closest?.('input,te
 // The header's 刷视频 link takes the route indicator while the feed is open.
 // While the feed is open the header tucks away; the grip at the top (or the very top edge) brings it back, and it
 // tucks again once the pointer leaves it with nothing of its own open.
-let swipeOn=false,swipeTucked=false,swipeTuckTimer=0;
+var swipeOn=false,swipeTucked=false,swipeTuckTimer=0;
 function setSwipeActive(on){if(!CHROME_VIEW||!shadow)return;swipeOn=!!on;shadow.host.toggleAttribute('data-swipe',swipeOn);
   const c=$('#chrome',shadow);if(c&&!c.dataset.swipeWired){c.dataset.swipeWired='1';c.addEventListener('pointerenter',()=>clearTimeout(swipeTuckTimer));c.addEventListener('pointerleave',()=>swipeTuckSoon(450));}
   swipeTuck(swipeOn);}
@@ -2245,11 +2288,23 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-peek i{margin-top:8px;width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.4);box-shadow:0 1px 4px rgba(0,0,0,.35);transition:width .28s cubic-bezier(.23,1,.32,1),background-color .2s,transform .28s cubic-bezier(.23,1,.32,1)}
 #bs-swipe .bs-swipe-peek:hover i{width:64px;background:rgba(255,255,255,.85);transform:translateY(2px)}
 #bs-swipe .bs-swipe-detail{position:absolute;top:18px;right:16px;padding:6px 12px;border:0;border-radius:999px;background:rgba(0,0,0,.45);font-size:13px;backdrop-filter:blur(8px)}
-#bs-swipe .bs-swipe-nav{position:absolute;right:14px;top:50%;transform:translateY(-50%);display:grid;gap:8px}
+#bs-swipe .bs-swipe-nav{position:absolute;right:18px;top:42%;transform:translateY(-50%);display:grid;gap:8px}
 #bs-swipe .bs-swipe-nav button{width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.4);transition:background .18s,transform .18s}#bs-swipe .bs-swipe-nav svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-#bs-swipe .bs-swipe-shade{position:absolute;left:0;right:0;bottom:56px;height:240px;background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,0))}
+#bs-swipe .bs-swipe-shade{position:absolute;left:0;right:0;bottom:0;height:260px;background:linear-gradient(to top,rgba(0,0,0,.62),rgba(0,0,0,0))}
+#bs-swipe .bs-swipe-dm{position:absolute;left:50%;bottom:30px;width:clamp(240px,28vw,440px);height:38px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:0 4px 0 5px;border-radius:19px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);backdrop-filter:blur(14px) saturate(140%);pointer-events:auto;transition:background-color .2s,box-shadow .2s}
+#bs-swipe .bs-swipe-dm:focus-within{background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+#bs-swipe .bs-swipe-dm input{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;color:#fff;font:inherit;font-size:13px}#bs-swipe .bs-swipe-dm input::placeholder{color:rgba(255,255,255,.62)}
+#bs-swipe .bs-swipe-dm-toggle{flex:none;width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(255,255,255,.18);font-size:13px!important;font-weight:600;transition:background-color .2s,opacity .2s}
+#bs-swipe .bs-swipe-dm-toggle[aria-pressed=true]{background:#00aeec}#bs-swipe .bs-swipe-dm-toggle[aria-pressed=false]{opacity:.6}
+#bs-swipe .bs-swipe-dm-send{flex:none;height:30px;padding:0 14px;border:0;border-radius:15px;background:#00aeec;font-size:13px!important;transition:filter .15s,transform .15s}#bs-swipe .bs-swipe-dm-send:hover{filter:brightness(1.1)}#bs-swipe .bs-swipe-dm-send:active{transform:scale(.95)}
+#bs-swipe .bs-swipe-progress{--p:0;position:absolute;left:0;right:0;bottom:0;height:14px;pointer-events:auto;cursor:pointer;touch-action:none}
+#bs-swipe .bs-swipe-progress::before,#bs-swipe .bs-swipe-progress i{content:'';position:absolute;left:0;bottom:0;height:3px;transition:height .18s cubic-bezier(.23,1,.32,1)}
+#bs-swipe .bs-swipe-progress::before{right:0;background:rgba(255,255,255,.22)}#bs-swipe .bs-swipe-progress i{width:calc(var(--p)*100%);background:#00aeec}
+#bs-swipe .bs-swipe-progress b{position:absolute;bottom:-3.5px;left:calc(var(--p)*100%);width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4);transform:scale(0);transition:transform .18s cubic-bezier(.23,1,.32,1)}
+#bs-swipe .bs-swipe-progress span{position:absolute;right:16px;bottom:12px;font-size:12px;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.6);opacity:0;transition:opacity .18s}
+#bs-swipe .bs-swipe-progress:is(:hover,.dragging)::before,#bs-swipe .bs-swipe-progress:is(:hover,.dragging) i{height:6px}#bs-swipe .bs-swipe-progress:is(:hover,.dragging) b{transform:scale(1)}#bs-swipe .bs-swipe-progress:is(:hover,.dragging) span{opacity:1}
 #bs-swipe .bs-swipe-nav button:hover{background:rgba(0,0,0,.65)}#bs-swipe .bs-swipe-nav button:active{transform:scale(.92)}
-#bs-swipe .bs-swipe-info{position:absolute;left:20px;bottom:74px;max-width:min(560px,55%);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#bs-swipe .bs-swipe-info{position:absolute;left:20px;bottom:24px;max-width:min(520px,calc(50% - 14vw - 40px));text-shadow:0 1px 3px rgba(0,0,0,.6)}
 #bs-swipe .bs-swipe-owner{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 #bs-swipe .bs-swipe-owner img{width:40px;height:40px;border-radius:50%;object-fit:cover}
 #bs-swipe .bs-swipe-owner p{margin:0;display:flex;align-items:center;gap:8px;font-size:15px}
@@ -2261,7 +2316,8 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-desc{display:none;margin:6px 0 0;font-size:13px;line-height:1.55;color:rgba(255,255,255,.85);max-height:9em;overflow:auto;white-space:pre-wrap;pointer-events:auto}
 #bs-swipe .expanded .bs-swipe-title span{-webkit-line-clamp:4}#bs-swipe .expanded .bs-swipe-desc{display:block}#bs-swipe .expanded .bs-swipe-title button{transform:rotate(180deg)}
 #bs-swipe .bs-swipe-season{margin-top:8px;padding:4px 10px;border:0;border-radius:6px;background:rgba(255,255,255,.14);font-size:12px}
-#bs-swipe .bs-swipe-actions{position:absolute;right:24px;bottom:72px;display:flex;gap:22px}
+#bs-swipe .bs-swipe-actions{position:absolute;right:24px;bottom:24px;display:flex;gap:22px}
+@media (max-width:1000px){#bs-swipe .bs-swipe-dm{left:auto;right:24px;bottom:96px;transform:none;width:300px}#bs-swipe .bs-swipe-info{max-width:calc(100% - 380px)}#bs-swipe .bs-swipe-actions{gap:14px}}
 #bs-swipe .bs-swipe-actions button{display:grid;justify-items:center;gap:3px;min-width:40px;border:0;background:none;padding:0;user-select:none;-webkit-user-select:none;touch-action:none}
 #bs-swipe .bs-swipe-icon{position:relative;display:grid;place-items:center;width:40px;height:40px;transition:transform .16s cubic-bezier(.23,1,.32,1)}
 #bs-swipe .bs-swipe-actions button:hover .bs-swipe-icon{transform:scale(1.08)}#bs-swipe .bs-swipe-actions button:active .bs-swipe-icon{transform:scale(.9)}
@@ -3167,6 +3223,7 @@ function boot(){
   }
   window.addEventListener('popstate',()=>{syncRoute();scheduleScan();});
   window.addEventListener('hashchange',syncSwipeHash);setTimeout(syncSwipeHash,0);
+  window.addEventListener('pagehide',()=>{if(swipe)native('swipe-state',{on:false});});
   window.addEventListener('hashchange',syncRoute);
   // Danmaku and live-chat lines arrive many times a second and never need a page scan (ads, links, player tools).
   const SCAN_QUIET='#bili-space-root,.bs-player-tool,.bs-gpu-canvas,.bili-danmaku-x-dm,.b-danmaku,#chat-items';
