@@ -84,7 +84,7 @@ class App(Gtk.Application):
         script=WebKit2.UserScript.new(bridge+self.renderer,WebKit2.UserContentInjectedFrames.TOP_FRAME,WebKit2.UserScriptInjectionTime.START,None,None);content.add_script(script)
         if self.web:self.stack.remove(self.web);self.web.destroy()
         self.web=WebKit2.WebView(web_context=self.context,user_content_manager=content)
-        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False);settings.set_enable_mediasource(True);settings.set_user_agent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 BiliSpace/0.1.63')
+        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False);settings.set_enable_mediasource(True);settings.set_user_agent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 BiliSpace/0.1.64')
         self.web.add_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.POINTER_MOTION_MASK)
         self.web.connect('button-press-event',self.resize_press);self.web.connect('motion-notify-event',self.resize_motion)
         self.web.connect('resource-load-started',self.resource_started)
