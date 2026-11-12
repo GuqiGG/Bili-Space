@@ -147,19 +147,13 @@
 - 弹窗（`src/up_notify.hpp` + `assets/up-notify.html`）是独立的小 WebView2 窗口，在客户端所在显示器的工作区右下角（不是窗口右下角），置顶、不抢焦点，从屏幕右边缘滑入、滑出。最多三条，每条「xxx 更新啦！」+ 封面（角上头像）+ 标题，按钮「不看」和随机的「冲冲冲！/抢前排！/走走走！」（打开视频）。12 秒没碰自动收起，鼠标停在上面时不收。原生会再校验一遍内容：只收 BV 号、纯文本和 hdslb 图片地址。
 - 开关：设置 → 个性化 → 通知 → UP 主更新通知（`upNotify`，默认开）。
 
-## 5.13 液态玻璃（内置插件，展示用）
-
-- 设置 → 扩展 → 液态玻璃（`liquidGlass`，默认关）。效果就是 LiquidGlass 库本身（@ybouane/liquidglass 1.0.3，MIT，从 `https://cdn.jsdelivr.net/npm/@ybouane/liquidglass@1.0.3/dist/index.js` 动态 import），不许自己写玻璃（`backdrop-filter`、SVG 滤镜、着色器、渐变都不行——自己仿写和「按尺寸把它的着色器算成图」两版都被用户否决了）。
-- 按库的规则：玻璃元素必须是 `position:relative` 的 root 的直接子元素；root 自己的背景不会被截取，所以每个 root 里按文档放一个绝对定位的背景层（`.bs-lg-bg`，页面底色，`z-index:-1`，root 加 `isolation`）；root 加 10px 内边距再用 -10px 外边距抵消，免得玻璃取样到截取区域外面出白边。玻璃元素自己的底色、阴影去掉，并加 `isolation`（库注入的 canvas 是 `z-index:-1`）。
-- 现在用在 B 站自己本来就并排的按钮组：首页分区按钮（`.channel-items__left > a.channel-link`）和视频页点赞一排（`.video-toolbar-left-main > .toolbar-left-item-wrap`）。每个 root 一个 WebGL 上下文（浏览器上限约 16 个），所以不能每个按钮各开一个。
-- 设置里的每一项都是库的参数（refraction、blurAmount、chromAberration、edgeHighlight、specular、fresnel、cornerRadius、zRadius、bevelMode、brightness、saturation、shadowOpacity、button、floating），存在 `lgConfig`，直接写进每个玻璃元素的 `data-config`，库自己会重新读取。原生只收这些键。
-
 ## 6. 否决过的方案（不要再做）
 
 - **启动时的屏外窗口 + 从小电视展开的启动动画**：用户觉得难看。保留原来窗口内的启动页。
 - **默认全屏防闪烁覆盖层和全屏放大动画**：多轮修复后仍会闪烁，已删除默认路径，只作为实验选项保留。不要再加回默认路径。
 - **强制语言路由 `/zh-Hans`**：会丢失「换一换」。
 - **会员 / 打赏 / 赞助类彩蛋和入口**：已删除，不要再加。B 站原生的「充电」按钮要保留，不要隐藏。
+- **液态玻璃内置插件**：先后试过自己仿写 CSS、把 LiquidGlass 的着色器按尺寸算成位移图、直接用 @ybouane/liquidglass 库。那个库要求玻璃和背景在同一个容器里、每组一个 WebGL 上下文，只能套在少数几组按钮上，用户决定整个删掉。
 - **超分、补帧的 ONNX/RIFE/ESPCN 链路**：为了包体和性能已移除。
 
 ## 7. 协作约定（给开发助手看）

@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,liquidGlass:false,lgConfig:{},commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
    keep their header space but hide their own copy (content mode). */
@@ -1228,53 +1228,6 @@ async function refreshAccount(force=false){
   }finally{clearTimeout(timeout);if(accountRequest===request)accountRequest=null;}
 }
 
-// 液态玻璃 (built-in plugin, a showcase): the effect is LiquidGlass itself (@ybouane/liquidglass 1.0.3, MIT,
-// https://liquid-glass.ybouane.com), loaded from jsDelivr. Its rules: each glass element is a direct child of a
-// position:relative root, and only the root's non-glass children are refracted (the root's own background is not
-// captured), so each root gets an absolutely positioned background sibling as the docs suggest. The root is padded
-// (and pulled back by the same negative margin, so nothing moves) so the glass never samples past the captured area.
-// Every look setting is a library option, written to each glass element's data-config.
-const LG_LIB='https://cdn.jsdelivr.net/npm/@ybouane/liquidglass@1.0.3/dist/index.js';
-const LG_DEFAULTS={refraction:.69,blurAmount:0,chromAberration:.05,edgeHighlight:.05,specular:0,fresnel:1,cornerRadius:65,zRadius:40,bevelMode:0,brightness:0,saturation:0,shadowOpacity:.3,button:true,floating:false};
-// Places where Bilibili's own buttons already sit side by side as direct children of one container.
-const LG_GROUPS=[{root:'.channel-items__left',glass:':scope>a.channel-link'},{root:'.video-toolbar-left-main',glass:':scope>.toolbar-left-item-wrap'}];
-const GLASS_FONT='"HarmonyOS_Regular","HarmonyOS Sans SC","PingFang SC","Microsoft YaHei UI",sans-serif';
-let lgLib=null,lgTimer=0;const lgInstances=new Map();
-function lgConfig(){const c={...LG_DEFAULTS,...(PREFS.lgConfig&&typeof PREFS.lgConfig==='object'?PREFS.lgConfig:{})};return c;}
-function lgPageBackground(el){for(let e=el;e;e=e.parentElement){const b=getComputedStyle(e).backgroundColor;if(b&&b!=='rgba(0, 0, 0, 0)'&&b!=='transparent')return b;}return document.documentElement.dataset.bsTheme==='dark'?'#161618':'#ffffff';}
-async function lgMount(group){
-  const root=document.querySelector(group.root);if(!root||lgInstances.has(root))return;
-  const glass=[...root.querySelectorAll(group.glass)];if(!glass.length)return;
-  lgInstances.set(root,null);
-  if(getComputedStyle(root).position==='static')root.style.position='relative';
-  root.style.isolation='isolate';root.style.padding='10px';root.style.margin='-10px';
-  const bg=document.createElement('div');bg.className='bs-lg-bg';bg.style.cssText=`position:absolute;inset:0;z-index:-1;pointer-events:none;background:${lgPageBackground(root.parentElement)}`;root.prepend(bg);
-  const config=JSON.stringify(lgConfig());
-  for(const el of glass){el.dataset.config=config;el.style.setProperty('background','transparent','important');el.style.setProperty('box-shadow','none','important');el.style.setProperty('border-color','transparent','important');el.style.isolation='isolate';}
-  try{lgLib||=await import(LG_LIB);const instance=await lgLib.LiquidGlass.init({root,glassElements:glass});if(!PREFS.liquidGlass||!root.isConnected){instance.destroy();lgUnmount(root);return;}lgInstances.set(root,instance);}
-  catch(e){console.warn('[Bili-Space] LiquidGlass',e);lgUnmount(root);}
-}
-function lgUnmount(root){const instance=lgInstances.get(root);instance?.destroy();lgInstances.delete(root);root.querySelector(':scope>.bs-lg-bg')?.remove();
-  for(const p of ['position','isolation','padding','margin'])root.style.removeProperty(p);
-  for(const el of root.querySelectorAll('[data-config]')){delete el.dataset.config;for(const p of ['background','box-shadow','border-color','isolation'])el.style.removeProperty(p);}}
-function lgScan(){if(!PREFS.liquidGlass||CHROME_VIEW)return;for(const [root] of lgInstances)if(!root.isConnected)lgUnmount(root);for(const g of LG_GROUPS)lgMount(g);}
-const GLASS_FONT_CSS=`html[data-bs-glass=true][data-bs-glass] body,html[data-bs-glass=true][data-bs-glass] body :not(#bilibili-player *):not(i):not([class*=icon]):not([class*=Icon]):not(svg):not(svg *){font-family:${GLASS_FONT}!important}`;
-const GLASS_SHELL_FONT_CSS=`:host([data-glass=true]),:host([data-glass=true]) *:not(svg):not(svg *){font-family:${GLASS_FONT}!important}`;
-const LG_OPTIONS=[['refraction','折射 refraction',.01],['blurAmount','模糊 blurAmount',.01],['chromAberration','色散 chromAberration',.01],['edgeHighlight','边缘光 edgeHighlight',.01],['specular','高光 specular',.01],['fresnel','菲涅尔 fresnel',.01],['cornerRadius','圆角 cornerRadius',1],['zRadius','倒角深度 zRadius',1],['bevelMode','bevelMode（0 胶囊 / 1 圆顶）',1],['brightness','亮度 brightness',.01],['saturation','饱和度 saturation',.01],['shadowOpacity','阴影 shadowOpacity',.01]];
-function lgSettingsRows(){const c=lgConfig();return LG_OPTIONS.map(([k,label,step])=>`<div class="row"><label for="lg-${k}">${label}</label><input id="lg-${k}" type="number" step="${step}" data-lg-key="${k}" value="${c[k]}" style="width:96px"></div>`).join('')+
-  [['button','按钮模式 button'],['floating','可拖动 floating']].map(([k,label])=>`<div class="row"><label for="lg-${k}">${label}</label><input id="lg-${k}" type="checkbox" data-lg-key="${k}" ${c[k]?'checked':''}></div>`).join('');}
-function applyLiquidGlass(){
-  const on=!!PREFS.liquidGlass,html=document.documentElement;html.dataset.bsGlass=String(on);if(root)root.dataset.glass=String(on);
-  clearInterval(lgTimer);
-  if(!on){for(const [r] of [...lgInstances])lgUnmount(r);return;}
-  for(const href of ['https://s1.hdslb.com/bfs/static/jinkela/long/font/regular.css','https://s1.hdslb.com/bfs/static/jinkela/long/font/medium.css'])
-    if(!document.querySelector(`link[href="${href}"]`))(document.head||html).append(Object.assign(document.createElement('link'),{rel:'stylesheet',href}));
-  if(!CHROME_VIEW&&!document.getElementById('bs-lg-font'))(document.head||html).append(Object.assign(document.createElement('style'),{id:'bs-lg-font',textContent:GLASS_FONT_CSS}));
-  if(shadow&&!shadow.getElementById('bs-lg-shell-font'))shadow.append(Object.assign(document.createElement('style'),{id:'bs-lg-shell-font',textContent:GLASS_SHELL_FONT_CSS}));
-  // A changed option goes straight into data-config; the library re-reads it.
-  const config=JSON.stringify(lgConfig());for(const [r] of lgInstances)for(const el of r.querySelectorAll('[data-config]'))if(el.dataset.config!==config)el.dataset.config=config;
-  lgScan();lgTimer=setInterval(lgScan,1500);
-}
 function applyPreferences() {root?.style.setProperty('--bs-settings-zoom',String(Math.min(160,Math.max(80,Number(PREFS.settingsZoom)||100))/100));
   const html=document.documentElement;
   syncRoute();
@@ -1297,7 +1250,7 @@ function applyPreferences() {root?.style.setProperty('--bs-settings-zoom',String
   html.style.setProperty('--bs-progress-radius',`${PREFS.progressRadius}px`);
   if(root){root.dataset.mode=CHROME_VIEW?'chrome':CHROME_HOST?'content':'page';root.dataset.frost=String(!!PREFS.experimentalFrost);root.dataset.bounce=String(!!PREFS.experimentalBounce);root.style.setProperty('--accent',PREFS.accent);root.style.setProperty('--font',PREFS.font?'BiliDouyin,"Microsoft YaHei UI",sans-serif':'"Microsoft YaHei UI",sans-serif');root.dataset.theme=dark?'dark':'light';}
   if(!PREFS.clipboardAutoOpen)shadow?.querySelector('#clipboard-video-prompt')?.remove();
-  applyHeaderPreferences();accountsController?.applyTheme();applyLiquidGlass();
+  applyHeaderPreferences();accountsController?.applyTheme();
   if(shadow)renderSettings();
   const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');
   scheduleScan();
@@ -2675,7 +2628,7 @@ function tabContent(tab=currentTab){
     `<div class="row block-list"><label for="block-users">屏蔽用户名<span class="hint">一行一个，昵称完全一样才屏蔽</span></label><textarea id="block-users" data-block-list="commentBlockUsers" rows="4" spellcheck="false" placeholder="一行一个用户名">${escapeHtml((PREFS.commentBlockUsers||[]).join('\n'))}</textarea></div>`+
     `<div class="row block-list"><label for="block-words">屏蔽词<span class="hint">一行一个，评论里出现就屏蔽</span></label><textarea id="block-words" data-block-list="commentBlockWords" rows="4" spellcheck="false" placeholder="一行一个词">${escapeHtml((PREFS.commentBlockWords||[]).join('\n'))}</textarea></div>`;
   if(tab==='play')return withoutVideoAi(`<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">WebGPU · 每个源帧只计算一次</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srModel">超分模型<span class="hint">自动：番剧、国创、动画区用动画模型，其余用通用模型</span></label><select id="pref-srModel" data-pref="srModel"><option value="auto">自动识别</option><option value="anime">动画（Anime4K）</option><option value="general">通用</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">画面补帧（Lossless Scaling 式）</option></select></div><div class="row"><label for="pref-fiFps">补帧上限<span class="hint">不超过屏幕刷新率</span></label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option><option value="144">144 fps</option><option value="240">240 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`);
-  return `<div class="compact-tab"><h2>扩展</h2>${toggle('clickGui','悬浮设置面板','内置插件 · 设置变成可拖动的悬浮面板：左键开关，右键展开详情，右 Shift 也能打开')}${toggle('liquidGlass','液态玻璃','内置插件 · 用 LiquidGlass 库（@ybouane/liquidglass 1.0.3）给首页分区按钮和视频页点赞一排加玻璃，字体换成鸿蒙黑体')}${PREFS.liquidGlass?lgSettingsRows():''}<div class="row"><label for="pref-btr">Bilibili 线程撕裂者<span class="hint">多线路并发加速视频缓冲 · 始终开启</span></label><input id="pref-btr" type="checkbox" checked disabled aria-describedby="btr-locked"></div><div class="actions"><button id="btr-settings" class="link">线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器</div>${toggle('downloader','视频页显示下载按钮','支持 AVC / AAC 单视频下载，暂不支持批量、多段与番剧')}<div class="section-label">插件</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本 主题"></div></div>`;
+  return `<div class="compact-tab"><h2>扩展</h2>${toggle('clickGui','悬浮设置面板','内置插件 · 设置变成可拖动的悬浮面板：左键开关，右键展开详情，右 Shift 也能打开')}<div class="row"><label for="pref-btr">Bilibili 线程撕裂者<span class="hint">多线路并发加速视频缓冲 · 始终开启</span></label><input id="pref-btr" type="checkbox" checked disabled aria-describedby="btr-locked"></div><div class="actions"><button id="btr-settings" class="link">线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器</div>${toggle('downloader','视频页显示下载按钮','支持 AVC / AAC 单视频下载，暂不支持批量、多段与番剧')}<div class="section-label">插件</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本 主题"></div></div>`;
 }
 const settingsGroupsOpen=new Map();
 function organizeSettings(panel){
@@ -2839,8 +2792,7 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
     if(b?.id==='downloader-open')native('downloader',{action:'open'});
     if(b?.id==='downloader-browse')native('downloader',{action:'browse'});
   });
-  shadow.addEventListener('change',e=>{const lgKey=e.target?.dataset?.lgKey;if(lgKey){const v=e.target.type==='checkbox'?e.target.checked:Number(e.target.value);if(typeof v==='boolean'||Number.isFinite(v))update({lgConfig:{...(PREFS.lgConfig||{}),[lgKey]:v}});return;}
-    const list=e.target?.dataset?.blockList;if(list){const lines=[...new Set(e.target.value.split(/\r?\n/).map(x=>x.trim()).filter(x=>x&&x.length<=60))].slice(0,300);update({[list]:lines});e.target.value=lines.join('\n');toast(lines.length?`已保存 ${lines.length} 条`:'已清空');return;}
+  shadow.addEventListener('change',e=>{const list=e.target?.dataset?.blockList;if(list){const lines=[...new Set(e.target.value.split(/\r?\n/).map(x=>x.trim()).filter(x=>x&&x.length<=60))].slice(0,300);update({[list]:lines});e.target.value=lines.join('\n');toast(lines.length?`已保存 ${lines.length} 条`:'已清空');return;}
     if(e.target?.dataset?.pref==='settingsZoom')update({settingsZoom:Math.min(160,Math.max(80,Math.round(Number(e.target.value)||100)))});});
   shadow.addEventListener('input',e=>{
     const el=e.target;
