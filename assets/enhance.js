@@ -2111,9 +2111,9 @@ const SWIPE_FRAME_CSS=`html,body{overflow:hidden!important;background:#000!impor
 #bilibili-player{transform-origin:0 50%;transition:transform .46s cubic-bezier(.32,.72,0,1)}
 html.bs-swipe-comments #bilibili-player{transform:scale(var(--bs-ck,.7))}
 #commentapp,#commentapp *{visibility:visible!important}
-#commentapp{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:auto!important;width:var(--bs-cw,400px)!important;max-width:none!important;margin:0!important;padding:14px 16px 24px 18px!important;box-sizing:border-box!important;overflow-y:auto!important;overscroll-behavior:contain;background:var(--bg1,#fff)!important;z-index:2147483647!important;transform:translateX(100%);transition:transform .46s cubic-bezier(.32,.72,0,1);scrollbar-width:thin}
+#commentapp{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:auto!important;width:var(--bs-cw,400px)!important;max-width:none!important;margin:0!important;padding:16px 20px 24px 20px!important;box-sizing:border-box!important;overflow-y:auto!important;overscroll-behavior:contain;background:var(--bg1,#fff)!important;z-index:2147483647!important;transform:translateX(100%);transition:transform .46s cubic-bezier(.32,.72,0,1);scrollbar-width:thin}
 html.bs-swipe-comments #commentapp{transform:none}
-#commentapp bili-comments{zoom:.9}
+#commentapp{font-family:var(--bs-cfont)!important}
 .bpx-player-state-wrap{left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%) scale(1.25)!important;pointer-events:none!important}`;
 function swipeVideo(slot){try{return slot.frame.contentDocument?.querySelector('#bilibili-player video,video');}catch{return null;}}
 function swipeSlot(i){
@@ -2134,7 +2134,7 @@ function swipeSlot(i){
     if(!slot.wired&&doc.body){slot.wired=true;swipeWireFrame(slot,frame.contentWindow,doc);}
     const v=swipeVideo(slot);if(!v)return;
     if(!v.dataset.bsSwipe){v.dataset.bsSwipe='1';v.addEventListener('ended',()=>{if(swipe&&swipe.slots.get(swipe.index)===slot)swipeGo(1);});v.addEventListener('play',()=>{if(swipe&&swipe.slots.get(swipe.index)!==slot)v.pause();});}
-    if(swipe.slots.get(swipe.index)===slot){swipeProgress();swipeSyncDanmakuToggle();}
+    if(swipe.slots.get(swipe.index)===slot){swipeProgress();swipeSyncDanmakuToggle();if(swipe.comments&&(slot.tick=(slot.tick||0)+1)%4===0)swipeStyleComments(doc);}
     if(swipe.slots.get(swipe.index)!==slot){if(!v.paused)v.pause();slot.preloaded=true;}
     else if(!slot.started&&v.readyState>=2){slot.started=true;if(slot.preloaded&&v.currentTime<3)v.currentTime=0;v.play().catch(()=>{});}
     if(!slot.ready&&v.readyState>=2&&slot.styled){slot.ready=true;el.classList.add('ready');if(swipe.slots.get(swipe.index)===slot)swipeEnsure();}
@@ -2145,6 +2145,7 @@ function swipeSlot(i){
 function swipeWireFrame(slot,win,doc){
   const inPanel=e=>!!swipe?.comments&&e.composedPath().some(n=>n.id==='commentapp');
   const typing=e=>e.composedPath().some(n=>n.nodeType===1&&(n.matches('input,textarea')||n.isContentEditable));
+  for(const t of ['pointermove','pointerdown','keydown'])doc.addEventListener(t,()=>{if(swipe?.slots.get(swipe.index)===slot)swipeWake();},{passive:true,capture:true});
   win.addEventListener('wheel',e=>{if(inPanel(e))return;e.preventDefault();swipeWheel(e);},{passive:false,capture:true});
   doc.addEventListener('keydown',e=>{if(typing(e))return;if(e.key==='Escape'&&swipe?.comments){e.preventDefault();e.stopImmediatePropagation();swipeComments(false);return;}if(inPanel(e)&&(e.key==='ArrowDown'||e.key==='ArrowUp'))return;
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();swipeGo(e.key==='ArrowDown'?1:-1);}
@@ -2201,6 +2202,7 @@ async function swipeAction(kind,button){
   if(kind==='share'){native('copy-video-link',{url:`https://www.bilibili.com/video/${item.bvid}`});swipePop(button);toast('已复制视频链接');return;}
   if(kind==='more'){swipe.ui.classList.toggle('expanded');return;}
   if(kind==='dm-toggle'){swipeDanmakuToggle(button);return;}
+  if(kind==='clean'){const on=!swipe.layer.classList.contains('clean');swipe.layer.classList.toggle('clean',on);button.setAttribute('aria-pressed',String(on));$('b',button).textContent=on?'(－ω－)':'(・ω・)';swipePop(button);swipeWake();return;}
   if(!swipeCookie('DedeUserID')){toast('请先登录 B站');return;}
   const aid=item.aid,fail=j=>{toast(j?.message||'操作失败，请稍后再试');};let j;
   if(kind==='like'){const on=!item.on?.like;swipeMark(item,'like',on);swipePop(button);if(on){const n=item.counts?.like??0;swipeSvga(button,n>=1e3?'thumb':n>=100?'heart':'like',n>=100?'top':'center');}
@@ -2227,7 +2229,7 @@ async function openSwipe(){
  <form class="bs-swipe-dm" autocomplete="off"><button type="button" data-swipe="dm-toggle" class="bs-swipe-dm-toggle" aria-pressed="true" aria-label="弹幕开关">弹</button><input maxlength="100" placeholder="发个友善的弹幕见证当下" aria-label="发弹幕"><button type="submit" class="bs-swipe-dm-send">发送</button></form>
  <div class="bs-swipe-progress" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" tabindex="-1"><i></i><b></b><span></span></div>
  <div class="bs-swipe-info"><div class="bs-swipe-owner"></div><p class="bs-swipe-title"></p><p class="bs-swipe-desc"></p><button type="button" class="bs-swipe-season" data-swipe="season" hidden></button></div>
- <div class="bs-swipe-actions">${SWIPE_ACTIONS.map(([k,l,box,d])=>`<button type="button" data-swipe="${k}" aria-label="${l}"><span class="bs-swipe-icon">${k==='like'||k==='coin'||k==='fav'?'<svg class="bs-swipe-ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/></svg>':''}<svg viewBox="0 0 ${box} ${box}" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="${d}"/></svg></span><small></small></button>`).join('')}</div>
+ <div class="bs-swipe-actions"><button type="button" data-swipe="clean" class="bs-swipe-clean" aria-pressed="false" aria-label="清屏"><span class="bs-swipe-icon"><b>(・ω・)</b></span><small>清屏</small></button>${SWIPE_ACTIONS.map(([k,l,box,d])=>`<button type="button" data-swipe="${k}" aria-label="${l}"><span class="bs-swipe-icon">${k==='like'||k==='coin'||k==='fav'?'<svg class="bs-swipe-ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/></svg>':''}<svg viewBox="0 0 ${box} ${box}" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="${d}"/></svg></span><small></small></button>`).join('')}</div>
 </div>`;
   if(!document.getElementById('bs-swipe-style')){const st=document.createElement('style');st.id='bs-swipe-style';st.textContent=SWIPE_CSS;(document.head||document.documentElement).append(st);}
   document.documentElement.append(layer);document.documentElement.dataset.bsSwipe='true';
@@ -2235,6 +2237,7 @@ async function openSwipe(){
   native('swipe-state',{on:true});
   layer.addEventListener('wheel',e=>{e.preventDefault();swipeWheel(e);},{passive:false});
   layer.addEventListener('pointerdown',swipeHold);
+  for(const t of ['pointermove','pointerdown','wheel','keydown'])layer.addEventListener(t,swipeWake,{passive:true});swipeWake();
   $('.bs-swipe-dm',layer).addEventListener('submit',swipeDanmakuSend);$('.bs-swipe-dm input',layer).addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();e.target.blur();}});
   swipeWireProgress($('.bs-swipe-progress',layer));
   for(const z of layer.querySelectorAll('.bs-swipe-edge,.bs-swipe-peek'))z.addEventListener('pointerenter',()=>native('swipe-header',{show:true}));
@@ -2245,13 +2248,46 @@ async function openSwipe(){
   swipeEnsure();swipePlace(false);swipeRenderInfo();
 }
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+// Everything over the video fades after 3 s without the pointer moving (not while it rests on a control, the danmaku box
+// has focus, comments are open or a long press is charging); 清屏 keeps it hidden, apart from its own button, until pressed again.
+function swipeWake(){if(!swipe)return;swipe.layer.classList.remove('idle');clearTimeout(swipe.idleTimer);swipe.idleTimer=setTimeout(swipeIdle,3000);}
+function swipeIdle(){
+  if(!swipe)return;const l=swipe.layer;
+  if(swipe.comments||l.querySelector('.bs-swipe-ui :is(button,form,.bs-swipe-progress,.bs-swipe-info):hover,.bs-swipe-dm:focus-within,.charging')){swipe.idleTimer=setTimeout(swipeIdle,1000);return;}
+  l.classList.add('idle');
+}
+// The comment section is built from nested shadow roots; one sheet is adopted into each of them as they appear.
+const SWIPE_COMMENT_CSS=`*{font-family:var(--bs-cfont)!important}
+#navbar{display:none!important}
+:host(bili-comments-header-renderer) #commentbox{margin:0 46px 0 0!important}
+:host(bili-comment-action-buttons-renderer) :is(#pubdate,#reply){white-space:nowrap!important}
+:host(bili-comment-renderer) #body{padding-left:56px!important}
+:host(bili-comment-renderer) #user-avatar{left:0!important}
+:host(bili-comment-renderer) #content{font-size:16px!important;line-height:1.6!important}
+:host(bili-comment-thread-renderer) #div{margin-left:56px!important}
+:host(bili-comment-box) #user-avatar{width:auto!important;margin-right:14px!important;justify-content:flex-start!important}
+:host(bili-comment-box) .tool-btn{width:34px!important;height:30px!important}
+:host(bili-comment-box) #pub button{height:34px!important;min-width:72px!important;font-size:16px!important;border-radius:8px!important}
+:host(bili-comment-box) #optional{font-size:13px!important}
+:host(bili-comment-rich-textarea) #input{font-size:15px!important;line-height:1.6!important}`;
+function swipeCommentFont(d){
+  if(PREFS.font&&!d.getElementById('bs-swipe-font')){const st=d.createElement('style');st.id='bs-swipe-font';st.textContent='@font-face{font-family:BiliDouyin;src:url("https://bili-space.local/fonts/DouyinSansBold.ttf") format("truetype")}';d.head?.append(st);}
+  d.querySelector('#commentapp')?.style.setProperty('--bs-cfont',PREFS.font?'BiliDouyin,"Microsoft YaHei UI",sans-serif':'"Microsoft YaHei UI","PingFang SC",sans-serif');
+}
+function swipeStyleComments(d){
+  const w=d.defaultView,root=d.querySelector('#commentapp bili-comments');if(!w||!root)return;
+  let sheet=d.bsSwipeCommentSheet;if(!sheet){try{sheet=new w.CSSStyleSheet();sheet.replaceSync(SWIPE_COMMENT_CSS);d.bsSwipeCommentSheet=sheet;}catch{return;}}
+  const walk=host=>{const sr=host.shadowRoot;if(!sr)return;if(!sr.adoptedStyleSheets.includes(sheet))sr.adoptedStyleSheets=[...sr.adoptedStyleSheets,sheet];for(const el of sr.querySelectorAll('*'))if(el.shadowRoot)walk(el);};
+  walk(root);
+}
 // 评论 opens the video page's own comment section as a panel from the right; the video scales down to the space left.
 function swipeComments(open){
   if(!swipe)return;open=open??!swipe.comments;const item=swipe.list[swipe.index],d=swipeFrameDoc();
   if(open&&!d?.querySelector('#commentapp')){location.href=`https://www.bilibili.com/video/${item.bvid}/#comment`;return;}
-  swipe.comments=open;const width=Math.round(Math.min(540,Math.max(400,innerWidth*.38)));
+  swipe.comments=open;const width=Math.round(Math.min(580,Math.max(420,innerWidth*.4)));
   swipe.layer.style.setProperty('--bs-cw',width+'px');swipe.layer.classList.toggle('comments',open);
   if(d){const root=d.documentElement,look=d.defaultView.getComputedStyle(root);root.style.setProperty('--bs-cw',width+'px');root.style.setProperty('--bs-ck',String((innerWidth-width)/innerWidth));root.classList.toggle('bs-swipe-comments',open);
+    swipeCommentFont(d);if(open)swipeStyleComments(d);
     swipe.layer.style.setProperty('--bs-ctext',look.getPropertyValue('--text1').trim()||'#18191c');swipe.layer.style.setProperty('--bs-cbg',look.getPropertyValue('--bg1').trim()||'#fff');}
   $('[data-swipe=reply]',swipe.ui)?.classList.toggle('on',open);
 }
@@ -2281,7 +2317,7 @@ function swipeWireProgress(bar){
     bar.addEventListener('pointermove',move);bar.addEventListener('pointerup',up);bar.addEventListener('pointercancel',up);});
 }
 function closeSwipe(){
-  if(!swipe)return;const s=swipe;swipe=null;for(const slot of s.slots.values()){clearInterval(slot.timer);slot.frame.src='about:blank';}
+  if(!swipe)return;const s=swipe;swipe=null;clearTimeout(s.idleTimer);for(const slot of s.slots.values()){clearInterval(slot.timer);slot.frame.src='about:blank';}
   delete document.documentElement.dataset.bsSwipe;native('swipe-state',{on:false});
   if(location.hash==='#swipe')history.replaceState(history.state,'',location.pathname+location.search);
   const done=()=>s.layer.remove();if(swipeStill())done();else s.layer.animate([{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}).onfinish=done;
@@ -2301,7 +2337,7 @@ function swipeHeaderBusy(){const open=q=>{const el=$(q,shadow);if(!el||el.hidden
   return ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories','.account-manager'].some(open)||!!shadow.activeElement?.closest?.('#chrome input')||$('#chrome',shadow)?.matches(':hover');}
 function swipeTuckSoon(ms){clearTimeout(swipeTuckTimer);swipeTuckTimer=setTimeout(()=>{if(!swipeOn)return;if(swipeHeaderBusy())swipeTuckSoon(600);else swipeTuck(true);},ms);}
 function revealSwipeHeader(){if(!CHROME_VIEW||!swipeOn)return;if(swipeTucked)swipeTuck(false);swipeTuckSoon(1600);}
-const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:#000;overflow:hidden;color:#fff;font-family:inherit}
+const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:#000;overflow:clip;color:#fff;font-family:inherit}
 #bs-swipe .bs-swipe-track{position:absolute;inset:0}
 #bs-swipe .bs-swipe-slot{position:absolute;inset:0;background:#000;will-change:transform}
 #bs-swipe .bs-swipe-cover{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:blur(18px) brightness(.55);transform:scale(1.08)}
@@ -2325,7 +2361,7 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-nav{position:absolute;right:18px;top:42%;transform:translateY(-50%);display:grid;gap:8px}
 #bs-swipe .bs-swipe-nav button{width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.4);transition:background .18s,transform .18s}#bs-swipe .bs-swipe-nav svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #bs-swipe .bs-swipe-shade{position:absolute;left:0;right:0;bottom:0;height:260px;background:linear-gradient(to top,rgba(0,0,0,.62),rgba(0,0,0,0))}
-#bs-swipe .bs-swipe-dm{position:absolute;left:50%;bottom:30px;width:clamp(240px,28vw,440px);height:32px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:0 3px 0 4px;border-radius:8px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);backdrop-filter:blur(14px) saturate(140%);pointer-events:auto;transition:background-color .2s,box-shadow .2s}
+#bs-swipe .bs-swipe-dm{position:absolute;left:50%;bottom:30px;width:clamp(240px,28vw,440px);height:32px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:0 3px 0 4px;border-radius:8px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);backdrop-filter:blur(14px) saturate(140%);pointer-events:auto;transition:background-color .2s,box-shadow .2s,opacity .3s ease,visibility 0s}
 #bs-swipe .bs-swipe-dm:focus-within{background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
 #bs-swipe .bs-swipe-dm input{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;color:#fff;font:inherit;font-size:13px}#bs-swipe .bs-swipe-dm input::placeholder{color:rgba(255,255,255,.62)}
 #bs-swipe .bs-swipe-dm-toggle{flex:none;width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:6px;background:rgba(255,255,255,.18);font-size:13px!important;font-weight:600;transition:background-color .2s,opacity .2s}
@@ -2367,6 +2403,14 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-svga{position:absolute;z-index:2;pointer-events:none}
 #bs-swipe .bs-swipe-svga.center{width:92px;height:92px;left:calc(50% - 46px);top:calc(50% - 46px)}
 #bs-swipe .bs-swipe-svga.top{width:120px;height:120px;left:calc(50% - 60px);bottom:calc(50% - 6px)}
+#bs-swipe .bs-swipe-ui>:is(.bs-swipe-detail,.bs-swipe-nav,.bs-swipe-shade,.bs-swipe-info,.bs-swipe-progress,.bs-swipe-actions),#bs-swipe .bs-swipe-actions>button{transition:opacity .3s ease,visibility 0s}
+#bs-swipe.idle .bs-swipe-ui>:is(.bs-swipe-detail,.bs-swipe-nav,.bs-swipe-shade,.bs-swipe-info,.bs-swipe-progress,.bs-swipe-actions,.bs-swipe-dm),
+#bs-swipe.clean .bs-swipe-ui>:is(.bs-swipe-detail,.bs-swipe-nav,.bs-swipe-shade,.bs-swipe-info,.bs-swipe-progress,.bs-swipe-dm),
+#bs-swipe.clean .bs-swipe-actions>button:not(.bs-swipe-clean){opacity:0!important;visibility:hidden!important;transition:opacity .3s ease,visibility 0s .3s!important}
+#bs-swipe.idle .bs-swipe-peek i{opacity:0}
+#bs-swipe .bs-swipe-clean .bs-swipe-icon{width:auto;min-width:40px}
+#bs-swipe .bs-swipe-clean b{display:grid;place-items:center;height:30px;padding:0 9px;border-radius:15px;box-shadow:inset 0 0 0 1.6px rgba(255,255,255,.92),0 1px 3px rgba(0,0,0,.35);font-size:13px;font-weight:700;letter-spacing:-.5px;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.45);transition:background-color .2s,color .2s}
+#bs-swipe .bs-swipe-clean[aria-pressed=true] b{background:rgba(255,255,255,.92);color:#18191c;text-shadow:none}
 @media (prefers-reduced-motion:reduce){#bs-swipe :is(.bs-swipe-ui,.bs-swipe-chead){transition:none}#bs-swipe .charging .bs-swipe-icon>svg{animation:none!important}#bs-swipe .bs-swipe-peek i{transition:none}}
 @media (prefers-reduced-motion:reduce){#bs-swipe .bs-swipe-slot{transition:none!important}}`;
 function showOnboarding(){
