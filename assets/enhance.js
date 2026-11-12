@@ -3247,11 +3247,14 @@ function startPagePending(){
 // The scale lives in its own stylesheet: Bilibili rewrites the root element's inline style while it loads.
 // The client zooms pages so they stay near 1280 CSS px wide; the feed's column count follows the window's real width.
 let pageZoom=1;function setPageZoom(z){z=Number(z);if(!(z>0)||Math.abs(z-pageZoom)<.001)return;pageZoom=z;applyUiScale();}
-function applyUiScale(){const html=document.documentElement;if(!html)return;const width=Math.max(320,innerWidth||1240),scale=Math.round(Math.min(1.28,Math.max(1,1+.2*Math.pow(1240/width,2)))*1000)/1000;
+function applyUiScale(){const html=document.documentElement;if(!html)return;const width=Math.max(320,innerWidth||1240),scale=Math.round(Math.min(1.28,Math.max(1,1+.2*Math.pow(1240/width,2)))*50)/50;
   let sheet=document.getElementById('bs-ui-scale');if(!sheet){sheet=document.createElement('style');sheet.id='bs-ui-scale';html.append(sheet);}
   const real=width*(CONTENT_VIEW?pageZoom:1),auto=real<=800?2:real<=1100?3:real<1500?4:real<1900?5:real<2300?6:7,floor=Number.isInteger(PREFS.feedColumns)&&PREFS.feedColumns>=2&&PREFS.feedColumns<=8?PREFS.feedColumns:0;
   const css='html:root{--bs-ui-scale:'+scale+';--bs-header-height:'+Math.round((width<=800?102:58)*scale)+'px;--bs-feed-columns:'+Math.max(auto,floor)+'}';if(sheet.textContent!==css)sheet.textContent=css;if(!sheet.isConnected)html.append(sheet);}
-let uiScaleFrame;window.addEventListener('resize',()=>{cancelAnimationFrame(uiScaleFrame);uiScaleFrame=requestAnimationFrame(applyUiScale);});
+// These variables sit on the root, so changing them restyles the whole page. A window drag used to change the scale on
+// nearly every step (it was kept to 0.001), restyling and relaying out every element of a long feed each frame; the scale
+// now moves in 0.02 steps and is only applied once the size has stopped changing.
+let uiScaleFrame;window.addEventListener('resize',()=>{clearTimeout(uiScaleFrame);uiScaleFrame=setTimeout(applyUiScale,150);});
 /* Video pages tell the native host their title and cover so the video dock can label them. */
 let tabInfoSent='',tabInfoTimer;
 function reportTabInfo(){clearTimeout(tabInfoTimer);tabInfoTimer=setTimeout(()=>{if(typeof RUNTIME==='undefined'||pageKind()!=='video')return;
