@@ -2104,9 +2104,16 @@ const SWIPE_FRAME_CSS=`html,body{overflow:hidden!important;background:#000!impor
 #bilibili-player,#bilibili-player *{visibility:visible!important}
 #bilibili-player{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;z-index:2147483646!important}
 #bilibili-player .bpx-player-container,#bilibili-player .bpx-player-primary-area{width:100%!important;height:100%!important}
+#bilibili-player .bpx-player-container{box-shadow:none!important}
 .bpx-player-ending-panel,.bpx-player-ending-wrap,.bpx-player-toast-auto{display:none!important}
 .bpx-player-sending-area,.bpx-player-control-wrap,.bpx-player-shadow-progress-area,.bpx-player-top-wrap,.bpx-player-dialog-wrap{display:none!important}
 #bilibili-player .bpx-player-video-area{height:100%!important}
+#bilibili-player{transform-origin:0 50%;transition:transform .46s cubic-bezier(.32,.72,0,1)}
+html.bs-swipe-comments #bilibili-player{transform:scale(var(--bs-ck,.7))}
+#commentapp,#commentapp *{visibility:visible!important}
+#commentapp{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:auto!important;width:var(--bs-cw,400px)!important;max-width:none!important;margin:0!important;padding:14px 16px 24px 18px!important;box-sizing:border-box!important;overflow-y:auto!important;overscroll-behavior:contain;background:var(--bg1,#fff)!important;z-index:2147483647!important;transform:translateX(100%);transition:transform .46s cubic-bezier(.32,.72,0,1);scrollbar-width:thin}
+html.bs-swipe-comments #commentapp{transform:none}
+#commentapp bili-comments{zoom:.9}
 .bpx-player-state-wrap{left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%) scale(1.25)!important;pointer-events:none!important}`;
 function swipeVideo(slot){try{return slot.frame.contentDocument?.querySelector('#bilibili-player video,video');}catch{return null;}}
 function swipeSlot(i){
@@ -2134,8 +2141,10 @@ function swipeSlot(i){
 }
 // Wheel, ↑/↓ and Esc reach the frame first; they switch videos instead of scrolling the hidden page or changing volume.
 function swipeWireFrame(slot,win,doc){
-  win.addEventListener('wheel',e=>{e.preventDefault();swipeWheel(e);},{passive:false,capture:true});
-  doc.addEventListener('keydown',e=>{if(e.target?.closest?.('input,textarea,[contenteditable=true]'))return;
+  const inPanel=e=>!!swipe?.comments&&e.composedPath().some(n=>n.id==='commentapp');
+  const typing=e=>e.composedPath().some(n=>n.nodeType===1&&(n.matches('input,textarea')||n.isContentEditable));
+  win.addEventListener('wheel',e=>{if(inPanel(e))return;e.preventDefault();swipeWheel(e);},{passive:false,capture:true});
+  doc.addEventListener('keydown',e=>{if(typing(e))return;if(e.key==='Escape'&&swipe?.comments){e.preventDefault();e.stopImmediatePropagation();swipeComments(false);return;}if(inPanel(e)&&(e.key==='ArrowDown'||e.key==='ArrowUp'))return;
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();swipeGo(e.key==='ArrowDown'?1:-1);}
     else if(e.key==='Escape'&&!doc.fullscreenElement){e.preventDefault();closeSwipe();}},true);
 }
@@ -2147,6 +2156,7 @@ async function swipeGo(step){
   if(!swipe||swipe.moving)return;const to=swipe.index+step;if(to<0)return;
   if(to>=swipe.list.length-3)swipeMore();
   if(to>=swipe.list.length){await swipeMore();if(to>=swipe.list.length)return;}
+  if(swipe.comments)swipeComments(false);
   swipe.moving=true;const old=swipe.slots.get(swipe.index);const ov=old&&swipeVideo(old);if(ov&&!ov.paused)ov.pause();
   swipe.index=to;swipeEnsure();swipeRenderInfo();
   requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();const cur=swipe.slots.get(swipe.index),v=cur&&swipeVideo(cur);if(v&&cur.ready)v.play().catch(()=>{});},470);});
@@ -2180,7 +2190,8 @@ function swipeMark(item,k,on){item.touched=true;item.on||={};if(!!item.on[k]===o
   if(swipe?.list[swipe.index]===item){const b=$(`[data-swipe=${k}]`,swipe.ui);b.classList.toggle('on',on);swipeShowCount(item,k);}}
 async function swipeAction(kind,button){
   const item=swipe?.list[swipe.index];if(!item)return;
-  if(kind==='detail'||kind==='reply'||kind==='season'){const v=swipeVideo(swipe.slots.get(swipe.index));if(v)v.pause();location.href=`https://www.bilibili.com/video/${item.bvid}/`+(kind==='reply'?'#comment':'');return;}
+  if(kind==='reply'||kind==='comments-close'){swipeComments(kind==='reply'?undefined:false);return;}
+  if(kind==='detail'||kind==='season'){const v=swipeVideo(swipe.slots.get(swipe.index));if(v)v.pause();location.href=`https://www.bilibili.com/video/${item.bvid}/`;return;}
   if(kind==='share'){native('copy-video-link',{url:`https://www.bilibili.com/video/${item.bvid}`});swipePop(button);toast('已复制视频链接');return;}
   if(kind==='more'){swipe.ui.classList.toggle('expanded');return;}
   if(kind==='dm-toggle'){swipeDanmakuToggle(button);return;}
@@ -2202,6 +2213,7 @@ async function openSwipe(){
   if(swipe||!CONTENT_VIEW||pageKind()!=='home')return;
   const layer=document.createElement('div');layer.id='bs-swipe';layer.setAttribute('role','region');layer.setAttribute('aria-label','刷视频');
   layer.innerHTML=`<div class="bs-swipe-track"></div>
+<div class="bs-swipe-chead"><button type="button" data-swipe="comments-close" aria-label="关闭评论"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
 <div class="bs-swipe-ui">
  <div class="bs-swipe-edge"></div><div class="bs-swipe-peek"><i></i></div>
  <button type="button" class="bs-swipe-detail" data-swipe="detail">详情页 ›</button>
@@ -2227,6 +2239,16 @@ async function openSwipe(){
   swipeEnsure();swipePlace(false);swipeRenderInfo();
 }
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+// 评论 opens the video page's own comment section as a panel from the right; the video scales down to the space left.
+function swipeComments(open){
+  if(!swipe)return;open=open??!swipe.comments;const item=swipe.list[swipe.index],d=swipeFrameDoc();
+  if(open&&!d?.querySelector('#commentapp')){location.href=`https://www.bilibili.com/video/${item.bvid}/#comment`;return;}
+  swipe.comments=open;const width=Math.round(Math.min(540,Math.max(400,innerWidth*.38)));
+  swipe.layer.style.setProperty('--bs-cw',width+'px');swipe.layer.classList.toggle('comments',open);
+  if(d){const root=d.documentElement,look=d.defaultView.getComputedStyle(root);root.style.setProperty('--bs-cw',width+'px');root.style.setProperty('--bs-ck',String((innerWidth-width)/innerWidth));root.classList.toggle('bs-swipe-comments',open);
+    swipe.layer.style.setProperty('--bs-ctext',look.getPropertyValue('--text1').trim()||'#18191c');swipe.layer.style.setProperty('--bs-cbg',look.getPropertyValue('--bg1').trim()||'#fff');}
+  $('[data-swipe=reply]',swipe.ui)?.classList.toggle('on',open);
+}
 // The page's own sending box stays hidden; ours fills it and presses its send button, so the danmaku appears at once.
 function swipeFrameDoc(){try{return swipe?.slots.get(swipe.index)?.frame.contentDocument||null;}catch{return null;}}
 function swipeDanmakuSend(e){
@@ -2260,7 +2282,7 @@ function closeSwipe(){
 }
 function syncSwipeHash(){if(!CONTENT_VIEW)return;if(location.hash==='#swipe'&&pageKind()==='home')openSwipe();else if(swipe&&location.hash!=='#swipe')closeSwipe();}
 document.addEventListener('keydown',e=>{if(!swipe||e.target?.closest?.('input,textarea,[contenteditable=true]'))return;
-  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();swipeGo(e.key==='ArrowDown'?1:-1);}else if(e.key==='Escape'&&!document.fullscreenElement){e.preventDefault();closeSwipe();}},true);
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();swipeGo(e.key==='ArrowDown'?1:-1);}else if(e.key==='Escape'&&swipe.comments){e.preventDefault();swipeComments(false);}else if(e.key==='Escape'&&!document.fullscreenElement){e.preventDefault();closeSwipe();}},true);
 // The header's 刷视频 link takes the route indicator while the feed is open.
 // While the feed is open the header tucks away; the grip at the top (or the very top edge) brings it back, and it
 // tucks again once the pointer leaves it with nothing of its own open.
@@ -2281,7 +2303,13 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-wait svg{width:44px;height:44px}
 #bs-swipe iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .25s ease}
 #bs-swipe .bs-swipe-slot.ready iframe{opacity:1}#bs-swipe .bs-swipe-slot.ready .bs-swipe-wait{display:none}
-#bs-swipe .bs-swipe-ui{position:absolute;inset:0;pointer-events:none}
+#bs-swipe .bs-swipe-ui{position:absolute;inset:0;pointer-events:none;transition:right .46s cubic-bezier(.32,.72,0,1)}
+#bs-swipe.comments .bs-swipe-ui{right:var(--bs-cw,400px)}
+#bs-swipe .bs-swipe-chead{position:absolute;top:12px;right:14px;z-index:1;color:var(--bs-ctext,#18191c);transform:translateX(calc(var(--bs-cw,400px) + 14px));transition:transform .46s cubic-bezier(.32,.72,0,1)}
+#bs-swipe.comments .bs-swipe-chead{transform:none}
+#bs-swipe .bs-swipe-chead button{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:8px;background:rgba(128,128,128,.12);color:inherit;cursor:pointer;transition:background-color .15s}
+#bs-swipe .bs-swipe-chead button:hover{background:rgba(128,128,128,.24)}
+#bs-swipe .bs-swipe-chead svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 #bs-swipe .bs-swipe-ui button{pointer-events:auto;font:inherit;color:#fff;cursor:pointer}
 #bs-swipe .bs-swipe-edge{position:absolute;top:0;left:0;right:0;height:6px;pointer-events:auto}
 #bs-swipe .bs-swipe-peek{position:absolute;top:0;left:50%;width:min(360px,40%);height:26px;transform:translateX(-50%);display:flex;justify-content:center;pointer-events:auto}
@@ -2291,12 +2319,12 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-nav{position:absolute;right:18px;top:42%;transform:translateY(-50%);display:grid;gap:8px}
 #bs-swipe .bs-swipe-nav button{width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.4);transition:background .18s,transform .18s}#bs-swipe .bs-swipe-nav svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #bs-swipe .bs-swipe-shade{position:absolute;left:0;right:0;bottom:0;height:260px;background:linear-gradient(to top,rgba(0,0,0,.62),rgba(0,0,0,0))}
-#bs-swipe .bs-swipe-dm{position:absolute;left:50%;bottom:30px;width:clamp(240px,28vw,440px);height:38px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:0 4px 0 5px;border-radius:19px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);backdrop-filter:blur(14px) saturate(140%);pointer-events:auto;transition:background-color .2s,box-shadow .2s}
+#bs-swipe .bs-swipe-dm{position:absolute;left:50%;bottom:30px;width:clamp(240px,28vw,440px);height:32px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:0 3px 0 4px;border-radius:8px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);backdrop-filter:blur(14px) saturate(140%);pointer-events:auto;transition:background-color .2s,box-shadow .2s}
 #bs-swipe .bs-swipe-dm:focus-within{background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
 #bs-swipe .bs-swipe-dm input{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;color:#fff;font:inherit;font-size:13px}#bs-swipe .bs-swipe-dm input::placeholder{color:rgba(255,255,255,.62)}
-#bs-swipe .bs-swipe-dm-toggle{flex:none;width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(255,255,255,.18);font-size:13px!important;font-weight:600;transition:background-color .2s,opacity .2s}
+#bs-swipe .bs-swipe-dm-toggle{flex:none;width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:6px;background:rgba(255,255,255,.18);font-size:13px!important;font-weight:600;transition:background-color .2s,opacity .2s}
 #bs-swipe .bs-swipe-dm-toggle[aria-pressed=true]{background:#00aeec}#bs-swipe .bs-swipe-dm-toggle[aria-pressed=false]{opacity:.6}
-#bs-swipe .bs-swipe-dm-send{flex:none;height:30px;padding:0 14px;border:0;border-radius:15px;background:#00aeec;font-size:13px!important;transition:filter .15s,transform .15s}#bs-swipe .bs-swipe-dm-send:hover{filter:brightness(1.1)}#bs-swipe .bs-swipe-dm-send:active{transform:scale(.95)}
+#bs-swipe .bs-swipe-dm-send{flex:none;height:26px;padding:0 12px;border:0;border-radius:6px;background:#00aeec;font-size:13px!important;transition:filter .15s,transform .15s}#bs-swipe .bs-swipe-dm-send:hover{filter:brightness(1.1)}#bs-swipe .bs-swipe-dm-send:active{transform:scale(.95)}
 #bs-swipe .bs-swipe-progress{--p:0;position:absolute;left:0;right:0;bottom:0;height:14px;pointer-events:auto;cursor:pointer;touch-action:none}
 #bs-swipe .bs-swipe-progress::before,#bs-swipe .bs-swipe-progress i{content:'';position:absolute;left:0;bottom:0;height:3px;transition:height .18s cubic-bezier(.23,1,.32,1)}
 #bs-swipe .bs-swipe-progress::before{right:0;background:rgba(255,255,255,.22)}#bs-swipe .bs-swipe-progress i{width:calc(var(--p)*100%);background:#00aeec}
@@ -2317,6 +2345,7 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .expanded .bs-swipe-title span{-webkit-line-clamp:4}#bs-swipe .expanded .bs-swipe-desc{display:block}#bs-swipe .expanded .bs-swipe-title button{transform:rotate(180deg)}
 #bs-swipe .bs-swipe-season{margin-top:8px;padding:4px 10px;border:0;border-radius:6px;background:rgba(255,255,255,.14);font-size:12px}
 #bs-swipe .bs-swipe-actions{position:absolute;right:24px;bottom:24px;display:flex;gap:22px}
+#bs-swipe.comments .bs-swipe-dm{left:auto;right:24px;bottom:96px;transform:none;width:min(300px,calc(100% - 48px))}#bs-swipe.comments .bs-swipe-info{max-width:calc(100% - 380px)}#bs-swipe.comments .bs-swipe-actions{gap:14px}
 @media (max-width:1000px){#bs-swipe .bs-swipe-dm{left:auto;right:24px;bottom:96px;transform:none;width:300px}#bs-swipe .bs-swipe-info{max-width:calc(100% - 380px)}#bs-swipe .bs-swipe-actions{gap:14px}}
 #bs-swipe .bs-swipe-actions button{display:grid;justify-items:center;gap:3px;min-width:40px;border:0;background:none;padding:0;user-select:none;-webkit-user-select:none;touch-action:none}
 #bs-swipe .bs-swipe-icon{position:relative;display:grid;place-items:center;width:40px;height:40px;transition:transform .16s cubic-bezier(.23,1,.32,1)}
@@ -2332,7 +2361,7 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-svga{position:absolute;z-index:2;pointer-events:none}
 #bs-swipe .bs-swipe-svga.center{width:92px;height:92px;left:calc(50% - 46px);top:calc(50% - 46px)}
 #bs-swipe .bs-swipe-svga.top{width:120px;height:120px;left:calc(50% - 60px);bottom:calc(50% - 6px)}
-@media (prefers-reduced-motion:reduce){#bs-swipe .charging .bs-swipe-icon>svg{animation:none!important}#bs-swipe .bs-swipe-peek i{transition:none}}
+@media (prefers-reduced-motion:reduce){#bs-swipe :is(.bs-swipe-ui,.bs-swipe-chead){transition:none}#bs-swipe .charging .bs-swipe-icon>svg{animation:none!important}#bs-swipe .bs-swipe-peek i{transition:none}}
 @media (prefers-reduced-motion:reduce){#bs-swipe .bs-swipe-slot{transition:none!important}}`;
 function showOnboarding(){
   const renewed=!(typeof RUNTIME!=='undefined'&&RUNTIME.firstRun);
