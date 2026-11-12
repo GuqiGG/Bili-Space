@@ -9,10 +9,10 @@ test('requested message SVG and square maximize glyph appear in the centered-tit
  assert.deepEqual([...s.querySelectorAll('.messages svg path')].map(x=>x.getAttribute('d')),[...expected.querySelectorAll('path')].map(x=>x.getAttribute('d')));
  assert.equal(s.querySelector('.brand-label').textContent,'Bili-Space');assert(s.querySelector('.header-left nav [data-route=home]'));a.close();
 });
-test('header settings individually hide all eight optional items without hiding window controls',()=>{
+test('header settings individually hide all nine optional items without hiding window controls',()=>{
  const a=app(),s=a.w.document.querySelector('#bili-space-root').shadowRoot;
  s.querySelector('[data-tab=appearance]').click();
- const keys=['headerHome','headerDynamic','headerHistory','headerBrand','headerSearch','headerMessages','headerAccount','headerBack'];
+ const keys=['headerHome','headerSwipe','headerDynamic','headerHistory','headerBrand','headerSearch','headerMessages','headerAccount','headerBack'];
  for(const key of keys)assert(s.querySelector(`[data-pref=${key}]`));
  a.w.BiliSpace.update(Object.fromEntries(keys.map(key=>[key,false])));
  for(const selector of ['nav','.brand','.search','.messages','.account','.back'])assert.equal(s.querySelector(selector).hidden,true,selector);

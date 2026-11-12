@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
    keep their header space but hide their own copy (content mode). */
@@ -80,7 +80,7 @@ let routeKey='', loadingTimer, accountRequest, accountChecked=0;
 let homeLoadWakeKey='',homeLoadWakeTimer,homeLoadRetryTimer;
 const mediaTheme=matchMedia('(prefers-color-scheme: dark)');
 const HEADER_ITEMS=[
-  ['headerHome','首页','[data-route="home"]'],['headerDynamic','动态','[data-route="dynamic"]'],['headerHistory','历史','[data-route="history"]'],
+  ['headerHome','首页','[data-route="home"]'],['headerSwipe','刷视频','[data-route="swipe"]'],['headerDynamic','动态','[data-route="dynamic"]'],['headerHistory','历史','[data-route="history"]'],
   ['headerBrand','显示 Logo','.brand'],['headerSearch','搜索栏','.search'],['headerFavorites','收藏夹按钮','.favorites-wrap'],['headerWatchlater','稍后再看按钮','.watchlater'],['headerMessages','消息按钮','.messages'],['headerUpload','投稿按钮','.upload'],['headerAccount','头像 / 登录入口','.account'],['headerBack','分区展开入口','.back']
 ];
 function applyHeaderPreferences(){
@@ -285,7 +285,7 @@ function pageKind(at=routePreview||chromeLocation||location){
   if(/\/(?:account\/)?history(?:\/|$)/.test(path))return 'history';
   if(/^\/(?:video|bangumi|list)(?:\/|$)/.test(path))return 'video';
   if(at.hostname==='message.bilibili.com')return 'messages';
-  return /^\/(?:index\.html)?$/.test(path)?'home':'other';
+  return /^\/(?:index\.html)?$/.test(path)?(CHROME_VIEW&&at.hash==='#swipe'?'swipe':'home'):'other';
 }
 /* Brand, history and category changes are decided before the native host shows a freshly loaded page; hold them on their first frame until it is visible. */
 const revealMotion=[];let revealFallback;function holdForReveal(m){if(typeof RUNTIME!=='undefined'&&!headerSurfaceReady&&m?.pause){m.pause();revealMotion.push(m);clearTimeout(revealFallback);revealFallback=setTimeout(releaseHeldMotion,1200);}return m;}
@@ -294,7 +294,7 @@ function releaseHeldMotion(){if(document.visibilityState==='hidden'){document.ad
 let headerSurfaceReady=false,headerRouteFrame,routeOrigin=typeof RUNTIME!=='undefined'?undefined:'',routeArrived=false,reportedRoute,videoHomeShown,videoHomeMotion=[],videoHomeTimer;
 const headerMotionReduced=()=>CONTENT_VIEW||matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* The previous page's route comes back from the native host, so a full page load can continue the header motion it started. */
-function acceptRouteOrigin(route){if(routeOrigin!==undefined)return;routeOrigin=['home','dynamic','history','video','other'].includes(route)?route:'';if(!headerSurfaceReady&&shadow&&routeOrigin)syncVideoHome(routeOrigin==='video',false);arriveHeaderRoute();}
+function acceptRouteOrigin(route){if(routeOrigin!==undefined)return;routeOrigin=['home','swipe','dynamic','history','video','other'].includes(route)?route:'';if(!headerSurfaceReady&&shadow&&routeOrigin)syncVideoHome(routeOrigin==='video',false);arriveHeaderRoute();}
 function arriveHeaderRoute(){if(routeArrived||!headerSurfaceReady||routeOrigin===undefined||!shadow)return;routeArrived=true;const kind=pageKind();syncVideoHome(kind==='video',true);if(routeOrigin&&routeOrigin!==kind)slideRouteIndicator(routeLink(routeOrigin),routeLink(kind));}
 function surfaceRevealed(){const first=!headerSurfaceReady;headerSurfaceReady=true;const held=revealMotion.splice(0);held.forEach(m=>{try{m.play();}catch{}});if(first&&routeOrigin===undefined)setTimeout(()=>acceptRouteOrigin(''),150);arriveHeaderRoute();}
 /* Local-first pages: the native host opens the account's saved copy instantly, so after each visit the official HTML of the
@@ -1699,7 +1699,7 @@ nav{display:flex;flex-shrink:0;gap:4px;height:100%;align-items:center}nav a{font
 .search-panel{position:absolute;top:calc(100% + 9px);left:0;right:0;max-height:min(460px,calc(100vh - var(--bs-header-height,58px) - 24px));overflow:auto;overscroll-behavior:contain;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 12px 32px #0004;pointer-events:auto;text-align:left}.search-panel[hidden]{display:none}.search-panel h2{position:relative;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0 9px;font-size:12px;color:var(--muted);font-weight:500}.search-panel p{font-size:12px;color:var(--muted);margin:12px 2px}.search-history-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.search-history-chip{display:inline-flex;align-items:center;max-width:100%;min-width:0;background:var(--field);border-radius:6px}.search-history-chip .search-choice{flex:0 1 auto!important;max-width:200px;padding:6px 8px!important;font-size:12px!important}.search-history-chip .search-remove{width:22px!important;height:24px!important;font-size:16px!important}.search-row{display:flex;align-items:center;min-width:0;border-radius:7px}.search-panel button{border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}.search-panel .search-choice{flex:1;min-width:0;text-align:left;padding:9px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;border-radius:7px}.search-choice:hover,.search-choice.selected{background:var(--field);color:var(--accent)}.search-panel .search-remove{flex:none;width:28px;height:28px;color:var(--muted);font-size:19px;border-radius:6px}.search-remove:hover,.search-panel .search-clear:hover{color:var(--accent);background:var(--field)}.search-panel .search-clear{padding:3px 5px;color:var(--muted);font-size:11px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @keyframes bs-search-spin{to{transform:rotate(360deg)}}@keyframes bs-search-progress{0%{transform:scaleX(.1)}70%{transform:scaleX(.85)}100%{transform:scaleX(1);opacity:.35}}
-:host([data-web-full]) :is(#settings-trigger,.upload,#feed-roll,#page-top){opacity:0!important;transform:translateY(8px)!important;pointer-events:none!important}:is(#settings-trigger,.upload){transition:opacity .24s cubic-bezier(.32,.72,0,1),transform .24s cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}#settings-trigger{position:fixed;bottom:22px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
+:host([data-web-full]) :is(#settings-trigger,.upload,#feed-roll,#page-top),:host([data-swipe]) :is(#settings-trigger,.upload,#feed-roll,#page-top){opacity:0!important;transform:translateY(8px)!important;pointer-events:none!important}:host([data-swipe]) #chrome{transition:translate .34s cubic-bezier(.23,1,.32,1),opacity .22s ease}:host([data-swipe][data-swipe-tuck]) #chrome{translate:0 calc(-100% - 12px);opacity:0;pointer-events:none}@media (prefers-reduced-motion:reduce){:host([data-swipe]) #chrome{transition:opacity .15s}:host([data-swipe][data-swipe-tuck]) #chrome{translate:none}}:is(#settings-trigger,.upload){transition:opacity .24s cubic-bezier(.32,.72,0,1),transform .24s cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}#settings-trigger{position:fixed;bottom:22px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
 #settings-trigger svg{width:23px;height:23px}#settings-trigger circle,#settings-trigger path{stroke:currentColor}
 .scrim{position:fixed;inset:0;background:#08080c80;display:grid;place-items:center;padding:40px;pointer-events:auto}
 .dialog{width:min(940px,100%);height:min(660px,calc(100vh - 80px));min-height:260px;min-width:min(360px,100%);max-width:100%;max-height:100%;resize:both;display:grid;grid-template-columns:calc(210px * var(--bs-settings-zoom,1)) 1fr;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 32px 100px #0006;overflow:hidden}#settings .dialog>:is(aside,main){zoom:var(--bs-settings-zoom,1)}
@@ -2038,6 +2038,246 @@ ${item.text?`<p class="share-lead news-text">${escapeHtml(item.text)}</p>`:''}
   requestAnimationFrame(()=>$('.wn-primary',card)?.focus({preventScroll:true}));
 }
 function startNews(){if(!CHROME_VIEW)return;setTimeout(()=>native('news'),5000);setInterval(()=>native('news'),3*3600*1000);}
+// 刷视频: recommended videos one at a time over the home page, switched with the wheel, ↑/↓ or the side arrows, like the
+// official desktop client's 精选. Each video is the real video page in a same-origin frame, reduced to its player, so
+// quality, danmaku (sending included) and the account all behave as usual; the neighbours are preloaded and kept paused.
+let swipe=null;
+const SWIPE_EASE='cubic-bezier(.32,.72,0,1)';
+const swipeCookie=name=>(document.cookie.match(new RegExp('(?:^|;\\s*)'+name+'=([^;]+)'))||[])[1]||'';
+const swipeCount=n=>{n=Number(n)||0;const lang=uiLanguage();if(!/^(zh|yue|lolcat)/.test(lang))try{return new Intl.NumberFormat(lang==='pt-BR'?'pt-BR':lang,{notation:'compact',maximumFractionDigits:1}).format(n);}catch{}return n>=1e8?(n/1e8).toFixed(1).replace(/\.0$/,'')+'亿':n>=1e4?(n/1e4).toFixed(1).replace(/\.0$/,'')+'万':String(n);};
+async function swipeApi(url,body){
+  const opt={credentials:'include'};
+  if(body){opt.method='POST';opt.headers={'Content-Type':'application/x-www-form-urlencoded'};opt.body=new URLSearchParams({...body,csrf:swipeCookie('bili_jct')});}
+  try{return await (await fetch(url,opt)).json();}catch{return null;}
+}
+async function swipeMore(){
+  if(!swipe||swipe.loading)return;swipe.loading=true;swipe.page++;
+  const j=await swipeApi(`https://api.bilibili.com/x/web-interface/index/top/feed/rcmd?ps=12&fresh_type=4&fresh_idx=${swipe.page}&fresh_idx_1h=${swipe.page}&brush=${swipe.page}`);
+  for(const it of j?.data?.item||[]){if(it.goto!=='av'||!it.bvid||it.business_info||swipe.seen.has(it.bvid))continue;swipe.seen.add(it.bvid);swipe.list.push({bvid:it.bvid,aid:it.id,title:it.title,pic:it.pic,owner:it.owner||{},stat:it.stat||{}});}
+  swipe.loading=false;
+}
+// Bilibili's own toolbar icons (the video page's like, coin, favourite and share), and a reply bubble drawn to match.
+const SWIPE_ACTIONS=[
+  ['like','点赞（长按一键三连）',36,'M9.77234 30.8573V11.7471H7.54573C5.50932 11.7471 3.85742 13.3931 3.85742 15.425V27.1794C3.85742 29.2112 5.50932 30.8573 7.54573 30.8573H9.77234ZM11.9902 30.8573V11.7054C14.9897 10.627 16.6942 7.8853 17.1055 3.33591C17.2666 1.55463 18.9633 0.814421 20.5803 1.59505C22.1847 2.36964 23.243 4.32583 23.243 6.93947C23.243 8.50265 23.0478 10.1054 22.6582 11.7471H29.7324C31.7739 11.7471 33.4289 13.402 33.4289 15.4435C33.4289 15.7416 33.3928 16.0386 33.3215 16.328L30.9883 25.7957C30.2558 28.7683 27.5894 30.8573 24.528 30.8573H11.9911H11.9902Z'],
+  ['coin','投币',28,'M14.045 25.5454C7.69377 25.5454 2.54504 20.3967 2.54504 14.0454C2.54504 7.69413 7.69377 2.54541 14.045 2.54541C20.3963 2.54541 25.545 7.69413 25.545 14.0454C25.545 17.0954 24.3334 20.0205 22.1768 22.1771C20.0201 24.3338 17.095 25.5454 14.045 25.5454ZM9.66202 6.81624H18.2761C18.825 6.81624 19.27 7.22183 19.27 7.72216C19.27 8.22248 18.825 8.62807 18.2761 8.62807H14.95V10.2903C17.989 10.4444 20.3766 12.9487 20.3855 15.9916V17.1995C20.3854 17.6997 19.9799 18.1052 19.4796 18.1052C18.9793 18.1052 18.5738 17.6997 18.5737 17.1995V15.9916C18.5667 13.9478 16.9882 12.2535 14.95 12.1022V20.5574C14.95 21.0577 14.5444 21.4633 14.0441 21.4633C13.5437 21.4633 13.1382 21.0577 13.1382 20.5574V12.1022C11.1 12.2535 9.52148 13.9478 9.51448 15.9916V17.1995C9.5144 17.6997 9.10883 18.1052 8.60856 18.1052C8.1083 18.1052 7.70273 17.6997 7.70265 17.1995V15.9916C7.71158 12.9487 10.0992 10.4444 13.1382 10.2903V8.62807H9.66202C9.11309 8.62807 8.66809 8.22248 8.66809 7.72216C8.66809 7.22183 9.11309 6.81624 9.66202 6.81624Z'],
+  ['fav','收藏',28,'M19.8071 9.26152C18.7438 9.09915 17.7624 8.36846 17.3534 7.39421L15.4723 3.4972C14.8998 2.1982 13.1004 2.1982 12.4461 3.4972L10.6468 7.39421C10.1561 8.36846 9.25639 9.09915 8.19315 9.26152L3.94016 9.91102C2.63155 10.0734 2.05904 11.6972 3.04049 12.6714L6.23023 15.9189C6.96632 16.6496 7.29348 17.705 7.1299 18.7605L6.39381 23.307C6.14844 24.6872 7.62063 25.6614 8.84745 25.0119L12.4461 23.0634C13.4276 22.4951 14.6544 22.4951 15.6359 23.0634L19.2345 25.0119C20.4614 25.6614 21.8518 24.6872 21.6882 23.307L20.8703 18.7605C20.7051 17.705 21.0339 16.6496 21.77 15.9189L24.9597 12.6714C25.9412 11.6972 25.3687 10.0734 24.06 9.91102L19.8071 9.26152Z'],
+  ['share','分享',28,'M12.6058 10.3326V5.44359C12.6058 4.64632 13.2718 4 14.0934 4C14.4423 4 14.78 4.11895 15.0476 4.33606L25.3847 12.7221C26.112 13.3121 26.2087 14.3626 25.6007 15.0684C25.5352 15.1443 25.463 15.2144 25.3847 15.2779L15.0476 23.6639C14.4173 24.1753 13.4791 24.094 12.9521 23.4823C12.7283 23.2226 12.6058 22.8949 12.6058 22.5564V18.053C7.59502 18.053 5.37116 19.9116 2.57197 23.5251C2.47607 23.6489 2.00031 23.7769 2.00031 23.2122C2.00031 16.2165 3.90102 10.3326 12.6058 10.3326Z'],
+  ['reply','评论',28,'M6 3.5h16a3.5 3.5 0 0 1 3.5 3.5v10.5a3.5 3.5 0 0 1-3.5 3.5h-9.2l-5.6 4.1c-.66.48-1.6.01-1.6-.81V21A3.5 3.5 0 0 1 2.5 17.5V7A3.5 3.5 0 0 1 6 3.5Z']];
+// The video page's own celebration animations (SVGA files) play over the buttons, with the page's own SVGA player
+// (which only accepts a container made by its own document; it sizes and centres its canvas itself).
+const SWIPE_SVGA_URLS={heart:'https://s1.hdslb.com/bfs/seed/jinkela/short/config/like_heart.svga',thumb:'https://s1.hdslb.com/bfs/seed/jinkela/short/config/like_thumb.svga',fireworks:'https://i0.hdslb.com/bfs/activity-plat/static/20210531/d10a0e2254670a43c49fc027b914ec9e/firework.svga'};
+let swipeSvgaFiles=null;
+function swipeSvgaKit(){
+  const slot=swipe?.slots.get(swipe.index);let w,d;try{w=slot?.frame.contentWindow;d=slot?.frame.contentDocument;}catch{return null;}
+  if(!w?.SVGA)return null;
+  // The base like, coin and favourite animations ship inside the page's toolbar component.
+  if(!swipeSvgaFiles&&d){let el=d.querySelector('.video-toolbar-left');while(el&&!el.__vue__)el=el.parentElement;
+    for(let vm=el?.__vue__,k=0;vm&&k<8;vm=vm.$parent,k++){const x=vm.$data;if(x?.likeBase&&x.coinBase&&x.favBase){swipeSvgaFiles={like:x.likeBase,coin:x.coinBase,fav:x.favBase};break;}}}
+  return {SVGA:w.SVGA,doc:d,files:{...SWIPE_SVGA_URLS,...swipeSvgaFiles}};
+}
+function swipeSvga(button,name,place='center'){
+  if(swipeStill())return;const kit=swipeSvgaKit(),src=kit?.files[name];if(!src)return;
+  const box=kit.doc.createElement('div');box.className='bs-swipe-svga '+place;$('.bs-swipe-icon',button).append(box);
+  try{const player=new kit.SVGA.Player(box);player.loops=1;player.clearsAfterStop=true;player.onFinished(()=>box.remove());
+    new kit.SVGA.Parser(box).load(src,item=>{if(!box.isConnected)return;player.setVideoItem(item);player.startAnimation();},()=>box.remove());}catch{box.remove();}
+  setTimeout(()=>box.remove(),5000);
+}
+function swipePop(button){if(swipeStill())return;$('.bs-swipe-icon>svg:last-of-type',button)?.animate([{transform:'scale(1)'},{transform:'scale(.78)',offset:.3},{transform:'scale(1.18)',offset:.7},{transform:'scale(1)'}],{duration:420,easing:'cubic-bezier(.2,.8,.2,1)'});}
+// Holding the like button fills a ring round like, coin and favourite, then sends 一键三连 like the video page does.
+function swipeHold(e){
+  const b=e.target.closest?.('[data-swipe=like]');if(!b||e.button!==0||!swipe)return;
+  const actions=$('.bs-swipe-actions',swipe.ui);clearTimeout(swipe.holdTimer);
+  swipe.holdTimer=setTimeout(()=>{actions.classList.add('charging');swipe.holdTimer=setTimeout(()=>{actions.classList.remove('charging');swipe.suppressClick=true;swipeTriple();},1300);},220);
+  const stop=()=>{clearTimeout(swipe?.holdTimer);actions.classList.remove('charging');removeEventListener('pointerup',stop,true);b.removeEventListener('pointerleave',stop);};
+  addEventListener('pointerup',stop,true);b.addEventListener('pointerleave',stop);
+}
+async function swipeTriple(){
+  const item=swipe?.list[swipe.index];if(!item)return;if(!swipeCookie('DedeUserID')){toast('请先登录 B站');return;}
+  const j=await swipeApi('https://api.bilibili.com/x/web-interface/archive/like/triple',{aid:item.aid});if(!swipe)return;
+  if(j?.code!==0){toast(j?.message||'三连失败');return;}
+  const d=j.data||{},ui=swipe.ui;
+  for(const [k,ok] of [['like',d.like],['coin',d.coin],['fav',d.fav]]){if(!ok)continue;const b=$(`[data-swipe=${k}]`,ui);b.classList.add('on');swipePop(b);swipeSvga(b,k);}
+  if(d.like&&d.coin&&d.fav)swipeSvga($('[data-swipe=coin]',ui),'fireworks','top');
+}
+const SWIPE_FRAME_CSS=`html,body{overflow:hidden!important;background:#000!important}body *{visibility:hidden!important}
+#bilibili-player,#bilibili-player *{visibility:visible!important}
+#bilibili-player{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;z-index:2147483646!important}
+#bilibili-player .bpx-player-container,#bilibili-player .bpx-player-primary-area{width:100%!important;height:100%!important}
+.bpx-player-ending-panel,.bpx-player-ending-wrap,.bpx-player-toast-auto{display:none!important}`;
+function swipeVideo(slot){try{return slot.frame.contentDocument?.querySelector('#bilibili-player video,video');}catch{return null;}}
+function swipeSlot(i){
+  const item=swipe.list[i],el=document.createElement('div');el.className='bs-swipe-slot';
+  el.innerHTML=`<img class="bs-swipe-cover" alt="" referrerpolicy="no-referrer" src="${escapeHtml((item.pic||'').replace(/^http:/,'https:'))}@1280w_720h_1c.webp"><div class="bs-swipe-wait">${ICON_TV}<p>你感兴趣的视频都在 B 站</p></div>`;
+  const frame=document.createElement('iframe');frame.allow='autoplay; fullscreen; picture-in-picture; clipboard-write';frame.setAttribute('allowfullscreen','');
+  frame.src=`https://www.bilibili.com/video/${item.bvid}/`;el.append(frame);
+  const slot={i,el,frame,ready:false,styled:false,wired:false};
+  // Until the page is reduced to its player and showing a picture, the cover stands in.
+  slot.timer=setInterval(()=>{
+    let doc;try{doc=frame.contentDocument;}catch{return;}if(!doc||!doc.documentElement)return;
+    // The frame starts on a blank document; only the video page's own document counts.
+    if(doc.location.href==='about:blank')return;if(slot.doc!==doc){slot.doc=doc;slot.styled=false;slot.wired=false;}
+    if(!slot.styled&&doc.head){const s=doc.createElement('style');s.id='bs-swipe-frame';s.textContent=SWIPE_FRAME_CSS;doc.head.append(s);slot.styled=true;}
+    else if(slot.styled&&!doc.getElementById('bs-swipe-frame')&&doc.head){const s=doc.createElement('style');s.id='bs-swipe-frame';s.textContent=SWIPE_FRAME_CSS;doc.head.append(s);}
+    if(!slot.wired&&doc.body){slot.wired=true;swipeWireFrame(slot,frame.contentWindow,doc);}
+    const v=swipeVideo(slot);if(!v)return;
+    if(!v.dataset.bsSwipe){v.dataset.bsSwipe='1';v.addEventListener('ended',()=>{if(swipe&&swipe.slots.get(swipe.index)===slot)swipeGo(1);});v.addEventListener('play',()=>{if(swipe&&swipe.slots.get(swipe.index)!==slot)v.pause();});}
+    if(swipe.slots.get(swipe.index)!==slot){if(!v.paused)v.pause();}
+    else if(!slot.started&&v.readyState>=2){slot.started=true;v.play().catch(()=>{});}
+    if(!slot.ready&&v.readyState>=2&&slot.styled){slot.ready=true;el.classList.add('ready');}
+  },120);
+  return slot;
+}
+// Wheel, ↑/↓ and Esc reach the frame first; they switch videos instead of scrolling the hidden page or changing volume.
+function swipeWireFrame(slot,win,doc){
+  win.addEventListener('wheel',e=>{e.preventDefault();swipeWheel(e);},{passive:false,capture:true});
+  doc.addEventListener('keydown',e=>{if(e.target?.closest?.('input,textarea,[contenteditable=true]'))return;
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();swipeGo(e.key==='ArrowDown'?1:-1);}
+    else if(e.key==='Escape'&&!doc.fullscreenElement){e.preventDefault();closeSwipe();}},true);
+}
+function swipeWheel(e){if(!swipe||Math.abs(e.deltaY)<20)return;const now=performance.now();if(now-swipe.wheelAt<480)return;swipe.wheelAt=now;swipeGo(e.deltaY>0?1:-1);}
+function swipePlace(animate){
+  for(const [i,slot] of swipe.slots){const y=(i-swipe.index)*100;slot.el.style.transition=animate?`transform .46s ${SWIPE_EASE}`:'none';slot.el.style.transform=`translate3d(0,${y}%,0)`;}
+}
+async function swipeGo(step){
+  if(!swipe||swipe.moving)return;const to=swipe.index+step;if(to<0)return;
+  if(to>=swipe.list.length-3)swipeMore();
+  if(to>=swipe.list.length){await swipeMore();if(to>=swipe.list.length)return;}
+  swipe.moving=true;const old=swipe.slots.get(swipe.index);const ov=old&&swipeVideo(old);if(ov&&!ov.paused)ov.pause();
+  swipe.index=to;swipeEnsure();swipeRenderInfo();
+  requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();const cur=swipe.slots.get(swipe.index),v=cur&&swipeVideo(cur);if(v&&cur.ready)v.play().catch(()=>{});},470);});
+}
+// The current video and its neighbours exist; anything further away is dropped (frames are whole pages).
+function swipeEnsure(){
+  for(const i of [swipe.index,swipe.index+1,swipe.index-1]){if(i<0||i>=swipe.list.length||swipe.slots.has(i))continue;const s=swipeSlot(i);s.el.style.transform=`translate3d(0,${(i-swipe.index)*100}%,0)`;swipe.track.append(s.el);swipe.slots.set(i,s);}
+}
+function swipePrune(){for(const [i,slot] of swipe.slots)if(Math.abs(i-swipe.index)>1){clearInterval(slot.timer);slot.frame.src='about:blank';slot.el.remove();swipe.slots.delete(i);}}
+async function swipeRenderInfo(){
+  const item=swipe.list[swipe.index];if(!item)return;const ui=swipe.ui,token=item.bvid;ui.dataset.bvid=token;
+  const o=item.owner,s=item.stat;
+  $('.bs-swipe-owner',ui).innerHTML=`<img alt="" referrerpolicy="no-referrer" src="${escapeHtml((o.face||'').replace(/^http:/,'https:'))}@80w_80h_1c.webp"><div><p><b>${escapeHtml(o.name||'')}</b><button type="button" data-swipe="follow" class="bs-swipe-follow">+ 关注</button></p><small class="bs-swipe-fans"></small></div>`;
+  $('.bs-swipe-title',ui).innerHTML=`<span>${escapeHtml(item.title||'')}</span><button type="button" data-swipe="more" aria-label="展开简介">⌄</button>`;
+  $('.bs-swipe-desc',ui).textContent='';ui.classList.remove('expanded');$('.bs-swipe-season',ui).hidden=true;
+  const counts={like:s.like,coin:s.coin,fav:s.favorite,share:s.share,reply:s.reply??s.danmaku};
+  for(const [k,v] of Object.entries(counts)){const b=$(`[data-swipe=${k}]`,ui);b.classList.remove('on');$('small',b).textContent=v!=null?swipeCount(v):'';}
+  const [view,rel]=await Promise.all([swipeApi('https://api.bilibili.com/x/web-interface/view?bvid='+token),swipeApi('https://api.bilibili.com/x/web-interface/archive/relation?bvid='+token)]);
+  if(!swipe||ui.dataset.bvid!==token)return;
+  const d=view?.data;if(d){item.aid=d.aid;item.mid=d.owner?.mid;const st=d.stat||{};item.likes=st.like;
+    for(const [k,v] of Object.entries({like:st.like,coin:st.coin,fav:st.favorite,share:st.share,reply:st.reply}))$(`[data-swipe=${k}] small`,ui).textContent=swipeCount(v);
+    $('.bs-swipe-desc',ui).textContent=d.desc||'';
+    if(d.ugc_season){const sea=$('.bs-swipe-season',ui);sea.hidden=false;sea.textContent=`合集 · ${d.ugc_season.title} · ${d.ugc_season.ep_count||''} 个视频 ›`;}
+    const card=await swipeApi('https://api.bilibili.com/x/web-interface/card?mid='+d.owner.mid);
+    if(swipe&&ui.dataset.bvid===token&&card?.data){$('.bs-swipe-fans',ui).textContent=`${swipeCount(card.data.follower)}粉丝 · ${swipeCount(card.data.like_num)}点赞`;if(card.data.following)$('.bs-swipe-follow',ui).hidden=true;}}
+  const r=rel?.data;if(r){$('[data-swipe=like]',ui).classList.toggle('on',!!r.like);$('[data-swipe=coin]',ui).classList.toggle('on',!!r.coin);$('[data-swipe=fav]',ui).classList.toggle('on',!!r.favorite);if(r.attention)$('.bs-swipe-follow',ui).hidden=true;}
+}
+async function swipeAction(kind,button){
+  const item=swipe?.list[swipe.index];if(!item)return;
+  if(kind==='detail'||kind==='reply'||kind==='season'){const v=swipeVideo(swipe.slots.get(swipe.index));if(v)v.pause();location.href=`https://www.bilibili.com/video/${item.bvid}/`+(kind==='reply'?'#comment':'');return;}
+  if(kind==='share'){native('copy-video-link',{url:`https://www.bilibili.com/video/${item.bvid}`});toast('已复制视频链接');return;}
+  if(kind==='more'){swipe.ui.classList.toggle('expanded');return;}
+  if(!swipeCookie('DedeUserID')){toast('请先登录 B站');return;}
+  const aid=item.aid;let j;
+  if(kind==='like'){const on=!button.classList.contains('on');j=await swipeApi('https://api.bilibili.com/x/web-interface/archive/like',{aid,like:on?1:2});if(j?.code===0){button.classList.toggle('on',on);swipePop(button);if(on){const n=item.likes??0;swipeSvga(button,n>=1e3?'thumb':n>=100?'heart':'like',n>=100?'top':'center');}}}
+  else if(kind==='coin'){if(button.classList.contains('on')){toast('这个视频已经投过币了');return;}j=await swipeApi('https://api.bilibili.com/x/web-interface/coin/add',{aid,multiply:1,select_like:0});if(j?.code===0){button.classList.add('on');swipePop(button);swipeSvga(button,'coin');toast('投币成功');}}
+  else if(kind==='fav'){const list=await swipeApi(`https://api.bilibili.com/x/v3/fav/folder/created/list-all?type=2&rid=${aid}&up_mid=${swipeCookie('DedeUserID')}`);const folders=list?.data?.list||[];if(!folders.length){toast('没有找到收藏夹');return;}
+    const on=!button.classList.contains('on'),ids=on?[folders[0].id]:folders.filter(f=>f.fav_state).map(f=>f.id);
+    j=await swipeApi('https://api.bilibili.com/x/v3/fav/resource/deal',{rid:aid,type:2,[on?'add_media_ids':'del_media_ids']:ids.join(',')});if(j?.code===0){button.classList.toggle('on',on);swipePop(button);if(on)swipeSvga(button,'fav');toast(on?'已收藏到默认收藏夹':'已取消收藏');}}
+  else if(kind==='follow'){if(!item.mid)return;j=await swipeApi('https://api.bilibili.com/x/relation/modify',{fid:item.mid,act:1,re_src:11});if(j?.code===0){button.hidden=true;toast('已关注');}}
+  if(j&&j.code!==0)toast(j.message||'操作失败，请稍后再试');
+}
+async function openSwipe(){
+  if(swipe||!CONTENT_VIEW||pageKind()!=='home')return;
+  const layer=document.createElement('div');layer.id='bs-swipe';layer.setAttribute('role','region');layer.setAttribute('aria-label','刷视频');
+  layer.innerHTML=`<div class="bs-swipe-track"></div>
+<div class="bs-swipe-ui">
+ <div class="bs-swipe-edge"></div><div class="bs-swipe-peek"><i></i></div>
+ <button type="button" class="bs-swipe-detail" data-swipe="detail">详情页 ›</button>
+ <div class="bs-swipe-shade"></div><div class="bs-swipe-nav"><button type="button" data-swipe="prev" aria-label="上一个"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button><button type="button" data-swipe="next" aria-label="下一个"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+ <div class="bs-swipe-info"><div class="bs-swipe-owner"></div><p class="bs-swipe-title"></p><p class="bs-swipe-desc"></p><button type="button" class="bs-swipe-season" data-swipe="season" hidden></button></div>
+ <div class="bs-swipe-actions">${SWIPE_ACTIONS.map(([k,l,box,d])=>`<button type="button" data-swipe="${k}" aria-label="${l}"><span class="bs-swipe-icon">${k==='like'||k==='coin'||k==='fav'?'<svg class="bs-swipe-ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/></svg>':''}<svg viewBox="0 0 ${box} ${box}" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="${d}"/></svg></span><small></small></button>`).join('')}</div>
+</div>`;
+  if(!document.getElementById('bs-swipe-style')){const st=document.createElement('style');st.id='bs-swipe-style';st.textContent=SWIPE_CSS;(document.head||document.documentElement).append(st);}
+  document.documentElement.append(layer);document.documentElement.dataset.bsSwipe='true';
+  swipe={layer,track:$('.bs-swipe-track',layer),ui:$('.bs-swipe-ui',layer),list:[],seen:new Set(),page:0,index:0,slots:new Map(),wheelAt:0,moving:false,loading:false};
+  native('swipe-state',{on:true});
+  layer.addEventListener('wheel',e=>{e.preventDefault();swipeWheel(e);},{passive:false});
+  layer.addEventListener('pointerdown',swipeHold);
+  for(const z of layer.querySelectorAll('.bs-swipe-edge,.bs-swipe-peek'))z.addEventListener('pointerenter',()=>native('swipe-header',{show:true}));
+  layer.addEventListener('click',e=>{const b=e.target.closest('[data-swipe]');if(!b)return;if(swipe.suppressClick){swipe.suppressClick=false;return;}const k=b.dataset.swipe;if(k==='prev')swipeGo(-1);else if(k==='next')swipeGo(1);else swipeAction(k,b);});
+  if(!swipeStill())layer.animate([{opacity:0},{opacity:1}],{duration:260,easing:'ease-out'});
+  await swipeMore();if(!swipe)return;
+  if(!swipe.list.length){toast('暂时拿不到推荐，请稍后再试');closeSwipe();return;}
+  swipeEnsure();swipePlace(false);swipeRenderInfo();
+}
+function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function closeSwipe(){
+  if(!swipe)return;const s=swipe;swipe=null;for(const slot of s.slots.values()){clearInterval(slot.timer);slot.frame.src='about:blank';}
+  delete document.documentElement.dataset.bsSwipe;native('swipe-state',{on:false});
+  if(location.hash==='#swipe')history.replaceState(history.state,'',location.pathname+location.search);
+  const done=()=>s.layer.remove();if(swipeStill())done();else s.layer.animate([{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}).onfinish=done;
+}
+function syncSwipeHash(){if(!CONTENT_VIEW)return;if(location.hash==='#swipe'&&pageKind()==='home')openSwipe();else if(swipe&&location.hash!=='#swipe')closeSwipe();}
+document.addEventListener('keydown',e=>{if(!swipe||e.target?.closest?.('input,textarea,[contenteditable=true]'))return;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();swipeGo(e.key==='ArrowDown'?1:-1);}else if(e.key==='Escape'&&!document.fullscreenElement){e.preventDefault();closeSwipe();}},true);
+// The header's 刷视频 link takes the route indicator while the feed is open.
+// While the feed is open the header tucks away; the grip at the top (or the very top edge) brings it back, and it
+// tucks again once the pointer leaves it with nothing of its own open.
+let swipeOn=false,swipeTucked=false,swipeTuckTimer=0;
+function setSwipeActive(on){if(!CHROME_VIEW||!shadow)return;swipeOn=!!on;shadow.host.toggleAttribute('data-swipe',swipeOn);
+  const c=$('#chrome',shadow);if(c&&!c.dataset.swipeWired){c.dataset.swipeWired='1';c.addEventListener('pointerenter',()=>clearTimeout(swipeTuckTimer));c.addEventListener('pointerleave',()=>swipeTuckSoon(450));}
+  swipeTuck(swipeOn);}
+function swipeTuck(on){clearTimeout(swipeTuckTimer);swipeTucked=on;shadow.host.toggleAttribute('data-swipe-tuck',on);reportChromeLayout();}
+function swipeHeaderBusy(){const open=q=>{const el=$(q,shadow);if(!el||el.hidden)return false;const look=getComputedStyle(el);return look.display!=='none'&&look.visibility!=='hidden'&&Number(look.opacity)>0&&look.pointerEvents!=='none';};
+  return ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories','.account-manager'].some(open)||!!shadow.activeElement?.closest?.('#chrome input')||$('#chrome',shadow)?.matches(':hover');}
+function swipeTuckSoon(ms){clearTimeout(swipeTuckTimer);swipeTuckTimer=setTimeout(()=>{if(!swipeOn)return;if(swipeHeaderBusy())swipeTuckSoon(600);else swipeTuck(true);},ms);}
+function revealSwipeHeader(){if(!CHROME_VIEW||!swipeOn)return;if(swipeTucked)swipeTuck(false);swipeTuckSoon(1600);}
+const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:#000;overflow:hidden;color:#fff;font-family:inherit}
+#bs-swipe .bs-swipe-track{position:absolute;inset:0}
+#bs-swipe .bs-swipe-slot{position:absolute;inset:0;background:#000;will-change:transform}
+#bs-swipe .bs-swipe-cover{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:blur(18px) brightness(.55);transform:scale(1.08)}
+#bs-swipe .bs-swipe-wait{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:rgba(255,255,255,.75);font-size:13px}
+#bs-swipe .bs-swipe-wait svg{width:44px;height:44px}
+#bs-swipe iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .25s ease}
+#bs-swipe .bs-swipe-slot.ready iframe{opacity:1}#bs-swipe .bs-swipe-slot.ready .bs-swipe-wait{display:none}
+#bs-swipe .bs-swipe-ui{position:absolute;inset:0;pointer-events:none}
+#bs-swipe .bs-swipe-ui button{pointer-events:auto;font:inherit;color:#fff;cursor:pointer}
+#bs-swipe .bs-swipe-edge{position:absolute;top:0;left:0;right:0;height:6px;pointer-events:auto}
+#bs-swipe .bs-swipe-peek{position:absolute;top:0;left:50%;width:min(360px,40%);height:26px;transform:translateX(-50%);display:flex;justify-content:center;pointer-events:auto}
+#bs-swipe .bs-swipe-peek i{margin-top:8px;width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.4);box-shadow:0 1px 4px rgba(0,0,0,.35);transition:width .28s cubic-bezier(.23,1,.32,1),background-color .2s,transform .28s cubic-bezier(.23,1,.32,1)}
+#bs-swipe .bs-swipe-peek:hover i{width:64px;background:rgba(255,255,255,.85);transform:translateY(2px)}
+#bs-swipe .bs-swipe-detail{position:absolute;top:18px;right:16px;padding:6px 12px;border:0;border-radius:999px;background:rgba(0,0,0,.45);font-size:13px;backdrop-filter:blur(8px)}
+#bs-swipe .bs-swipe-nav{position:absolute;right:14px;top:50%;transform:translateY(-50%);display:grid;gap:8px}
+#bs-swipe .bs-swipe-nav button{width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.4);transition:background .18s,transform .18s}#bs-swipe .bs-swipe-nav svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#bs-swipe .bs-swipe-shade{position:absolute;left:0;right:0;bottom:56px;height:240px;background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,0))}
+#bs-swipe .bs-swipe-nav button:hover{background:rgba(0,0,0,.65)}#bs-swipe .bs-swipe-nav button:active{transform:scale(.92)}
+#bs-swipe .bs-swipe-info{position:absolute;left:20px;bottom:74px;max-width:min(560px,55%);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#bs-swipe .bs-swipe-owner{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+#bs-swipe .bs-swipe-owner img{width:40px;height:40px;border-radius:50%;object-fit:cover}
+#bs-swipe .bs-swipe-owner p{margin:0;display:flex;align-items:center;gap:8px;font-size:15px}
+#bs-swipe .bs-swipe-owner small{font-size:12px;color:rgba(255,255,255,.8)}
+#bs-swipe .bs-swipe-follow{padding:3px 10px;border:0;border-radius:6px;background:#fb7299;font-size:12px;text-shadow:none}
+#bs-swipe .bs-swipe-title{margin:0;display:flex;gap:6px;align-items:flex-start;font-size:15px;font-weight:600;line-height:1.45}
+#bs-swipe .bs-swipe-title span{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+#bs-swipe .bs-swipe-title button{border:0;background:none;font-size:16px;padding:0 2px;transition:transform .2s}
+#bs-swipe .bs-swipe-desc{display:none;margin:6px 0 0;font-size:13px;line-height:1.55;color:rgba(255,255,255,.85);max-height:9em;overflow:auto;white-space:pre-wrap;pointer-events:auto}
+#bs-swipe .expanded .bs-swipe-title span{-webkit-line-clamp:4}#bs-swipe .expanded .bs-swipe-desc{display:block}#bs-swipe .expanded .bs-swipe-title button{transform:rotate(180deg)}
+#bs-swipe .bs-swipe-season{margin-top:8px;padding:4px 10px;border:0;border-radius:6px;background:rgba(255,255,255,.14);font-size:12px}
+#bs-swipe .bs-swipe-actions{position:absolute;right:24px;bottom:72px;display:flex;gap:22px}
+#bs-swipe .bs-swipe-actions button{display:grid;justify-items:center;gap:3px;min-width:40px;border:0;background:none;padding:0;user-select:none;-webkit-user-select:none;touch-action:none}
+#bs-swipe .bs-swipe-icon{position:relative;display:grid;place-items:center;width:40px;height:40px;transition:transform .16s cubic-bezier(.23,1,.32,1)}
+#bs-swipe .bs-swipe-actions button:hover .bs-swipe-icon{transform:scale(1.08)}#bs-swipe .bs-swipe-actions button:active .bs-swipe-icon{transform:scale(.9)}
+#bs-swipe .bs-swipe-icon>svg:last-of-type{width:32px;height:32px;fill:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));transition:fill .2s}
+#bs-swipe .bs-swipe-actions button.on .bs-swipe-icon>svg:last-of-type{fill:#00aeec}
+#bs-swipe .bs-swipe-actions small{font-size:13px;font-weight:600;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.6);font-variant-numeric:tabular-nums}
+#bs-swipe .bs-swipe-ring{position:absolute;inset:-4px;width:48px;height:48px;transform:rotate(-90deg);opacity:0;pointer-events:none;fill:none;stroke:#00aeec;stroke-width:3;stroke-linecap:round;stroke-dasharray:138.3;stroke-dashoffset:138.3;transition:opacity .15s}
+#bs-swipe .charging .bs-swipe-ring{opacity:1;animation:bs-swipe-ring 1.3s linear forwards}
+#bs-swipe .charging :is([data-swipe=like],[data-swipe=coin],[data-swipe=fav]) .bs-swipe-icon>svg:last-of-type{fill:#00aeec;animation:bs-swipe-shake .5s ease-in-out infinite}
+@keyframes bs-swipe-ring{to{stroke-dashoffset:0}}
+@keyframes bs-swipe-shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+#bs-swipe .bs-swipe-svga{position:absolute;z-index:2;pointer-events:none}
+#bs-swipe .bs-swipe-svga.center{width:92px;height:92px;left:calc(50% - 46px);top:calc(50% - 46px)}
+#bs-swipe .bs-swipe-svga.top{width:120px;height:120px;left:calc(50% - 60px);bottom:calc(50% - 6px)}
+@media (prefers-reduced-motion:reduce){#bs-swipe .charging .bs-swipe-icon>svg{animation:none!important}#bs-swipe .bs-swipe-peek i{transition:none}}
+@media (prefers-reduced-motion:reduce){#bs-swipe .bs-swipe-slot{transition:none!important}}`;
 function showOnboarding(){
   const renewed=!(typeof RUNTIME!=='undefined'&&RUNTIME.firstRun);
   const still=matchMedia('(prefers-reduced-motion: reduce)').matches,EASE='cubic-bezier(.32,.72,0,1)';
@@ -2306,7 +2546,7 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
 :host([data-mode=content]) :is(#chrome,#settings-trigger,.upload,#messages-menu){display:none!important}:host([data-mode=chrome]) :is(#page-pending){display:none!important}
 @keyframes bs-symbol-bounce{0%{transform:scale(1)}35%{transform:scale(.84)}70%{transform:scale(1.06)}100%{transform:scale(1)}}@keyframes bs-breathe{0%,100%{opacity:.5}50%{opacity:1}}@keyframes bs-fade{from{opacity:0}}@keyframes bs-rise{from{opacity:0;transform:translateY(8px)}}
 @media(prefers-reduced-motion:reduce){.favorites-video,.favorites-skeleton,.favorites-empty,.favorites[aria-expanded=true] svg{animation:none!important}.favorites-ghost i,.favorites-folder-ghost{animation:none!important;opacity:.7}.history-controls button:active,.header-left>.back:active,.video-home-top:active,.primary-nav a:active,.favorites:active,.header-right .messages:active,.favorites-folder:active,.favorites-video:active .favorites-cover,.favorites-heading button:active,.favorites-retry:active,.favorites-more:active{scale:none}.favorites-cover img{transition:opacity 200ms cubic-bezier(.2,.8,.2,1)}}
-</style><header id="chrome"><div class="header-left" data-video="false"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><div class="history-controls" role="group" aria-label="页面历史导航"><button class="history-back" type="button" data-window="back" aria-label="返回上一页" title="返回 · Alt+←"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button><button class="history-forward" type="button" data-window="forward" aria-label="前进下一页" title="前进"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="展开频道分区"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/history">历史</a></nav></div></div><div class="brand"><div class="brand-leading"><button type="button" class="video-link" aria-label="复制视频链接" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 .1l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7-.1l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span class="video-link-text"></span></button><time class="header-clock" aria-label="当前时间" hidden></time></div><span class="brand-label">Bili-<b>Space</b></span></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span><section id="search-panel" class="search-panel" aria-label="搜索历史和官方联想" hidden></section></form><a class="watchlater" href="https://www.bilibili.com/watchlater/#/list" aria-label="稍后再看" title="稍后再看"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12.5" r="8.5"/><path class="wl-hour" d="M12 12.5V8.6"/><path class="wl-minute" d="M12 12.5h3.6"/><path d="M8.5 2.6h7"/></svg></a><div class="favorites-wrap"><button class="favorites" type="button" aria-label="收藏夹" title="我的收藏夹" aria-expanded="false" aria-controls="favorites-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></button><section id="favorites-panel" class="favorites-panel" aria-label="我的收藏夹" hidden><div class="favorites-heading"><div><span>YOUR COLLECTION</span><h2>我的收藏夹</h2></div><button type="button" class="favorites-official" title="打开完整收藏夹">全部收藏 ↗</button><button type="button" class="favorites-close" aria-label="关闭收藏夹">×</button></div><div class="favorites-layout"><nav class="favorites-folders" aria-label="收藏夹列表"></nav><div class="favorites-body" aria-live="polite"></div></div></section></div><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><div id="messages-menu" class="messages-menu" role="navigation" aria-label="消息分类" hidden><a class="messages-item" data-kind="reply" href="https://message.bilibili.com/#/reply"><span>回复我的</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="at" href="https://message.bilibili.com/#/at"><span>@我的</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="love" href="https://message.bilibili.com/#/love"><span>收到的赞</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="system" href="https://message.bilibili.com/#/system"><span>系统消息</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="whisper" href="https://message.bilibili.com/#/whisper"><span>我的消息</span><b class="messages-count" hidden></b></a></div><a class="upload" href="https://member.bilibili.com/platform/upload/video/frame" aria-label="投稿" title="投稿到B站"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a><div class="account-wrap"><a class="account" aria-controls="account-card" aria-expanded="false" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a><section id="account-card" class="account-card" role="region" aria-label="我的账户信息" hidden><div class="account-banner" hidden></div><div class="account-identity"><div class="account-portrait" hidden></div><div class="account-card-head"><strong class="account-name"></strong><span class="account-level"></span><span class="account-vip-label" hidden></span></div></div><div class="account-stats"><div><b data-stat="follower">—</b><span>粉丝</span></div><div><b data-stat="following">—</b><span>关注</span></div><div><b data-stat="likes">—</b><span>获赞</span></div></div><p class="account-status"></p></section></div><div class="window-actions" aria-label="窗口控制" hidden><button type="button" data-window="minimize" aria-label="最小化"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button><button type="button" data-window="maximize" aria-label="最大化或还原"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1"/></svg></button><button type="button" data-window="close" aria-label="关闭"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></button></div></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><h1 id="settings-title">客户端设置</h1><input id="settings-query" type="search" aria-label="搜索客户端设置" placeholder="搜索设置" maxlength="80" autocomplete="off"><p id="settings-search-status" role="status" aria-live="polite"></p><div id="settings-matches" class="settings-matches" aria-label="匹配的设置" hidden></div><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Bili-Space</b>${APP_META.version}</div></aside><main><button id="dismiss" aria-label="关闭设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><div id="tab-content" role="tabpanel" tabindex="-1"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
+</style><header id="chrome"><div class="header-left" data-video="false"><a class="video-home-top" href="https://www.bilibili.com/" aria-label="返回首页" hidden>${ICON_TV}<span>首页</span></a><div class="lights"><button class="light close" data-window="close" aria-label="关闭窗口" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button><button class="light min" data-window="minimize" aria-label="最小化窗口" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7"/></svg></button><button class="light max" data-window="maximize" aria-label="最大化或还原窗口" title="最大化或还原"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx=".5"/></svg></button></div><div class="history-controls" role="group" aria-label="页面历史导航"><button class="history-back" type="button" data-window="back" aria-label="返回上一页" title="返回 · Alt+←"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button><button class="history-forward" type="button" data-window="forward" aria-label="前进下一页" title="前进"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div><button class="back" type="button" aria-label="展开分区" aria-controls="header-categories" aria-expanded="false" title="展开频道分区"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.6 4.4-6.2 5.6 6.2 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="nav-lane"><div id="header-categories" class="category-links" role="navigation" aria-label="频道分区" inert>${CATEGORIES.map(([label,url])=>`<a href="${url}">${label}</a>`).join('')}</div><nav class="primary-nav" aria-label="主导航"><a data-route="home" href="https://www.bilibili.com/">首页</a><a data-route="swipe" data-swipe-link href="https://www.bilibili.com/#swipe">刷视频</a><a data-route="dynamic" href="https://t.bilibili.com/">动态</a><a data-route="history" href="https://www.bilibili.com/history">历史</a></nav></div></div><div class="brand"><div class="brand-leading"><button type="button" class="video-link" aria-label="复制视频链接" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 .1l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7-.1l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span class="video-link-text"></span></button><time class="header-clock" aria-label="当前时间" hidden></time></div><span class="brand-label">Bili-<b>Space</b></span></div><div class="header-right"><form class="search" role="search" aria-busy="false"><input name="keyword" aria-label="搜索视频" placeholder="搜索你感兴趣的内容" autocomplete="off"><button aria-label="搜索">${icon('search')}</button><span class="sr-only" id="search-status" role="status" aria-live="polite"></span><section id="search-panel" class="search-panel" aria-label="搜索历史和官方联想" hidden></section></form><a class="watchlater" href="https://www.bilibili.com/watchlater/#/list" aria-label="稍后再看" title="稍后再看"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12.5" r="8.5"/><path class="wl-hour" d="M12 12.5V8.6"/><path class="wl-minute" d="M12 12.5h3.6"/><path d="M8.5 2.6h7"/></svg></a><div class="favorites-wrap"><button class="favorites" type="button" aria-label="收藏夹" title="我的收藏夹" aria-expanded="false" aria-controls="favorites-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></button><section id="favorites-panel" class="favorites-panel" aria-label="我的收藏夹" hidden><div class="favorites-heading"><div><span>YOUR COLLECTION</span><h2>我的收藏夹</h2></div><button type="button" class="favorites-official" title="打开完整收藏夹">全部收藏 ↗</button><button type="button" class="favorites-close" aria-label="关闭收藏夹">×</button></div><div class="favorites-layout"><nav class="favorites-folders" aria-label="收藏夹列表"></nav><div class="favorites-body" aria-live="polite"></div></div></section></div><a class="messages" href="https://message.bilibili.com/#/reply" aria-label="消息" title="消息">${ICON_MESSAGE}</a><div id="messages-menu" class="messages-menu" role="navigation" aria-label="消息分类" hidden><a class="messages-item" data-kind="reply" href="https://message.bilibili.com/#/reply"><span>回复我的</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="at" href="https://message.bilibili.com/#/at"><span>@我的</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="love" href="https://message.bilibili.com/#/love"><span>收到的赞</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="system" href="https://message.bilibili.com/#/system"><span>系统消息</span><b class="messages-count" hidden></b></a><a class="messages-item" data-kind="whisper" href="https://message.bilibili.com/#/whisper"><span>我的消息</span><b class="messages-count" hidden></b></a></div><a class="upload" href="https://member.bilibili.com/platform/upload/video/frame" aria-label="投稿" title="投稿到B站"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a><div class="account-wrap"><a class="account" aria-controls="account-card" aria-expanded="false" href="https://passport.bilibili.com/login?gourl=https%3A%2F%2Fwww.bilibili.com%2F">登录 B站</a><section id="account-card" class="account-card" role="region" aria-label="我的账户信息" hidden><div class="account-banner" hidden></div><div class="account-identity"><div class="account-portrait" hidden></div><div class="account-card-head"><strong class="account-name"></strong><span class="account-level"></span><span class="account-vip-label" hidden></span></div></div><div class="account-stats"><div><b data-stat="follower">—</b><span>粉丝</span></div><div><b data-stat="following">—</b><span>关注</span></div><div><b data-stat="likes">—</b><span>获赞</span></div></div><p class="account-status"></p></section></div><div class="window-actions" aria-label="窗口控制" hidden><button type="button" data-window="minimize" aria-label="最小化"><svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg></button><button type="button" data-window="maximize" aria-label="最大化或还原"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1"/></svg></button><button type="button" data-window="close" aria-label="关闭"><svg viewBox="0 0 16 16"><path d="m3 3 10 10M13 3 3 13"/></svg></button></div></div></header><button id="settings-trigger" aria-label="客户端设置" title="客户端设置 · Ctrl+,">${ICON_SETTINGS}</button><div class="scrim" id="settings" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title"><aside><h1 id="settings-title">客户端设置</h1><input id="settings-query" type="search" aria-label="搜索客户端设置" placeholder="搜索设置" maxlength="80" autocomplete="off"><p id="settings-search-status" role="status" aria-live="polite"></p><div id="settings-matches" class="settings-matches" aria-label="匹配的设置" hidden></div><div class="tabs" role="tablist" aria-label="设置分类">${Object.entries(tabs).map(([key,[label,i]])=>`<button role="tab" data-tab="${key}" aria-controls="tab-content">${icon(i)}${label}</button>`).join('')}</div><div class="aside-footer"><b>Bili-Space</b>${APP_META.version}</div></aside><main><button id="dismiss" aria-label="关闭设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button><div id="tab-content" role="tabpanel" tabindex="-1"></div><div class="actions"><button class="link" id="reset">恢复默认设置</button></div></main></section></div><div role="status" id="toast" hidden></div>`;
   const updateCss=document.createElement('style');updateCss.textContent='#settings-trigger[data-update-available=true]::after{content: "";position:absolute;right:7px;top:7px;width:7px;height:7px;border-radius:50%;background:#fb7299}#update-notes{padding-left:20px;line-height:1.9;overflow-wrap:anywhere;max-height:220px;overflow:auto}';shadow.append(updateCss);
   document.documentElement.append(root);
   renderMessageUnread();
@@ -2873,7 +3113,7 @@ function reportChromeLayout(){
   if(!CHROME_VIEW||!shadow)return;cancelAnimationFrame(chromeLayoutFrame);chromeLayoutFrame=requestAnimationFrame(()=>{
     const rects=[],scale=devicePixelRatio||1;
     const add=el=>{if(!el||el.hidden||!el.isConnected)return;const look=getComputedStyle(el);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)return;const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)rects.push([Math.floor(r.left*scale),Math.floor(r.top*scale),Math.ceil(r.right*scale),Math.ceil(r.bottom*scale)]);};
-    add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories',...(webFullscreen?[]:['#settings-trigger','.upload','#feed-roll','#page-top']),'#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));for(const p of $$('.bs-plugin-panel',shadow))add(p);
+    if(!swipeTucked)add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories',...(webFullscreen?[]:['#settings-trigger','.upload','#feed-roll','#page-top']),'#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));for(const p of $$('.bs-plugin-panel',shadow))add(p);
     // Windows that other scripts open in this document (the login panel, the thread ripper's settings dialog) sit
     // outside the shadow root; without their rectangles the clicks would land on the page underneath.
     let foreignModal=false;
@@ -2926,6 +3166,7 @@ function boot(){
     history[method]=function(...args){const result=Reflect.apply(original,this,args);syncRoute();scheduleScan();return result;};
   }
   window.addEventListener('popstate',()=>{syncRoute();scheduleScan();});
+  window.addEventListener('hashchange',syncSwipeHash);setTimeout(syncSwipeHash,0);
   window.addEventListener('hashchange',syncRoute);
   // Danmaku and live-chat lines arrive many times a second and never need a page scan (ads, links, player tools).
   const SCAN_QUIET='#bili-space-root,.bs-player-tool,.bs-gpu-canvas,.bili-danmaku-x-dm,.b-danmaku,#chat-items';
@@ -2982,7 +3223,7 @@ function boot(){
         for(const [el,[value,priority]] of pipHiddenHosts){if(value)el.style.setProperty('display',value,priority);else el.style.removeProperty('display');}pipHiddenHosts.clear();
       }
     },
-    setWebFullscreen,openFeedback,feedbackResult,clearSearchBusy,setPageZoom,openWhatsNew,showShare,shareCopied,acceptNews,rollFeed,setPageScrolled,scrollPageTop,
+    setWebFullscreen,setSwipeActive,revealSwipeHeader,openSwipe,closeSwipe,openFeedback,feedbackResult,clearSearchBusy,setPageZoom,openWhatsNew,showShare,shareCopied,acceptNews,rollFeed,setPageScrolled,scrollPageTop,
     setFullscreen(on){if(!on)holdPlayer(false);fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
     emitPipDanmaku(items,time){for(const item of items)pipDanmaku.emit(item,time);},
     get state(){return {headerBrand:{shown:brandShown,moving:brandMotion.length>0},pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status}:null};}
