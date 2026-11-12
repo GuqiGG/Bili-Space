@@ -17,7 +17,7 @@
   <a href="docs/CHANGELOG.md">更新日志</a>
 </p>
 
-![Bili-Space 实际界面的倾斜立体展示](docs/images/showcase.webp)
+![Bili-Space 实际界面的倾斜立体展示](docs/images/showcase.webp?v=0165)
 
 <p align="center"><sub>Windows 10 / 11 · C++20 · WebView2 · 仅限非商业使用</sub></p>
 
@@ -38,19 +38,19 @@
 
 MP4 视频下载，进度、速度、预计剩余时间集中显示，下载中可随时取消。
 
-![视频页上方的内置下载入口，实际客户端截图](docs/images/download.webp)
+![视频页上方的内置下载入口，实际客户端截图](docs/images/download.webp?v=0165)
 
 ### 无边框画中画 · 小窗，只留画面
 
 窗口置顶，拖动到顺手的位置。没有多余的标题栏。
 
-<p align="center"><img src="docs/images/pip.webp" width="560" alt="Bili-Space 无边框画中画实际截图"></p>
+<p align="center"><img src="docs/images/pip.webp?v=0165" width="560" alt="Bili-Space 无边框画中画实际截图"></p>
 
 ### 进度条，也有你的审美
 
 颜色、粗细、圆角、拖动圆点，按你的习惯来。
 
-![Bili-Space 进度条自定义设置实际截图](docs/images/customize.webp)
+![Bili-Space 进度条自定义设置实际截图](docs/images/customize.webp?v=0165)
 
 ### 还有这些，顺手的小事
 
@@ -65,12 +65,12 @@ MP4 视频下载，进度、速度、预计剩余时间集中显示，下载中�
 
 ## 界面一览
 
-![Bili-Space 首页实际截图](docs/images/home.webp)
+![Bili-Space 首页实际截图](docs/images/home.webp?v=0165)
 
 <details>
 <summary>个性化设置</summary>
 
-![Bili-Space 个性化设置实际截图](docs/images/settings.webp)
+![Bili-Space 个性化设置实际截图](docs/images/settings.webp?v=0165)
 
 </details>
 
