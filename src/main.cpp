@@ -76,7 +76,7 @@ std::wstring injectionId;
 bool injectionPending=false, injectionDirty=false;
 json config, gm, searchHistory=json::array();
 void save();
-void copyVideoLink(const std::string& value);
+void copyVideoLink(const std::string& value);void copyShareText();
 bool externalWebUrl(const std::wstring& uri);
 HANDLE proxyProcess{},proxyJob{};int proxyPort{},proxyControlPort{};std::string proxyStatus="代理已关闭",proxySecret;
 bool proxyEnabled=false,proxyRunning=false;
@@ -342,7 +342,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerWatchlater",true},{"clickGui",false},{"searchWidth",0},{"watchlaterOpen","list"},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"shareSeen",""},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerWatchlater",true},{"clickGui",false},{"searchWidth",0},{"watchlaterOpen","list"},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -383,7 +383,7 @@ void mergeConfig(const json& next){
         else if(key=="srModel"&&value.is_string()&&(value=="auto"||value=="anime"||value=="general"))config[key]=value;
         else if(key=="fiMode"&&value.is_string()&&(value=="off"||value=="rife"||value=="blend"))config[key]=value=="blend"?json("rife"):value;
         else if(key=="proxyNode"&&value.is_string()&&value.get<std::string>().size()<=96)config[key]=value;
-        else if(key=="whatsNewSeen"&&value.is_string()&&value.get<std::string>().size()<=24)config[key]=value;
+        else if((key=="whatsNewSeen"||key=="shareSeen")&&value.is_string()&&value.get<std::string>().size()<=24)config[key]=value;
         else if(key=="watchlaterOpen"&&value.is_string()&&(value=="list"||value=="video"))config[key]=value;
         else if(key=="pluginsDisabled"&&value.is_array()&&value.size()<=32){json ids=json::array();for(const auto& item:value)if(item.is_string()){const auto id=item.get<std::string>();if(std::regex_match(id,std::regex(R"([a-z0-9][a-z0-9._-]{0,39})")))ids.push_back(id);if(ids.size()>=32)break;}config[key]=ids;}
         else if(key=="categorySelection"&&value.is_array()&&value.size()<=18){json choices=json::array();for(const auto& v:value)if(v.is_number_integer()&&v.get<int>()>=0&&v.get<int>()<18&&std::find(choices.begin(),choices.end(),v)==choices.end())choices.push_back(v);config[key]=choices;}
@@ -709,6 +709,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             if(dir&&zoomBase>0&&!full&&!pip&&activeTab&&activeTab->controller){auto* scoped=controller;controller=activeTab->controller;double shown=zoomApplied;controller->get_ZoomFactor(&shown);
                 manualZoom=std::clamp(next/zoomBase,.25,5.0);zoomDeferred=true;applyZoom();zoomDeferred=false;
                 zoomFrom=shown;zoomTo=zoomApplied;zoomStart=GetTickCount64();zoomCtl=controller;zoomAnimating=true;controller=scoped;SetTimer(windowHandle,7770,10,nullptr);}
+        }else if(type=="copy-share"){copyShareText();
         }else if(type=="feedback"){sendFeedback(m);
         }else if(type=="web-fullscreen"){executeEverywhere(std::string("window.BiliSpace?.setWebFullscreen?.(")+(m.value("on",false)?"true":"false")+")");
         }else if(type=="tour-backdrop"){executeEverywhere(std::string("window.BiliSpace?.tourBackdrop?.(")+(m.value("on",false)?"true":"false")+")");
@@ -781,6 +782,13 @@ std::wstring clipboardVideoUrl(std::wstring text){
         for(std::wsregex_iterator it(tail.begin(),tail.end(),param),last;it!=last;++it){if(query.size()>100)break;query+=(query.empty()?L"?":L"&")+(*it)[1].str()+L"="+(*it)[2].str();}
     }else {static const std::wregex shortLink(LR"((https?://)?b23\.tv/([A-Za-z0-9]+)(?=[/?#\s<>]|$))",std::regex_constants::icase);if(std::regex_search(text,match,shortLink)){if(match.position()>0){auto c=text[match.position()-1];if(iswalnum(c)||c==L'.'||c==L'/'||c==L'@'||c==L'-')return L"";}return L"https://b23.tv/"+match[2].str();}return L"";}
     id[0]=L'B';id[1]=L'V';return L"https://www.bilibili.com/video/"+id+query;
+}
+// The share card's text lives here, not in the page, so the page cannot put arbitrary text on the clipboard.
+void copyShareText(){
+    static const std::wstring text=L"推荐一个 B 站电脑客户端 Bili-Space：保留官方播放器和弹幕，界面更清爽，还有内置下载、无边框画中画、200% 音量和一大堆自定义。免费下载：https://github.com/GuqiGG/Bili-Space/releases/latest";
+    bool ok=false;auto bytes=(text.size()+1)*sizeof(wchar_t);HGLOBAL memory=GlobalAlloc(GMEM_MOVEABLE,bytes);
+    if(memory){auto dest=GlobalLock(memory);if(dest){memcpy(dest,text.c_str(),bytes);GlobalUnlock(memory);if(OpenClipboard(windowHandle)){if(EmptyClipboard()&&SetClipboardData(CF_UNICODETEXT,memory)){ok=true;memory=nullptr;}CloseClipboard();}}if(memory)GlobalFree(memory);}
+    execute(std::string("window.BiliSpace?.shareCopied?.(")+(ok?"true":"false")+")");
 }
 void copyVideoLink(const std::string& value){
     auto text=wide(value);static const std::wregex allowed(LR"(^https://www\.bilibili\.com/(video/BV[A-Za-z0-9]{10}|bangumi/play/(ep|ss)[0-9]+|list/[A-Za-z0-9]+)(\?[pt]=[0-9]+(\.[0-9]+)?(&[pt]=[0-9]+(\.[0-9]+)?)?)?$)");
