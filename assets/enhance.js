@@ -792,7 +792,7 @@ function suggestedLanguage(){
     const hit=LANGUAGES.find(([k])=>k===l.split('-')[0]);if(hit)return hit[0];}
   return 'zh-CN';
 }
-let i18nLang='zh-CN',i18nDict=null,i18nRe=null,i18nLoading=null;
+let i18nLang='zh-CN',i18nDict=null,i18nRe=null,i18nLoading=null,i18nPageTimer=0;
 const i18nTexts=new WeakMap(),i18nAttrs=new WeakMap(),I18N_ATTRS=['title','aria-label','placeholder','alt'];
 const cjkCount=s=>(String(s).match(/[㐀-鿿豈-﫿]/g)||[]).length;
 function translateText(src){
@@ -827,7 +827,7 @@ const i18nObserver=new MutationObserver(records=>{for(const r of records){
 const i18nWatched=new WeakSet();
 function watchI18n(node){if(!node||i18nWatched.has(node))return;i18nWatched.add(node);translateTree(node);i18nObserver.observe(node,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:I18N_ATTRS});}
 // Elements the client adds to Bilibili's pages; the page itself is never observed (danmaku would make that costly).
-function watchPageI18n(){for(const el of document.querySelectorAll('[id^="bili-space-"]:not(#bili-space-root),[class^="bs-"]:not([class^="bs-"] *)'))watchI18n(el);}
+function watchPageI18n(again=false){for(const el of document.querySelectorAll('[id^="bili-space-"]:not(#bili-space-root),[class^="bs-"]:not([class^="bs-"] *)')){if(again&&i18nWatched.has(el))translateTree(el);else watchI18n(el);}}
 function loadDictionary(lang){
   return fetch(localAsset('i18n/'+lang+'.json')).then(r=>r.ok?r.json():null).catch(()=>null).then(dict=>{
     if(!dict)return null;const keys=Object.keys(dict).filter(k=>dict[k]!==null&&dict[k]!==k).sort((a,b)=>b.length-a.length);
@@ -837,7 +837,9 @@ function setLanguage(lang){
   if(!LANGUAGES.some(x=>x[0]===lang))lang='zh-CN';
   const tag=LANG_TAGS[lang]||lang;if(root)root.setAttribute('lang',tag);if(CHROME_VIEW)document.documentElement.lang=tag;
   searchQuips=null;searchQuipDeck=[];
-  const apply=()=>{if(shadow)translateTree(shadow);watchPageI18n();};
+  // Pages are only rescanned for the client's own elements while a translation is active (Simplified Chinese needs none).
+  clearInterval(i18nPageTimer);i18nPageTimer=0;if(CONTENT_VIEW&&lang!=='zh-CN')i18nPageTimer=setInterval(watchPageI18n,1500);
+  const apply=()=>{if(shadow)translateTree(shadow);if(CONTENT_VIEW)watchPageI18n(true);};
   if(lang==='zh-CN'){i18nLang=lang;i18nDict=null;i18nRe=null;apply();return Promise.resolve();}
   const ticket=i18nLoading=loadDictionary(lang).then(d=>{if(i18nLoading!==ticket)return;i18nLang=lang;i18nDict=d?.dict||null;i18nRe=d?.re||null;apply();});
   return ticket;
@@ -846,7 +848,6 @@ function startI18n(){
   if(!shadow)return;watchI18n(shadow);
   const lang=uiLanguage();if(lang!=='zh-CN'){root.style.visibility='hidden';const show=()=>{root.style.visibility='';};setLanguage(lang).then(show,show);setTimeout(show,700);}
   else setLanguage(lang);
-  if(CONTENT_VIEW)setInterval(watchPageI18n,1500);
 }
 // Once per install and after updating to a version that brings languages: pick one (the system language is preselected).
 let languageTimer=0;
@@ -2999,7 +3000,9 @@ function boot(){
      if(CHROME_VIEW)openClickGui();else native('open-settings',{tab:''});},true);}
   native('updates',{action:'status'});startI18n();scheduleLanguagePicker();scheduleOnboarding();scheduleWhatsNew();startNews();if(CONTENT_VIEW){native('page-zoom');installZoomWheel();}
   loadOfficialSearchHistory();
-  if(document.readyState==='complete')window.__bsPaintReady?.();
+  // A video page carries its own loading cover from here on, so its tab can be shown now (about 0.8 s sooner than
+  // waiting for the load event); the cover stays until the video itself is ready.
+  if(document.readyState==='complete'||(CONTENT_VIEW&&pageKind()==='video'&&$('#bs-video-loading')))window.__bsPaintReady?.();
   diagnostic('Bili-Space ready');
 }
 if(document.documentElement)prepareShell();else{const earlyShell=new MutationObserver(()=>{if(document.documentElement){earlyShell.disconnect();prepareShell();}});earlyShell.observe(document,{childList:true});}
