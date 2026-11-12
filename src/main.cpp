@@ -34,6 +34,9 @@
 #include <functional>
 #include <memory>
 #include <regex>
+#include <set>
+#include <array>
+#include <map>
 #include <cmath>
 #include <string>
 #include <sstream>
@@ -342,7 +345,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"shareSeen",""},{"newsSeen",json::array()},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerWatchlater",true},{"clickGui",false},{"searchWidth",0},{"watchlaterOpen","list"},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"shareSeen",""},{"newsSeen",json::array()},{"language",""},{"languageChosen",false},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerWatchlater",true},{"clickGui",false},{"searchWidth",0},{"watchlaterOpen","list"},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -385,6 +388,7 @@ void mergeConfig(const json& next){
         else if(key=="proxyNode"&&value.is_string()&&value.get<std::string>().size()<=96)config[key]=value;
         else if((key=="whatsNewSeen"||key=="shareSeen")&&value.is_string()&&value.get<std::string>().size()<=24)config[key]=value;
         else if(key=="newsSeen"&&value.is_array()&&value.size()<=100&&std::all_of(value.begin(),value.end(),[](const json& v){return v.is_string()&&v.get<std::string>().size()<=64;}))config[key]=value;
+        else if(key=="language"&&value.is_string()&&std::set<std::string>{"","zh-CN","zh-TW","zh-HK","yue","en","ja","ko","es","fr","de","ru","pt-BR","lolcat"}.count(value.get<std::string>()))config[key]=value;
         else if(key=="watchlaterOpen"&&value.is_string()&&(value=="list"||value=="video"))config[key]=value;
         else if(key=="pluginsDisabled"&&value.is_array()&&value.size()<=32){json ids=json::array();for(const auto& item:value)if(item.is_string()){const auto id=item.get<std::string>();if(std::regex_match(id,std::regex(R"([a-z0-9][a-z0-9._-]{0,39})")))ids.push_back(id);if(ids.size()>=32)break;}config[key]=ids;}
         else if(key=="categorySelection"&&value.is_array()&&value.size()<=18){json choices=json::array();for(const auto& v:value)if(v.is_number_integer()&&v.get<int>()>=0&&v.get<int>()<18&&std::find(choices.begin(),choices.end(),v)==choices.end())choices.push_back(v);config[key]=choices;}
@@ -821,6 +825,18 @@ void fetchNews(){
         auto reply=new std::string(std::move(bytes));if(!IsWindow(target)||!PostMessageW(target,newsMessage,0,reinterpret_cast<LPARAM>(reply)))delete reply;
     }).detach();
 }
+// The tray menu follows the client language (Settings → Personalize → Language).
+const std::array<const wchar_t*,4>& trayLabels(){
+    static const std::map<std::string,std::array<const wchar_t*,4>> labels{
+        {"zh-CN",{L"打开 Bili Space",L"隐藏窗口",L"反馈问题…",L"退出"}},{"zh-TW",{L"開啟 Bili Space",L"隱藏視窗",L"回報問題…",L"結束"}},
+        {"zh-HK",{L"開啟 Bili Space",L"隱藏視窗",L"回報問題…",L"結束"}},{"yue",{L"打開 Bili Space",L"收埋視窗",L"反映問題…",L"退出"}},
+        {"en",{L"Open Bili Space",L"Hide window",L"Report a problem…",L"Quit"}},{"ja",{L"Bili Space を開く",L"ウィンドウを隠す",L"問題を報告…",L"終了"}},
+        {"ko",{L"Bili Space 열기",L"창 숨기기",L"문제 신고…",L"종료"}},{"es",{L"Abrir Bili Space",L"Ocultar ventana",L"Informar de un problema…",L"Salir"}},
+        {"fr",{L"Ouvrir Bili Space",L"Masquer la fenêtre",L"Signaler un problème…",L"Quitter"}},{"de",{L"Bili Space öffnen",L"Fenster ausblenden",L"Problem melden…",L"Beenden"}},
+        {"ru",{L"Открыть Bili Space",L"Скрыть окно",L"Сообщить о проблеме…",L"Выйти"}},{"pt-BR",{L"Abrir o Bili Space",L"Ocultar janela",L"Relatar um problema…",L"Sair"}},
+        {"lolcat",{L"OPUN BILI SPACE",L"HIEDZ WINDOE",L"I FOUND A BUG…",L"KTHXBAI"}}};
+    auto it=labels.find(config.value("language",std::string{}));return it!=labels.end()?it->second:labels.at("zh-CN");
+}
 void copyShareText(){
     static const std::wstring text=L"推荐一个 B 站电脑客户端 Bili-Space：保留官方播放器和弹幕，界面更清爽，还有内置下载、无边框画中画、200% 音量和一大堆自定义。免费下载：https://bili.gvqi.top";
     bool ok=false;auto bytes=(text.size()+1)*sizeof(wchar_t);HGLOBAL memory=GlobalAlloc(GMEM_MOVEABLE,bytes);
@@ -921,9 +937,9 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
         if(lp==NIN_BALLOONUSERCLICK){auto url=communityNotificationClick();if(!url.empty()&&webview)webview->Navigate(wide(url).c_str());return 0;}
         if(lp==WM_LBUTTONDBLCLK){restoreFromTray();return 0;}
         if(lp==WM_RBUTTONUP||lp==WM_CONTEXTMENU){
-            HMENU menu=CreatePopupMenu();AppendMenuW(menu,MF_STRING,1,L"打开 Bili Space");
-            AppendMenuW(menu,MF_STRING,2,L"隐藏窗口");AppendMenuW(menu,MF_STRING,4,L"反馈问题…");AppendMenuW(menu,MF_SEPARATOR,0,nullptr);
-            AppendMenuW(menu,MF_STRING,3,L"退出");POINT pt{};GetCursorPos(&pt);SetForegroundWindow(hwnd);
+            const auto& t=trayLabels();HMENU menu=CreatePopupMenu();AppendMenuW(menu,MF_STRING,1,t[0]);
+            AppendMenuW(menu,MF_STRING,2,t[1]);AppendMenuW(menu,MF_STRING,4,t[2]);AppendMenuW(menu,MF_SEPARATOR,0,nullptr);
+            AppendMenuW(menu,MF_STRING,3,t[3]);POINT pt{};GetCursorPos(&pt);SetForegroundWindow(hwnd);
             auto selected=TrackPopupMenu(menu,TPM_RETURNCMD|TPM_RIGHTBUTTON,pt.x,pt.y,0,hwnd,nullptr);DestroyMenu(menu);
             if(selected==1)restoreFromTray();else if(selected==4){restoreFromTray();executeEverywhere("window.BiliSpace?.openFeedback?.()");}else if(selected==2){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);}else if(selected==3){config["closeAction"]="exit";PostMessageW(hwnd,WM_CLOSE,0,0);}
             PostMessageW(hwnd,WM_NULL,0,0);return 0;

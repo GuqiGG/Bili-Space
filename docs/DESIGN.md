@@ -95,6 +95,14 @@
 - 分享弹窗：新安装和每个新版本，关掉更新公告后弹一次（`shareSeen`）；设置 → 关于与更新可以随时打开。分享文案写在 main.cpp 里，由客户端写入剪贴板，网页不能借它往剪贴板写任意内容。
 - 远程公告：客户端从 `bili.gvqi.top/news` 拉取，原生端先清洗字段和长度再交给顶栏；每条按 id 只显示一次（`newsSeen`）。格式见 [NEWS.md](NEWS.md)。
 
+## 5.7 多语言
+
+- 13 种：简体中文、繁體中文（台灣）、繁體中文（香港）、粵語、English、日本語、한국어、Español、Français、Deutsch、Русский、Português (Brasil)、LOLCAT 萌猫语（致敬 Minecraft 的 LOLCAT）。
+- 界面文字仍然用简体中文写在代码里，渲染时由 `assets/i18n/<语言>.json` 翻译（顶栏层的 shadow root 和客户端加到网页上的 `bili-space-*` / `bs-*` 元素），包括 title、aria-label、placeholder。一段文字只有在已知词句覆盖了它所有汉字时才替换，B 站自己的标题、昵称、评论不会被翻一半。不监听整个网页（弹幕会让它很贵）。
+- 繁体不能直接简转繁：台湾用 OpenCC s2twp（網路、軟體、影片、滑鼠、預設…），香港用 s2hk 再换香港用词（視窗、載入、設定…），两边都可以在 `i18n/zh-TW.fix.tsv` / `zh-HK.fix.tsv` 里逐条修正。粤语是口语（嘅、咗、唔、喺）。
+- 新安装和更新到带多语言的版本后，先弹一次语言选择（预选系统语言），再进欢迎引导和更新公告；之后在 个性化 → 语言 改。托盘菜单跟着变。
+- 改了界面文字：`python scripts/i18n_extract.py`（原文只追加，位置不变）→ 在 `i18n/tr/*.tsv` 里补译文（`-` 表示不显示、不翻）→ `python scripts/i18n_build.py`（需要 `pip install opencc-python-reimplemented`，只在开发时用）。
+
 ## 6. 否决过的方案（不要再做）
 
 - **启动时的屏外窗口 + 从小电视展开的启动动画**：用户觉得难看。保留原来窗口内的启动页。

@@ -1,0 +1,151 @@
+# idx	en	yue	ja	ko	es	fr	de	ru	pt-BR
+0	Unsigned	未署名	署名なし	서명 없음	Sin firma	Non signé	Ohne Signatur	Без подписи	Sem assinatura
+1	Danmaku data too large	彈幕數據太大	弾幕データが大きすぎます	탄막 데이터가 너무 큽니다	Datos de comentarios demasiado grandes	Données de commentaires trop volumineuses	Danmaku-Daten zu groß	Слишком много данных комментариев	Dados de comentários grandes demais
+2	Danmaku data incomplete	彈幕數據唔齊	弾幕データが不完全です	탄막 데이터가 불완전합니다	Datos de comentarios incompletos	Données de commentaires incomplètes	Danmaku-Daten unvollständig	Данные комментариев неполные	Dados de comentários incompletos
+3	Danmaku encoding error	彈幕編碼出錯	弾幕のエンコードエラー	탄막 인코딩 오류	Error de codificación de comentarios	Erreur d'encodage des commentaires	Danmaku-Kodierungsfehler	Ошибка кодировки комментариев	Erro de codificação dos comentários
+4	Danmaku field error	彈幕欄位出錯	弾幕フィールドのエラー	탄막 필드 오류	Error de campo en comentarios	Erreur de champ des commentaires	Danmaku-Feldfehler	Ошибка поля комментариев	Erro de campo nos comentários
+5	Danmaku data out of range	彈幕數據超出範圍	弾幕データが範囲外です	탄막 데이터 범위 초과	Datos de comentarios fuera de rango	Données de commentaires hors limites	Danmaku-Daten außerhalb des Bereichs	Данные комментариев вне диапазона	Dados de comentários fora do intervalo
+6	Danmaku format not supported	唔支援呢種彈幕格式	未対応の弾幕形式	지원하지 않는 탄막 형식	Formato de comentarios no compatible	Format de commentaires non pris en charge	Danmaku-Format nicht unterstützt	Формат комментариев не поддерживается	Formato de comentários não suportado
+7	Too many danmaku entries	彈幕太多	弾幕の件数が多すぎます	탄막 항목이 너무 많습니다	Demasiados comentarios	Trop de commentaires	Zu viele Danmaku-Einträge	Слишком много комментариев	Comentários demais
+8	Close	閂	閉じる	닫기	Cerrar	Fermer	Schließen	Закрыть	Fechar
+9	Danmaku service unavailable	彈幕接口用唔到	弾幕サービスを利用できません	탄막 서비스를 사용할 수 없습니다	Servicio de comentarios no disponible	Service de commentaires indisponible	Danmaku-Dienst nicht verfügbar	Сервис комментариев недоступен	Serviço de comentários indisponível
+10	No danmaku info	未有彈幕資料	弾幕情報がありません	탄막 정보 없음	Sin información de comentarios	Aucune information de commentaires	Keine Danmaku-Infos	Нет данных о комментариях	Sem informações de comentários
+11	Couldn't load danmaku	彈幕載入唔到	弾幕を読み込めませんでした	탄막을 불러오지 못했습니다	No se pudieron cargar los comentarios	Impossible de charger les commentaires	Danmaku konnten nicht geladen werden	Не удалось загрузить комментарии	Não foi possível carregar os comentários
+12	Loaded	載入咗	読み込み済み	불러옴	Cargado	Chargé	Geladen	Загружено	Carregado
+13	Loading	載入緊	読み込み中	불러오는 중	Cargando	Chargement	Wird geladen	Загрузка	Carregando
+14	Unavailable for now	暫時用唔到	現在利用できません	지금은 사용할 수 없음	No disponible por ahora	Indisponible pour le moment	Derzeit nicht verfügbar	Пока недоступно	Indisponível no momento
+15	Picture-in-picture danmaku:	畫中畫彈幕：	PiP の弾幕：	PIP 탄막:	Comentarios en imagen en imagen:	Commentaires en mode incrustation :	Danmaku im Bild-im-Bild:	Комментарии в режиме «картинка в картинке»:	Comentários no picture-in-picture:
+16	Play	播	再生	재생	Reproducir	Lecture	Abspielen	Воспроизвести	Reproduzir
+17	Pause	暫停	一時停止	일시정지	Pausa	Pause	Pause	Пауза	Pausar
+18	Off	未開	オフ	꺼짐	Desactivado	Désactivé	Aus	Выкл.	Desligado
+19	Checking the downloader…	檢查緊下載器…	ダウンローダーを確認中…	다운로더 확인 중…	Comprobando el descargador…	Vérification du téléchargeur…	Downloader wird geprüft…	Проверка загрузчика…	Verificando o downloader…
+20	Home	首頁	ホーム	홈	Inicio	Accueil	Startseite	Главная	Início
+21	Feed	動態	フィード	피드	Novedades	Fil	Feed	Лента	Feed
+22	History	歷史	履歴	기록	Historial	Historique	Verlauf	История	Histórico
+23	Show logo	顯示 Logo	ロゴを表示	로고 표시	Mostrar logotipo	Afficher le logo	Logo anzeigen	Показывать логотип	Mostrar logotipo
+24	Search bar	搜尋欄	検索バー	검색창	Barra de búsqueda	Barre de recherche	Suchleiste	Строка поиска	Barra de pesquisa
+25	Favorites button	收藏夾掣	お気に入りボタン	즐겨찾기 버튼	Botón de favoritos	Bouton Favoris	Favoriten-Taste	Кнопка «Избранное»	Botão de favoritos
+26	Watch Later button	遲啲睇掣	後で見るボタン	나중에 보기 버튼	Botón Ver más tarde	Bouton À regarder plus tard	„Später ansehen“-Taste	Кнопка «Смотреть позже»	Botão Assistir depois
+27	Messages button	訊息掣	メッセージボタン	메시지 버튼	Botón de mensajes	Bouton Messages	Nachrichten-Taste	Кнопка «Сообщения»	Botão de mensagens
+28	Upload button	投稿掣	投稿ボタン	업로드 버튼	Botón de subir	Bouton Publier	Hochladen-Taste	Кнопка «Загрузить»	Botão de enviar
+29	Avatar / sign-in	頭像 / 登入入口	アバター / ログイン	아바타 / 로그인	Avatar / iniciar sesión	Avatar / connexion	Avatar / Anmeldung	Аватар / вход	Avatar / entrar
+30	Channel list toggle	分區展開入口	カテゴリ展開ボタン	카테고리 펼치기	Mostrar categorías	Afficher les catégories	Kategorien ausklappen	Показать разделы	Mostrar categorias
+31	No channels picked · open Settings	未揀分區 · 去設定	カテゴリ未選択 · 設定を開く	선택한 카테고리 없음 · 설정 열기	Sin categorías · ir a Ajustes	Aucune catégorie · ouvrir les réglages	Keine Kategorien · Einstellungen öffnen	Разделы не выбраны · открыть настройки	Nenhuma categoria · abrir Configurações
+32	Click to copy link · Shift+click copies the current time	撳一下複製連結 · Shift+撳連埋而家時間	クリックでリンクをコピー · Shift+クリックで現在の再生位置付き	클릭하여 링크 복사 · Shift+클릭하면 현재 시간 포함	Clic para copiar el enlace · Mayús+clic copia el minuto actual	Clic pour copier le lien · Maj+clic avec l'instant actuel	Klicken kopiert den Link · Umschalt+Klick mit aktueller Zeit	Нажмите, чтобы скопировать ссылку · Shift+клик — с текущим временем	Clique para copiar o link · Shift+clique copia o momento atual
+33	Copy video link (Shift+click includes the current time):	複製影片連結（Shift+撳會連埋而家時間）：	動画リンクをコピー（Shift+クリックで再生位置付き）：	동영상 링크 복사 (Shift+클릭 시 현재 시간 포함):	Copiar enlace del vídeo (Mayús+clic incluye el minuto actual):	Copier le lien de la vidéo (Maj+clic inclut l'instant actuel) :	Videolink kopieren (Umschalt+Klick mit aktueller Zeit):	Копировать ссылку на видео (Shift+клик — с текущим временем):	Copiar link do vídeo (Shift+clique inclui o momento atual):
+34	Copy video link	複製影片連結	動画リンクをコピー	동영상 링크 복사	Copiar enlace del vídeo	Copier le lien de la vidéo	Videolink kopieren	Копировать ссылку на видео	Copiar link do vídeo
+35	Video time isn't ready yet	影片時間仲未準備好	再生位置がまだ取得できません	아직 영상 시간을 알 수 없습니다	El tiempo del vídeo aún no está listo	Le temps de la vidéo n'est pas encore prêt	Videozeit ist noch nicht bereit	Время видео ещё не готово	O tempo do vídeo ainda não está pronto
+36	Copy failed, please try again	複製唔到，再試吓	コピーに失敗しました。もう一度お試しください	복사하지 못했습니다. 다시 시도하세요	No se pudo copiar, inténtalo de nuevo	Échec de la copie, réessayez	Kopieren fehlgeschlagen, bitte erneut versuchen	Не удалось скопировать, попробуйте ещё раз	Falha ao copiar, tente de novo
+37	Copied	複製咗	コピーしました	복사됨	Copiado	Copié	Kopiert	Скопировано	Copiado
+38	Copied with timestamp	複製咗時間點	再生位置付きでコピーしました	시간 포함 복사됨	Copiado con el minuto	Copié avec l'horodatage	Mit Zeitstempel kopiert	Скопировано с отметкой времени	Copiado com o momento
+39	Back to Bilibili home	返去 B站首頁	ビリビリのホームへ戻る	빌리빌리 홈으로	Volver al inicio de Bilibili	Retour à l'accueil Bilibili	Zurück zur Bilibili-Startseite	На главную Bilibili	Voltar ao início do Bilibili
+40	Save this video with the downloader	用下載器存低呢條片	この動画をダウンローダーで保存	다운로더로 이 동영상 저장	Guardar este vídeo con el descargador	Enregistrer cette vidéo avec le téléchargeur	Dieses Video mit dem Downloader speichern	Сохранить это видео загрузчиком	Salvar este vídeo com o downloader
+41	Save the video with the built-in downloader	用內置下載器存影片	内蔵ダウンローダーで動画を保存	내장 다운로더로 동영상 저장	Guardar el vídeo con el descargador integrado	Enregistrer la vidéo avec le téléchargeur intégré	Video mit dem eingebauten Downloader speichern	Сохранить видео встроенным загрузчиком	Salvar o vídeo com o downloader integrado
+42	Download	下載	ダウンロード	다운로드	Descargar	Télécharger	Herunterladen	Скачать	Baixar
+43	Cancel	取消	キャンセル	취소	Cancelar	Annuler	Abbrechen	Отмена	Cancelar
+44	Calculating	計緊	計算中	계산 중	Calculando	Calcul en cours	Wird berechnet	Вычисляется	Calculando
+45	h	個鐘	時間	시간	h	h	Std.	ч	h
+46	Downloading	下載緊	ダウンロード中	다운로드 중	Descargando	Téléchargement	Wird heruntergeladen	Скачивание	Baixando
+47	Time left	仲要	残り	남은 시간	Tiempo restante	Temps restant	Verbleibend	Осталось	Tempo restante
+48	Download service returned HTTP	下載接口返回 HTTP	ダウンロードサービスが HTTP を返しました	다운로드 서비스 응답 HTTP	El servicio de descarga devolvió HTTP	Le service de téléchargement a renvoyé HTTP	Download-Dienst antwortete mit HTTP	Сервис загрузки вернул HTTP	O serviço de download retornou HTTP
+49	Couldn't get the official signature	攞唔到官方簽名參數	公式の署名パラメータを取得できませんでした	공식 서명 값을 가져오지 못했습니다	No se pudo obtener la firma oficial	Impossible d'obtenir la signature officielle	Offizielle Signatur nicht erhalten	Не удалось получить официальную подпись	Não foi possível obter a assinatura oficial
+50	No official CDN address available (including backups); download not started	冇官方 CDN 地址用得（包括後備），未開始下載	利用できる公式 CDN（予備含む）がないため、ダウンロードを開始しませんでした	사용 가능한 공식 CDN 주소(예비 포함)가 없어 다운로드를 시작하지 않았습니다	No hay dirección CDN oficial disponible (ni de respaldo); descarga no iniciada	Aucune adresse CDN officielle disponible (secours compris) ; téléchargement non lancé	Keine offizielle CDN-Adresse (auch keine Reserve); Download nicht gestartet	Нет доступного официального CDN (включая резервные); загрузка не начата	Nenhum endereço CDN oficial disponível (nem reserva); download não iniciado
+51	Non-AAC audio isn't supported yet; a silent video was not saved	暫時唔支援非 AAC 音軌，冇存無聲影片	AAC 以外の音声には未対応のため、無音の動画は保存しませんでした	AAC가 아닌 오디오는 아직 지원하지 않아 무음 영상은 저장하지 않았습니다	El audio no AAC aún no es compatible; no se guardó un vídeo sin sonido	L'audio non AAC n'est pas encore pris en charge ; aucune vidéo muette enregistrée	Nicht-AAC-Audio wird noch nicht unterstützt; kein stummes Video gespeichert	Звук не в AAC пока не поддерживается; видео без звука не сохранено	Áudio não AAC ainda não é suportado; vídeo sem som não foi salvo
+52	No savable AVC/AAC stream found; account and region limits are not bypassed	搵唔到可以存嘅 AVC/AAC 影片流；唔會繞過帳號或地區限制	保存可能な AVC/AAC ストリームが見つかりません。アカウントや地域の制限は回避しません	저장 가능한 AVC/AAC 스트림이 없습니다. 계정·지역 제한은 우회하지 않습니다	No se encontró una transmisión AVC/AAC guardable; no se evitan límites de cuenta ni región	Aucun flux AVC/AAC enregistrable ; les limites de compte et de région ne sont pas contournées	Kein speicherbarer AVC/AAC-Stream; Konto- und Regionssperren werden nicht umgangen	Нет потока AVC/AAC для сохранения; ограничения аккаунта и региона не обходятся	Nenhum stream AVC/AAC salvável; limites de conta e região não são contornados
+53	Parsing	分析緊	解析中	분석 중	Analizando	Analyse	Wird analysiert	Разбор	Analisando
+54	Reading download info…	分析緊下載資料…	ダウンロード情報を解析中…	다운로드 정보 분석 중…	Leyendo la información de descarga…	Lecture des infos de téléchargement…	Download-Infos werden gelesen…	Получение данных для загрузки…	Lendo as informações de download…
+55	The built-in downloader only supports BV video pages	內置下載暫時只支援 BV 影片頁	内蔵ダウンロードは BV 動画ページのみ対応	내장 다운로드는 BV 동영상 페이지만 지원합니다	El descargador integrado solo admite páginas de vídeo BV	Le téléchargeur intégré ne gère que les pages vidéo BV	Der eingebaute Download unterstützt nur BV-Videoseiten	Встроенная загрузка работает только на страницах видео BV	O downloader integrado só funciona em páginas de vídeo BV
+56	Couldn't get video info	攞唔到影片資料	動画情報を取得できませんでした	동영상 정보를 가져오지 못했습니다	No se pudo obtener la información del vídeo	Impossible d'obtenir les infos de la vidéo	Videoinfos nicht abrufbar	Не удалось получить данные видео	Não foi possível obter as informações do vídeo
+57	Current part not found	搵唔到而家呢 P	現在のパートが見つかりません	현재 파트를 찾을 수 없습니다	No se encontró la parte actual	Partie actuelle introuvable	Aktueller Teil nicht gefunden	Текущая часть не найдена	Parte atual não encontrada
+58	Couldn't get the download address	攞唔到下載地址	ダウンロード先を取得できませんでした	다운로드 주소를 가져오지 못했습니다	No se pudo obtener la dirección de descarga	Impossible d'obtenir l'adresse de téléchargement	Downloadadresse nicht abrufbar	Не удалось получить адрес загрузки	Não foi possível obter o endereço de download
+59	The download address isn't secure HTTPS	下載地址唔係安全嘅 HTTPS	ダウンロード先が安全な HTTPS ではありません	다운로드 주소가 안전한 HTTPS가 아닙니다	La dirección de descarga no es HTTPS segura	L'adresse de téléchargement n'est pas en HTTPS sécurisé	Downloadadresse ist kein sicheres HTTPS	Адрес загрузки не защищён HTTPS	O endereço de download não é HTTPS seguro
+60	Choose where to save	揀儲存位置	保存先を選択	저장 위치 선택	Elegir dónde guardar	Choisir l'emplacement	Speicherort wählen	Выберите место сохранения	Escolher onde salvar
+61	Waiting for a save location…	等緊你揀儲存位置…	保存先の選択を待っています…	저장 위치 선택 대기 중…	Esperando la ubicación de guardado…	En attente de l'emplacement…	Warte auf Speicherort…	Ожидание выбора места…	Aguardando o local para salvar…
+62	Parsing failed	分析失敗	解析に失敗しました	분석 실패	Error al analizar	Échec de l'analyse	Analyse fehlgeschlagen	Ошибка разбора	Falha na análise
+63	Saved	存好咗	保存しました	저장됨	Guardado	Enregistré	Gespeichert	Сохранено	Salvo
+64	Canceled	取消咗	キャンセルしました	취소됨	Cancelado	Annulé	Abgebrochen	Отменено	Cancelado
+65	Download incomplete	下載未完成	ダウンロード未完了	다운로드 미완료	Descarga incompleta	Téléchargement incomplet	Download unvollständig	Загрузка не завершена	Download incompleto
+66	Anime	番劇	アニメ	애니	Anime	Anime	Anime	Аниме	Anime
+67	Chinese Animation	國創	国産アニメ	중국 애니	Animación china	Animation chinoise	Chinesische Animation	Китайская анимация	Animação chinesa
+68	Comics	漫畫	マンガ	만화	Cómics	BD	Comics	Комиксы	Quadrinhos
+69	Live	直播	ライブ	라이브	En directo	Live	Live	Трансляции	Ao vivo
+70	Animation	動畫	アニメーション	애니메이션	Animación	Animation	Animation	Анимация	Animação
+71	Gaming	遊戲	ゲーム	게임	Juegos	Jeux	Gaming	Игры	Games
+72	Music	音樂	音楽	음악	Música	Musique	Musik	Музыка	Música
+73	Dance	舞蹈	ダンス	댄스	Baile	Danse	Tanz	Танцы	Dança
+74	Remix	鬼畜	音MAD	음MAD	Remix	Remix	Remix	Ремиксы	Remix
+75	Knowledge	知識	知識	지식	Conocimiento	Savoir	Wissen	Знания	Conhecimento
+76	Tech	科技	テクノロジー	테크	Tecnología	Tech	Technik	Технологии	Tecnologia
+77	Food	美食	グルメ	음식	Comida	Cuisine	Essen	Еда	Comida
+78	Life	生活	ライフ	라이프	Vida	Vie	Leben	Жизнь	Vida
+79	Film & TV	影視	映画・ドラマ	영화·TV	Cine y TV	Films et séries	Film & TV	Кино и ТВ	Filmes e TV
+80	Movies	電影	映画	영화	Películas	Films	Filme	Фильмы	Filmes
+81	TV Series	電視劇	ドラマ	드라마	Series	Séries	Serien	Сериалы	Séries
+82	Documentaries	紀錄片	ドキュメンタリー	다큐멘터리	Documentales	Documentaires	Dokus	Документальные	Documentários
+83	Articles	專欄	コラム	칼럼	Artículos	Articles	Artikel	Статьи	Artigos
+84	Back to main navigation	返去主導航	メインナビに戻る	메인 메뉴로	Volver a la navegación principal	Retour à la navigation principale	Zurück zur Hauptnavigation	К основной навигации	Voltar à navegação principal
+85	Show channels	展開分區	カテゴリを表示	카테고리 펼치기	Mostrar categorías	Afficher les catégories	Kategorien anzeigen	Показать разделы	Mostrar categorias
+86	Opening video…	開緊影片…	動画を開いています…	동영상 여는 중…	Abriendo el vídeo…	Ouverture de la vidéo…	Video wird geöffnet…	Открываем видео…	Abrindo o vídeo…
+87	The page couldn't load. Check your network and try again.	頁面載入唔到，睇吓網絡再試。	ページを読み込めませんでした。ネットワークを確認して再試行してください。	페이지를 불러오지 못했습니다. 네트워크를 확인하고 다시 시도하세요.	No se pudo cargar la página. Revisa la red e inténtalo de nuevo.	La page n'a pas pu se charger. Vérifiez votre réseau et réessayez.	Seite konnte nicht geladen werden. Netzwerk prüfen und erneut versuchen.	Страница не загрузилась. Проверьте сеть и попробуйте снова.	A página não carregou. Verifique a rede e tente de novo.
+88	Loading the video…	載入緊影片畫面…	動画を読み込み中…	영상 불러오는 중…	Cargando el vídeo…	Chargement de la vidéo…	Video wird geladen…	Загружаем видео…	Carregando o vídeo…
+89	Opening the video page…	開緊影片頁…	動画ページを開いています…	동영상 페이지 여는 중…	Abriendo la página del vídeo…	Ouverture de la page vidéo…	Videoseite wird geöffnet…	Открываем страницу видео…	Abrindo a página do vídeo…
+90	Loading search results…	載入緊搜尋結果…	検索結果を読み込み中…	검색 결과 불러오는 중…	Cargando resultados…	Chargement des résultats…	Suchergebnisse werden geladen…	Загружаем результаты поиска…	Carregando resultados…
+91	Failed to load, please try again	載入唔到，再試吓	読み込みに失敗しました。もう一度お試しください	불러오지 못했습니다. 다시 시도하세요	Error al cargar, inténtalo de nuevo	Échec du chargement, réessayez	Laden fehlgeschlagen, bitte erneut versuchen	Не удалось загрузить, попробуйте снова	Falha ao carregar, tente de novo
+92	History is unavailable right now	暫時攞唔到歷史紀錄	現在履歴を取得できません	지금은 기록을 가져올 수 없습니다	El historial no está disponible ahora	L'historique est indisponible pour le moment	Verlauf derzeit nicht verfügbar	История сейчас недоступна	O histórico está indisponível agora
+93	Couldn't update Bilibili search history. Please try again later.	更新唔到 B站搜尋紀錄，遲啲再試。	ビリビリの検索履歴を更新できませんでした。しばらくしてからお試しください。	빌리빌리 검색 기록을 업데이트하지 못했습니다. 잠시 후 다시 시도하세요.	No se pudo actualizar el historial de búsqueda de Bilibili. Inténtalo más tarde.	Impossible de mettre à jour l'historique de recherche Bilibili. Réessayez plus tard.	Bilibili-Suchverlauf konnte nicht aktualisiert werden. Bitte später erneut versuchen.	Не удалось обновить историю поиска Bilibili. Попробуйте позже.	Não foi possível atualizar o histórico de pesquisa do Bilibili. Tente mais tarde.
+94	Delete from search history:	刪除搜尋紀錄：	検索履歴から削除：	검색 기록에서 삭제:	Eliminar del historial:	Supprimer de l'historique :	Aus dem Suchverlauf löschen:	Удалить из истории поиска:	Excluir do histórico:
+95	Search history	搜尋紀錄	検索履歴	검색 기록	Historial de búsqueda	Historique de recherche	Suchverlauf	История поиска	Histórico de pesquisa
+96	Clear	清空	クリア	지우기	Borrar	Effacer	Leeren	Очистить	Limpar
+97	Clear search history	清空搜尋紀錄	検索履歴をクリア	검색 기록 지우기	Borrar historial de búsqueda	Effacer l'historique de recherche	Suchverlauf leeren	Очистить историю поиска	Limpar histórico de pesquisa
+98	Show less	收埋	折りたたむ	접기	Mostrar menos	Afficher moins	Weniger anzeigen	Свернуть	Mostrar menos
+99	Show more	睇多啲	もっと見る	더 보기	Mostrar más	Afficher plus	Mehr anzeigen	Показать ещё	Mostrar mais
+100	No search history	未有搜尋紀錄	検索履歴はありません	검색 기록 없음	Sin historial de búsqueda	Aucun historique	Kein Suchverlauf	История поиска пуста	Sem histórico de pesquisa
+101	You might like	估你想搵	おすすめの検索	추천 검색어	Quizá te interese	Suggestions	Vorschläge für dich	Возможно, вы ищете	Talvez você goste
+102	No suggestions	未有建議	候補はありません	추천 없음	Sin sugerencias	Aucune suggestion	Keine Vorschläge	Нет подсказок	Sem sugestões
+103	Suggestions unavailable right now	暫時攞唔到建議	現在候補を取得できません	지금은 추천을 가져올 수 없습니다	Sugerencias no disponibles ahora	Suggestions indisponibles pour le moment	Vorschläge derzeit nicht verfügbar	Подсказки сейчас недоступны	Sugestões indisponíveis agora
+104	My avatar	我嘅頭像	マイアバター	내 아바타	Mi avatar	Mon avatar	Mein Avatar	Мой аватар	Meu avatar
+105	Avatar frame	頭像掛件	アバターフレーム	아바타 프레임	Marco de avatar	Cadre d'avatar	Avatar-Rahmen	Рамка аватара	Moldura de avatar
+106	Premium	大會員	大会員	프리미엄	Premium	Premium	Premium	Премиум	Premium
+107	Sign in to Bilibili	登入 B站	ビリビリにログイン	빌리빌리 로그인	Iniciar sesión en Bilibili	Se connecter à Bilibili	Bei Bilibili anmelden	Войти в Bilibili	Entrar no Bilibili
+108	Reading account	讀緊帳號	アカウントを読み込み中	계정 불러오는 중	Leyendo la cuenta	Lecture du compte	Konto wird gelesen	Читаем аккаунт	Lendo a conta
+109	Profile feed banner	主頁動態橫額	ホームのフィードバナー	프로필 피드 배너	Banner del perfil	Bannière du profil	Profil-Banner	Баннер профиля	Banner do perfil
+110	My profile banner	我嘅主頁橫額	マイページのバナー	내 프로필 배너	Banner de mi perfil	Bannière de mon profil	Mein Profilbanner	Баннер моего профиля	Banner do meu perfil
+111	Unread	有未讀	未読あり	읽지 않음	Sin leer	Non lus	Ungelesen	Непрочитанные	Não lidas
+112	unread	條未讀	件の未読	개 읽지 않음	sin leer	non lus	ungelesen	непрочитанных	não lidas
+113	Messages ·	訊息 ·	メッセージ ·	메시지 ·	Mensajes ·	Messages ·	Nachrichten ·	Сообщения ·	Mensagens ·
+114	unread replies or DMs	條未讀互動或私訊	件の未読の反応・DM	개의 읽지 않은 반응 또는 DM	respuestas o mensajes sin leer	réponses ou messages non lus	ungelesene Antworten oder DMs	непрочитанных ответов или ЛС	respostas ou mensagens não lidas
+115	plus system messages	仲有系統訊息	ほかにシステム通知あり	시스템 메시지도 있음	y mensajes del sistema	et des messages système	plus Systemnachrichten	и системные сообщения	e mensagens do sistema
+116	Messages · unread system messages	訊息 · 有未讀系統訊息	メッセージ · 未読のシステム通知	메시지 · 읽지 않은 시스템 메시지	Mensajes · mensajes del sistema sin leer	Messages · messages système non lus	Nachrichten · ungelesene Systemnachrichten	Сообщения · непрочитанные системные	Mensagens · mensagens do sistema não lidas
+117	Messages	訊息	メッセージ	메시지	Mensajes	Messages	Nachrichten	Сообщения	Mensagens
+118	Refresh	重新整理	更新	새로고침	Actualizar	Actualiser	Aktualisieren	Обновить	Atualizar
+119	Don't forget to eat well today	今日都要食飽飽呀	今日もちゃんとごはん食べてね	오늘도 밥 잘 챙겨 먹어요	Hoy también come bien	Pense à bien manger aujourd'hui	Iss heute auch ordentlich	Не забудь сегодня нормально поесть	Hoje também, coma direitinho
+120	Like, coin, fave — never lose your way	一鍵三連唔迷路，搜嘢唔迷惘	いいね・コイン・お気に入りで迷わない	좋아요·코인·즐겨찾기면 길을 잃지 않아요	Like, moneda y favorito: nunca te perderás	Like, pièce, favori : jamais perdu	Like, Münze, Favorit – nie mehr verloren	Лайк, монетка, в избранное — и не заблудишься	Curtir, moeda, favoritar — nunca se perca
+121	Search box: I'm ready	搜尋框：我準備好喇	検索ボックス：準備オッケー	검색창: 준비 완료	Caja de búsqueda: lista	Barre de recherche : prête	Suchfeld: bereit	Строка поиска: я готова	Caixa de busca: pronta
+122	Rumor says pressing Enter brings good luck	聽講撳 Enter 會有好事發生	Enter を押すといいことがあるらしい	엔터를 누르면 좋은 일이 생긴대요	Dicen que pulsar Intro trae suerte	On dit qu'appuyer sur Entrée porte chance	Angeblich bringt Enter Glück	Говорят, Enter приносит удачу	Dizem que apertar Enter dá sorte
+123	Cat videos cure everything	貓貓片包醫百病	猫動画は万病に効く	고양이 영상은 만병통치약	Los vídeos de gatos lo curan todo	Les vidéos de chats guérissent tout	Katzenvideos heilen alles	Видео с котиками лечат всё	Vídeos de gato curam tudo
+124	-
+125	-
+126	-
+127	-
+128	-
+129	-
+130	-
+131	-
+132	Shuffle	換一換	シャッフル	새로 고침	Cambiar	Changer	Neu mischen	Обновить подборку	Trocar
+133	Show a new batch	換一批推薦	おすすめを入れ替え	추천 새로 받기	Mostrar otras recomendaciones	Afficher d'autres recommandations	Neue Empfehlungen	Показать другие рекомендации	Mostrar outras recomendações
+134	Back to top	返去頂部	トップへ戻る	맨 위로	Volver arriba	Retour en haut	Nach oben	Наверх	Voltar ao topo
+135	Top	頂部	トップ	맨 위	Arriba	Haut	Oben	Наверх	Topo
+136	Drag to resize the search bar	拖動調整搜尋欄闊度	ドラッグで検索バーの幅を調整	드래그해 검색창 너비 조절	Arrastra para cambiar el ancho de la búsqueda	Faites glisser pour redimensionner la recherche	Ziehen, um die Suchleiste anzupassen	Перетащите, чтобы изменить ширину поиска	Arraste para ajustar a largura da busca
+137	Drag to resize the search bar · double-click to reset	拖動調整搜尋欄闊度 · 㩒兩下還原	ドラッグで幅を調整 · ダブルクリックで元に戻す	드래그해 너비 조절 · 더블클릭하면 초기화	Arrastra para cambiar el ancho · doble clic para restablecer	Glisser pour redimensionner · double-clic pour réinitialiser	Ziehen zum Anpassen · Doppelklick setzt zurück	Перетащите для изменения ширины · двойной клик — сброс	Arraste para ajustar · clique duplo para redefinir
+138	Floating settings panel	浮動設定面板	フローティング設定パネル	플로팅 설정 패널	Panel de ajustes flotante	Panneau de réglages flottant	Schwebendes Einstellungsfenster	Плавающая панель настроек	Painel de configurações flutuante
+139	Left-click toggles · right-click expands · drag a title to move · right-click a title to fold · Esc closes	左撳開關 · 右撳展開 · 拖標題移動 · 右撳標題收埋 · Esc 閂	左クリックで切替 · 右クリックで展開 · タイトルをドラッグで移動 · タイトル右クリックで折りたたみ · Esc で閉じる	왼쪽 클릭 전환 · 오른쪽 클릭 펼치기 · 제목 드래그로 이동 · 제목 오른쪽 클릭 접기 · Esc 닫기	Clic izquierdo activa · clic derecho despliega · arrastra el título para mover · clic derecho en el título pliega · Esc cierra	Clic gauche : basculer · clic droit : déplier · glisser le titre pour déplacer · clic droit sur le titre pour replier · Échap pour fermer	Linksklick schaltet · Rechtsklick klappt auf · Titel ziehen verschiebt · Rechtsklick auf Titel klappt zu · Esc schließt	ЛКМ — переключить · ПКМ — развернуть · тяните заголовок, чтобы двигать · ПКМ по заголовку — свернуть · Esc — закрыть	Clique esquerdo alterna · clique direito expande · arraste o título para mover · clique direito no título recolhe · Esc fecha
+140	Classic settings	經典設定	クラシック設定	클래식 설정	Ajustes clásicos	Réglages classiques	Klassische Einstellungen	Классические настройки	Configurações clássicas
+141	Left-click to toggle	左撳切換開關	左クリックで切り替え	왼쪽 클릭으로 전환	Clic izquierdo para alternar	Clic gauche pour basculer	Linksklick zum Umschalten	ЛКМ — переключить	Clique esquerdo para alternar
+142	Not signed in	未登入	未ログイン	로그인 안 됨	Sin iniciar sesión	Non connecté	Nicht angemeldet	Вход не выполнен	Não conectado
+143	Level —	等級 —	レベル —	레벨 —	Nivel —	Niveau —	Level —	Уровень —	Nível —
+144	Sign in to see your account	登入之後睇帳戶資料	ログインするとアカウント情報を表示	로그인하면 계정 정보를 볼 수 있습니다	Inicia sesión para ver tu cuenta	Connectez-vous pour voir votre compte	Anmelden, um dein Konto zu sehen	Войдите, чтобы увидеть аккаунт	Entre para ver sua conta
+145	My profile	我嘅主頁	マイページ	내 프로필	Mi perfil	Mon profil	Mein Profil	Мой профиль	Meu perfil
+146	Warning: super-resolution and frame interpolation are experimental and may stutter, flicker or judder; quality isn't guaranteed to improve. Turn them off if anything looks wrong.	注意：超解析同補幀係測試功能，可能會卡、閃或者抖；唔保證畫質會好啲，有問題就熄咗佢。	警告：超解像とフレーム補間はテスト機能です。カクつき・ちらつき・揺れが起きることがあり、画質向上は保証されません。異常があればオフにしてください。	경고: 초해상도와 프레임 보간은 테스트 기능이라 끊김·깜박임·떨림이 생길 수 있고 화질 향상을 보장하지 않습니다. 이상하면 끄세요.	Aviso: la superresolución y la interpolación de fotogramas son experimentales y pueden dar tirones, parpadeos o vibraciones; no se garantiza mejor calidad. Desactívalas si algo falla.	Attention : la super-résolution et l'interpolation d'images sont expérimentales et peuvent saccader, scintiller ou trembler ; la qualité n'est pas garantie. Désactivez-les en cas de problème.	Warnung: Super-Resolution und Zwischenbildberechnung sind experimentell und können ruckeln, flackern oder zittern; bessere Qualität ist nicht garantiert. Bei Problemen ausschalten.	Внимание: суперразрешение и интерполяция кадров — экспериментальные функции, возможны подтормаживания, мерцание и дрожание; улучшение качества не гарантировано. Отключите при проблемах.	Aviso: a super-resolução e a interpolação de quadros são experimentais e podem travar, piscar ou tremer; melhor qualidade não é garantida. Desligue se algo der errado.
+147	Clipboard video prompt	剪貼簿影片提示	クリップボードの動画通知	클립보드 동영상 알림	Aviso de vídeo en el portapapeles	Alerte vidéo du presse-papiers	Video aus der Zwischenablage	Подсказка о видео в буфере обмена	Aviso de vídeo na área de transferência
+148	Video link detected	發現影片連結	動画リンクを検出しました	동영상 링크 감지됨	Enlace de vídeo detectado	Lien vidéo détecté	Videolink erkannt	Найдена ссылка на видео	Link de vídeo detectado
+149	Open it to watch?	要唔要跳過去睇？	開いて視聴しますか？	이동해서 볼까요?	¿Abrirlo para verlo?	L'ouvrir pour regarder ?	Zum Ansehen öffnen?	Открыть для просмотра?	Abrir para assistir?

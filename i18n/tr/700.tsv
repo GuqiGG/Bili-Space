@@ -1,0 +1,179 @@
+# idx	en	yue	ja	ko	es	fr	de	ru	pt-BR
+700	General model	通用模型	汎用モデル	범용 모델	Modelo general	Modèle général	Allgemeines Modell	Общая модель	Modelo geral
+701	Upscaling on standby (picture isn't larger than the source)	超解析待機（畫面唔比源大）	超解像は待機中（元より大きくない）	업스케일 대기(원본보다 크지 않음)	Escalado en espera (la imagen no supera el original)	Mise à l'échelle en attente (image pas plus grande que la source)	Hochskalierung wartet (Bild nicht größer als Quelle)	Апскейл ожидает (картинка не больше исходной)	Upscaling em espera (imagem não é maior que a fonte)
+702	fps · cap	幀 · 上限	fps · 上限	fps · 상한	fps · límite	ips · limite	fps · Limit	к/с · предел	fps · limite
+703	Picture enhancement off:	畫面增強閂咗：	画質強化をオフにしました：	화질 향상 꺼짐:	Mejora de imagen desactivada:	Amélioration d'image désactivée :	Bildverbesserung aus:	Улучшение изображения выключено:	Melhoria de imagem desligada:
+704	Native playback restored	已還原原生播放	通常再生に戻しました	원래 재생으로 복원	Reproducción nativa restaurada	Lecture native rétablie	Native Wiedergabe wiederhergestellt	Обычное воспроизведение восстановлено	Reprodução nativa restaurada
+705	Picture enhancement unavailable; native playback restored:	畫面增強用唔到，已還原原生播放：	画質強化を利用できないため通常再生に戻しました：	화질 향상을 쓸 수 없어 원래 재생으로 복원:	Mejora de imagen no disponible; reproducción nativa restaurada:	Amélioration indisponible ; lecture native rétablie :	Bildverbesserung nicht verfügbar; native Wiedergabe wiederhergestellt:	Улучшение недоступно; обычное воспроизведение восстановлено:	Melhoria indisponível; reprodução nativa restaurada:
+706	Waiting for video	等緊影片	動画を待っています	영상 대기 중	Esperando el vídeo	En attente de la vidéo	Warte auf Video	Ожидание видео	Aguardando o vídeo
+707	Requires a WebGPU graphics card; native playback kept	要 WebGPU 顯示卡支援，保留咗原生播放	WebGPU 対応 GPU が必要なため通常再生のままです	WebGPU 그래픽 카드가 필요해 원래 재생을 유지합니다	Requiere WebGPU; se mantiene la reproducción nativa	Nécessite WebGPU ; lecture native conservée	Benötigt WebGPU; native Wiedergabe bleibt	Нужна видеокарта с WebGPU; обычное воспроизведение сохранено	Requer WebGPU; reprodução nativa mantida
+708	This system doesn't support per-frame processing; native playback kept	呢部機唔支援逐幀處理，保留咗原生播放	このシステムはフレーム単位の処理に未対応のため通常再生のままです	이 시스템은 프레임별 처리를 지원하지 않아 원래 재생을 유지합니다	Este sistema no admite procesado por fotograma; se mantiene la reproducción nativa	Ce système ne gère pas le traitement image par image ; lecture native conservée	Dieses System unterstützt keine Einzelbildverarbeitung; native Wiedergabe bleibt	Система не поддерживает покадровую обработку; обычное воспроизведение сохранено	Este sistema não suporta processamento por quadro; reprodução nativa mantida
+709	Picture enhancement unavailable; native playback unaffected:	畫面增強用唔到，原生播放唔受影響：	画質強化は利用できません。通常再生には影響しません：	화질 향상을 쓸 수 없지만 원래 재생에는 영향 없음:	Mejora no disponible; la reproducción nativa no se ve afectada:	Amélioration indisponible ; la lecture native n'est pas affectée :	Bildverbesserung nicht verfügbar; native Wiedergabe unbeeinträchtigt:	Улучшение недоступно; обычное воспроизведение не затронуто:	Melhoria indisponível; reprodução nativa não é afetada:
+710	Volume boost unavailable; original sound kept:	音量增益用唔到，保留原聲：	音量ブーストを利用できないため元の音のままです：	음량 증폭을 쓸 수 없어 원음 유지:	Amplificación no disponible; se mantiene el sonido original:	Amplification indisponible ; son d'origine conservé :	Lautstärke-Boost nicht verfügbar; Originalton bleibt:	Усиление громкости недоступно; исходный звук сохранён:	Aumento de volume indisponível; som original mantido:
+711	Sound balance isn't supported for this video yet	呢條片暫時唔支援聲音平衡	この動画はサウンドバランスに未対応です	이 영상은 아직 사운드 밸런스를 지원하지 않아요	Este vídeo aún no admite el equilibrio de sonido	Cette vidéo ne prend pas encore en charge l'équilibrage	Lautstärkeausgleich für dieses Video noch nicht möglich	Для этого видео выравнивание звука пока недоступно	Este vídeo ainda não suporta o equilíbrio de som
+712	Closing Bili Space	閂緊 Bili Space	Bili Space を終了しています	Bili Space 종료 중	Cerrando Bili Space	Fermeture de Bili Space	Bili Space wird geschlossen	Закрываем Bili Space	Fechando o Bili Space
+713	The page hasn't finished loading; please try again	頁面仲未載入完，再試吓	ページの読み込みが終わっていません。もう一度お試しください	페이지가 아직 다 열리지 않았어요. 다시 시도하세요	La página aún no ha terminado de cargar; inténtalo de nuevo	La page n'a pas fini de charger ; réessayez	Seite noch nicht fertig geladen; bitte erneut versuchen	Страница ещё не загрузилась; попробуйте снова	A página ainda não terminou de carregar; tente de novo
+714	Loading	載入緊	読み込み中	불러오는 중	Cargando	Chargement	Wird geladen	Загрузка	Carregando
+715	History	歷史紀錄	履歴	기록	Historial	Historique	Verlauf	История	Histórico
+716	Search results	搜尋結果	検索結果	검색 결과	Resultados de búsqueda	Résultats de recherche	Suchergebnisse	Результаты поиска	Resultados da pesquisa
+717	Profile	個人空間	個人ページ	개인 공간	Perfil	Profil	Profil	Профиль	Perfil
+718	Reload	重新載入	再読み込み	다시 불러오기	Recargar	Recharger	Neu laden	Перезагрузить	Recarregar
+719	Bilibili	嗶哩嗶哩	ビリビリ	빌리빌리	Bilibili	Bilibili	Bilibili	Bilibili	Bilibili
+720	You're already on the home page!	你已經喺主頁喇！	もうホームにいますよ！	이미 홈이에요!	¡Ya estás en el inicio!	Vous êtes déjà sur l'accueil !	Du bist schon auf der Startseite!	Вы уже на главной!	Você já está no início!
+721	Experimental features on: upscaling/interpolation may stutter or flicker.	測試功能開咗：超解析/補幀可能會卡或者閃。	テスト機能がオン：超解像・補間でカクつきやちらつきが出ることがあります。	테스트 기능 켜짐: 업스케일·보간이 끊기거나 깜박일 수 있어요.	Funciones experimentales activas: el escalado o la interpolación pueden fallar.	Fonctions expérimentales actives : saccades ou scintillement possibles.	Experimentelle Funktionen an: Hochskalierung/Zwischenbilder können ruckeln oder flackern.	Экспериментальные функции включены: апскейл и интерполяция могут дёргаться или мерцать.	Funções experimentais ativas: upscaling/interpolação podem travar ou piscar.
+722	Back to the client	返去客戶端	クライアントに戻る	클라이언트로 돌아가기	Volver al cliente	Retour au client	Zurück zum Client	Вернуться в клиент	Voltar ao cliente
+723	Canceling	取消緊	キャンセル中	취소 중	Cancelando	Annulation	Wird abgebrochen	Отмена	Cancelando
+724	Canceling download…	取消緊下載…	ダウンロードをキャンセル中…	다운로드 취소 중…	Cancelando la descarga…	Annulation du téléchargement…	Download wird abgebrochen…	Отменяем загрузку…	Cancelando o download…
+725	Merging	合併緊	結合中	병합 중	Uniendo	Fusion	Wird zusammengeführt	Объединение	Mesclando
+726	Downloaded · merging audio and video…	下載完 · 合併緊聲同畫…	ダウンロード完了 · 音声と映像を結合中…	다운로드 완료 · 오디오와 영상 병합 중…	Descargado · uniendo audio y vídeo…	Téléchargé · fusion de l'audio et de la vidéo…	Heruntergeladen · Audio und Video werden zusammengeführt…	Загружено · объединяем звук и видео…	Baixado · mesclando áudio e vídeo…
+727	Time left: calculating	仲要：計緊	残り：計算中	남은 시간: 계산 중	Tiempo restante: calculando	Temps restant : calcul…	Verbleibend: wird berechnet	Осталось: вычисляется	Tempo restante: calculando
+728	Blocklist file too large	屏蔽字檔案太大	ブロックワードのファイルが大きすぎます	차단어 파일이 너무 큽니다	Archivo de palabras bloqueadas demasiado grande	Fichier de mots bloqués trop volumineux	Sperrwort-Datei zu groß	Файл стоп-слов слишком большой	Arquivo de palavras bloqueadas grande demais
+729	Choose a plain-text list or a keywords JSON	請揀文字清單或者 keywords JSON	テキストのリストか keywords JSON を選んでください	텍스트 목록이나 keywords JSON을 선택하세요	Elige una lista de texto o un JSON de keywords	Choisissez une liste texte ou un JSON keywords	Wähle eine Textliste oder eine keywords-JSON	Выберите текстовый список или keywords JSON	Escolha uma lista de texto ou um JSON de keywords
+730	Import up to 200 blocked words	最多匯入 200 個屏蔽字	ブロックワードは最大 200 個まで	차단어는 최대 200개까지 가져올 수 있어요	Importa hasta 200 palabras	200 mots bloqués maximum	Höchstens 200 Sperrwörter importieren	Не более 200 стоп-слов	Importe até 200 palavras
+731	Invalid danmaku data	彈幕數據無效	弾幕データが無効です	잘못된 탄막 데이터	Datos de comentarios no válidos	Données de commentaires invalides	Ungültige Danmaku-Daten	Неверные данные комментариев	Dados de comentários inválidos
+732	Followed creators	關注 UP	フォロー中の投稿者	팔로우한 크리에이터	Creadores seguidos	Créateurs suivis	Gefolgte Creator	Подписки	Criadores seguidos
+733	New videos	新影片	新着動画	새 동영상	Vídeos nuevos	Nouvelles vidéos	Neue Videos	Новые видео	Vídeos novos
+734	Waiting to check	等緊檢查	確認待ち	확인 대기 중	Esperando para comprobar	En attente de vérification	Wartet auf Prüfung	Ожидает проверки	Aguardando verificação
+735	ilibili service unavailable for now	站接口暫時用唔到	ilibili のサービスが現在利用できません	ilibili 서비스를 지금 쓸 수 없어요	ilibili no está disponible ahora	ilibili est indisponible pour le moment	ilibili-Dienst derzeit nicht verfügbar	ilibili сейчас недоступен	ilibili está indisponível agora
+736	Sign in to Bilibili first	請先登入 B站	先にビリビリにログインしてください	먼저 빌리빌리에 로그인하세요	Inicia sesión en Bilibili primero	Connectez-vous d'abord à Bilibili	Erst bei Bilibili anmelden	Сначала войдите в Bilibili	Entre no Bilibili primeiro
+737	Open a video first	先開一條片	先に動画を開いてください	먼저 영상을 여세요	Abre un vídeo primero	Ouvrez d'abord une vidéo	Erst ein Video öffnen	Сначала откройте видео	Abra um vídeo primeiro
+738	Danmaku info for this video is unavailable	而家條片嘅彈幕資料用唔到	この動画の弾幕情報を利用できません	이 영상의 탄막 정보를 쓸 수 없어요	La información de comentarios de este vídeo no está disponible	Infos de commentaires indisponibles pour cette vidéo	Danmaku-Infos für dieses Video nicht verfügbar	Данные комментариев этого видео недоступны	Informações de comentários deste vídeo indisponíveis
+739	Danmaku signature unavailable	彈幕簽名資料用唔到	弾幕の署名情報を利用できません	탄막 서명 정보를 쓸 수 없음	Firma de comentarios no disponible	Signature des commentaires indisponible	Danmaku-Signatur nicht verfügbar	Подпись комментариев недоступна	Assinatura dos comentários indisponível
+740	This player layout can't be enhanced yet	而家播放器排版暫時唔支援增強	このプレーヤーのレイアウトはまだ強化に未対応です	이 플레이어 배치는 아직 향상을 지원하지 않아요	Este diseño de reproductor aún no admite mejoras	Cette disposition du lecteur n'est pas encore prise en charge	Dieses Player-Layout wird noch nicht unterstützt	Этот макет плеера пока не поддерживается	Este layout de player ainda não é suportado
+741	Loading danmaku	載入緊彈幕	弾幕を読み込み中	탄막 불러오는 중	Cargando comentarios	Chargement des commentaires	Danmaku werden geladen	Загружаем комментарии	Carregando comentários
+742	Local danmaku on · native layer	已開本地彈幕 · 原生層	ローカル弾幕オン · ネイティブ層	로컬 탄막 켜짐 · 기본 레이어	Comentarios locales activos · capa nativa	Commentaires locaux actifs · couche native	Lokale Danmaku an · native Ebene	Локальные комментарии вкл. · родной слой	Comentários locais ativos · camada nativa
+743	Local danmaku dropped out; native ones are back for now	本地彈幕斷咗，暫時用返原生	ローカル弾幕が途切れたため一時的に通常の弾幕に戻しました	로컬 탄막이 끊겨 잠시 기본 탄막으로 돌아갔어요	Los comentarios locales se cortaron; vuelven los nativos por ahora	Les commentaires locaux ont décroché ; retour aux natifs pour l'instant	Lokale Danmaku ausgefallen; vorerst wieder native	Локальные комментарии прервались; временно включены родные	Os comentários locais caíram; os nativos voltaram por enquanto
+744	Sign in to check followed creators	登入之後檢查關注更新	ログインするとフォロー中の更新を確認できます	로그인하면 팔로우 업데이트를 확인해요	Inicia sesión para comprobar tus creadores	Connectez-vous pour vérifier vos créateurs	Anmelden, um gefolgte Creator zu prüfen	Войдите, чтобы проверять подписки	Entre para verificar os criadores seguidos
+745	Checking followed creators	檢查緊關注更新	フォロー中の更新を確認中	팔로우 업데이트 확인 중	Comprobando creadores seguidos	Vérification des créateurs suivis	Gefolgte Creator werden geprüft	Проверяем подписки	Verificando criadores seguidos
+746	Last checked	上次檢查	前回の確認	최근 확인	Última comprobación	Dernière vérification	Zuletzt geprüft	Последняя проверка	Última verificação
+747	updated	更新咗	が更新	업데이트함	actualizó	a publié	hat aktualisiert	обновил	atualizou
+748	Followed creators updated	關注 UP 更新咗	フォロー中の投稿者が更新	팔로우한 크리에이터 업데이트	Tus creadores publicaron	Vos créateurs ont publié	Gefolgte Creator haben gepostet	Подписки обновились	Criadores seguidos atualizaram
+749	videos	條片	本の動画	개 영상	vídeos	vidéos	Videos	видео	vídeos
+750	Exporting danmaku	匯出緊彈幕	弾幕を書き出し中	탄막 내보내는 중	Exportando comentarios	Export des commentaires	Danmaku werden exportiert	Экспортируем комментарии	Exportando comentários
+751	Too many danmaku; choose a shorter video	彈幕太多，請揀短啲嘅片	弾幕が多すぎます。短い動画を選んでください	탄막이 너무 많아요. 더 짧은 영상을 고르세요	Demasiados comentarios; elige un vídeo más corto	Trop de commentaires ; choisissez une vidéo plus courte	Zu viele Danmaku; wähle ein kürzeres Video	Слишком много комментариев; выберите видео покороче	Comentários demais; escolha um vídeo mais curto
+752	Created (	整好咗（	作成しました（	생성됨(	Creado (	Créé (	Erstellt (	Создано (	Criado (
+753	 source danmaku)	條源彈幕）	件の元弾幕）	개 원본 탄막)	 comentarios de origen)	 commentaires source)	 Quell-Danmaku)	 исходных комментариев)	 comentários de origem)
+754	Danmaku & viewing	彈幕同觀看	弾幕と視聴	탄막 및 시청	Comentarios y visionado	Commentaires et visionnage	Danmaku & Ansehen	Комментарии и просмотр	Comentários e visualização
+755	Client danmaku enhancement	客戶端彈幕增強	クライアントの弾幕強化	클라이언트 탄막 향상	Mejora de comentarios del cliente	Commentaires améliorés du client	Client-Danmaku-Verbesserung	Улучшенные комментарии клиента	Melhoria de comentários do cliente
+756	On uses a local danmaku layer; off keeps the original player's danmaku.	開咗就用本地彈幕層，閂咗就保留原播放器彈幕。	オンでローカル弾幕レイヤーを使い、オフで元のプレーヤーの弾幕のままにします。	켜면 로컬 탄막 레이어를, 끄면 원래 플레이어 탄막을 씁니다.	Activado usa una capa local; desactivado mantiene los comentarios originales.	Activé : couche locale ; désactivé : commentaires du lecteur d'origine.	An nutzt eine lokale Danmaku-Ebene, aus behält die des Players.	Вкл. — локальный слой комментариев, выкл. — родные комментарии плеера.	Ligado usa uma camada local; desligado mantém os comentários originais.
+757	Density	密度	密度	밀도	Densidad	Densité	Dichte	Плотность	Densidade
+758	Opacity	透明度	不透明度	불투명도	Opacidad	Opacité	Deckkraft	Непрозрачность	Opacidade
+759	Speed	速度	速度	속도	Velocidad	Vitesse	Geschwindigkeit	Скорость	Velocidade
+760	Duplicate merge window	重複合併時間	重複をまとめる時間	중복 병합 시간	Ventana para unir duplicados	Fenêtre de fusion des doublons	Zeitfenster für Duplikate	Окно объединения повторов	Janela para unir repetidos
+761	s	秒	秒	초	s	s	s	с	s
+762	Max per second (0	每秒最多顯示（0	1 秒あたりの最大表示（0	초당 최대 표시(0	Máximo por segundo (0	Maximum par seconde (0	Höchstens pro Sekunde (0	Максимум в секунду (0	Máximo por segundo (0
+763	 = no limit)	唔限）	無制限）	무제한)	 = sin límite)	 = illimité)	 = unbegrenzt)	 = без ограничения)	 = sem limite)
+764	-
+765	Merge duplicate danmaku	合併重複彈幕	重複した弾幕をまとめる	중복 탄막 합치기	Unir comentarios repetidos	Fusionner les commentaires en double	Doppelte Danmaku zusammenfassen	Объединять повторы	Unir comentários repetidos
+766	Repeats on screen show as “text	同屏重複會顯示做「文字	画面内の重複を「テキスト	화면에 반복되면 '텍스트	Las repeticiones se muestran como «texto	Les répétitions s'affichent comme « texte	Wiederholungen erscheinen als „Text	Повторы на экране показываются как «текст	Repetições aparecem como “texto
+767	is the native count	係原生條數	が元の件数	는 원래 개수	es el recuento nativo	est le nombre natif	ist die native Anzahl	— исходное число	é a contagem nativa
+768	Filter meaningless danmaku	過濾無意義彈幕	意味のない弾幕を除外	의미 없는 탄막 거르기	Filtrar comentarios sin sentido	Filtrer les commentaires inutiles	Sinnlose Danmaku filtern	Фильтровать бессмысленные комментарии	Filtrar comentários sem sentido
+769	Symbols only, repeated single-character spam	淨係符號、連續單字洗版	記号だけ、1 文字の連投	기호만, 한 글자 도배	Solo símbolos o un carácter repetido	Symboles seuls, spam d'un seul caractère	Nur Symbole, wiederholte Einzelzeichen	Только символы, спам одним знаком	Só símbolos, spam de um caractere
+770	Display area	顯示範圍	表示範囲	표시 영역	Zona de visualización	Zone d'affichage	Anzeigebereich	Область показа	Área de exibição
+771	Scrolling danmaku	滾動彈幕	スクロール弾幕	스크롤 탄막	Comentarios en movimiento	Commentaires défilants	Laufende Danmaku	Бегущие комментарии	Comentários rolando
+772	Top danmaku	頂部彈幕	上部の弾幕	상단 탄막	Comentarios superiores	Commentaires en haut	Danmaku oben	Комментарии сверху	Comentários no topo
+773	Bottom danmaku	底部彈幕	下部の弾幕	하단 탄막	Comentarios inferiores	Commentaires en bas	Danmaku unten	Комментарии снизу	Comentários embaixo
+774	Blocked keywords	屏蔽關鍵字	ブロックキーワード	차단 키워드	Palabras bloqueadas	Mots-clés bloqués	Gesperrte Stichwörter	Стоп-слова	Palavras bloqueadas
+775	One per line, up to 200; lines starting with re	每行一個，最多 200 個；re	1 行に 1 つ、最大 200 個。re	한 줄에 하나, 최대 200개. re	Una por línea, hasta 200; las que empiezan por re	Un par ligne, 200 max ; commençant par re	Eins pro Zeile, bis 200; Zeilen mit re	По одному в строке, до 200; строки с re	Uma por linha, até 200; linhas com re
+776	 are regular expressions	開頭就用正則匹配	で始まる行は正規表現	로 시작하면 정규식	 son expresiones regulares	 sont des expressions régulières	 am Anfang sind reguläre Ausdrücke	 в начале — регулярные выражения	 no início são expressões regulares
+777	Import blocked words	匯入屏蔽字	ブロックワードを読み込む	차단어 가져오기	Importar palabras bloqueadas	Importer des mots bloqués	Sperrwörter importieren	Импорт стоп-слов	Importar palavras bloqueadas
+778	Export blocked words	匯出屏蔽字	ブロックワードを書き出す	차단어 내보내기	Exportar palabras bloqueadas	Exporter les mots bloqués	Sperrwörter exportieren	Экспорт стоп-слов	Exportar palavras bloqueadas
+779	Export normal danmaku as ASS	匯出普通彈幕 ASS	通常の弾幕を ASS で書き出す	일반 탄막을 ASS로 내보내기	Exportar comentarios como ASS	Exporter les commentaires en ASS	Normale Danmaku als ASS exportieren	Экспорт обычных комментариев в ASS	Exportar comentários como ASS
+780	Local weekly viewing report	本地觀看周報	ローカル視聴レポート	로컬 주간 시청 보고서	Informe semanal local	Rapport hebdo local	Lokaler Wochenbericht	Локальный еженедельный отчёт	Relatório semanal local
+781	New video alerts from followed creators	關注 UP 更新提醒	フォロー中の投稿者の更新通知	팔로우 크리에이터 새 영상 알림	Avisos de nuevos vídeos de creadores seguidos	Alertes des créateurs suivis	Benachrichtigung bei neuen Videos	Уведомления о новых видео подписок	Avisos de vídeos novos dos criadores seguidos
+782	Checks every 10 minutes; the first check only sets a baseline	每 10 分鐘檢查一次，第一次淨係建立基線	10 分ごとに確認。初回は基準を作るだけです	10분마다 확인, 첫 확인은 기준만 만듭니다	Comprueba cada 10 minutos; la primera vez solo fija una base	Vérifie toutes les 10 minutes ; la première fois sert de référence	Prüft alle 10 Minuten; die erste Prüfung legt nur eine Basis fest	Проверка раз в 10 минут; первая лишь задаёт отправную точку	Verifica a cada 10 minutos; a primeira só define uma base
+783	Weekly viewing report	觀看周報	視聴レポート	주간 시청 보고서	Informe semanal	Rapport hebdomadaire	Wochenbericht	Еженедельный отчёт	Relatório semanal
+784	More than 200 blocked words after merging	合併之後超過 200 個屏蔽字	まとめると 200 個を超えます	합치면 차단어가 200개를 넘어요	Más de 200 palabras al unir	Plus de 200 mots après fusion	Nach dem Zusammenführen über 200 Sperrwörter	После объединения больше 200 стоп-слов	Mais de 200 palavras após unir
+785	Imported	匯入咗	読み込みました	가져옴	Importadas	Importés	Importiert	Импортировано	Importadas
+786	blocked words	個屏蔽字	個のブロックワード	개 차단어	palabras bloqueadas	mots bloqués	Sperrwörter	стоп-слов	palavras bloqueadas
+787	Blocked words	屏蔽字	ブロックワード	차단어	Palabras bloqueadas	Mots bloqués	Sperrwörter	Стоп-слова	Palavras bloqueadas
+788	No limit	唔限	無制限	무제한	Sin límite	Illimité	Unbegrenzt	Без ограничения	Sem limite
+789	min	分鐘	分	분	min	min	Min.	мин	min
+790	Last 7 days	最近 7 日	過去 7 日間	최근 7일	Últimos 7 días	7 derniers jours	Letzte 7 Tage	Последние 7 дней	Últimos 7 dias
+791	Today	今日	今日	오늘	Hoy	Aujourd'hui	Heute	Сегодня	Hoje
+792	Manage accounts	管理帳號	アカウント管理	계정 관리	Gestionar cuentas	Gérer les comptes	Konten verwalten	Управление аккаунтами	Gerenciar contas
+793	Saved accounts	已儲存嘅帳號	保存したアカウント	저장된 계정	Cuentas guardadas	Comptes enregistrés	Gespeicherte Konten	Сохранённые аккаунты	Contas salvas
+794	Sign-in component timed out	登入組件載入逾時	ログイン部品の読み込みがタイムアウトしました	로그인 구성 요소 시간 초과	Se agotó el tiempo del inicio de sesión	Délai dépassé pour la connexion	Zeitüberschreitung beim Anmeldemodul	Модуль входа не загрузился вовремя	Tempo esgotado no componente de login
+795	Sign-in component unavailable	登入組件暫時用唔到	ログイン部品を利用できません	로그인 구성 요소를 쓸 수 없음	Inicio de sesión no disponible	Connexion indisponible	Anmeldemodul nicht verfügbar	Модуль входа недоступен	Componente de login indisponível
+796	Sign-in component failed to load	登入組件載入唔到	ログイン部品の読み込みに失敗しました	로그인 구성 요소를 불러오지 못함	No se pudo cargar el inicio de sesión	Échec du chargement de la connexion	Anmeldemodul konnte nicht geladen werden	Не удалось загрузить модуль входа	Falha ao carregar o login
+797	ilibili account	站帳號	ilibili アカウント	ilibili 계정	ilibili: cuenta	ilibili : compte	ilibili-Konto	ilibili: аккаунт	ilibili: conta
+798	Current	而家	現在	현재	Actual	Actuel	Aktuell	Текущий	Atual
+799	After signing in it's stored securely on this computer.	登入之後會安全噉存喺呢部電腦。	ログイン情報はこのパソコンに安全に保存されます。	로그인 정보는 이 컴퓨터에 안전하게 저장됩니다.	Tras iniciar sesión se guarda de forma segura en este equipo.	Après connexion, c'est stocké en sécurité sur cet ordinateur.	Nach der Anmeldung sicher auf diesem Computer gespeichert.	После входа данные надёжно хранятся на этом компьютере.	Depois de entrar, fica guardado com segurança neste computador.
+800	Add account	加帳號	アカウントを追加	계정 추가	Añadir cuenta	Ajouter un compte	Konto hinzufügen	Добавить аккаунт	Adicionar conta
+801	Sign out of this account	登出而家個帳號	このアカウントからログアウト	현재 계정에서 로그아웃	Cerrar esta sesión	Se déconnecter de ce compte	Von diesem Konto abmelden	Выйти из этого аккаунта	Sair desta conta
+802	Sign-in data stays on this computer and is never sent to other services.	登入資料存喺本機，唔會傳畀其他服務。	ログイン情報はこのパソコンにだけ保存され、ほかのサービスには送られません。	로그인 정보는 이 컴퓨터에만 저장되며 다른 서비스로 보내지 않습니다.	Los datos de sesión se quedan en este equipo y no se envían a otros servicios.	Les données de connexion restent sur cet ordinateur et ne sont envoyées nulle part.	Anmeldedaten bleiben auf diesem Computer und gehen an keine anderen Dienste.	Данные входа остаются на этом компьютере и никуда не отправляются.	Os dados de login ficam neste computador e não vão para outros serviços.
+803	Loading the official sign-in…	載入緊官方登入組件…	公式ログインを読み込み中…	공식 로그인 불러오는 중…	Cargando el inicio de sesión oficial…	Chargement de la connexion officielle…	Offizielle Anmeldung wird geladen…	Загружаем официальный вход…	Carregando o login oficial…
+804	Please try again.	請再試吓。	もう一度お試しください。	다시 시도하세요.	Inténtalo de nuevo.	Réessayez.	Bitte erneut versuchen.	Попробуйте снова.	Tente de novo.
+805	Retry	再試	再試行	다시 시도	Reintentar	Réessayer	Erneut versuchen	Повторить	Tentar de novo
+806	Signed in	登入咗	ログインしました	로그인 성공	Sesión iniciada	Connecté	Angemeldet	Вход выполнен	Conectado
+807	Favorites can't load right now	收藏夾暫時載入唔到	お気に入りを今は読み込めません	지금은 즐겨찾기를 불러올 수 없어요	Los favoritos no cargan ahora	Les favoris ne se chargent pas pour l'instant	Favoriten können gerade nicht geladen werden	Избранное сейчас не загружается	Os favoritos não carregam agora
+808	Sign in to Bilibili to see your favorites	請先登入 B站，再睇收藏夾	ビリビリにログインするとお気に入りを表示できます	빌리빌리에 로그인하면 즐겨찾기를 볼 수 있어요	Inicia sesión en Bilibili para ver tus favoritos	Connectez-vous à Bilibili pour voir vos favoris	Bei Bilibili anmelden, um Favoriten zu sehen	Войдите в Bilibili, чтобы увидеть избранное	Entre no Bilibili para ver seus favoritos
+809	Favorites can't load right now; please try again later	收藏夾暫時載入唔到，遲啲再試	お気に入りを今は読み込めません。しばらくしてからお試しください	지금은 즐겨찾기를 불러올 수 없어요. 잠시 후 다시 시도하세요	Los favoritos no cargan ahora; inténtalo más tarde	Les favoris ne se chargent pas ; réessayez plus tard	Favoriten gerade nicht verfügbar; bitte später erneut	Избранное не загружается; попробуйте позже	Os favoritos não carregam agora; tente mais tarde
+810	Reading favorite videos…	讀緊收藏影片…	お気に入りの動画を読み込み中…	즐겨찾기 영상 불러오는 중…	Leyendo vídeos favoritos…	Lecture des vidéos favorites…	Favoriten-Videos werden gelesen…	Загружаем избранные видео…	Lendo vídeos favoritos…
+811	Cover unavailable	封面暫時用唔到	サムネイルを表示できません	표지를 쓸 수 없음	Portada no disponible	Miniature indisponible	Vorschaubild nicht verfügbar	Обложка недоступна	Capa indisponível
+812	No cover	未有封面	サムネイルなし	표지 없음	Sin portada	Pas de miniature	Kein Vorschaubild	Нет обложки	Sem capa
+813	Video no longer available	已失效嘅影片	削除された動画	삭제된 영상	Vídeo no disponible	Vidéo indisponible	Video nicht mehr verfügbar	Видео недоступно	Vídeo indisponível
+814	Saved	收藏咗	保存済み	저장됨	Guardado	Enregistré	Gespeichert	В избранном	Salvo
+815	This folder has no videos yet	呢個收藏夾仲未有片	このフォルダーにはまだ動画がありません	이 폴더에는 아직 영상이 없어요	Esta carpeta aún no tiene vídeos	Ce dossier n'a pas encore de vidéos	Dieser Ordner hat noch keine Videos	В этой папке пока нет видео	Esta pasta ainda não tem vídeos
+816	Load more	載入多啲	さらに読み込む	더 불러오기	Cargar más	Charger plus	Mehr laden	Загрузить ещё	Carregar mais
+817	Loading…	載入緊…	読み込み中…	불러오는 중…	Cargando…	Chargement…	Wird geladen…	Загрузка…	Carregando…
+818	Failed to load; click to retry	載入唔到，撳一下再試	読み込みに失敗しました。クリックで再試行	불러오지 못했어요. 클릭해 다시 시도	Error al cargar; haz clic para reintentar	Échec du chargement ; cliquez pour réessayer	Laden fehlgeschlagen; zum Wiederholen klicken	Не загрузилось; нажмите, чтобы повторить	Falha ao carregar; clique para tentar de novo
+819	Opening your favorites…	打開緊你嘅收藏夾…	お気に入りを開いています…	즐겨찾기 여는 중…	Abriendo tus favoritos…	Ouverture de vos favoris…	Deine Favoriten werden geöffnet…	Открываем избранное…	Abrindo seus favoritos…
+820	Sign in and your favorites will show up here	登入之後，你嘅收藏會喺度出現	ログインするとお気に入りがここに表示されます	로그인하면 즐겨찾기가 여기에 나타나요	Inicia sesión y tus favoritos aparecerán aquí	Connectez-vous et vos favoris apparaîtront ici	Nach der Anmeldung erscheinen hier deine Favoriten	Войдите — и избранное появится здесь	Entre e seus favoritos aparecem aqui
+821	No favorite folders yet — go find videos you love	仲未有收藏夾，去搵啲鍾意嘅片啦	お気に入りフォルダーはまだありません。好きな動画を見つけよう	아직 즐겨찾기 폴더가 없어요. 좋아하는 영상을 찾아보세요	Aún no hay carpetas: ve a descubrir vídeos que te gusten	Pas encore de dossier — allez trouver des vidéos que vous aimez	Noch keine Favoritenordner – finde Videos, die du magst	Папок избранного пока нет — найдите любимые видео	Ainda não há pastas — vá achar vídeos que você curta
+822	Timed out; check your network and try again	載入逾時，睇吓網絡再試	タイムアウトしました。ネットワークを確認して再試行してください	시간 초과. 네트워크를 확인하고 다시 시도하세요	Se agotó el tiempo; revisa la red e inténtalo de nuevo	Délai dépassé ; vérifiez votre réseau et réessayez	Zeitüberschreitung; Netzwerk prüfen und erneut versuchen	Время ожидания истекло; проверьте сеть и попробуйте снова	Tempo esgotado; verifique a rede e tente de novo
+823	Too many errors; turned off on this page	出錯太多次，喺呢個頁停用咗	エラーが多すぎるため、このページでは停止しました	오류가 너무 많아 이 페이지에서 꺼졌어요	Demasiados errores; desactivado en esta página	Trop d'erreurs ; désactivé sur cette page	Zu viele Fehler; auf dieser Seite deaktiviert	Слишком много ошибок; отключено на этой странице	Erros demais; desativado nesta página
+824	Failed	失敗	失敗	실패	Error	Échec	Fehlgeschlagen	Ошибка	Falhou
+825	OK	好	OK	확인	Aceptar	OK	OK	ОК	OK
+826	Import plugin…	匯入插件…	プラグインを読み込む…	플러그인 가져오기…	Importar complemento…	Importer une extension…	Plugin importieren…	Импорт плагина…	Importar plugin…
+827	Open plugin folder	打開插件資料夾	プラグインフォルダーを開く	플러그인 폴더 열기	Abrir carpeta de complementos	Ouvrir le dossier des extensions	Plugin-Ordner öffnen	Открыть папку плагинов	Abrir pasta de plugins
+828	Reload page	重新載入頁面	ページを再読み込み	페이지 다시 불러오기	Recargar página	Recharger la page	Seite neu laden	Перезагрузить страницу	Recarregar página
+829	Plugin folder:	插件資料夾：	プラグインフォルダー：	플러그인 폴더:	Carpeta de complementos:	Dossier des extensions :	Plugin-Ordner:	Папка плагинов:	Pasta de plugins:
+830	Plugin folder unavailable	插件資料夾用唔到	プラグインフォルダーを利用できません	플러그인 폴더를 쓸 수 없음	Carpeta de complementos no disponible	Dossier des extensions indisponible	Plugin-Ordner nicht verfügbar	Папка плагинов недоступна	Pasta de plugins indisponível
+831	No plugins yet. Click “Import plugin…” and choose a plugin's plugin	未有插件。撳「匯入插件…」揀插件嘅 plugin	プラグインはまだありません。「プラグインを読み込む…」でプラグインの plugin	아직 플러그인이 없어요. '플러그인 가져오기…'로 플러그인의 plugin	Aún no hay complementos. Pulsa «Importar complemento…» y elige su plugin	Aucune extension. Cliquez sur « Importer une extension… » et choisissez son plugin	Noch keine Plugins. Klicke „Plugin importieren…“ und wähle die plugin	Плагинов пока нет. Нажмите «Импорт плагина…» и выберите plugin	Ainda não há plugins. Clique em “Importar plugin…” e escolha o plugin
+832	 or a single	或者單個	または単体の	또는 단일	 o un único	 ou un seul	 oder eine einzelne	 или один	 ou um único
+833	 file.	檔案。	ファイルを選んでください。	파일을 고르세요.	 archivo.	 fichier.	 Datei.	 файл.	 arquivo.
+834	Enable	啟用	有効にする	사용	Activar	Activer	Aktivieren	Включить	Ativar
+835	Plugin enabled	插件啟用咗	プラグインを有効にしました	플러그인 사용함	Complemento activado	Extension activée	Plugin aktiviert	Плагин включён	Plugin ativado
+836	Plugin disabled	插件停用咗	プラグインを無効にしました	플러그인 사용 안 함	Complemento desactivado	Extension désactivée	Plugin deaktiviert	Плагин отключён	Plugin desativado
+837	Failed to load:	載入失敗：	読み込みに失敗：	불러오기 실패:	Error al cargar:	Échec du chargement :	Laden fehlgeschlagen:	Ошибка загрузки:	Falha ao carregar:
+838	Latest error:	最近嘅錯誤：	直近のエラー：	최근 오류:	Último error:	Dernière erreur :	Letzter Fehler:	Последняя ошибка:	Último erro:
+839	See the developer tools console for details	詳情睇開發者工具控制台	詳細は開発者ツールのコンソールを参照	자세한 내용은 개발자 도구 콘솔에서	Consulta la consola de herramientas de desarrollo	Voir la console des outils de développement	Details in der Konsole der Entwicklertools	Подробности в консоли инструментов разработчика	Veja o console das ferramentas de desenvolvedor
+840	Delete plugin	刪除插件	プラグインを削除	플러그인 삭제	Eliminar complemento	Supprimer l'extension	Plugin löschen	Удалить плагин	Excluir plugin
+841	Click again to confirm deletion	再撳多一下確認刪除	もう一度クリックで削除	한 번 더 클릭하면 삭제	Haz clic otra vez para confirmar	Cliquez encore pour confirmer	Zum Löschen erneut klicken	Нажмите ещё раз для удаления	Clique de novo para confirmar
+842	Request failed HTTP	請求失敗 HTTP	リクエスト失敗 HTTP	요청 실패 HTTP	Solicitud fallida HTTP	Échec de la requête HTTP	Anfrage fehlgeschlagen HTTP	Ошибка запроса HTTP	Falha na solicitação HTTP
+843	Sign in to Bilibili first	請先登入 B站	先にビリビリにログインしてください	먼저 빌리빌리에 로그인하세요	Inicia sesión en Bilibili primero	Connectez-vous d'abord à Bilibili	Erst bei Bilibili anmelden	Сначала войдите в Bilibili	Entre no Bilibili primeiro
+844	Request failed	請求失敗	リクエストに失敗しました	요청 실패	Solicitud fallida	Échec de la requête	Anfrage fehlgeschlagen	Ошибка запроса	Falha na solicitação
+845	Loading…	載入緊…	読み込み中…	불러오는 중…	Cargando…	Chargement…	Wird geladen…	Загрузка…	Carregando…
+846	The signed-in account changed; refresh the list	登入帳號變咗，請重新整理清單	ログイン中のアカウントが変わりました。一覧を更新してください	로그인 계정이 바뀌었어요. 목록을 새로고침하세요	La cuenta cambió; actualiza la lista	Le compte a changé ; actualisez la liste	Angemeldetes Konto hat sich geändert; Liste aktualisieren	Аккаунт сменился; обновите список	A conta mudou; atualize a lista
+847	Sign-in is incomplete; please sign in again	登入狀態唔完整，請重新登入	ログイン状態が不完全です。もう一度ログインしてください	로그인 상태가 불완전해요. 다시 로그인하세요	La sesión está incompleta; vuelve a iniciarla	Connexion incomplète ; reconnectez-vous	Anmeldung unvollständig; bitte neu anmelden	Вход не завершён; войдите заново	Login incompleto; entre de novo
+848	Unblocked	已取消拉黑	ブロックを解除しました	차단 해제됨	Desbloqueado	Débloqué	Entsperrt	Разблокирован	Desbloqueado
+849	Total	共	合計	총	Total	Total	Insgesamt	Всего	Total
+850	creators	位 UP主	人の投稿者	명의 크리에이터	creadores	créateurs	Creator	авторов	criadores
+851	Working…	處理緊…	処理中…	처리 중…	Procesando…	Traitement…	Wird bearbeitet…	Обработка…	Processando…
+852	Unblock	取消拉黑	ブロック解除	차단 해제	Desbloquear	Débloquer	Entsperren	Разблокировать	Desbloquear
+853	No blocked creators	未有拉黑嘅 UP主	ブロック中の投稿者はいません	차단한 크리에이터 없음	No hay creadores bloqueados	Aucun créateur bloqué	Keine blockierten Creator	Заблокированных авторов нет	Nenhum criador bloqueado
+854	Enter a BV number, or open a video page first	請輸入 BV 號，或者先開影片頁	BV 番号を入力するか、先に動画ページを開いてください	BV 번호를 입력하거나 먼저 영상 페이지를 여세요	Escribe un número BV o abre antes un vídeo	Saisissez un numéro BV ou ouvrez d'abord une vidéo	BV-Nummer eingeben oder erst eine Videoseite öffnen	Введите номер BV или сначала откройте видео	Digite um número BV ou abra um vídeo primeiro
+855	This video has no collection	呢條片冇可用嘅合集	この動画にはシリーズがありません	이 영상에는 시리즈가 없어요	Este vídeo no tiene colección	Cette vidéo n'a pas de collection	Dieses Video hat keine Sammlung	У этого видео нет подборки	Este vídeo não tem coleção
+856	No parts available	冇可用嘅分 P	利用できるパートがありません	사용할 수 있는 파트 없음	No hay partes disponibles	Aucune partie disponible	Keine Teile verfügbar	Нет доступных частей	Nenhuma parte disponível
+857	Choose the tasks to add first	請先揀要加嘅任務	追加するタスクを先に選んでください	추가할 작업을 먼저 고르세요	Elige primero las tareas	Choisissez d'abord les tâches	Erst Aufgaben zum Hinzufügen wählen	Сначала выберите задачи	Escolha as tarefas primeiro
+858	Part not found	搵唔到分 P	パートが見つかりません	파트를 찾을 수 없음	Parte no encontrada	Partie introuvable	Teil nicht gefunden	Часть не найдена	Parte não encontrada
+859	Requested to add	已請求加入	追加をリクエストしました	추가 요청함	Se pidió añadir	Ajout demandé	Hinzufügen angefordert	Запрошено добавление	Solicitado adicionar
+860	 tasks; choose a folder to save to	個任務，請揀儲存資料夾	件のタスク。保存先フォルダーを選んでください	개 작업, 저장할 폴더를 고르세요	 tareas; elige la carpeta de destino	 tâches ; choisissez le dossier	 Aufgaben; Zielordner wählen	 задач; выберите папку для сохранения	 tarefas; escolha a pasta para salvar
+861	 number or video link	號或者影片連結	番号または動画リンク	번호 또는 영상 링크	 o enlace del vídeo	 ou lien vidéo	-Nummer oder Videolink	 или ссылка на видео	 ou link do vídeo
+862	Add video	加影片	動画を追加	영상 추가	Añadir vídeo	Ajouter une vidéo	Video hinzufügen	Добавить видео	Adicionar vídeo
+863	Choose parts	揀分 P	パートを選ぶ	파트 선택	Elegir partes	Choisir les parties	Teile wählen	Выбрать части	Escolher partes
+864	Choose collection	揀合集	シリーズを選ぶ	시리즈 선택	Elegir colección	Choisir la collection	Sammlung wählen	Выбрать подборку	Escolher coleção
+865	Refresh tasks	重新整理任務	タスクを更新	작업 새로고침	Actualizar tareas	Actualiser les tâches	Aufgaben aktualisieren	Обновить задачи	Atualizar tarefas
+866	Clear selection	取消揀選	選択を解除	선택 취소	Quitar selección	Désélectionner	Auswahl aufheben	Снять выбор	Limpar seleção
+867	Add selected (	加入所揀（	選択を追加（	선택 항목 추가(	Añadir selección (	Ajouter la sélection (	Auswahl hinzufügen (	Добавить выбранное (	Adicionar selecionados (
+868	Queued	排緊隊	待機中	대기 중	En cola	En file	In Warteschlange	В очереди	Na fila
+869	Paused	暫停咗	一時停止中	일시정지됨	En pausa	En pause	Pausiert	Приостановлено	Pausado
+870	Done	完成咗	完了	완료	Completado	Terminé	Fertig	Готово	Concluído
+871	No download tasks	未有下載任務	ダウンロードタスクはありません	다운로드 작업 없음	No hay descargas	Aucun téléchargement	Keine Download-Aufgaben	Загрузок нет	Nenhum download
+872	Remaining	仲剩	残り	남음	Restante	Restant	Verbleibend	Осталось	Restante
+873	Resume	繼續	再開	계속	Reanudar	Reprendre	Fortsetzen	Продолжить	Retomar
+874	Remove	移除	削除	삭제	Quitar	Retirer	Entfernen	Удалить	Remover
+875	Invalid video ID	影片號無效	動画 ID が無効です	잘못된 영상 번호	ID de vídeo no válido	Identifiant vidéo invalide	Ungültige Video-ID	Неверный ID видео	ID de vídeo inválido
+876	The video's parts changed; please add the task again	影片分 P 變咗，請重新加任務	動画のパートが変わりました。タスクを追加し直してください	영상 파트가 바뀌었어요. 작업을 다시 추가하세요	Las partes del vídeo cambiaron; vuelve a añadir la tarea	Les parties de la vidéo ont changé ; ajoutez à nouveau la tâche	Die Videoteile haben sich geändert; Aufgabe neu hinzufügen	Части видео изменились; добавьте задачу заново	As partes do vídeo mudaram; adicione a tarefa de novo
+877	The original encoding changed, so the old resume point can't be used; please add it again	原編碼變咗，用唔到舊斷點，請重新加	元のエンコードが変わったため、以前の再開位置は使えません。追加し直してください	원본 인코딩이 바뀌어 이전 이어받기 지점을 쓸 수 없어요. 다시 추가하세요	La codificación original cambió y no se puede reanudar; vuelve a añadirla	L'encodage d'origine a changé, l'ancien point de reprise est inutilisable ; ajoutez-la à nouveau	Die Originalkodierung hat sich geändert; alter Fortsetzungspunkt unbrauchbar, bitte neu hinzufügen	Исходная кодировка изменилась, старую точку продолжения не использовать; добавьте заново	A codificação original mudou e o ponto antigo não serve; adicione de novo
