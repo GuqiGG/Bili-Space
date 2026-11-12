@@ -1828,14 +1828,16 @@ function showUpdateNotice(value){
   if(CONTENT_VIEW||!shadow||!value.prompt||!value.available||value.ignored||value.required||value.version===updateNoticeVersion||$('#update-notice',shadow))return;
   updateNoticeVersion=value.version;const previous=shadow.activeElement,layer=document.createElement('div');layer.className='update-notice-layer';layer.id='update-notice';
   const dialog=document.createElement('section');dialog.className='update-notice';dialog.setAttribute('role','alertdialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','update-notice-title');
-  const title=document.createElement('h2');title.id='update-notice-title';title.textContent='发现新版本 '+String(value.version||'');
+  const title=document.createElement('h2');title.id='update-notice-title';title.textContent='新版本 '+String(value.version||'')+' 已下载好';
   const notes=document.createElement('ul');for(const line of value.changelog||[]){const li=document.createElement('li');li.textContent=String(line);notes.append(li);}
   const actions=document.createElement('div');actions.className='actions';const close=()=>{layer.remove();previous?.focus?.();};
+  // 稍后 (and Esc) leaves it to be installed when the client is next quit; nothing restarts on its own.
+  const later=()=>{native('updates',{action:'later'});close();toast('退出客户端时自动安装，下次打开就是新版本');};
   const action=(label,kind,run)=>{const b=document.createElement('button');b.type='button';b.className=kind;b.textContent=label;b.onclick=run;actions.append(b);return b;};
-  action('稍后','link',close);action('忽略此版本','link',()=>{native('updates',{action:'ignore'});close();});
-  const primary=action(value.ready?'安装并重启':'下载更新','update-primary',()=>{close();currentTab='about';openSettings();native('updates',{action:value.ready?'install':'download'});});
+  action('忽略此版本','link',()=>{native('updates',{action:'ignore'});close();});action('稍后','link',later);
+  const primary=action('现在重启更新','update-primary',()=>{close();currentTab='about';openSettings();native('updates',{action:'install'});});
   dialog.append(title,notes,actions);layer.append(dialog);shadow.append(layer);primary.focus();
-  layer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}else if(e.key==='Tab'){const buttons=$$('button',layer),i=buttons.indexOf(shadow.activeElement),next=(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length;e.preventDefault();buttons[next].focus();}});
+  layer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();later();}else if(e.key==='Tab'){const buttons=$$('button',layer),i=buttons.indexOf(shadow.activeElement),next=(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length;e.preventDefault();buttons[next].focus();}});
   native('updates',{action:'notice-shown',version:value.version});
 }
 // ---- Welcome tour: a showcase, then one setting per page with a live preview, then the way into Personalization.

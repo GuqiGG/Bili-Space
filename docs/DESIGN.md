@@ -44,6 +44,7 @@
   - 「全屏动画」只是**实验性**选项：默认关闭，开启时有警告弹窗。
 - **其他平台**：Linux（`src/linux_main.py`）和 macOS（`src/macos_main.mm`）尽量跟随 Windows 的功能，版本号同步。
 - **安卓**（`android/`，`scripts/build_android.ps1` 生成 `dist/Bili-Space-<版本>-android.apk`）：WebView 打开电脑版 B 站（桌面 UA、宽视口），注入和 Linux 同一份 `renderer.js`，`window.chrome.webview` 由 JS 接口模拟。客户端自带文件从 APK 里以 `https://bili-space.local/` 提供。软件内更新读 GitHub 最新 Release 里的 `.apk`，下载后交给系统安装器。版本号跟随 `assets/app-info.json`。暂用 debug 签名，换签名会导致无法覆盖安装。
+- **Windows 更新方式**：检查到不是强制的新版本就在后台下载并校验，不弹窗。更新说明（`docs/RELEASE-<版本>.md`）标题里写「小更新」的版本，清单带 `silent: true`：下好后什么都不提示，用户自己退出客户端时由更新器在后台安装（不重新打开），下次启动就是新版。其它版本下好后弹「新版本已下载好」：现在重启更新 / 稍后（Esc 也算稍后，退出时安装）/ 忽略此版本。更新器安装期间持有 `Local\BiliSpaceUpdateInstalling`，这时打开客户端会等它装完（最多两分钟）。关机注销时不装。
 - **非 Windows 的软件内更新**：都读 GitHub 最新 Release，用 GitHub 记录的 sha256 校验下载。Linux 下载 `-linux.deb`，用 `pkexec apt-get install` 安装后自动重启；macOS 下载 `-macos-universal.zip`，退出后由一个 shell 脚本替换 `.app` 并重新打开（App 所在目录不可写时提示手动更新）；安卓下载 `.apk` 交给系统安装器。发布流程里有安卓任务，Release 会带上 APK。
 - **鸿蒙**：鸿蒙 NEXT 需要 DevEco Studio 和 ArkTS 工程，尚未开始；老鸿蒙（2–4）可以直接装安卓 APK。
 - **测试**：

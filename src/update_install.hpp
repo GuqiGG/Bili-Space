@@ -30,6 +30,8 @@ int runUpdateWorker(PWSTR command){
     int argc{};auto argv=CommandLineToArgvW(GetCommandLineW(),&argc);fs::path jobPath;
     if(argc==3&&std::wstring(argv[1])==L"--apply-update")jobPath=argv[2];LocalFree(argv);if(jobPath.empty())return 2;
     json job;bool mayRestart=false;fs::path install;
+    // Held while installing, so a launch in the meantime waits for the new files; released before any relaunch.
+    HANDLE installing=CreateMutexW(nullptr,TRUE,L"Local\\BiliSpaceUpdateInstalling");auto releaseInstalling=[&]{if(installing){ReleaseMutex(installing);CloseHandle(installing);installing=nullptr;}};
     try{
         job=json::parse(read(jobPath));updateValidateJob(job,jobPath);install=wide(job.at("installDir").get<std::string>());
         HANDLE parent=OpenProcess(SYNCHRONIZE|PROCESS_QUERY_LIMITED_INFORMATION,FALSE,job.at("parentPid").get<DWORD>());
@@ -48,7 +50,7 @@ int runUpdateWorker(PWSTR command){
             const auto wait=WaitForSingleObject(parent,60000);CloseHandle(parent);if(wait!=WAIT_OBJECT_0)throw std::runtime_error("客户端未退出，已取消安装");
         }
         // The running executable must be released before Inno Setup touches any application file.
-        mayRestart=true;updateValidateJob(job,jobPath);
+        const bool relaunch=job.value("relaunch",true);mayRestart=relaunch;updateValidateJob(job,jobPath);
         auto package=fs::path(wide(job.at("package").get<std::string>()));
         auto child=updateLaunch(package,L"/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /DIR="+updateQuote(install.wstring())+L" /LOG="+updateQuote((jobPath.parent_path()/L"install.log").wstring()));
         CloseHandle(child.hThread);auto wait=WaitForSingleObject(child.hProcess,10*60*1000);DWORD code=1;GetExitCodeProcess(child.hProcess,&code);CloseHandle(child.hProcess);
@@ -56,12 +58,28 @@ int runUpdateWorker(PWSTR command){
         if(code!=0)throw std::runtime_error("安装未完成，安装器返回 "+std::to_string(code));
         auto metadata=json::parse(read(install/L"assets/app-info.json"));if(metadata.at("version")!=job.at("version"))throw std::runtime_error("安装后版本校验失败");
         saveUpdateJson(jobPath.parent_path()/L"install-result.json",{{"success",true},{"version",job.at("version")},{"message","更新完成"}});
-        auto resumed=updateLaunch(install/L"Bili-Space.exe",L"");CloseHandle(resumed.hThread);CloseHandle(resumed.hProcess);return 0;
+        releaseInstalling();
+        if(relaunch){auto resumed=updateLaunch(install/L"Bili-Space.exe",L"");CloseHandle(resumed.hThread);CloseHandle(resumed.hProcess);}return 0;
     }catch(const std::exception& e){
         try{saveUpdateJson(jobPath.parent_path()/L"install-result.json",{{"success",false},{"message",e.what()}});}catch(...){}
+        releaseInstalling();
         if(mayRestart)try{auto resumed=updateLaunch(install/L"Bili-Space.exe",L"");CloseHandle(resumed.hThread);CloseHandle(resumed.hProcess);}catch(...){}
         return 1;
     }
+}
+// Quitting with a verified package waiting (a small update, or 稍后): the worker installs it once this process has
+// exited and does not reopen the client; the next launch waits for it and starts as the new version.
+void installUpdateAfterExit(){
+    if(!installUpdateOnExit||updateBusy||readyUpdatePackage.empty()||!updateState.value("ready",false)||downloadBusy.load()||GetSystemMetrics(SM_SHUTTINGDOWN))return;
+    try{
+        const auto state=validateUpdate(updateState,appVersion);auto jobPath=dataPath/L"updates/install-job.json";
+        json job={{"parentPid",GetCurrentProcessId()},{"installDir",utf8(root.wstring())},{"package",utf8(readyUpdatePackage.wstring())},{"version",state.at("version")},{"sha256",state.at("setupSha256")},{"size",state.at("setupSize")},{"relaunch",false}};
+        updateValidateJob(job,jobPath);saveUpdateJson(jobPath,job);
+        auto worker=dataPath/L"updates/Bili-Space-update-worker.exe";fs::copy_file(root/L"Bili-Space.exe",worker,fs::copy_options::overwrite_existing);
+        std::error_code ec;fs::remove(jobPath.parent_path()/L"install-result.json",ec);
+        auto child=updateLaunch(worker,L"--apply-update "+updateQuote(jobPath.wstring()));CloseHandle(child.hThread);CloseHandle(child.hProcess);
+        updateBusy=true;updateLog("install on exit "+state.at("version").get<std::string>());
+    }catch(const std::exception& e){updateLog(std::string("install on exit failed: ")+e.what());}
 }
 void startUpdateInstall(){
     if(updateBusy||readyUpdatePackage.empty()||!updateState.value("ready",false))return;

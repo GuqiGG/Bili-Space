@@ -20,5 +20,6 @@ json validateUpdate(const json& value,const std::string& current){
         auto n=value.at("setupSize").get<long long>();if(n<1||n>1024LL*1024*1024)throw std::runtime_error("安装包大小无效");
     }
     const auto& notes=value.at("changelog");if(!notes.is_array()||notes.empty()||notes.size()>100)throw std::runtime_error("缺少更新日志");for(const auto& line:notes)if(!line.is_string()||line.get<std::string>().size()>4000)throw std::runtime_error("更新日志无效");
-    auto result=value;result["available"]=latest>installed;result["required"]=latest>installed&&(value.at("force").get<bool>()||installed<minimum);return result;
+    if(value.contains("silent")&&!value.at("silent").is_boolean())throw std::runtime_error("更新清单校验失败");
+    auto result=value;result["silent"]=value.value("silent",false);result["available"]=latest>installed;result["required"]=latest>installed&&(value.at("force").get<bool>()||installed<minimum);return result;
 }
