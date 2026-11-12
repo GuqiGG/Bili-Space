@@ -2200,7 +2200,7 @@ async function swipeAction(kind,button){
   if(kind==='reply'||kind==='comments-close'){swipeComments(kind==='reply'?undefined:false);return;}
   if(kind==='detail'||kind==='season'){const v=swipeVideo(swipe.slots.get(swipe.index));if(v)v.pause();location.href=`https://www.bilibili.com/video/${item.bvid}/`;return;}
   if(kind==='share'){native('copy-video-link',{url:`https://www.bilibili.com/video/${item.bvid}`});swipePop(button);toast('已复制视频链接');return;}
-  if(kind==='more'){swipe.ui.classList.toggle('expanded');return;}
+  if(kind==='more'){swipeToggleMore();return;}
   if(kind==='dm-toggle'){swipeDanmakuToggle(button);return;}
   if(kind==='clean'){const on=!swipe.layer.classList.contains('clean');swipe.layer.classList.toggle('clean',on);button.setAttribute('aria-pressed',String(on));$('b',button).textContent=on?':D':':3';swipePop(button);swipeWake();return;}
   if(!swipeCookie('DedeUserID')){toast('请先登录 B站');return;}
@@ -2248,6 +2248,18 @@ async function openSwipe(){
   swipeEnsure();swipePlace(false);swipeRenderInfo();
 }
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function swipeToggleMore(){
+  const ui=swipe.ui,info=$('.bs-swipe-info',ui),desc=$('.bs-swipe-desc',ui),open=!ui.classList.contains('expanded');
+  info.getAnimations().forEach(a=>a.cancel());desc.getAnimations().forEach(a=>a.cancel());
+  if(swipeStill()){ui.classList.toggle('expanded',open);return;}
+  const from=info.offsetHeight;ui.classList.toggle('expanded',open);const to=info.offsetHeight;
+  const chevron=$('.bs-swipe-title button',ui);if(!open){ui.classList.add('expanded');if(chevron)chevron.style.transform='none';}
+  info.style.overflow='hidden';
+  const grow=info.animate([{height:from+'px'},{height:to+'px'}],{duration:open?420:340,easing:SWIPE_EASE});
+  if(open)desc.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:360,delay:90,easing:'cubic-bezier(.23,1,.32,1)',fill:'backwards'});
+  else desc.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(6px)'}],{duration:200,easing:'ease-in',fill:'forwards'});
+  grow.onfinish=grow.oncancel=()=>{info.style.overflow='';if(chevron)chevron.style.transform='';if(!open){ui.classList.remove('expanded');desc.getAnimations().forEach(a=>a.cancel());}};
+}
 // Everything over the video fades after 3 s without the pointer moving (not while it rests on a control, the danmaku box
 // has focus, comments are open or a long press is charging); 清屏 keeps it hidden, apart from its own button, until pressed again.
 function swipeWake(){if(!swipe)return;swipe.layer.classList.remove('idle');clearTimeout(swipe.idleTimer);swipe.idleTimer=setTimeout(swipeIdle,3000);}
@@ -2382,7 +2394,7 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-follow{padding:3px 10px;border:0;border-radius:6px;background:#fb7299;font-size:12px;text-shadow:none}
 #bs-swipe .bs-swipe-title{margin:0;display:flex;gap:6px;align-items:flex-start;font-size:15px;font-weight:600;line-height:1.45}
 #bs-swipe .bs-swipe-title span{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
-#bs-swipe .bs-swipe-title button{flex:none;width:22px;height:22px;margin-top:-.5px;display:grid;place-items:center;border:0;border-radius:50%;padding:0;background:rgba(255,255,255,.18);transition:transform .25s cubic-bezier(.23,1,.32,1),background-color .15s}
+#bs-swipe .bs-swipe-title button{flex:none;width:22px;height:22px;margin-top:-.5px;display:grid;place-items:center;border:0;border-radius:50%;padding:0;background:rgba(255,255,255,.18);transition:transform .42s cubic-bezier(.32,.72,0,1),background-color .15s}
 #bs-swipe .bs-swipe-title button:hover{background:rgba(255,255,255,.3)}
 #bs-swipe .bs-swipe-title svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 #bs-swipe .bs-swipe-desc{display:none;margin:6px 0 0;font-size:13px;line-height:1.55;color:rgba(255,255,255,.85);max-height:9em;overflow:auto;white-space:pre-wrap;pointer-events:auto}
@@ -2410,7 +2422,7 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe.clean .bs-swipe-ui>:is(.bs-swipe-detail,.bs-swipe-nav,.bs-swipe-shade,.bs-swipe-info,.bs-swipe-progress,.bs-swipe-dm),
 #bs-swipe.clean .bs-swipe-actions>button:not(.bs-swipe-clean){opacity:0!important;visibility:hidden!important;transition:opacity .3s ease,visibility 0s .3s!important}
 #bs-swipe.idle .bs-swipe-peek i{opacity:0}
-#bs-swipe .bs-swipe-clean b{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#fff;color:#18191c;font:800 15px/1 "Segoe UI",system-ui,sans-serif;letter-spacing:-.5px;box-shadow:0 1px 3px rgba(0,0,0,.35);transform:rotate(90deg)}
+#bs-swipe .bs-swipe-clean b{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#fff;color:#18191c;font:800 14px/1 "Segoe UI",system-ui,sans-serif;letter-spacing:0;box-shadow:0 1px 3px rgba(0,0,0,.35)}
 @media (prefers-reduced-motion:reduce){#bs-swipe :is(.bs-swipe-ui,.bs-swipe-chead){transition:none}#bs-swipe .charging .bs-swipe-icon>svg{animation:none!important}#bs-swipe .bs-swipe-peek i{transition:none}}
 @media (prefers-reduced-motion:reduce){#bs-swipe .bs-swipe-slot{transition:none!important}}`;
 function showOnboarding(){
