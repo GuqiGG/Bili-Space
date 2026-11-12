@@ -387,7 +387,7 @@ function mountHomeBanner(){
   }
 }
 function compactHomeFeed(){
-  if(pageKind()!=='home')return;
+  if(pageKind()!=='home'||document.documentElement.dataset.bsSwipe)return;
   markAds();
   const cardSelector='.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card';
   for(const layout of $$('.bili-feed4-layout')){
@@ -2246,8 +2246,8 @@ async function openSwipe(){
  <div class="bs-swipe-actions">${SWIPE_ACTIONS.map(([k,l,box,d])=>`<button type="button" data-swipe="${k}" aria-label="${l}"><span class="bs-swipe-icon">${k==='like'||k==='coin'||k==='fav'?'<svg class="bs-swipe-ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/></svg>':''}<svg viewBox="0 0 ${box} ${box}" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="${d}"/></svg></span><small></small></button>`).join('')}<button type="button" data-swipe="clean" class="bs-swipe-clean" aria-pressed="false" aria-label="清屏"><span class="bs-swipe-icon"><svg class="bs-swipe-eye" viewBox="0 0 24 24" aria-hidden="true"><path class="bs-eye-open" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5ZM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5Zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3Z"/><path class="bs-eye-shut" d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7ZM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27ZM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2Zm4.31-.78 3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01Z"/></svg></span><small>清屏</small></button></div>
 </div>`;
   if(!document.getElementById('bs-swipe-style')){const st=document.createElement('style');st.id='bs-swipe-style';st.textContent=SWIPE_CSS;(document.head||document.documentElement).append(st);}
-  document.documentElement.append(layer);document.documentElement.dataset.bsSwipe='true';
-  swipe={layer,track:$('.bs-swipe-track',layer),ui:$('.bs-swipe-ui',layer),list:[],seen:new Set(),page:0,index:0,slots:new Map(),wheelAt:0,moving:false,loading:false,arrivedAt:performance.now()};
+  const homeScroll=scrollY;document.documentElement.append(layer);document.documentElement.dataset.bsSwipe='true';
+  swipe={layer,track:$('.bs-swipe-track',layer),ui:$('.bs-swipe-ui',layer),list:[],seen:new Set(),page:0,index:0,slots:new Map(),wheelAt:0,moving:false,loading:false,arrivedAt:performance.now(),homeScroll};
   native('swipe-state',{on:true});
   layer.addEventListener('wheel',e=>{e.preventDefault();swipeWheel(e);},{passive:false});
   layer.addEventListener('pointerdown',swipeHold);
@@ -2347,7 +2347,7 @@ function swipeWireProgress(bar){
 }
 function closeSwipe(){
   if(!swipe)return;const s=swipe;swipe=null;removeEventListener('resize',swipeResized);clearTimeout(s.resizeTimer);clearTimeout(s.idleTimer);if(gpu&&[...s.slots.values()].some(x=>swipeVideo(x)===gpu.video)){gpu.stop();gpu=interpolator=null;}for(const slot of s.slots.values()){clearInterval(slot.timer);slot.frame.src='about:blank';}
-  delete document.documentElement.dataset.bsSwipe;native('swipe-state',{on:false});
+  delete document.documentElement.dataset.bsSwipe;scrollTo(0,s.homeScroll||0);native('swipe-state',{on:false});
   if(location.hash==='#swipe')history.replaceState(history.state,'',location.pathname+location.search);
   const done=()=>s.layer.remove();if(swipeStill())done();else s.layer.animate([{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}).onfinish=done;
 }
@@ -2366,7 +2366,9 @@ function swipeHeaderBusy(){const open=q=>{const el=$(q,shadow);if(!el||el.hidden
   return ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories','.account-manager'].some(open)||!!shadow.activeElement?.closest?.('#chrome input')||$('#chrome',shadow)?.matches(':hover');}
 function swipeTuckSoon(ms){clearTimeout(swipeTuckTimer);swipeTuckTimer=setTimeout(()=>{if(!swipeOn)return;if(swipeHeaderBusy())swipeTuckSoon(600);else swipeTuck(true);},ms);}
 function revealSwipeHeader(){if(!CHROME_VIEW||!swipeOn)return;if(swipeTucked)swipeTuck(false);swipeTuckSoon(1600);}
-const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:#000;overflow:clip;color:#fff;font-family:inherit}
+const SWIPE_CSS=`/* The home page under the feed is not seen: without boxes its scripts' measurements cost nothing while the window is resized. */
+html[data-bs-swipe=true] body{display:none!important}
+#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:#000;overflow:clip;color:#fff;font-family:inherit}
 #bs-swipe .bs-swipe-track{position:absolute;inset:0}
 #bs-swipe .bs-swipe-slot{position:absolute;inset:0;background:#000;will-change:transform}
 #bs-swipe .bs-swipe-cover{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:blur(18px) brightness(.55);transform:scale(1.08)}
