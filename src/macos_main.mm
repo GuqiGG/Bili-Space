@@ -24,6 +24,7 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
 @property(nonatomic,copy) NSString *cachedLoadingURL;
 @property(nonatomic,strong) NSDictionary *webManifest;
 @property(nonatomic,strong) NSMutableSet *schemeTasks;
+@property(nonatomic,strong) NSMutableDictionary *update;
 @end
 
 @implementation BiliApp
@@ -93,7 +94,51 @@ static BOOL BiliURL(NSURL *url){return [url.scheme isEqualToString:@"https"]&&[@
  else if([type isEqualToString:@"copy-video-link"]){NSString *text=m[@"url"];[NSPasteboard.generalPasteboard clearContents];BOOL ok=[NSPasteboard.generalPasteboard setString:text?:@"" forType:NSPasteboardTypeString];[self send:@"videoLinkCopied" value:@{@"ok":@(ok),@"url":text?:@""}];}
  else if([type isEqualToString:@"window"]){if([action isEqualToString:@"back"])[self.web goBack];else if([action isEqualToString:@"forward"])[self.web goForward];else if([action isEqualToString:@"reload"])[self.web reload];else if([action isEqualToString:@"minimize"])[self.window miniaturize:nil];else if([action isEqualToString:@"maximize"])[self.window zoom:nil];else if([action isEqualToString:@"fullscreen"])[self.window toggleFullScreen:nil];else if([action isEqualToString:@"close"])[self.window close];else if([action isEqualToString:@"drag"]&&NSApp.currentEvent.type==NSEventTypeLeftMouseDown)[self.window performWindowDragWithEvent:NSApp.currentEvent];}
  else if([type isEqualToString:@"accounts"])[self accounts:m];
- else if([type isEqualToString:@"updates"])[self send:@"acceptUpdateStatus" value:@{@"available":@NO,@"message":@"macOS 版本请从 GitHub Release 更新"}];
+ else if([type isEqualToString:@"updates"])[self updates:action];
+}
+// In-app updates: the latest GitHub release's macOS zip, checked against the digest GitHub records for it.
+// A small shell script waits for the app to quit, swaps the .app bundle in place and opens the new one.
+static BOOL NewerVersion(NSString *a,NSString *b){NSArray *x=[a componentsSeparatedByString:@"."],*y=[b componentsSeparatedByString:@"."];
+ for(NSUInteger i=0;i<MAX(x.count,y.count);i++){NSInteger p=i<x.count?[x[i] integerValue]:0,q=i<y.count?[y[i] integerValue]:0;if(p!=q)return p>q;}return NO;}
+- (NSString *)appVersion {return [self readJSON:[self.resources URLByAppendingPathComponent:@"assets/app-info.json"]][@"version"]?:@"0";}
+- (void)updateStatus:(NSString *)message {NSMutableDictionary *u=self.update;BOOL available=[u[@"version"] length]&&NewerVersion(u[@"version"],[self appVersion]);
+ [self send:@"acceptUpdateStatus" value:@{@"available":@(available),@"version":u[@"version"]?:@"",@"changelog":u[@"notes"]?:@"",@"busy":@([u[@"busy"] boolValue]),@"ready":@(available&&[u[@"file"] length]>0),@"message":message?:@""}];}
+- (void)updates:(NSString *)action {
+ if(!self.update)self.update=NSMutableDictionary.dictionary;NSMutableDictionary *u=self.update;
+ if([u[@"busy"] boolValue]){[self updateStatus:@"正在处理更新…"];return;}
+ if([action isEqualToString:@"install"]&&[u[@"file"] length]){[self installUpdate];return;}
+ if([action isEqualToString:@"download"]&&[u[@"url"] length]){[self downloadUpdate];return;}
+ if([action isEqualToString:@"ignore"]||[action isEqualToString:@"notice-shown"])return;
+ u[@"busy"]=@YES;[self updateStatus:@"正在检查更新…"];
+ NSMutableURLRequest *r=[NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"https://api.github.com/repos/GuqiGG/Bili-Space/releases/latest"]];[r setValue:@"application/vnd.github+json" forHTTPHeaderField:@"Accept"];r.timeoutInterval=15;
+ [[NSURLSession.sharedSession dataTaskWithRequest:r completionHandler:^(NSData *data,NSURLResponse *response,NSError *error){
+  NSString *message=@"";id release=data?[NSJSONSerialization JSONObjectWithData:data options:0 error:nil]:nil;
+  if(![release isKindOfClass:NSDictionary.class]||error)message=@"检查更新失败，请检查网络";
+  else{NSString *version=[release[@"tag_name"] description];if([version hasPrefix:@"v"])version=[version substringFromIndex:1];NSDictionary *asset=nil;
+   for(NSDictionary *a in release[@"assets"])if([a isKindOfClass:NSDictionary.class]&&[[a[@"name"] description] hasSuffix:@"-macos-universal.zip"])asset=a;
+   if(!asset)message=[NSString stringWithFormat:@"最新版本 %@ 还没有 macOS 安装包",version];
+   else{NSString *digest=[asset[@"digest"] isKindOfClass:NSString.class]?asset[@"digest"]:@"";if([digest hasPrefix:@"sha256:"])digest=[digest substringFromIndex:7];
+    dispatch_async(dispatch_get_main_queue(),^{u[@"version"]=version;u[@"url"]=asset[@"browser_download_url"];u[@"digest"]=digest;u[@"notes"]=[release[@"body"] isKindOfClass:NSString.class]?release[@"body"]:@"";u[@"file"]=@"";});
+    if(!NewerVersion(version,[self appVersion]))message=@"已是最新版本";}}
+  dispatch_async(dispatch_get_main_queue(),^{u[@"busy"]=@NO;[self updateStatus:message];});
+ }] resume];
+}
+- (void)downloadUpdate {NSMutableDictionary *u=self.update;u[@"busy"]=@YES;[self updateStatus:@"正在下载更新…"];
+ [[NSURLSession.sharedSession downloadTaskWithURL:[NSURL URLWithString:u[@"url"]] completionHandler:^(NSURL *location,NSURLResponse *response,NSError *error){
+  NSString *message=@"下载失败或校验不通过，请重试",*path=nil;NSData *data=location?[NSData dataWithContentsOfURL:location]:nil;
+  if(data&&!error){unsigned char sum[CC_SHA256_DIGEST_LENGTH];CC_SHA256(data.bytes,(CC_LONG)data.length,sum);NSMutableString *hex=NSMutableString.string;for(int i=0;i<CC_SHA256_DIGEST_LENGTH;i++)[hex appendFormat:@"%02x",sum[i]];
+   if([u[@"digest"] length]&&[hex isEqualToString:u[@"digest"]]){NSURL *dir=[NSFileManager.defaultManager.temporaryDirectory URLByAppendingPathComponent:@"bili-space-update"];[NSFileManager.defaultManager createDirectoryAtURL:dir withIntermediateDirectories:YES attributes:nil error:nil];
+    NSURL *target=[dir URLByAppendingPathComponent:@"Bili-Space-macos-universal.zip"];if([data writeToURL:target atomically:YES]){path=target.path;message=@"";}}}
+  dispatch_async(dispatch_get_main_queue(),^{u[@"busy"]=@NO;u[@"file"]=path?:@"";[self updateStatus:message];if(path)[self installUpdate];});
+ }] resume];
+}
+- (void)installUpdate {NSString *app=NSBundle.mainBundle.bundlePath;
+ if(![NSFileManager.defaultManager isWritableFileAtPath:app.stringByDeletingLastPathComponent]){[self updateStatus:@"没有权限替换当前的 App，请从 GitHub Release 手动更新"];return;}
+ [self save];
+ NSString *script=@"while kill -0 \"$1\" 2>/dev/null; do sleep 0.2; done; tmp=$(mktemp -d) && ditto -x -k \"$2\" \"$tmp\" && [ -d \"$tmp/Bili-Space.app\" ] && rm -rf \"$3\" && mv \"$tmp/Bili-Space.app\" \"$3\" && xattr -dr com.apple.quarantine \"$3\"; open \"$3\"";
+ NSTask *task=[NSTask new];task.executableURL=[NSURL fileURLWithPath:@"/bin/sh"];task.arguments=@[@"-c",script,@"sh",[NSString stringWithFormat:@"%d",NSProcessInfo.processInfo.processIdentifier],self.update[@"file"],app];
+ NSError *error=nil;if(![task launchAndReturnError:&error]){[self updateStatus:@"无法启动更新程序，请从 GitHub Release 手动更新"];return;}
+ [NSApp terminate:nil];
 }
 - (void)accounts:(NSDictionary *)m {NSString *action=m[@"action"];
  if([action isEqualToString:@"list"]){NSString *event=self.pendingEvent;self.pendingEvent=nil;[self accountState:event message:nil];return;}

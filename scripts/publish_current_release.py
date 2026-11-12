@@ -7,7 +7,7 @@ tag = 'v'+version
 repo = os.environ['GH_REPO']
 files = [ROOT/'releases'/f'Bili-Space-{version}-win64.zip', ROOT/'releases'/f'Bili-Space-{version}-Setup.exe']
 if tuple(map(int,version.split('.'))) >= (0,1,50):
-    files += [ROOT/'releases'/f'Bili-Space-{version}-{name}' for name in ['win7-x64.zip','macos-universal.zip','linux.deb']]
+    files += [ROOT/'releases'/f'Bili-Space-{version}-{name}' for name in ['win7-x64.zip','macos-universal.zip','linux.deb','android.apk']]
     assert all(p.is_file() for p in files), 'All platform packages are required before publication'
 manifest = None
 if tuple(map(int,version.split('.'))) >= (0,1,38):

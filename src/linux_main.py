@@ -227,8 +227,62 @@ class App(Gtk.Application):
             elif kind=='copy-video-link':
                 from gi.repository import Gdk
                 Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).set_text(m.get('url',''),-1);self.send('videoLinkCopied',{'url':m.get('url',''),'ok':True})
-            elif kind=='updates':self.send('acceptUpdateStatus',{'available':False,'message':'Linux 版本请从 GitHub Release 更新'})
+            elif kind=='updates':self.updates(action)
         except (ValueError,KeyError,GLib.Error,TypeError):pass
+    # In-app updates: the latest GitHub release's .deb, checked against the digest GitHub records for it,
+    # installed with pkexec (the system asks for the password) and then the app restarts itself.
+    RELEASES='https://api.github.com/repos/GuqiGG/Bili-Space/releases/latest'
+    @staticmethod
+    def newer(a,b):
+        parse=lambda v:[int(x) for x in re.findall(r'\d+',v)[:4]]
+        return parse(a)>parse(b)
+    def update_status(self,message=''):
+        u=getattr(self,'update',None) or {};version=self.read(self.resources/'assets/app-info.json').get('version','0')
+        available=bool(u.get('version'))and self.newer(u['version'],version)
+        self.send('acceptUpdateStatus',{'available':available,'version':u.get('version',''),'changelog':u.get('notes',''),'busy':bool(u.get('busy')),'ready':available and bool(u.get('file')),'message':message})
+    def updates(self,action):
+        u=self.__dict__.setdefault('update',{})
+        if u.get('busy'):return self.update_status('正在处理更新…')
+        if action=='install' and u.get('file'):return self.install_update()
+        if action=='download' and u.get('url'):
+            u['busy']=True;self.update_status('正在下载更新…');threading.Thread(target=self.download_update,daemon=True).start();return
+        if action in('ignore','notice-shown'):return
+        u['busy']=True;self.update_status('正在检查更新…');threading.Thread(target=self.check_update,daemon=True).start()
+    def check_update(self):
+        u=self.update;message=''
+        try:
+            request=urllib.request.Request(self.RELEASES,headers={'Accept':'application/vnd.github+json','User-Agent':'Bili-Space'})
+            release=json.loads(urllib.request.urlopen(request,timeout=15).read())
+            asset=next((a for a in release.get('assets',[]) if a.get('name','').endswith('-linux.deb')),None)
+            version=release.get('tag_name','').lstrip('v')
+            if not asset:message='最新版本 '+version+' 还没有 Linux 安装包'
+            else:
+                u.update(version=version,url=asset['browser_download_url'],digest=(asset.get('digest') or '').removeprefix('sha256:'),notes=release.get('body',''),file='')
+                if not self.newer(version,self.read(self.resources/'assets/app-info.json').get('version','0')):message='已是最新版本'
+        except (OSError,ValueError,KeyError):message='检查更新失败，请检查网络'
+        u['busy']=False;GLib.idle_add(lambda:self.update_status(message) and False)
+    def download_update(self):
+        u=self.update;message=''
+        try:
+            target=Path(GLib.get_user_cache_dir())/'bili-space'/'updates';target.mkdir(parents=True,exist_ok=True)
+            path=target/('Bili-Space-'+re.sub(r'[^0-9.]','',u['version'])+'-linux.deb');digest=hashlib.sha256()
+            with urllib.request.urlopen(urllib.request.Request(u['url'],headers={'User-Agent':'Bili-Space'}),timeout=30) as response,open(path,'wb') as out:
+                while chunk:=response.read(1<<17):out.write(chunk);digest.update(chunk)
+            if not u.get('digest') or digest.hexdigest()!=u['digest']:path.unlink(missing_ok=True);raise ValueError('digest')
+            u['file']=str(path)
+        except (OSError,ValueError):message='下载失败或校验不通过，请重试'
+        u['busy']=False;GLib.idle_add(lambda:(self.update_status(message),message or self.install_update()) and False)
+    def install_update(self):
+        import subprocess
+        u=self.update;u['busy']=True;self.update_status('正在安装更新，请在弹出的窗口里输入密码…')
+        def run():
+            ok=subprocess.run(['pkexec','apt-get','install','-y','--reinstall',u['file']]).returncode==0
+            u['busy']=False
+            def done():
+                if ok:self.save();os.execv(sys.executable,[sys.executable]+sys.argv)
+                self.update_status('安装没有完成，可以再试一次')
+            GLib.idle_add(lambda:done() and False)
+        threading.Thread(target=run,daemon=True).start()
     def accounts(self,m):
         action=m.get('action')
         if action=='list':event=self.pending;self.pending='';self.account_state(event)
