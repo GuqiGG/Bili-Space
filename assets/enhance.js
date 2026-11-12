@@ -57,6 +57,9 @@ function syncPipPlayback(){const button=$('.bs-pip-play');if(!button)return;cons
 
 const $ = (q, root=document) => root.querySelector(q);
 const $$ = (q, root=document) => [...root.querySelectorAll(q)];
+// 精选 plays its videos inside frames; while it is open the picture enhancer works on its current one.
+var swipeCurrentVideo=()=>null;
+function enhanceTarget(){return swipeCurrentVideo()||playbackVideo();}
 function playbackVideo(){const main=[...new Set($$('.bpx-player-video-wrap video,#bilibili-player video,.bilibili-player-video video'))],all=main.length?main:$$('video');return all.sort((a,b)=>{const score=v=>{const r=v.getBoundingClientRect();return (!v.hidden&&getComputedStyle(v).display!=='none'&&r.width>1&&r.height>1?100:0)+v.readyState;};return score(b)-score(a);})[0]||null;}
 const AD_SELECTORS = [
   '.recommended-swipe','.bili-feed4-layout .recommended-swipe',
@@ -1408,7 +1411,7 @@ document.addEventListener('fullscreenchange',()=>{
 });
 function scheduleScan(){
   if(scanTimer)return;
-  scanTimer=setTimeout(()=>{scanTimer=0;pauseOffscreenLoops();syncRoute();markAds();linkifyDescriptions();cacheSpaceBackgrounds();applyAudioBoost();watchVideoLoading();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==playbackVideo()))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==playbackVideo()))startGpu();},180);
+  scanTimer=setTimeout(()=>{scanTimer=0;pauseOffscreenLoops();syncRoute();markAds();linkifyDescriptions();cacheSpaceBackgrounds();applyAudioBoost();watchVideoLoading();const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');mountPlayerTools();if(PREFS.fiMode!=='off'&&(!interpolator||interpolator.video!==enhanceTarget()))startInterpolation();if(PREFS.srMode!=='off'&&(!gpu||gpu.video!==enhanceTarget()))startGpu();},180);
 }
 
 // Short wheel easing only: precision gestures retain the OS's own momentum.
@@ -2045,6 +2048,7 @@ function startNews(){if(!CHROME_VIEW)return;setTimeout(()=>native('news'),5000);
 // official desktop client's 精选. Each video is the real video page in a same-origin frame, reduced to its player, so
 // quality, danmaku (sending included) and the account all behave as usual; the neighbours are preloaded and kept paused.
 let swipe=null;
+swipeCurrentVideo=()=>swipe?swipeVideo(swipe.slots.get(swipe.index)):null;
 const SWIPE_EASE='cubic-bezier(.32,.72,0,1)';
 const swipeCookie=name=>(document.cookie.match(new RegExp('(?:^|;\\s*)'+name+'=([^;]+)'))||[])[1]||'';
 const swipeCount=n=>{n=Number(n)||0;const lang=uiLanguage();if(!/^(zh|yue|lolcat)/.test(lang))try{return new Intl.NumberFormat(lang==='pt-BR'?'pt-BR':lang,{notation:'compact',maximumFractionDigits:1}).format(n);}catch{}return n>=1e8?(n/1e8).toFixed(1).replace(/\.0$/,'')+'亿':n>=1e4?(n/1e4).toFixed(1).replace(/\.0$/,'')+'万':String(n);};
@@ -2107,6 +2111,7 @@ const SWIPE_FRAME_CSS=`html,body{overflow:hidden!important;background:#000!impor
 #bilibili-player{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;z-index:2147483646!important}
 #bilibili-player .bpx-player-container,#bilibili-player .bpx-player-primary-area{width:100%!important;height:100%!important}
 #bilibili-player .bpx-player-container{box-shadow:none!important}
+.bs-gpu-canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:2;background:#000}
 .bpx-player-ending-panel,.bpx-player-ending-wrap,.bpx-player-toast-auto{display:none!important}
 .bpx-player-sending-area,.bpx-player-control-wrap,.bpx-player-shadow-progress-area,.bpx-player-top-wrap,.bpx-player-dialog-wrap{display:none!important}
 #bilibili-player .bpx-player-video-area{height:100%!important}
@@ -2140,7 +2145,7 @@ function swipeSlot(i){
     if(!v.dataset.bsSwipe){v.dataset.bsSwipe='1';v.addEventListener('ended',()=>{if(swipe&&swipe.slots.get(swipe.index)===slot)swipeGo(1);});v.addEventListener('play',()=>{if(swipe&&swipe.slots.get(swipe.index)!==slot)v.pause();});}
     if(swipe.slots.get(swipe.index)===slot){swipeProgress();swipeSyncDanmakuToggle();if(swipe.comments&&(slot.tick=(slot.tick||0)+1)%4===0){swipeStyleComments(doc);filterComments(doc.querySelector('#commentapp bili-comments'));}}
     if(swipe.slots.get(swipe.index)!==slot){if(!v.paused)v.pause();slot.preloaded=true;}
-    else if(!slot.started&&v.readyState>=2){slot.started=true;if(slot.preloaded&&v.currentTime<3)v.currentTime=0;v.play().catch(()=>{});}
+    else if(!slot.started&&v.readyState>=2){slot.started=true;if(slot.preloaded&&v.currentTime<3)v.currentTime=0;v.play().catch(()=>{});if(PREFS.fiMode!=='off'||PREFS.srMode!=='off')startEnhancer();}
     if(!slot.ready&&v.readyState>=2&&slot.styled){slot.ready=true;el.classList.add('ready');if(swipe.slots.get(swipe.index)===slot)swipeEnsure();}
   },120);
   return slot;
@@ -2157,8 +2162,12 @@ function swipeWireFrame(slot,win,doc){
     else if(e.key==='Escape'&&!doc.fullscreenElement){e.preventDefault();closeSwipe();}},true);
 }
 function swipeWheel(e){if(!swipe||Math.abs(e.deltaY)<20)return;const now=performance.now();if(now-swipe.wheelAt<480)return;swipe.wheelAt=now;swipeGo(e.deltaY>0?1:-1);}
+// Each preloaded frame is a whole video page; resizing them on every step of a window drag made dragging crawl. They keep
+// their size (in px) until the drag has stopped for a moment; only the current one stretches with the window.
+function swipeFreeze(){if(!swipe)return;swipe.layer.style.setProperty('--bs-fw',innerWidth+'px');swipe.layer.style.setProperty('--bs-fh',innerHeight+'px');}
+function swipeResized(){if(!swipe)return;clearTimeout(swipe.resizeTimer);swipe.resizeTimer=setTimeout(swipeFreeze,350);}
 function swipePlace(animate){
-  for(const [i,slot] of swipe.slots){const y=(i-swipe.index)*100;slot.el.style.transition=animate?`transform .46s ${SWIPE_EASE}`:'none';slot.el.style.transform=`translate3d(0,${y}%,0)`;}
+  for(const [i,slot] of swipe.slots){slot.el.classList.toggle('current',i===swipe.index);const y=(i-swipe.index)*100;slot.el.style.transition=animate?`transform .46s ${SWIPE_EASE}`:'none';slot.el.style.transform=`translate3d(0,${y}%,0)`;}
 }
 async function swipeGo(step){
   if(!swipe||swipe.moving)return;const to=swipe.index+step;if(to<0)return;
@@ -2251,6 +2260,7 @@ async function openSwipe(){
   if(!swipeStill())layer.animate([{opacity:0},{opacity:1}],{duration:260,easing:'ease-out'});
   await swipeMore();if(!swipe)return;
   if(!swipe.list.length){toast('暂时拿不到推荐，请稍后再试');closeSwipe();return;}
+  swipeFreeze();addEventListener('resize',swipeResized);
   swipeEnsure();swipePlace(false);swipeRenderInfo();
 }
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
@@ -2336,7 +2346,7 @@ function swipeWireProgress(bar){
     bar.addEventListener('pointermove',move);bar.addEventListener('pointerup',up);bar.addEventListener('pointercancel',up);});
 }
 function closeSwipe(){
-  if(!swipe)return;const s=swipe;swipe=null;clearTimeout(s.idleTimer);for(const slot of s.slots.values()){clearInterval(slot.timer);slot.frame.src='about:blank';}
+  if(!swipe)return;const s=swipe;swipe=null;removeEventListener('resize',swipeResized);clearTimeout(s.resizeTimer);clearTimeout(s.idleTimer);if(gpu&&[...s.slots.values()].some(x=>swipeVideo(x)===gpu.video)){gpu.stop();gpu=interpolator=null;}for(const slot of s.slots.values()){clearInterval(slot.timer);slot.frame.src='about:blank';}
   delete document.documentElement.dataset.bsSwipe;native('swipe-state',{on:false});
   if(location.hash==='#swipe')history.replaceState(history.state,'',location.pathname+location.search);
   const done=()=>s.layer.remove();if(swipeStill())done();else s.layer.animate([{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}).onfinish=done;
@@ -2362,8 +2372,8 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-cover{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:blur(18px) brightness(.55);transform:scale(1.08)}
 #bs-swipe .bs-swipe-wait{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:rgba(255,255,255,.75);font-size:13px}
 #bs-swipe .bs-swipe-wait svg{width:44px;height:44px}
-#bs-swipe iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .25s ease}
-#bs-swipe .bs-swipe-slot.ready iframe{opacity:1}#bs-swipe .bs-swipe-slot.ready .bs-swipe-wait{display:none}
+#bs-swipe iframe{position:absolute;left:0;top:0;width:var(--bs-fw,100%);height:var(--bs-fh,100%);border:0;opacity:0;transition:opacity .25s ease}
+#bs-swipe .bs-swipe-slot.ready iframe{opacity:1}#bs-swipe .bs-swipe-slot.current iframe{width:100%;height:100%}#bs-swipe .bs-swipe-slot.ready .bs-swipe-wait{display:none}
 #bs-swipe .bs-swipe-ui{position:absolute;inset:0;pointer-events:none;transition:right .46s cubic-bezier(.32,.72,0,1)}
 #bs-swipe.comments .bs-swipe-ui{right:var(--bs-cw,400px)}
 #bs-swipe .bs-swipe-chead{position:absolute;top:12px;right:14px;z-index:1;color:var(--bs-ctext,#18191c);transform:translateX(calc(var(--bs-cw,400px) + 14px));transition:transform .46s cubic-bezier(.32,.72,0,1)}
@@ -2819,7 +2829,9 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
   left.addEventListener('focusout',()=>setTimeout(()=>{if(!left.contains(shadow.activeElement))setCategories(false);},0));
   left.addEventListener('keydown',e=>{if(e.key==='Escape'){setCategories(false,true);trigger.focus();e.stopPropagation();}if(e.target===trigger&&e.key==='ArrowDown'){e.preventDefault();setCategories(true,true);$('#header-categories a:not([hidden])',shadow)?.focus();}});
   document.addEventListener('pointerdown',e=>{if(!e.composedPath().includes(left))setCategories(false);},{passive:true});
-  let feedResize;window.addEventListener('resize',()=>{setCategories(trigger.getAttribute('aria-expanded')==='true');cancelAnimationFrame(feedResize);feedResize=requestAnimationFrame(()=>{compactHomeFeed();window.dispatchEvent(new Event('scroll'));alignVideoToolbar();});});
+  // Re-marking the feed cards and waking the page's own scroll handlers does not depend on the window size, and doing it
+  // on every step of a window drag made dragging stutter; it runs once the size has stopped changing.
+  let feedResize;window.addEventListener('resize',()=>{setCategories(trigger.getAttribute('aria-expanded')==='true');clearTimeout(feedResize);feedResize=setTimeout(()=>{compactHomeFeed();window.dispatchEvent(new Event('scroll'));alignVideoToolbar();},180);});
   setCategories(false);
   renderSettings();
 }
@@ -3095,14 +3107,14 @@ function updateStatus(){
 function startEnhancer(){
   gpu?.stop();gpu=interpolator=null;if(CHROME_VIEW)return;
   if(PREFS.srMode==='off'&&PREFS.fiMode==='off'){status='未开启';updateStatus();return;}
-  const video=playbackVideo();if(!video){status='等待视频';updateStatus();return;}
+  const video=enhanceTarget();if(!video){status='等待视频';updateStatus();return;}
   if(!navigator.gpu){status='需要 WebGPU 显卡支持，已保留原生播放';updateStatus();return;}
   if(!video.requestVideoFrameCallback){status='此系统不支持逐帧处理，已保留原生播放';updateStatus();return;}
   try{gpu=interpolator=new VideoEnhancer(video);}
   catch(e){status=e.message;updateStatus();toast('画面增强不可用，原生播放不受影响：'+e.message);diagnostic(status);}
 }
 function startGpu(){startEnhancer();}
-function startInterpolation(){if(!gpu||gpu.stopped||gpu.video!==playbackVideo()||gpu.fi!==(PREFS.fiMode!=='off'))startEnhancer();}
+function startInterpolation(){if(!gpu||gpu.stopped||gpu.video!==enhanceTarget()||gpu.fi!==(PREFS.fiMode!=='off'))startEnhancer();}
 
 let volumeDrag=null;const volumeWatched=new WeakSet(),volumeTracks=new WeakSet(),volumeIntents=new WeakMap(),volumeObserved=new WeakMap();
 function playerVolumePercent(){const video=playbackVideo();return video?Math.round((video.muted?0:video.volume)*Math.max(1,Math.min(2,Number(PREFS.volumeBoost||100)/100))*100):0;}
