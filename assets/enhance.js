@@ -2133,6 +2133,8 @@ function swipeSlot(i){
   const slot={i,el,frame,ready:false,styled:false,wired:false};
   // Until the page is reduced to its player and showing a picture, the cover stands in.
   slot.timer=setInterval(()=>{
+    // Once a preloaded page is styled, wired and ready it only needs an occasional look.
+    if(slot.ready&&slot.wired&&swipe&&swipe.slots.get(swipe.index)!==slot&&(slot.idle=(slot.idle||0)+1)%4)return;
     let doc;try{doc=frame.contentDocument;}catch{return;}if(!doc||!doc.documentElement)return;
     // The frame starts on a blank document; only the video page's own document counts.
     if(doc.location.href==='about:blank')return;if(slot.doc!==doc){slot.doc=doc;slot.styled=false;slot.wired=false;
@@ -2166,8 +2168,11 @@ function swipeWheel(e){if(!swipe||Math.abs(e.deltaY)<20)return;const now=perform
 // their size (in px) until the drag has stopped for a moment; only the current one stretches with the window.
 function swipeFreeze(){if(!swipe)return;swipe.layer.style.setProperty('--bs-fw',innerWidth+'px');swipe.layer.style.setProperty('--bs-fh',innerHeight+'px');}
 function swipeResized(){if(!swipe)return;clearTimeout(swipe.resizeTimer);swipe.resizeTimer=setTimeout(swipeFreeze,350);}
+// Pages off screen are parked (not rendered, so their players and animations do no drawing work); the one sliding in is
+// unparked before the slide, the one sliding out is parked after it.
+function swipePark(){if(!swipe||swipe.moving)return;for(const [i,slot] of swipe.slots)slot.el.classList.toggle('parked',i!==swipe.index);}
 function swipePlace(animate){
-  for(const [i,slot] of swipe.slots){slot.el.classList.toggle('current',i===swipe.index);const y=(i-swipe.index)*100;slot.el.style.transition=animate?`transform .46s ${SWIPE_EASE}`:'none';slot.el.style.transform=`translate3d(0,${y}%,0)`;}
+  for(const [i,slot] of swipe.slots){slot.el.classList.toggle('current',i===swipe.index);if(i===swipe.index)slot.el.classList.remove('parked');const y=(i-swipe.index)*100;slot.el.style.transition=animate?`transform .46s ${SWIPE_EASE}`:'none';slot.el.style.transform=`translate3d(0,${y}%,0)`;}
 }
 async function swipeGo(step){
   if(!swipe||swipe.moving)return;const to=swipe.index+step;if(to<0)return;
@@ -2176,7 +2181,7 @@ async function swipeGo(step){
   if(swipe.comments)swipeComments(false);
   swipe.moving=true;const old=swipe.slots.get(swipe.index);const ov=old&&swipeVideo(old);if(ov&&!ov.paused)ov.pause();
   swipe.index=to;swipe.arrivedAt=performance.now();swipeEnsure();swipeRenderInfo();
-  requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();const cur=swipe.slots.get(swipe.index),v=cur&&swipeVideo(cur);if(v&&cur.ready)v.play().catch(()=>{});},470);});
+  requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();swipePark();const cur=swipe.slots.get(swipe.index),v=cur&&swipeVideo(cur);if(v&&cur.ready)v.play().catch(()=>{});},470);});
 }
 // The current video, the one before it and the next two exist; anything further away is dropped (frames are whole
 // pages). The second one down starts once the current one shows a picture, or 600ms after arriving, whichever is first,
@@ -2184,7 +2189,7 @@ async function swipeGo(step){
 function swipeEnsure(){
   const cur=swipe.slots.get(swipe.index),ahead=cur?.ready||performance.now()-swipe.arrivedAt>=600?[swipe.index+2]:[];
   clearTimeout(swipe.aheadTimer);if(!ahead.length)swipe.aheadTimer=setTimeout(()=>swipe&&swipeEnsure(),620);
-  for(const i of [swipe.index,swipe.index+1,swipe.index-1,...ahead]){if(i<0||i>=swipe.list.length||swipe.slots.has(i))continue;const s=swipeSlot(i);s.el.style.transform=`translate3d(0,${(i-swipe.index)*100}%,0)`;swipe.track.append(s.el);swipe.slots.set(i,s);}
+  for(const i of [swipe.index,swipe.index+1,swipe.index-1,...ahead]){if(i<0||i>=swipe.list.length||swipe.slots.has(i))continue;const s=swipeSlot(i);s.el.style.transform=`translate3d(0,${(i-swipe.index)*100}%,0)`;if(i!==swipe.index&&!swipe.moving)s.el.classList.add('parked');swipe.track.append(s.el);swipe.slots.set(i,s);}
 }
 function swipePrune(){for(const [i,slot] of swipe.slots)if(i<swipe.index-1||i>swipe.index+2){clearInterval(slot.timer);slot.frame.src='about:blank';slot.el.remove();swipe.slots.delete(i);}}
 async function swipeRenderInfo(){
@@ -2261,7 +2266,7 @@ async function openSwipe(){
   await swipeMore();if(!swipe)return;
   if(!swipe.list.length){toast('暂时拿不到推荐，请稍后再试');closeSwipe();return;}
   swipeFreeze();addEventListener('resize',swipeResized);
-  swipeEnsure();swipePlace(false);swipeRenderInfo();
+  swipeEnsure();swipePlace(false);swipePark();swipeRenderInfo();
 }
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
 function swipeTogglePlay(){const v=swipe&&swipeVideo(swipe.slots.get(swipe.index));if(!v)return;if(v.paused)v.play().catch(()=>{});else v.pause();}
@@ -2371,6 +2376,7 @@ html[data-bs-swipe=true] body{display:none!important}
 #bs-swipe{position:fixed;inset:0;z-index:2147483000;background:#000;overflow:clip;color:#fff;font-family:inherit}
 #bs-swipe .bs-swipe-track{position:absolute;inset:0}
 #bs-swipe .bs-swipe-slot{position:absolute;inset:0;background:#000;will-change:transform}
+#bs-swipe .bs-swipe-slot.parked{content-visibility:hidden}
 #bs-swipe .bs-swipe-cover{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:blur(18px) brightness(.55);transform:scale(1.08)}
 #bs-swipe .bs-swipe-wait{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:rgba(255,255,255,.75);font-size:13px}
 #bs-swipe .bs-swipe-wait svg{width:44px;height:44px}
@@ -2388,11 +2394,11 @@ html[data-bs-swipe=true] body{display:none!important}
 #bs-swipe .bs-swipe-peek{position:absolute;top:0;left:50%;width:min(360px,40%);height:26px;transform:translateX(-50%);display:flex;justify-content:center;pointer-events:auto}
 #bs-swipe .bs-swipe-peek i{margin-top:8px;width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.4);box-shadow:0 1px 4px rgba(0,0,0,.35);transition:width .28s cubic-bezier(.23,1,.32,1),background-color .2s,transform .28s cubic-bezier(.23,1,.32,1)}
 #bs-swipe .bs-swipe-peek:hover i{width:64px;background:rgba(255,255,255,.85);transform:translateY(2px)}
-#bs-swipe .bs-swipe-detail{position:absolute;top:18px;right:16px;padding:6px 12px;border:0;border-radius:999px;background:rgba(0,0,0,.45);font-size:13px;backdrop-filter:blur(8px)}
+#bs-swipe .bs-swipe-detail{position:absolute;top:18px;right:16px;padding:6px 12px;border:0;border-radius:999px;background:rgba(0,0,0,.45);font-size:13px}
 #bs-swipe .bs-swipe-nav{position:absolute;right:18px;top:42%;transform:translateY(-50%);display:grid;gap:8px}
 #bs-swipe .bs-swipe-nav button{width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.4);transition:background .18s,transform .18s}#bs-swipe .bs-swipe-nav svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #bs-swipe .bs-swipe-shade{position:absolute;left:0;right:0;bottom:0;height:260px;background:linear-gradient(to top,rgba(0,0,0,.62),rgba(0,0,0,0))}
-#bs-swipe .bs-swipe-dm{position:absolute;left:50%;bottom:30px;width:clamp(240px,28vw,440px);height:32px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:0 3px 0 4px;border-radius:8px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);backdrop-filter:blur(14px) saturate(140%);pointer-events:auto;transition:background-color .2s,box-shadow .2s,opacity .3s ease,visibility 0s}
+#bs-swipe .bs-swipe-dm{position:absolute;left:50%;bottom:30px;width:clamp(240px,28vw,440px);height:32px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:0 3px 0 4px;border-radius:8px;background:rgba(24,25,28,.62);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);pointer-events:auto;transition:background-color .2s,box-shadow .2s,opacity .3s ease,visibility 0s}
 #bs-swipe .bs-swipe-dm:focus-within{background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
 #bs-swipe .bs-swipe-dm input{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;color:#fff;font:inherit;font-size:13px}#bs-swipe .bs-swipe-dm input::placeholder{color:rgba(255,255,255,.62)}
 #bs-swipe .bs-swipe-dm-toggle{flex:none;width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:6px;background:rgba(255,255,255,.18);font-size:13px!important;font-weight:600;transition:background-color .2s,opacity .2s}
