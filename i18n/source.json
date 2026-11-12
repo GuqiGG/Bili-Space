@@ -929,5 +929,21 @@
 "关注的 UP 主发新视频时，在屏幕右下角提醒",
 "通知",
 "液态玻璃",
-"内置插件 · 展示用：按钮和面板变成通透的液态玻璃，字体换成鸿蒙黑体"
+"内置插件 · 展示用：按钮和面板变成通透的液态玻璃，字体换成鸿蒙黑体",
+"折射 refraction",
+"模糊 blurAmount",
+"色散 chromAberration",
+"边缘光 edgeHighlight",
+"高光 specular",
+"菲涅尔 fresnel",
+"圆角 cornerRadius",
+"倒角深度 zRadius",
+"胶囊 / 1 圆顶）",
+"亮度 brightness",
+"饱和度 saturation",
+"阴影 shadowOpacity",
+"按钮模式 button",
+"可拖动 floating",
+"内置插件 · 用 LiquidGlass 库（",
+"给首页分区按钮和视频页点赞一排加玻璃，字体换成鸿蒙黑体"
 ]

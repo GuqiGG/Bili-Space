@@ -149,10 +149,10 @@
 
 ## 5.13 液态玻璃（内置插件，展示用）
 
-- 设置 → 扩展 → 液态玻璃（`liquidGlass`，默认关）。外观直接用 LiquidGlass（@ybouane/liquidglass 1.0.3，MIT，liquid-glass.ybouane.com）的片元着色器 `FS_GLASS`，逐行搬成 JS，参数是它的 Regular Glass 默认值。
-- 那个库是把玻璃背后的 DOM 截成图再走 WebGL，要求玻璃和背景在同一个容器里，套不到客户端里分散在各处的按钮上（B 站封面跨域、顶栏层看不到网页）。所以按每个按钮的尺寸把着色器里只跟形状有关的部分算一遍：折射偏移（双面折射 + 向中心收）和色散做成红绿蓝三张位移图，交给 `backdrop-filter:url()` 折射按钮背后真实的网页；菲涅尔、内描边、边缘高光、内发光、环境反光算成一张白色高光图贴在上面；阴影按它的外阴影 + 接触阴影。结果按尺寸缓存。
-- 顶栏层看不到下面的网页，只画高光（面板加一层半透明底保证文字可读）。字体换成 B 站自己的鸿蒙黑体（`HarmonyOS_Regular`），图标、SVG 和播放器不换。
-- 自己仿写一个「像液态玻璃」的 CSS 版本被用户否决：要用那个库的代码。
+- 设置 → 扩展 → 液态玻璃（`liquidGlass`，默认关）。效果就是 LiquidGlass 库本身（@ybouane/liquidglass 1.0.3，MIT，从 `https://cdn.jsdelivr.net/npm/@ybouane/liquidglass@1.0.3/dist/index.js` 动态 import），不许自己写玻璃（`backdrop-filter`、SVG 滤镜、着色器、渐变都不行——自己仿写和「按尺寸把它的着色器算成图」两版都被用户否决了）。
+- 按库的规则：玻璃元素必须是 `position:relative` 的 root 的直接子元素；root 自己的背景不会被截取，所以每个 root 里按文档放一个绝对定位的背景层（`.bs-lg-bg`，页面底色，`z-index:-1`，root 加 `isolation`）；root 加 10px 内边距再用 -10px 外边距抵消，免得玻璃取样到截取区域外面出白边。玻璃元素自己的底色、阴影去掉，并加 `isolation`（库注入的 canvas 是 `z-index:-1`）。
+- 现在用在 B 站自己本来就并排的按钮组：首页分区按钮（`.channel-items__left > a.channel-link`）和视频页点赞一排（`.video-toolbar-left-main > .toolbar-left-item-wrap`）。每个 root 一个 WebGL 上下文（浏览器上限约 16 个），所以不能每个按钮各开一个。
+- 设置里的每一项都是库的参数（refraction、blurAmount、chromAberration、edgeHighlight、specular、fresnel、cornerRadius、zRadius、bevelMode、brightness、saturation、shadowOpacity、button、floating），存在 `lgConfig`，直接写进每个玻璃元素的 `data-config`，库自己会重新读取。原生只收这些键。
 
 ## 6. 否决过的方案（不要再做）
 
