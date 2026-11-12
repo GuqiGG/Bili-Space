@@ -2126,16 +2126,18 @@ function swipeSlot(i){
   slot.timer=setInterval(()=>{
     let doc;try{doc=frame.contentDocument;}catch{return;}if(!doc||!doc.documentElement)return;
     // The frame starts on a blank document; only the video page's own document counts.
-    if(doc.location.href==='about:blank')return;if(slot.doc!==doc){slot.doc=doc;slot.styled=false;slot.wired=false;}
+    if(doc.location.href==='about:blank')return;if(slot.doc!==doc){slot.doc=doc;slot.styled=false;slot.wired=false;
+      // A preloading page's own autoplay is held back (no sound, no head start); play() works again once it is the current one.
+      try{const proto=frame.contentWindow.HTMLMediaElement.prototype,play=proto.play;proto.play=function(){return swipe&&swipe.slots.get(swipe.index)!==slot?Promise.resolve():play.call(this);};}catch{}}
     if(!slot.styled&&doc.head){const s=doc.createElement('style');s.id='bs-swipe-frame';s.textContent=SWIPE_FRAME_CSS;doc.head.append(s);slot.styled=true;}
     else if(slot.styled&&!doc.getElementById('bs-swipe-frame')&&doc.head){const s=doc.createElement('style');s.id='bs-swipe-frame';s.textContent=SWIPE_FRAME_CSS;doc.head.append(s);}
     if(!slot.wired&&doc.body){slot.wired=true;swipeWireFrame(slot,frame.contentWindow,doc);}
     const v=swipeVideo(slot);if(!v)return;
     if(!v.dataset.bsSwipe){v.dataset.bsSwipe='1';v.addEventListener('ended',()=>{if(swipe&&swipe.slots.get(swipe.index)===slot)swipeGo(1);});v.addEventListener('play',()=>{if(swipe&&swipe.slots.get(swipe.index)!==slot)v.pause();});}
     if(swipe.slots.get(swipe.index)===slot){swipeProgress();swipeSyncDanmakuToggle();}
-    if(swipe.slots.get(swipe.index)!==slot){if(!v.paused)v.pause();}
-    else if(!slot.started&&v.readyState>=2){slot.started=true;v.play().catch(()=>{});}
-    if(!slot.ready&&v.readyState>=2&&slot.styled){slot.ready=true;el.classList.add('ready');}
+    if(swipe.slots.get(swipe.index)!==slot){if(!v.paused)v.pause();slot.preloaded=true;}
+    else if(!slot.started&&v.readyState>=2){slot.started=true;if(slot.preloaded&&v.currentTime<3)v.currentTime=0;v.play().catch(()=>{});}
+    if(!slot.ready&&v.readyState>=2&&slot.styled){slot.ready=true;el.classList.add('ready');if(swipe.slots.get(swipe.index)===slot)swipeEnsure();}
   },120);
   return slot;
 }
@@ -2154,18 +2156,20 @@ function swipePlace(animate){
 }
 async function swipeGo(step){
   if(!swipe||swipe.moving)return;const to=swipe.index+step;if(to<0)return;
-  if(to>=swipe.list.length-3)swipeMore();
+  if(to>=swipe.list.length-4)swipeMore();
   if(to>=swipe.list.length){await swipeMore();if(to>=swipe.list.length)return;}
   if(swipe.comments)swipeComments(false);
   swipe.moving=true;const old=swipe.slots.get(swipe.index);const ov=old&&swipeVideo(old);if(ov&&!ov.paused)ov.pause();
   swipe.index=to;swipeEnsure();swipeRenderInfo();
   requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();const cur=swipe.slots.get(swipe.index),v=cur&&swipeVideo(cur);if(v&&cur.ready)v.play().catch(()=>{});},470);});
 }
-// The current video and its neighbours exist; anything further away is dropped (frames are whole pages).
+// The current video, the one before it and the next two exist; anything further away is dropped (frames are whole
+// pages). The second one down only starts loading once the current one shows a picture, so it never competes with it.
 function swipeEnsure(){
-  for(const i of [swipe.index,swipe.index+1,swipe.index-1]){if(i<0||i>=swipe.list.length||swipe.slots.has(i))continue;const s=swipeSlot(i);s.el.style.transform=`translate3d(0,${(i-swipe.index)*100}%,0)`;swipe.track.append(s.el);swipe.slots.set(i,s);}
+  const cur=swipe.slots.get(swipe.index),ahead=cur?.ready?[swipe.index+2]:[];
+  for(const i of [swipe.index,swipe.index+1,swipe.index-1,...ahead]){if(i<0||i>=swipe.list.length||swipe.slots.has(i))continue;const s=swipeSlot(i);s.el.style.transform=`translate3d(0,${(i-swipe.index)*100}%,0)`;swipe.track.append(s.el);swipe.slots.set(i,s);}
 }
-function swipePrune(){for(const [i,slot] of swipe.slots)if(Math.abs(i-swipe.index)>1){clearInterval(slot.timer);slot.frame.src='about:blank';slot.el.remove();swipe.slots.delete(i);}}
+function swipePrune(){for(const [i,slot] of swipe.slots)if(i<swipe.index-1||i>swipe.index+2){clearInterval(slot.timer);slot.frame.src='about:blank';slot.el.remove();swipe.slots.delete(i);}}
 async function swipeRenderInfo(){
   const item=swipe.list[swipe.index];if(!item)return;const ui=swipe.ui,token=item.bvid;ui.dataset.bvid=token;
   const o=item.owner,s=item.stat;
