@@ -17,6 +17,8 @@
   <a href="docs/CHANGELOG.md">更新日志</a>
 </p>
 
+https://github.com/user-attachments/assets/30ea1bc1-fe6c-4411-be8b-074b0adb32a8
+
 ![Bili-Space 实际界面的倾斜立体展示](docs/images/showcase.webp?v=0165)
 
 <p align="center"><sub>Windows 10 / 11 · C++20 · WebView2 · 仅限非商业使用</sub></p>
