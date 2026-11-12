@@ -318,7 +318,10 @@ void saveDownload(const std::string& url,const std::string& title,const std::str
     if(downloadBusy.exchange(true)){executeEverywhere("window.BiliSpace?.downloadResult({ok:false,message:'已有下载正在进行'})");return;}
     auto name=wide(title);for(auto& ch:name)if(ch<32||std::wstring(L"<>:\"/\\|?*").find(ch)!=std::wstring::npos)ch=L'_';if(name.size()>100)name.resize(100);if(name.empty())name=L"Bili-video";name+=L".mp4";
     wchar_t file[32768]{};lstrcpynW(file,name.c_str(),32768);OPENFILENAMEW dialog{sizeof(dialog)};dialog.hwndOwner=windowHandle;dialog.lpstrFile=file;dialog.nMaxFile=32768;dialog.lpstrFilter=L"MP4 视频\0*.mp4\0\0";dialog.lpstrDefExt=L"mp4";dialog.lpstrTitle=L"保存视频 · 内置下载器";dialog.Flags=OFN_OVERWRITEPROMPT|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;
-    if(!GetSaveFileNameW(&dialog)){downloadBusy=false;executeEverywhere("window.BiliSpace?.downloadResult({ok:false,message:'已取消保存'})");return;}
+    // Test windows can skip the dialog (scripted README recordings): BILI_SPACE_TEST_DOWNLOAD_DIR names the folder.
+    const wchar_t* testDir=testing?_wgetenv(L"BILI_SPACE_TEST_DOWNLOAD_DIR"):nullptr;
+    if(testDir&&*testDir)lstrcpynW(file,(fs::path(testDir)/name).c_str(),32768);
+    else if(!GetSaveFileNameW(&dialog)){downloadBusy=false;executeEverywhere("window.BiliSpace?.downloadResult({ok:false,message:'已取消保存'})");return;}
     {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCancelRequested=false;downloadCommitted=false;}executeEverywhere("window.BiliSpace?.downloadStarted();window.BiliSpace?.downloaderNotice('下载已开始')");launchDownloadWorker(wide(url),wide(audio),fs::path(file));
 }
 void cancelDownload(){std::lock_guard<std::mutex> lock(downloadCommitMutex);if(downloadBusy&&!downloadCommitted)downloadCancelRequested=true;}

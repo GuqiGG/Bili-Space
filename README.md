@@ -65,12 +65,12 @@ MP4 视频下载，进度、速度、预计剩余时间集中显示，下载中�
 
 ## 界面一览
 
-![Bili-Space 首页实际截图](docs/images/home.png)
+![Bili-Space 首页实际截图](docs/images/home.webp)
 
 <details>
 <summary>个性化设置</summary>
 
-![Bili-Space 个性化设置实际截图](docs/images/settings.png)
+![Bili-Space 个性化设置实际截图](docs/images/settings.webp)
 
 </details>
 
