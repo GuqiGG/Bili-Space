@@ -345,7 +345,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"shareSeen",""},{"newsSeen",json::array()},{"language",""},{"languageChosen",false},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerSwipe",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerWatchlater",true},{"clickGui",false},{"searchWidth",0},{"watchlaterOpen","list"},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"shareSeen",""},{"newsSeen",json::array()},{"language",""},{"languageChosen",false},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerSwipe",true},{"commentBlock",true},{"commentBlockUsers",json::array()},{"commentBlockWords",json::array()},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerWatchlater",true},{"clickGui",false},{"searchWidth",0},{"watchlaterOpen","list"},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -390,6 +390,7 @@ void mergeConfig(const json& next){
         else if(key=="newsSeen"&&value.is_array()&&value.size()<=100&&std::all_of(value.begin(),value.end(),[](const json& v){return v.is_string()&&v.get<std::string>().size()<=64;}))config[key]=value;
         else if(key=="language"&&value.is_string()&&std::set<std::string>{"","zh-CN","zh-TW","zh-HK","yue","en","ja","ko","es","fr","de","ru","pt-BR","lolcat"}.count(value.get<std::string>()))config[key]=value;
         else if(key=="watchlaterOpen"&&value.is_string()&&(value=="list"||value=="video"))config[key]=value;
+        else if((key=="commentBlockUsers"||key=="commentBlockWords")&&value.is_array()&&value.size()<=300&&std::all_of(value.begin(),value.end(),[](const json& v){if(!v.is_string())return false;const auto t=v.get<std::string>();return !t.empty()&&t.size()<=240&&t.find_first_of("\r\n")==std::string::npos;}))config[key]=value;
         else if(key=="pluginsDisabled"&&value.is_array()&&value.size()<=32){json ids=json::array();for(const auto& item:value)if(item.is_string()){const auto id=item.get<std::string>();if(std::regex_match(id,std::regex(R"([a-z0-9][a-z0-9._-]{0,39})")))ids.push_back(id);if(ids.size()>=32)break;}config[key]=ids;}
         else if(key=="categorySelection"&&value.is_array()&&value.size()<=18){json choices=json::array();for(const auto& v:value)if(v.is_number_integer()&&v.get<int>()>=0&&v.get<int>()<18&&std::find(choices.begin(),choices.end(),v)==choices.end())choices.push_back(v);config[key]=choices;}
         else if(value.is_boolean()&&defaults()[key].is_boolean())config[key]=value;
@@ -887,7 +888,53 @@ void chromeAcceptConfig(){if(chromeHost::view&&webview!=chromeHost::view)chromeH
 // opens Bilibili) and address/card form autofill parsing on every page. Saved passwords are left as they are.
 void lightenSettings(ICoreWebView2Settings* settings){
     ICoreWebView2Settings8* s8{};if(SUCCEEDED(settings->QueryInterface(__uuidof(ICoreWebView2Settings8),reinterpret_cast<void**>(&s8)))&&s8){s8->put_IsReputationCheckingRequired(FALSE);s8->Release();}
-    ICoreWebView2Settings4* s4{};if(SUCCEEDED(settings->QueryInterface(__uuidof(ICoreWebView2Settings4),reinterpret_cast<void**>(&s4)))&&s4){s4->put_IsGeneralAutofillEnabled(FALSE);s4->Release();}
+    ICoreWebView2Settings4* s4{};if(SUCCEEDED(settings->QueryInterface(__uuidof(ICoreWebView2Settings4),reinterpret_cast<void**>(&s4)))&&s4){s4->put_IsGeneralAutofillEnabled(FALSE);s4->put_IsPasswordAutosaveEnabled(FALSE);s4->Release();}
+    ICoreWebView2Settings6* s6{};if(SUCCEEDED(settings->QueryInterface(__uuidof(ICoreWebView2Settings6),reinterpret_cast<void**>(&s6)))&&s6){s6->put_IsSwipeNavigationEnabled(FALSE);s6->Release();}
+}
+// Keys that only open the browser's own UI (find bar, print, save page, view source, downloads, caret browsing, and the
+// developer tools outside test builds). The pages never use them.
+bool browserOnlyKey(UINT key){
+    const bool ctrl=GetKeyState(VK_CONTROL)&0x8000,shift=GetKeyState(VK_SHIFT)&0x8000,alt=GetKeyState(VK_MENU)&0x8000;
+    if(key==VK_F7||(key==VK_F3&&!alt))return true;
+    if(!testing&&(key==VK_F12||(ctrl&&shift&&(key=='I'||key=='J'||key=='C'))))return true;
+    return ctrl&&!alt&&!shift&&(key=='F'||key=='G'||key=='P'||key=='S'||key=='U'||key=='J'||key=='H'||key=='O');
+}
+// The browser's context menu only shows its editing items over text fields and selections (cut, copy, paste, select
+// all, undo, emoji); anywhere else nothing opens. Pages with their own menu (the player's) never reach this.
+HRESULT trimContextMenu(ICoreWebView2ContextMenuRequestedEventArgs* args){
+    ICoreWebView2ContextMenuTarget* target{};BOOL editable=FALSE,selection=FALSE;
+    if(SUCCEEDED(args->get_ContextMenuTarget(&target))&&target){target->get_IsEditable(&editable);target->get_HasSelection(&selection);target->Release();}
+    if(!editable&&!selection){args->put_Handled(TRUE);return S_OK;}
+    ICoreWebView2ContextMenuItemCollection* items{};if(FAILED(args->get_MenuItems(&items))||!items){args->put_Handled(TRUE);return S_OK;}
+    static const wchar_t* keep[]={L"undo",L"redo",L"cut",L"copy",L"paste",L"pasteAndMatchStyle",L"pasteAsPlainText",L"selectAll",L"emoji"};
+    auto kindAt=[&](UINT32 i){COREWEBVIEW2_CONTEXT_MENU_ITEM_KIND k=COREWEBVIEW2_CONTEXT_MENU_ITEM_KIND_COMMAND;ICoreWebView2ContextMenuItem* it{};if(SUCCEEDED(items->GetValueAtIndex(i,&it))&&it){it->get_Kind(&k);it->Release();}return k;};
+    UINT32 n=0;items->get_Count(&n);
+    for(UINT32 i=n;i-->0;){ICoreWebView2ContextMenuItem* it{};if(FAILED(items->GetValueAtIndex(i,&it))||!it)continue;
+        LPWSTR name{};it->get_Name(&name);COREWEBVIEW2_CONTEXT_MENU_ITEM_KIND kind{};it->get_Kind(&kind);it->Release();
+        bool ok=kind==COREWEBVIEW2_CONTEXT_MENU_ITEM_KIND_SEPARATOR;for(auto k:keep)if(name&&!wcscmp(name,k))ok=true;
+        if(testing&&name)log("context menu item: "+utf8(name)+(ok?" (kept)":""));if(name)CoTaskMemFree(name);
+        if(!ok)items->RemoveValueAtIndex(i);}
+    // separators left at either end or next to each other go too
+    items->get_Count(&n);
+    for(UINT32 i=n;i-->0;){UINT32 count=0;items->get_Count(&count);if(i>=count)continue;
+        if(kindAt(i)==COREWEBVIEW2_CONTEXT_MENU_ITEM_KIND_SEPARATOR&&(i==0||i+1==count||kindAt(i+1)==COREWEBVIEW2_CONTEXT_MENU_ITEM_KIND_SEPARATOR))items->RemoveValueAtIndex(i);}
+    items->get_Count(&n);if(n&&kindAt(0)==COREWEBVIEW2_CONTEXT_MENU_ITEM_KIND_SEPARATOR)items->RemoveValueAtIndex(0);
+    items->get_Count(&n);if(!n)args->put_Handled(TRUE);items->Release();return S_OK;
+}
+// Downloads a page starts run without the browser's download bubble and its history list; the header says when one
+// finishes or fails.
+HRESULT quietDownload(ICoreWebView2DownloadStartingEventArgs* args){
+    args->put_Handled(TRUE);if(testing){LPWSTR path{};args->get_ResultFilePath(&path);log("download starting: "+(path?utf8(path):std::string{}));if(path)CoTaskMemFree(path);}
+    ICoreWebView2DownloadOperation* op{};if(FAILED(args->get_DownloadOperation(&op))||!op)return S_OK;
+    EventRegistrationToken token{};
+    auto changed=callback<ICoreWebView2StateChangedEventHandler,ICoreWebView2DownloadOperation*,IUnknown*>([](ICoreWebView2DownloadOperation* o,IUnknown*){
+        COREWEBVIEW2_DOWNLOAD_STATE state{};o->get_State(&state);if(state==COREWEBVIEW2_DOWNLOAD_STATE_IN_PROGRESS)return S_OK;
+        if(testing)log("download finished, state "+std::to_string(int(state)));
+        COREWEBVIEW2_DOWNLOAD_INTERRUPT_REASON reason{};o->get_InterruptReason(&reason);if(reason==COREWEBVIEW2_DOWNLOAD_INTERRUPT_REASON_USER_CANCELED)return S_OK;
+        LPWSTR path{};o->get_ResultFilePath(&path);std::wstring file=path?std::filesystem::path(path).filename().wstring():L"";if(path)CoTaskMemFree(path);
+        const std::string text=state==COREWEBVIEW2_DOWNLOAD_STATE_COMPLETED?"已下载 "+utf8(file):"下载失败";
+        chromeExecute(wide("window.BiliSpace?.toast?.("+json(text).dump()+")").c_str());return S_OK;});
+    op->add_StateChanged(changed,&token);changed->Release();op->Release();return S_OK;
 }
 void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Environment* env){
             {EventRegistrationToken zoomToken;
@@ -899,9 +946,12 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
             EventRegistrationToken acceleratorToken;
             auto accelerator=callback<ICoreWebView2AcceleratorKeyPressedEventHandler,ICoreWebView2Controller*,ICoreWebView2AcceleratorKeyPressedEventArgs*>([](ICoreWebView2Controller* sender,auto args){ViewScope scope(sender);
                 UINT key{};COREWEBVIEW2_KEY_EVENT_KIND kind{};args->get_VirtualKey(&key);args->get_KeyEventKind(&kind);if(tabAccelerator(key,kind)){args->put_Handled(TRUE);return S_OK;}
+                if(browserOnlyKey(key)){args->put_Handled(TRUE);return S_OK;}
                 if(key=='W'&&(GetKeyState(VK_CONTROL)&0x8000)&&!(GetKeyState(VK_MENU)&0x8000)&&(kind==COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN||kind==COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN)){args->put_Handled(TRUE);PostMessageW(windowHandle,WM_CLOSE,0,0);}return S_OK;
             });c->add_AcceleratorKeyPressed(accelerator,&acceleratorToken);accelerator->Release();
             ICoreWebView2Settings* settings{};view->get_Settings(&settings);settings->put_AreDefaultContextMenusEnabled(TRUE);settings->put_IsStatusBarEnabled(FALSE);settings->put_AreDevToolsEnabled(testing);lightenSettings(settings);settings->Release();
+            {ICoreWebView2_11* v11{};if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_11),reinterpret_cast<void**>(&v11)))&&v11){EventRegistrationToken t{};auto menu=callback<ICoreWebView2ContextMenuRequestedEventHandler,ICoreWebView2*,ICoreWebView2ContextMenuRequestedEventArgs*>([](ICoreWebView2*,ICoreWebView2ContextMenuRequestedEventArgs* a){return trimContextMenu(a);});v11->add_ContextMenuRequested(menu,&t);menu->Release();v11->Release();}}
+            {ICoreWebView2_4* v4{};if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_4),reinterpret_cast<void**>(&v4)))&&v4){EventRegistrationToken t{};auto down=callback<ICoreWebView2DownloadStartingEventHandler,ICoreWebView2*,ICoreWebView2DownloadStartingEventArgs*>([](ICoreWebView2*,ICoreWebView2DownloadStartingEventArgs* a){return quietDownload(a);});v4->add_DownloadStarting(down,&t);down->Release();v4->Release();}}
             ICoreWebView2_3* v3{};
             if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_3),reinterpret_cast<void**>(&v3)))){v3->SetVirtualHostNameToFolderMapping(L"bili-space.local",(root/L"assets").c_str(),COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);v3->Release();}
             EventRegistrationToken token;

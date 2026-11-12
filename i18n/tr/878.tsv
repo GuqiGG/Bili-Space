@@ -35,3 +35,12 @@
 911	Clear	清屏	画面だけ	화면만	Limpiar	Épurer	Ausblenden	Скрыть всё	Limpar
 912	Clear	清	隠す	숨김	Limpiar	Masquer	Aus	Скрыть	Limpar
 913	Featured	精選	ピックアップ	추천	Destacados	Sélection	Highlights	Лучшее	Destaques
+914	Comment blocking	評論屏蔽	コメントのブロック	댓글 차단	Bloqueo de comentarios	Blocage des commentaires	Kommentare blockieren	Блокировка комментариев	Bloqueio de comentários
+915	Block comments	屏蔽評論	コメントをブロック	댓글 차단하기	Bloquear comentarios	Bloquer les commentaires	Kommentare ausblenden	Скрывать комментарии	Bloquear comentários
+916	Comments by listed users, or containing a blocked word (replies included), are hidden	名單入面啲用戶發嘅評論，或者有屏蔽詞嘅評論（樓中樓回覆都計）唔會顯示	リストのユーザーのコメントやブロック語を含むコメント（返信も含む）を表示しません	목록의 사용자가 쓴 댓글이나 차단어가 들어간 댓글(답글 포함)을 숨겨요	Se ocultan los comentarios de usuarios de la lista o con palabras bloqueadas (respuestas incluidas)	Les commentaires des utilisateurs listés ou contenant un mot bloqué (réponses comprises) sont masqués	Kommentare von gelisteten Nutzern oder mit gesperrten Wörtern (auch Antworten) werden ausgeblendet	Скрываются комментарии пользователей из списка и с запрещёнными словами (включая ответы)	Comentários de usuários da lista ou com palavras bloqueadas (respostas incluídas) ficam ocultos
+917	Blocked users	屏蔽用戶名	ブロックするユーザー名	차단할 사용자 이름	Usuarios bloqueados	Utilisateurs bloqués	Gesperrte Nutzer	Скрытые пользователи	Usuários bloqueados
+918	One per line; the name must match exactly	一行一個，暱稱要完全一樣先會屏蔽	1行に1つ、名前が完全一致したときだけ	한 줄에 하나, 이름이 완전히 같아야 차단돼요	Uno por línea; el nombre debe coincidir exactamente	Un par ligne ; le nom doit correspondre exactement	Einer pro Zeile; der Name muss genau stimmen	По одному в строке; имя должно совпадать полностью	Um por linha; o nome precisa ser idêntico
+919	One username per line	一行一個用戶名	1行に1つのユーザー名	한 줄에 사용자 이름 하나	Un usuario por línea	Un nom d'utilisateur par ligne	Ein Nutzername pro Zeile	Одно имя в строке	Um usuário por linha
+920	One per line; blocked if it appears in a comment	一行一個，評論入面出現就屏蔽	1行に1つ、コメントに含まれていればブロック	한 줄에 하나, 댓글에 들어 있으면 차단돼요	Uno por línea; se bloquea si aparece en un comentario	Un par ligne ; bloqué s'il apparaît dans un commentaire	Eines pro Zeile; wird ausgeblendet, wenn es im Kommentar vorkommt	По одному в строке; скрывается, если встречается в комментарии	Um por linha; bloqueado se aparecer no comentário
+921	One word per line	一行一個詞	1行に1語	한 줄에 단어 하나	Una palabra por línea	Un mot par ligne	Ein Wort pro Zeile	Одно слово в строке	Uma palavra por linha
+922	Cleared	清空咗	クリアしました	비웠어요	Vaciado	Vidé	Geleert	Очищено	Limpo
