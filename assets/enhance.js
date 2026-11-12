@@ -1228,46 +1228,104 @@ async function refreshAccount(force=false){
   }finally{clearTimeout(timeout);if(accountRequest===request)accountRequest=null;}
 }
 
-// 液态玻璃 (built-in plugin, a showcase): buttons and panels become clear "regular glass" in the manner of
-// liquid-glass.ybouane.com - no blur, the backdrop bent at the rim (an SVG displacement filter, with the colour channels
-// pulled slightly apart), a bright upper rim, a soft specular sweep and a light drop shadow; hover brightens it and a
-// press flattens it. The header layer cannot see the page beneath it, so there the glass is drawn, not refracted.
-// The interface text switches to HarmonyOS Sans (Bilibili's own web font).
+// 液态玻璃 (built-in plugin, a showcase). The glass is the fragment shader of LiquidGlass (@ybouane/liquidglass 1.0.3,
+// MIT, https://liquid-glass.ybouane.com) - FS_GLASS, line for line, with its "Regular Glass" defaults. The library
+// renders DOM snapshots through WebGL; here every term of that shader that depends only on the shape (rounded-rect
+// SDF, bevel height field, dual-surface refraction, per-channel chromatic aberration, fresnel, inner stroke, rim, inner
+// glow, environment reflection) is evaluated once per button size. The refraction offsets become one SVG displacement
+// map per colour channel, so the browser refracts what is really behind each button (backdrop-filter); the lighting
+// terms become a highlight image laid over it. The header layer cannot see the page beneath it, so there only the
+// lighting is drawn. Interface text switches to HarmonyOS Sans, Bilibili's own web font.
 const GLASS_FONT='"HarmonyOS_Regular","HarmonyOS Sans SC","PingFang SC","Microsoft YaHei UI",sans-serif';
-const GLASS_MAP=(()=>{const stops=(on,mid,off)=>`<stop offset='0' stop-color='${on}'/><stop offset='.2' stop-color='${mid}'/><stop offset='.8' stop-color='${mid}'/><stop offset='1' stop-color='${off}'/>`;
-  const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><defs><linearGradient id='x' x1='0' y1='0' x2='1' y2='0'>${stops('#ff0000','#800000','#000000')}</linearGradient><linearGradient id='y' x1='0' y1='0' x2='0' y2='1'>${stops('#00ff00','#008000','#000000')}</linearGradient></defs><rect width='100' height='100' fill='url(#x)'/><rect width='100' height='100' fill='url(#y)' style='mix-blend-mode:screen'/></svg>`;
-  return 'data:image/svg+xml,'+encodeURIComponent(svg);})();
-const GLASS_SVG=`<svg id="bs-lg-svg" width="0" height="0" style="position:absolute;width:0;height:0" aria-hidden="true"><filter id="bs-lg" x="0" y="0" width="1" height="1" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-<feImage href="${GLASS_MAP}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="map"/>
-<feDisplacementMap in="SourceGraphic" in2="map" scale=".085" xChannelSelector="R" yChannelSelector="G" result="dr"/><feColorMatrix in="dr" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="r"/>
-<feDisplacementMap in="SourceGraphic" in2="map" scale=".075" xChannelSelector="R" yChannelSelector="G" result="dg"/><feColorMatrix in="dg" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="g"/>
-<feDisplacementMap in="SourceGraphic" in2="map" scale=".065" xChannelSelector="R" yChannelSelector="G" result="db"/><feColorMatrix in="db" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="b"/>
-<feBlend in="r" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="b" mode="screen"/></filter></svg>`;
-const GLASS_SURFACE=`background:radial-gradient(120% 95% at 22% -8%,rgba(255,255,255,.42),rgba(255,255,255,0) 52%),linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.03) 55%,rgba(255,255,255,.08)),var(--lg-tint)!important;border-color:transparent!important;
-box-shadow:inset 0 1px .5px rgba(255,255,255,.85),inset 0 -1px 1px rgba(255,255,255,.22),inset 1px 0 .5px rgba(255,255,255,.3),inset -1px 0 .5px rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.16),0 6px 18px rgba(0,0,0,.13),0 1px 3px rgba(0,0,0,.08)!important;`;
+// DEFAULTS of the library (blurAmount 0, refraction .69, chromAberration .05, edgeHighlight .05, specular 0, fresnel 1,
+// distortion 0, cornerRadius 65, zRadius 40, brightness 0, saturation 0, shadowOpacity .3, shadowSpread 10, shadowOffsetY 1).
+const LG={refract:.69,chroma:.05,edgeHL:.05,spec:0,fresnel:1,radius:65,zRadius:40,shadowAlpha:.3,shadowSpread:10,shadowOffY:1};
+const lgSmooth=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};
+// float rrSDF(vec2 p, vec2 b, float r)
+const lgSDF=(px,py,bx,by,r)=>{const qx=Math.abs(px)-bx+r,qy=Math.abs(py)-by+r;return Math.min(Math.max(qx,qy),0)+Math.hypot(Math.max(qx,0),Math.max(qy,0))-r;};
+// float bevelHeight(float d, float zR)
+const lgBevel=(d,z)=>d<=0?0:d>=z?z:Math.sqrt(d*(2*z-d));
+const lgCache=new Map();let lgSeq=0;
+function lgBuild(w,h,refract){
+  const dpr=Math.min(2,devicePixelRatio||1),W=Math.max(2,Math.round(w*dpr)),H=Math.max(2,Math.round(h*dpr));
+  const hx=w/2,hy=h/2,r=Math.min(LG.radius,hx,hy),zR=LG.zRadius,maxD=Math.min(hx,hy),e=2;
+  const light=new ImageData(W,H),maps=refract?[new ImageData(W,H),new ImageData(W,H),new ImageData(W,H)]:null,off=refract?new Float32Array(W*H*6):null;let maxOff=1;
+  for(let j=0;j<H;j++)for(let i=0;i<W;i++){
+    const px=(i+.5)/dpr-hx,py=(j+.5)/dpr-hy,k=j*W+i,sdf=lgSDF(px,py,hx,hy,r);if(sdf>0)continue;
+    const mask=1-lgSmooth(-1.5,.5,sdf),inside=-sdf,edge=lgSmooth(maxD*.35,0,inside);
+    // Surface normal (top surface) via bevel height field
+    const hC=lgBevel(inside,zR),hR=lgBevel(-lgSDF(px+e,py,hx,hy,r),zR),hL=lgBevel(-lgSDF(px-e,py,hx,hy,r),zR),hU=lgBevel(-lgSDF(px,py+e,hx,hy,r),zR),hD=lgBevel(-lgSDF(px,py-e,hx,hy,r),zR);
+    const gx=(hR-hL)/(2*e),gy=(hU-hD)/(2*e),nl=Math.hypot(gx,gy,1),Nx=-gx/nl,Ny=-gy/nl,Nz=1/nl;
+    const depth=lgSmooth(0,zR,inside);
+    if(refract){
+      // Refraction (biconvex): exit + entry + through, plus the pull towards the centre
+      const refrPow=1-1/1.5,thickNorm=hC*2/Math.max(zR*2,1),ex=gx*refrPow,ey=gy*refrPow;
+      let rx=(ex+ex+ex*thickNorm*.5)*LG.refract*30,ry=(ey+ey+ey*thickNorm*.5)*LG.refract*30;
+      rx+=-px/Math.max(hx,1)*LG.refract*4*depth;ry+=-py/Math.max(hy,1)*LG.refract*4*depth;
+      // Chromatic aberration: red sampled at +caD, green at the base, blue at -caD
+      const caS=LG.chroma*18*(edge*.7+.3)*2,cx=Nx*caS,cy=Ny*caS;
+      off.set([rx+cx,ry+cy,rx,ry,rx-cx,ry-cy],k*6);for(let q=0;q<6;q++)maxOff=Math.max(maxOff,Math.abs(off[k*6+q]));
+    }
+    // Fresnel, inner stroke, rim, inner glow, environment reflection (specular is 0 for Regular Glass)
+    const fres=Math.pow(1-Math.abs(Nz),4)*LG.fresnel;
+    let stroke=lgSmooth(-2.5,-1.5,sdf)*(1-lgSmooth(-1,0,sdf));stroke*=.4+.6*(.5+.5*(-py/hy));
+    const rim=edge*LG.edgeHL*.22,glow=lgSmooth(5,0,-sdf)*LG.edgeHL*.15,env=(Ny*.5+.5)*fres*.08;
+    const add=rim+glow+stroke*LG.edgeHL*.55+env;
+    // fin = mix(col + add, vec3(1), fres * .2): white laid over the refracted backdrop
+    const a=Math.min(1,add+fres*.2)*mask;light.data[k*4]=light.data[k*4+1]=light.data[k*4+2]=255;light.data[k*4+3]=Math.round(a*255);
+  }
+  const toUrl=img=>{const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').putImageData(img,0,0);return c.toDataURL('image/png');};
+  const out={light:toUrl(light),radius:r};
+  if(refract){
+    const S=Math.ceil(maxOff*2+2);
+    for(let k=0;k<W*H;k++)for(let m=0;m<3;m++){const d=maps[m].data;d[k*4]=Math.round(255*(.5+off[k*6+m*2]/S));d[k*4+1]=Math.round(255*(.5+off[k*6+m*2+1]/S));d[k*4+2]=128;d[k*4+3]=255;}
+    const id='bs-lg-'+(++lgSeq),u=maps.map(toUrl),keep=['1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0','0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0','0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0'];
+    let svg=document.getElementById('bs-lg-svg');if(!svg){document.documentElement.insertAdjacentHTML('beforeend','<svg id="bs-lg-svg" width="0" height="0" style="position:absolute;width:0;height:0;pointer-events:none" aria-hidden="true"></svg>');svg=document.getElementById('bs-lg-svg');}
+    svg.insertAdjacentHTML('beforeend',`<filter id="${id}" x="0" y="0" width="${w}" height="${h}" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">${u.map((m,i)=>`<feImage href="${m}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="m${i}"/><feDisplacementMap in="SourceGraphic" in2="m${i}" scale="${S}" xChannelSelector="R" yChannelSelector="G" result="d${i}"/><feColorMatrix in="d${i}" type="matrix" values="${keep[i]}" result="c${i}"/>`).join('')}<feBlend in="c0" in2="c1" mode="screen" result="c01"/><feBlend in="c01" in2="c2" mode="screen"/></filter>`);
+    out.filter=id;
+  }
+  return out;
+}
+const LG_PROPS=['background','border-color','border-radius','box-shadow','backdrop-filter'];
+function lgApply(el,refract,panel){
+  const b=el.getBoundingClientRect(),w=Math.round(b.width),h=Math.round(b.height);if(w<6||h<6||w*h>1600*1000)return;
+  const key=w+'x'+h+(refract?'r':''),current=el.dataset.lg;if(current===key)return;
+  let a=lgCache.get(key);if(!a){a=lgBuild(w,h,refract);lgCache.set(key,a);}
+  el.dataset.lg=key;const s=el.style;
+  // Shadow: the shader's outer + contact shadow (shadowOpacity .3, spread 10, offset 1)
+  s.setProperty('box-shadow',`0 ${LG.shadowOffY}px ${LG.shadowSpread*1.6}px rgba(0,0,0,${(.65*LG.shadowAlpha).toFixed(3)}),0 ${LG.shadowOffY}px 2px rgba(0,0,0,${(.35*LG.shadowAlpha).toFixed(3)})`,'important');
+  s.setProperty('background',`url("${a.light}") 0 0/100% 100% no-repeat${panel?',var(--lg-panel)':''}`,'important');
+  s.setProperty('border-color','transparent','important');s.setProperty('border-radius',a.radius+'px','important');
+  // col *= 1 + .06 * depth; brightness/saturation 0
+  if(a.filter)s.setProperty('backdrop-filter',`url(#${a.filter}) brightness(1.03)`,'important');
+}
+function lgClear(scope){for(const el of scope.querySelectorAll('[data-lg]')){for(const p of LG_PROPS)el.style.removeProperty(p);delete el.dataset.lg;}}
 const GLASS_PAGE_BUTTONS=':is(button,.vui_button,.roll-btn,.primary-btn,.follow-btn,.channel-link,.video-toolbar-left-item,.tag-link,.bili-button):not(#bilibili-player *):not([class*=bpx]):not(#bs-swipe *):not([disabled])';
-const GLASS_PAGE_CSS=`:root{--lg-tint:rgba(255,255,255,.12)}html[data-bs-theme=dark]{--lg-tint:rgba(255,255,255,.07)}
-html[data-bs-glass=true][data-bs-glass] body,html[data-bs-glass=true][data-bs-glass] body :not(#bilibili-player *):not(i):not([class*=icon]):not([class*=Icon]):not(svg):not(svg *){font-family:${GLASS_FONT}!important}
-html[data-bs-glass=true][data-bs-glass] ${GLASS_PAGE_BUTTONS}{${GLASS_SURFACE}backdrop-filter:url(#bs-lg) saturate(1.7) brightness(1.05)!important;border-radius:999px!important;transition:transform .22s cubic-bezier(.23,1,.32,1),box-shadow .22s,filter .2s!important}
-html[data-bs-glass=true][data-bs-glass] ${GLASS_PAGE_BUTTONS}:hover{filter:brightness(1.06)}
-html[data-bs-glass=true][data-bs-glass] ${GLASS_PAGE_BUTTONS}:active{transform:scale(.96)!important;box-shadow:inset 0 1px .5px rgba(255,255,255,.7),inset 0 0 0 1px rgba(255,255,255,.14),0 2px 6px rgba(0,0,0,.12)!important}
-@media (prefers-reduced-motion:reduce){html[data-bs-glass=true][data-bs-glass] ${GLASS_PAGE_BUTTONS}{transition:none!important}}`;
-const GLASS_SHELL_CSS=`:host([data-glass=true]){--lg-tint:rgba(255,255,255,.14);--lg-panel:rgba(250,250,252,.66)}
-:host([data-glass=true][data-theme=dark]){--lg-tint:rgba(255,255,255,.07);--lg-panel:rgba(30,31,35,.66)}
+const GLASS_SHELL_BUTTONS='button:not(.light):not(.ob-chip),.upload,#settings-trigger,#feed-roll,#page-top';
+const GLASS_SHELL_PANELS='.search-panel,.favorites-panel,.account-card,.messages-menu,.account-manager,#toast,#settings .dialog';
+const GLASS_PAGE_CSS=`html[data-bs-glass=true][data-bs-glass] body,html[data-bs-glass=true][data-bs-glass] body :not(#bilibili-player *):not(i):not([class*=icon]):not([class*=Icon]):not(svg):not(svg *){font-family:${GLASS_FONT}!important}
+html[data-bs-glass=true] [data-lg]{transition:transform .22s cubic-bezier(.23,1,.32,1),filter .2s!important}
+html[data-bs-glass=true] [data-lg]:hover{filter:brightness(1.08)}html[data-bs-glass=true] [data-lg]:active{transform:scale(.96)!important}`;
+const GLASS_SHELL_CSS=`:host([data-glass=true]){--lg-panel:rgba(250,250,252,.62)}:host([data-glass=true][data-theme=dark]){--lg-panel:rgba(30,31,35,.62)}
 :host([data-glass=true]),:host([data-glass=true]) *:not(svg):not(svg *){font-family:${GLASS_FONT}!important}
-:host([data-glass=true]) :is(button:not(.light),.upload),:host([data-glass=true]) :is(#settings-trigger,#feed-roll,#page-top){${GLASS_SURFACE}transition:transform .22s cubic-bezier(.23,1,.32,1),box-shadow .22s,filter .2s!important}
-:host([data-glass=true]) #chrome button:not(.light){border-radius:999px!important}
-:host([data-glass=true]) :is(button:not(.light),.upload):hover,:host([data-glass=true]) :is(#settings-trigger,#feed-roll,#page-top):hover{filter:brightness(1.07)}
-:host([data-glass=true]) :is(button:not(.light),.upload):active{transform:scale(.95)!important}
-:host([data-glass=true]) #chrome{background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.04)),var(--lg-panel)!important;box-shadow:inset 0 -1px 0 rgba(255,255,255,.35),0 8px 24px rgba(0,0,0,.08)!important}
-:host([data-glass=true]) :is(.search-panel,.favorites-panel,.account-card,.messages-menu,.account-manager,#toast,#settings .dialog,#header-categories){background:radial-gradient(140% 60% at 18% 0%,rgba(255,255,255,.3),rgba(255,255,255,0) 50%),var(--lg-panel)!important;border-color:transparent!important;box-shadow:inset 0 1px .5px rgba(255,255,255,.8),inset 0 0 0 1px rgba(255,255,255,.18),0 18px 48px rgba(0,0,0,.2)!important}
-@media (prefers-reduced-motion:reduce){:host([data-glass=true]) :is(button,.upload){transition:none!important}}`;
+:host([data-glass=true]) [data-lg]{transition:transform .22s cubic-bezier(.23,1,.32,1),filter .2s!important}
+:host([data-glass=true]) [data-lg]:hover{filter:brightness(1.08)}:host([data-glass=true]) [data-lg]:active{transform:scale(.95)!important}
+:host([data-glass=true]) #chrome{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.03)),var(--lg-panel)!important;box-shadow:inset 0 -1px 0 rgba(255,255,255,.3)!important}`;
+let lgTimer=0;
+function lgScan(){
+  if(!PREFS.liquidGlass)return;
+  if(!CHROME_VIEW)for(const el of document.querySelectorAll(GLASS_PAGE_BUTTONS))lgApply(el,true,false);
+  if(shadow){for(const el of shadow.querySelectorAll(GLASS_SHELL_BUTTONS))lgApply(el,false,false);for(const el of shadow.querySelectorAll(GLASS_SHELL_PANELS))lgApply(el,false,true);}
+}
 function applyLiquidGlass(){
-  const on=!!PREFS.liquidGlass,html=document.documentElement;html.dataset.bsGlass=String(on);if(root)root.dataset.glass=String(on);if(!on)return;
+  const on=!!PREFS.liquidGlass,html=document.documentElement;html.dataset.bsGlass=String(on);if(root)root.dataset.glass=String(on);
+  clearInterval(lgTimer);
+  if(!on){lgClear(document);if(shadow)lgClear(shadow);return;}
   for(const href of ['https://s1.hdslb.com/bfs/static/jinkela/long/font/regular.css','https://s1.hdslb.com/bfs/static/jinkela/long/font/medium.css'])
     if(!document.querySelector(`link[href="${href}"]`))(document.head||html).append(Object.assign(document.createElement('link'),{rel:'stylesheet',href}));
-  if(!CHROME_VIEW&&!document.getElementById('bs-lg-css')){(document.head||html).append(Object.assign(document.createElement('style'),{id:'bs-lg-css',textContent:GLASS_PAGE_CSS}));html.insertAdjacentHTML('beforeend',GLASS_SVG);}
+  if(!CHROME_VIEW&&!document.getElementById('bs-lg-css'))(document.head||html).append(Object.assign(document.createElement('style'),{id:'bs-lg-css',textContent:GLASS_PAGE_CSS}));
   if(shadow&&!shadow.getElementById('bs-lg-shell'))shadow.append(Object.assign(document.createElement('style'),{id:'bs-lg-shell',textContent:GLASS_SHELL_CSS}));
+  lgScan();lgTimer=setInterval(lgScan,1200);
 }
 function applyPreferences() {root?.style.setProperty('--bs-settings-zoom',String(Math.min(160,Math.max(80,Number(PREFS.settingsZoom)||100))/100));
   const html=document.documentElement;
