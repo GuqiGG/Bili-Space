@@ -783,8 +783,8 @@ function localAsset(path){return (typeof RUNTIME!=='undefined'&&['macos','linux'
 // Chinese and translated as it renders, from assets/i18n/<lang>.json (source text → translation; scripts/i18n_build.py).
 // A text is only replaced when known phrases cover every Chinese character in it, so Bilibili's own content
 // (titles, names, comments) that passes through the shell is never half-translated.
-const LANGUAGES=[['zh-CN','简体中文'],['zh-TW','繁體中文（台灣）'],['zh-HK','繁體中文（香港）'],['yue','粵語'],['en','English'],['ja','日本語'],['ko','한국어'],['es','Español'],['fr','Français'],['de','Deutsch'],['ru','Русский'],['pt-BR','Português (Brasil)'],['lolcat','LOLCAT 萌猫语']];
-const LANG_TAGS={'zh-CN':'zh-Hans-CN','zh-TW':'zh-Hant-TW','zh-HK':'zh-Hant-HK',yue:'yue-Hant-HK',lolcat:'en'};
+const LANGUAGES=[['zh-CN','简体中文'],['zh-TW','繁體中文（台灣）'],['zh-HK','繁體中文（香港）'],['yue','粵語'],['en','English'],['ja','日本語'],['ko','한국어'],['es','Español'],['fr','Français'],['de','Deutsch'],['ru','Русский'],['pt-BR','Português (Brasil)'],['lolcat','萌猫语 喵']];
+const LANG_TAGS={'zh-CN':'zh-Hans-CN','zh-TW':'zh-Hant-TW','zh-HK':'zh-Hant-HK',yue:'yue-Hant-HK',lolcat:'zh-Hans-CN'};
 function uiLanguage(){return LANGUAGES.some(x=>x[0]===PREFS.language)?PREFS.language:'zh-CN';}
 function suggestedLanguage(){
   for(const raw of navigator.languages||[navigator.language||'']){const l=String(raw).toLowerCase();

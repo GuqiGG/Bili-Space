@@ -834,7 +834,7 @@ const std::array<const wchar_t*,4>& trayLabels(){
         {"ko",{L"Bili Space 열기",L"창 숨기기",L"문제 신고…",L"종료"}},{"es",{L"Abrir Bili Space",L"Ocultar ventana",L"Informar de un problema…",L"Salir"}},
         {"fr",{L"Ouvrir Bili Space",L"Masquer la fenêtre",L"Signaler un problème…",L"Quitter"}},{"de",{L"Bili Space öffnen",L"Fenster ausblenden",L"Problem melden…",L"Beenden"}},
         {"ru",{L"Открыть Bili Space",L"Скрыть окно",L"Сообщить о проблеме…",L"Выйти"}},{"pt-BR",{L"Abrir o Bili Space",L"Ocultar janela",L"Relatar um problema…",L"Sair"}},
-        {"lolcat",{L"OPUN BILI SPACE",L"HIEDZ WINDOE",L"I FOUND A BUG…",L"KTHXBAI"}}};
+        {"lolcat",{L"回猫窝",L"躲到床底下",L"我打翻东西了…",L"去睡觉了"}}};
     auto it=labels.find(config.value("language",std::string{}));return it!=labels.end()?it->second:labels.at("zh-CN");
 }
 void copyShareText(){

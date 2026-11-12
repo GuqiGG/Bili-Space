@@ -97,7 +97,7 @@
 
 ## 5.7 多语言
 
-- 13 种：简体中文、繁體中文（台灣）、繁體中文（香港）、粵語、English、日本語、한국어、Español、Français、Deutsch、Русский、Português (Brasil)、LOLCAT 萌猫语（致敬 Minecraft 的 LOLCAT）。
+- 13 种：简体中文、繁體中文（台灣）、繁體中文（香港）、粵語、English、日本語、한국어、Español、Français、Deutsch、Русский、Português (Brasil)、萌猫语（用猫的视角写的中文，水桶是「一个含有邪恶液体的小桶」，致敬 Minecraft 的 LOLCAT；译文在 `i18n/cat/`）。
 - 界面文字仍然用简体中文写在代码里，渲染时由 `assets/i18n/<语言>.json` 翻译（顶栏层的 shadow root 和客户端加到网页上的 `bili-space-*` / `bs-*` 元素），包括 title、aria-label、placeholder。一段文字只有在已知词句覆盖了它所有汉字时才替换，B 站自己的标题、昵称、评论不会被翻一半。不监听整个网页（弹幕会让它很贵）。
 - 繁体不能直接简转繁：台湾用 OpenCC s2twp（網路、軟體、影片、滑鼠、預設…），香港用 s2hk 再换香港用词（視窗、載入、設定…），两边都可以在 `i18n/zh-TW.fix.tsv` / `zh-HK.fix.tsv` 里逐条修正。粤语是口语（嘅、咗、唔、喺）。
 - 新安装和更新到带多语言的版本后，先弹一次语言选择（预选系统语言），再进欢迎引导和更新公告；之后在 个性化 → 语言 改。托盘菜单跟着变。

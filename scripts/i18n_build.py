@@ -3,7 +3,7 @@
 - i18n/tr/*.tsv: one row per source index: idx, en, yue, ja, ko, es, fr, de, ru, pt-BR ('-' in en = not shown, skip).
 - zh-TW: OpenCC s2twp (Taiwan wording: 網路, 軟體, 影片…) plus i18n/zh-TW.fix.tsv.
 - zh-HK: OpenCC s2hk plus Hong Kong wording below and i18n/zh-HK.fix.tsv.
-- lolcat: made from English with the LOLCAT rules below (a nod to Minecraft's LOLCAT).
+- lolcat (萌猫语): i18n/cat/*.tsv, the interface in Chinese as a cat would put it (a nod to Minecraft's LOLCAT).
 Also writes the Traditional Chinese search-box line decks. Needs `pip install opencc-python-reimplemented` (build time only).
 """
 import json, re
@@ -53,6 +53,12 @@ def build():
             cells = line.split('\t'); i = int(cells[0])
             if cells[1] == '-': skip.add(i); continue
             for c, v in zip(COLS, cells[1:]): tr[c][i] = v
+    # 萌猫语: Chinese as a cat sees it (i18n/cat/*.tsv: idx, text); anything missing falls back to English LOLCAT.
+    cat = {}
+    for f in sorted((I18N / 'cat').glob('*.tsv')):
+        for line in f.read_text(encoding='utf-8').splitlines():
+            if line.strip() and not line.startswith('#') and '	' in line:
+                i, text = line.split('	', 1); cat[int(i)] = text
     s2tw, s2hk = OpenCC('s2twp'), OpenCC('s2hk'); fix_tw, fix_hk = table('zh-TW.fix.tsv'), table('zh-HK.fix.tsv')
     def tw(text):
         t = s2tw.convert(text)
@@ -70,7 +76,8 @@ def build():
             if lang == 'zh-TW': d[s] = fix_tw.get(s) or tw(s)
             elif lang == 'zh-HK': d[s] = fix_hk.get(s) or hk(s)
             elif lang == 'lolcat':
-                if i in tr['en']: d[s] = lolcat(tr['en'][i])
+                if cat.get(i): d[s] = cat[i]
+                elif i in tr['en']: d[s] = lolcat(tr['en'][i])
             elif i in tr[lang] and tr[lang][i]: d[s] = tr[lang][i]
         missing[lang] = len(src) - len(skip) - len(d)
         (OUT / f'{lang}.json').write_text(json.dumps(d, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
