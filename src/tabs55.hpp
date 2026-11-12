@@ -86,6 +86,9 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
     comp::createController(env,created);created->Release();
 }
 std::wstring currentSource(Tab* t){if(!t||!t->view)return {};LPWSTR source{};t->view->get_Source(&source);std::wstring s=source?source:L"";CoTaskMemFree(source);return s;}
+// Bilibili switches videos inside a page (related videos, parts) without a navigation; the tab must follow, or a later
+// link to the video it was opened with would just bring this tab forward, still showing the other video.
+void syncTabKey(ICoreWebView2* view){Tab* t=tabForView(view);if(!t||!t->video||t->closed)return;auto source=currentSource(t);auto key=videoTabKey(source);if(key.empty()||key==t->key)return;t->key=key;t->url=source;dockSync();}
 // Compares pages by host and path, ignoring the locale prefix, a trailing slash, the query and the fragment.
 // Same page for "just switch back" purposes: path-equal, and a search must also have the same query, or a new search would show old results.
 std::wstring normalisedPage(std::wstring uri);
