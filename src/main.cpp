@@ -785,7 +785,7 @@ std::wstring clipboardVideoUrl(std::wstring text){
 }
 // The share card's text lives here, not in the page, so the page cannot put arbitrary text on the clipboard.
 void copyShareText(){
-    static const std::wstring text=L"推荐一个 B 站电脑客户端 Bili-Space：保留官方播放器和弹幕，界面更清爽，还有内置下载、无边框画中画、200% 音量和一大堆自定义。免费下载：https://github.com/GuqiGG/Bili-Space/releases/latest";
+    static const std::wstring text=L"推荐一个 B 站电脑客户端 Bili-Space：保留官方播放器和弹幕，界面更清爽，还有内置下载、无边框画中画、200% 音量和一大堆自定义。免费下载：https://bili.gvqi.top";
     bool ok=false;auto bytes=(text.size()+1)*sizeof(wchar_t);HGLOBAL memory=GlobalAlloc(GMEM_MOVEABLE,bytes);
     if(memory){auto dest=GlobalLock(memory);if(dest){memcpy(dest,text.c_str(),bytes);GlobalUnlock(memory);if(OpenClipboard(windowHandle)){if(EmptyClipboard()&&SetClipboardData(CF_UNICODETEXT,memory)){ok=true;memory=nullptr;}CloseClipboard();}}if(memory)GlobalFree(memory);}
     execute(std::string("window.BiliSpace?.shareCopied?.(")+(ok?"true":"false")+")");

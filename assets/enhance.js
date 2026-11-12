@@ -1865,7 +1865,7 @@ function showWhatsNew(data){
 }
 // Share: on a fresh install and on each new version, after the what's-new, one card asks to pass Bili-Space on to a
 // friend (the copied text carries the download link). Shown once per version; Settings → About opens it any time.
-const SHARE_TEXT='推荐一个 B 站电脑客户端 Bili-Space：保留官方播放器和弹幕，界面更清爽，还有内置下载、无边框画中画、200% 音量和一大堆自定义。免费下载：https://github.com/GuqiGG/Bili-Space/releases/latest';
+const SHARE_TEXT='推荐一个 B 站电脑客户端 Bili-Space：保留官方播放器和弹幕，界面更清爽，还有内置下载、无边框画中画、200% 音量和一大堆自定义。免费下载：https://bili.gvqi.top';
 let shareTimer=0;
 function scheduleShare(delay=700){
   if(!CHROME_VIEW||PREFS.shareSeen===APP_META.version)return;
