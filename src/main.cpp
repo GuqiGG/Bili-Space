@@ -318,7 +318,10 @@ void saveDownload(const std::string& url,const std::string& title,const std::str
     if(downloadBusy.exchange(true)){executeEverywhere("window.BiliSpace?.downloadResult({ok:false,message:'已有下载正在进行'})");return;}
     auto name=wide(title);for(auto& ch:name)if(ch<32||std::wstring(L"<>:\"/\\|?*").find(ch)!=std::wstring::npos)ch=L'_';if(name.size()>100)name.resize(100);if(name.empty())name=L"Bili-video";name+=L".mp4";
     wchar_t file[32768]{};lstrcpynW(file,name.c_str(),32768);OPENFILENAMEW dialog{sizeof(dialog)};dialog.hwndOwner=windowHandle;dialog.lpstrFile=file;dialog.nMaxFile=32768;dialog.lpstrFilter=L"MP4 视频\0*.mp4\0\0";dialog.lpstrDefExt=L"mp4";dialog.lpstrTitle=L"保存视频 · 内置下载器";dialog.Flags=OFN_OVERWRITEPROMPT|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;
-    if(!GetSaveFileNameW(&dialog)){downloadBusy=false;executeEverywhere("window.BiliSpace?.downloadResult({ok:false,message:'已取消保存'})");return;}
+    // Test windows can skip the dialog (scripted README recordings): BILI_SPACE_TEST_DOWNLOAD_DIR names the folder.
+    const wchar_t* testDir=testing?_wgetenv(L"BILI_SPACE_TEST_DOWNLOAD_DIR"):nullptr;
+    if(testDir&&*testDir)lstrcpynW(file,(fs::path(testDir)/name).c_str(),32768);
+    else if(!GetSaveFileNameW(&dialog)){downloadBusy=false;executeEverywhere("window.BiliSpace?.downloadResult({ok:false,message:'已取消保存'})");return;}
     {std::lock_guard<std::mutex> lock(downloadCommitMutex);downloadCancelRequested=false;downloadCommitted=false;}executeEverywhere("window.BiliSpace?.downloadStarted();window.BiliSpace?.downloaderNotice('下载已开始')");launchDownloadWorker(wide(url),wide(audio),fs::path(file));
 }
 void cancelDownload(){std::lock_guard<std::mutex> lock(downloadCommitMutex);if(downloadBusy&&!downloadCommitted)downloadCancelRequested=true;}
@@ -339,7 +342,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"feedColumns",0},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerWatchlater",true},{"clickGui",false},{"searchWidth",0},{"watchlaterOpen","list"},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -381,12 +384,13 @@ void mergeConfig(const json& next){
         else if(key=="fiMode"&&value.is_string()&&(value=="off"||value=="rife"||value=="blend"))config[key]=value=="blend"?json("rife"):value;
         else if(key=="proxyNode"&&value.is_string()&&value.get<std::string>().size()<=96)config[key]=value;
         else if(key=="whatsNewSeen"&&value.is_string()&&value.get<std::string>().size()<=24)config[key]=value;
+        else if(key=="watchlaterOpen"&&value.is_string()&&(value=="list"||value=="video"))config[key]=value;
         else if(key=="pluginsDisabled"&&value.is_array()&&value.size()<=32){json ids=json::array();for(const auto& item:value)if(item.is_string()){const auto id=item.get<std::string>();if(std::regex_match(id,std::regex(R"([a-z0-9][a-z0-9._-]{0,39})")))ids.push_back(id);if(ids.size()>=32)break;}config[key]=ids;}
         else if(key=="categorySelection"&&value.is_array()&&value.size()<=18){json choices=json::array();for(const auto& v:value)if(v.is_number_integer()&&v.get<int>()>=0&&v.get<int>()<18&&std::find(choices.begin(),choices.end(),v)==choices.end())choices.push_back(v);config[key]=choices;}
         else if(value.is_boolean()&&defaults()[key].is_boolean())config[key]=value;
         else if(value.is_number_integer()){
             int n=value.get<int>();
-            if((key=="feedColumns"&&(n==0||(n>=2&&n<=8)))||(key=="downloadConnections"&&n>=1&&n<=512)||(key=="pipDanmakuMinWidth"&&n>=320&&n<=1200)||(key=="volumeBoost"&&n>=100&&n<=200)||(key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="settingsZoom"&&n>=80&&n<=160)||(key=="srScale"&&n>=1&&n<=3)||((key=="srFps")&&(n==60||n==120))||(key=="fiFps"&&(n==60||n==120||n==144||n==240))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
+            if((key=="searchWidth"&&n>=0&&n<=640)||(key=="feedColumns"&&(n==0||(n>=2&&n<=8)))||(key=="downloadConnections"&&n>=1&&n<=512)||(key=="pipDanmakuMinWidth"&&n>=320&&n<=1200)||(key=="volumeBoost"&&n>=100&&n<=200)||(key=="progressHeight"&&n>=1&&n<=12)||(key=="progressRadius"&&n>=0&&n<=12)||(key=="zoom"&&n>=75&&n<=200)||(key=="settingsZoom"&&n>=80&&n<=160)||(key=="srScale"&&n>=1&&n<=3)||((key=="srFps")&&(n==60||n==120))||(key=="fiFps"&&(n==60||n==120||n==144||n==240))||(key=="fiFlowScale"&&(n==25||n==50||n==100))||(key=="autoZoomTarget"&&n>=1100&&n<=1800)||(key=="categoryPreset"&&n>=0&&n<=9))config[key]=n;
         }
     }
 }
@@ -455,6 +459,9 @@ void setSurface(bool dark){surfaceDark=dark;if(surfaceWaiting)InvalidateRect(win
 // The page zoom the user set by hand, as a factor on top of the client's own zoom; kept across resizes, maximize,
 // fullscreen and settings changes instead of being reset by them.
 double manualZoom=1,zoomBase=1,zoomApplied=1;
+bool configDirty=false;void flushConfig(){if(!configDirty)return;configDirty=false;KillTimer(windowHandle,7772);save();refreshInjection();}
+// A Ctrl+wheel step glides from the shown zoom to the new one (ease-out, ~200ms) instead of jumping.
+bool zoomDeferred=false,zoomAnimating=false;double zoomFrom=1,zoomTo=1;ULONGLONG zoomStart=0;ICoreWebView2Controller* zoomCtl=nullptr;
 void applyZoom(){
     if(!controller)return;
     RECT r{};GetClientRect(windowHandle,&r);
@@ -470,7 +477,8 @@ void applyZoom(){
         if(target<800)target=1280;
         z=std::max(z,std::min(2.5,dip/target));
     }
-    zoomBase=z;z=std::clamp(z*manualZoom,.25,5.0);zoomApplied=z;controller->put_ZoomFactor(z);if(!full)chromeZoom(z);
+    zoomBase=z;z=std::clamp(z*manualZoom,.25,5.0);zoomApplied=z;if(!zoomDeferred){controller->put_ZoomFactor(z);if(!full)chromeZoom(z);}
+    if(activeTab&&activeTab->view){wchar_t call[80];swprintf(call,80,L"window.BiliSpace?.setPageZoom?.(%.4f)",z);activeTab->view->ExecuteScript(call,nullptr);}
 }
 void fit(){chromePlace();if(controller){RECT rc;GetClientRect(windowHandle,&rc);controller->put_Bounds(rc);applyZoom();}}
 void toggleFull(bool on);
@@ -662,12 +670,17 @@ void sendFeedback(const json& m){
     if(m.value("diag",false)){wchar_t locale[LOCALE_NAME_MAX_LENGTH]{};GetUserDefaultLocaleName(locale,LOCALE_NAME_MAX_LENGTH);
         body["os"]=windowsDescription();body["locale"]=utf8(locale);auto page=m.value("page",std::string{});body["page"]=page.substr(0,32);}
     std::thread([body]{
-        try{auto r=nativeHttp({{"url","https://bili.gvqi.top/feedback"},{"method","POST"},{"body",body.dump()},{"headers",{{"Content-Type","application/json"}}},{"timeout",20000}});
-            const int status=r.value("status",0);
-            if(status>=200&&status<300)feedbackReply(true,"");
-            else if(status==429)feedbackReply(false,"提交得太快了，请半分钟后再试。内容已保留。");
-            else feedbackReply(false,"发送失败（"+std::to_string(status)+"），请稍后再试。内容已保留。");
-        }catch(...){feedbackReply(false,"网络连接失败，请检查网络后重试。内容已保留。");}
+        // The site first; when it cannot be reached at all (common on some networks), the second address.
+        const std::pair<const char*,int> routes[]{{"https://bili.gvqi.top/feedback",8000},{"https://ntfy.gvqi.top/feedback",12000}};
+        for(const auto& [url,timeout]:routes){
+            try{auto r=nativeHttp({{"url",url},{"method","POST"},{"body",body.dump()},{"headers",{{"Content-Type","application/json"}}},{"timeout",timeout}});
+                const int status=r.value("status",0);
+                if(status>=200&&status<300){feedbackReply(true,"");return;}
+                if(status==429){feedbackReply(false,"提交得太快了，请半分钟后再试。内容已保留。");return;}
+                if(status>0){feedbackReply(false,"发送失败（"+std::to_string(status)+"），请稍后再试。内容已保留。");return;}
+            }catch(...){}
+        }
+        feedbackReply(false,"offline");
     }).detach();
 }
 void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
@@ -683,6 +696,8 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="community"){communityAction(m);
         }else if(type=="open-settings"){const auto tab=m.value("tab",std::string{});const auto call="window.BiliSpace?.openSettings?.("+json(tab).dump()+",true)";if(!chromeOpenSettings(call))execute(call);
         }else if(type=="fullscreen-start"){startRect.clear();if(m.contains("rect")&&m["rect"].is_array()&&m["rect"].size()>=4&&m["rect"].size()<=6)for(const auto& v:m["rect"])if(v.is_number())startRect.push_back(v.get<double>());startRectAt=GetTickCount64();startGrow();
+        }else if(type=="page-ready"){if(viewScopeActive)chromeExecute(L"window.BiliSpace?.clearSearchBusy?.()");
+        }else if(type=="page-zoom"){if(webview){wchar_t call[80];swprintf(call,80,L"window.BiliSpace?.setPageZoom?.(%.4f)",zoomApplied>0?zoomApplied:1.0);webview->ExecuteScript(call,nullptr);}
         }else if(type=="page-scrolled"){if(viewScopeActive)chromeExecute(m.value("past",false)?L"window.BiliSpace?.setPageScrolled?.(true)":L"window.BiliSpace?.setPageScrolled?.(false)");
         }else if(type=="page-top"){if(activeTab&&activeTab->view)activeTab->view->ExecuteScript(L"window.BiliSpace?.scrollPageTop?.()",nullptr);
         }else if(type=="feed-roll"){if(activeTab&&activeTab->view)activeTab->view->ExecuteScript(L"window.BiliSpace?.rollFeed?.()",nullptr);
@@ -691,7 +706,9 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             static const double steps[]{.25,.33,.5,.67,.75,.8,.9,1,1.1,1.25,1.5,1.75,2,2.5,3,4,5};const int dir=m.value("dir",0);double next=zoomApplied;
             if(dir>0){for(double s:steps)if(s>zoomApplied+.001){next=s;break;}}else if(dir<0){for(int i=int(std::size(steps))-1;i>=0;--i)if(steps[i]<zoomApplied-.001){next=steps[i];break;}}
             // Header messages run with the header's controller in scope; the zoom belongs to the visible page.
-            if(dir&&zoomBase>0&&!full&&!pip&&activeTab&&activeTab->controller){auto* scoped=controller;controller=activeTab->controller;manualZoom=std::clamp(next/zoomBase,.25,5.0);applyZoom();controller=scoped;}
+            if(dir&&zoomBase>0&&!full&&!pip&&activeTab&&activeTab->controller){auto* scoped=controller;controller=activeTab->controller;double shown=zoomApplied;controller->get_ZoomFactor(&shown);
+                manualZoom=std::clamp(next/zoomBase,.25,5.0);zoomDeferred=true;applyZoom();zoomDeferred=false;
+                zoomFrom=shown;zoomTo=zoomApplied;zoomStart=GetTickCount64();zoomCtl=controller;zoomAnimating=true;controller=scoped;SetTimer(windowHandle,7770,10,nullptr);}
         }else if(type=="feedback"){sendFeedback(m);
         }else if(type=="web-fullscreen"){executeEverywhere(std::string("window.BiliSpace?.setWebFullscreen?.(")+(m.value("on",false)?"true":"false")+")");
         }else if(type=="tour-backdrop"){executeEverywhere(std::string("window.BiliSpace?.tourBackdrop?.(")+(m.value("on",false)?"true":"false")+")");
@@ -738,8 +755,10 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
         }else if(type=="config"){
             // Only zoom settings re-apply the zoom: any other setting (the volume, say) must not undo a zoom the user set by hand.
             const auto& changed=m.at("value");const bool zoomChanged=changed.is_object()&&(changed.contains("zoom")||changed.contains("autoZoom")||changed.contains("autoZoomTarget"));
-            mergeConfig(changed);save();if(zoomChanged){if(changed.contains("zoom"))manualZoom=1;applyZoom();}refreshInjection();
-            if(m.at("value").contains("proxyAll"))proxyAction("reload","","");
+            // Saving and rebuilding every view's document script are the slow part (megabytes per tab), and a held
+            // volume key or a dragged slider sends a change every few ms: they wait for a quiet 0.8s and run once.
+            mergeConfig(changed);configDirty=true;SetTimer(windowHandle,7772,800,nullptr);if(zoomChanged){if(changed.contains("zoom"))manualZoom=1;applyZoom();}
+            if(m.at("value").contains("proxyAll")){flushConfig();proxyAction("reload","","");}
             log("config saved: "+m.at("value").dump());
             chromeAcceptConfig();dockSync();execute("window.BiliSpace?.acceptConfig("+config.dump()+","+std::to_string(m.value("revision",0))+")");
         }else if(type=="gm-set"){
@@ -811,7 +830,7 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
             {EventRegistrationToken zoomToken;
             // A zoom change the client did not make is the user's own: remember it relative to the client's zoom.
             auto zoomed=callback<ICoreWebView2ZoomFactorChangedEventHandler,ICoreWebView2Controller*,IUnknown*>([](ICoreWebView2Controller* sender,IUnknown*){
-                if(sender!=controller)return S_OK;double now=1;sender->get_ZoomFactor(&now);
+                if(sender!=controller||zoomAnimating)return S_OK;double now=1;sender->get_ZoomFactor(&now);
                 if(std::abs(now-zoomApplied)>.001&&zoomBase>0){manualZoom=std::clamp(now/zoomBase,.25,5.0);zoomApplied=now;if(!full)chromeZoom(now);}
                 return S_OK;});c->add_ZoomFactorChanged(zoomed,&zoomToken);zoomed->Release();}
             EventRegistrationToken acceleratorToken;
@@ -842,7 +861,7 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
             auto cacheResponse=callback<ICoreWebView2WebResourceResponseReceivedEventHandler,ICoreWebView2*,ICoreWebView2WebResourceResponseReceivedEventArgs*>([](ICoreWebView2*,auto args){localShell::observe(args);return S_OK;});ICoreWebView2_2* responseEvents{};if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_2),reinterpret_cast<void**>(&responseEvents)))){responseEvents->add_WebResourceResponseReceived(cacheResponse,&token);responseEvents->Release();}cacheResponse->Release();
             auto ph=callback<ICoreWebView2NewWindowRequestedEventHandler,ICoreWebView2*,ICoreWebView2NewWindowRequestedEventArgs*>([env](ICoreWebView2* sender,auto args){ViewScope scope(sender);LPWSTR uri{};args->get_Uri(&uri);if(uri){if(authProvider50(uri))authPopup50(env,args);else{args->put_Handled(TRUE);webview->Navigate(uri);}CoTaskMemFree(uri);}return S_OK;});view->add_NewWindowRequested(ph,&token);ph->Release();
             auto fh=callback<ICoreWebView2ContainsFullScreenElementChangedEventHandler,ICoreWebView2*,IUnknown*>([](ICoreWebView2* sender,IUnknown*){ViewScope scope(sender);BOOL on{};sender->get_ContainsFullScreenElement(&on);if(!scope.active){if(on||!full)return S_OK;BOOL visible{};if(activeTab&&activeTab->view)activeTab->view->get_ContainsFullScreenElement(&visible);if(visible)return S_OK;}if(testing)log(std::string("fullscreen event ")+(on?"on":"off")+(scope.active?"":" (background page)"));toggleFull(on);return S_OK;});view->add_ContainsFullScreenElementChanged(fh,&token);fh->Release();
-            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2* sender,auto args){ViewScope scope(sender);if(!scope.active)revealPendingTab(tabForView(sender));else chromePush();BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(!IsWindowVisible(windowHandle))execute("window.BiliSpace?.pauseForTray()");if(success){if(scope.active)surfaceCommitted=true;execute("window.__bsPaintReady?.()");}else if(scope.active){surfaceWaiting=false;KillTimer(windowHandle,75);KillTimer(windowHandle,76);controller->put_IsVisible(TRUE);}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");log(success?"navigation completed":"navigation failed");return S_OK;});view->add_NavigationCompleted(ready,&token);ready->Release();
+            auto ready=callback<ICoreWebView2NavigationCompletedEventHandler,ICoreWebView2*,ICoreWebView2NavigationCompletedEventArgs*>([](ICoreWebView2* sender,auto args){ViewScope scope(sender);if(!scope.active)revealPendingTab(tabForView(sender));else chromePush();BOOL success{};args->get_IsSuccess(&success);if(!success){COREWEBVIEW2_WEB_ERROR_STATUS status{};args->get_WebErrorStatus(&status);if(status==COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED)return S_OK;}if(testing&&!success){COREWEBVIEW2_WEB_ERROR_STATUS error{};args->get_WebErrorStatus(&error);log("test navigation error: "+std::to_string(int(error)));}if(!IsWindowVisible(windowHandle))execute("window.BiliSpace?.pauseForTray()");if(success){if(scope.active)surfaceCommitted=true;execute("window.__bsPaintReady?.()");}else if(scope.active){surfaceWaiting=false;KillTimer(windowHandle,75);KillTimer(windowHandle,76);controller->put_IsVisible(TRUE);}if(success&&!startupTarget.empty()){LPWSTR source{};webview->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"about:blank",0)==0||current.rfind(L"data:text/html",0)==0)SetTimer(windowHandle,73,lifecyclePreview?1200:450,nullptr);}execute(success?"window.BiliSpace?.setLoading(false)":"window.BiliSpace?.setLoading(false,true)");if(viewScopeActive)chromeExecute(L"window.BiliSpace?.clearSearchBusy?.()");log(success?"navigation completed":"navigation failed");return S_OK;});view->add_NavigationCompleted(ready,&token);ready->Release();
 }
 #include "startup49.hpp"
 
@@ -911,9 +930,11 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     case WM_DPICHANGED:{comp::applyScaleToAll();auto r=reinterpret_cast<RECT*>(lp);SetWindowPos(hwnd,nullptr,r->left,r->top,r->right-r->left,r->bottom-r->top,SWP_NOZORDER|SWP_NOACTIVATE);fit();return 0;}
     case WM_EXITSIZEMOVE:{RECT r{};GetWindowRect(hwnd,&r);log("native edge drag end: "+std::to_string(r.right-r.left)+"x"+std::to_string(r.bottom-r.top));return 0;}
     case WM_CLOSE:if(updateRequired){DestroyWindow(hwnd);return 0;}if(pip){togglePip(false);return 0;}if(testing&&!lifecyclePreview&&!trayReady){DestroyWindow(hwnd);return 0;}if(!closePending){rememberWindow();if(config.value("closeAction",std::string("tray"))=="tray")execute("window.BiliSpace?.pauseForTray()");closePending=true;GetWindowRect(hwnd,&closeRect);closeStarted=GetTickCount64();execute("window.BiliSpace?.beginClose()");SetTimer(hwnd,74,16,nullptr);SetTimer(hwnd,72,280,nullptr);}return 0;
-    case WM_TIMER:if(wp==7765){returnFromFull();return 0;}if(wp==7766){KillTimer(hwnd,wp);if(fullPhase==FullPhase::entering&&liveReady)finishEnter();return 0;}if(wp==7767){KillTimer(hwnd,wp);if(fullPhase==FullPhase::idle){comp::settleContent();comp::clearUnder(false);fullSettledAt=GetTickCount64();}return 0;}if(wp==7762){KillTimer(hwnd,wp);comp::settleChrome();return 0;}if(wp==7761){KillTimer(hwnd,wp);if(fullPhase==FullPhase::entering&&cropGrowing){liveReady=true;if(GetTickCount64()>=growUntil)finishEnter();}else fullscreenReady({});return 0;}if(wp==7760){KillTimer(hwnd,wp);comp::settleContent();if(fullPhase==FullPhase::entering){fullPhase=FullPhase::entered;comp::clearUnder(true);comp::settleChrome();fullSettledAt=GetTickCount64();}return 0;}if(wp==7756||wp==7758){KillTimer(hwnd,wp);if(controller&&!IsIconic(hwnd)){RECT rc{};GetClientRect(hwnd,&rc);RECT shy=rc;shy.bottom=std::max(rc.top,rc.bottom-1);controller->put_Bounds(shy);controller->put_Bounds(rc);controller->NotifyParentWindowPositionChanged();}chromePlace();return 0;}if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
+    case WM_TIMER:if(wp==7772){flushConfig();return 0;}if(wp==7770){double t=std::min(1.0,(GetTickCount64()-zoomStart)/200.0),e=1-std::pow(1-t,3);
+        if(!zoomCtl||!activeTab||activeTab->controller!=zoomCtl||full){KillTimer(hwnd,wp);zoomAnimating=false;return 0;}
+        double z=zoomFrom+(zoomTo-zoomFrom)*e;zoomCtl->put_ZoomFactor(z);chromeZoom(z);if(t>=1){KillTimer(hwnd,wp);zoomAnimating=false;}return 0;}if(wp==7765){returnFromFull();return 0;}if(wp==7766){KillTimer(hwnd,wp);if(fullPhase==FullPhase::entering&&liveReady)finishEnter();return 0;}if(wp==7767){KillTimer(hwnd,wp);if(fullPhase==FullPhase::idle){comp::settleContent();comp::clearUnder(false);fullSettledAt=GetTickCount64();}return 0;}if(wp==7762){KillTimer(hwnd,wp);comp::settleChrome();return 0;}if(wp==7761){KillTimer(hwnd,wp);if(fullPhase==FullPhase::entering&&cropGrowing){liveReady=true;if(GetTickCount64()>=growUntil)finishEnter();}else fullscreenReady({});return 0;}if(wp==7760){KillTimer(hwnd,wp);comp::settleContent();if(fullPhase==FullPhase::entering){fullPhase=FullPhase::entered;comp::clearUnder(true);comp::settleChrome();fullSettledAt=GetTickCount64();}return 0;}if(wp==7756||wp==7758){KillTimer(hwnd,wp);if(controller&&!IsIconic(hwnd)){RECT rc{};GetClientRect(hwnd,&rc);RECT shy=rc;shy.bottom=std::max(rc.top,rc.bottom-1);controller->put_Bounds(shy);controller->put_Bounds(rc);controller->NotifyParentWindowPositionChanged();}chromePlace();return 0;}if(wp==pendingRevealTimer){KillTimer(hwnd,pendingRevealTimer);revealPendingTabs();return 0;}if(wp==75){if(surfaceWaiting)InvalidateRect(hwnd,nullptr,FALSE);return 0;}if(wp==76){KillTimer(hwnd,75);KillTimer(hwnd,76);surfaceWaiting=false;if(controller)controller->put_IsVisible(TRUE);execute("window.BiliSpace?.surfaceRevealed?.()");return 0;}if(wp==74){if(!closePending){KillTimer(hwnd,74);return 0;}double t=std::min(1.,(GetTickCount64()-closeStarted)/180.);double ease=1.-(1.-t)*(1.-t)*(1.-t);int w=int((closeRect.right-closeRect.left)*(1.-.18*ease)),h=int((closeRect.bottom-closeRect.top)*(1.-.18*ease));SetWindowPos(hwnd,nullptr,(closeRect.left+closeRect.right-w)/2,(closeRect.top+closeRect.bottom-h)/2,w,h,SWP_NOZORDER|SWP_NOACTIVATE);if(t>=1)KillTimer(hwnd,74);return 0;}if(wp==73){KillTimer(hwnd,73);auto target=startupTarget;startupTarget.clear();if(webview&&!target.empty())webview->Navigate(target.c_str());return 0;}if(wp!=72)break;
     case WM_APP+72:if(!closePending)return 0;KillTimer(hwnd,72);KillTimer(hwnd,74);closePending=false;if(trayReady&&config.value("closeAction",std::string("tray"))=="tray"){execute("window.BiliSpace?.pauseForTray()");ShowWindow(hwnd,SW_HIDE);SetWindowPos(hwnd,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);execute("document.querySelector('#bs-close-animation')?.remove()");windowRemembered=false;trayMemory(true);return 0;}DestroyWindow(hwnd);return 0;
-    case WM_DESTROY:if(!windowRemembered)rememberWindow();{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
+    case WM_DESTROY:flushConfig();if(!windowRemembered)rememberWindow();{auto popups=authPopups50;for(auto h:popups)if(IsWindow(h))DestroyWindow(h);}dock::shutdown();chromeClose();closeAllTabs();comp::shutdown();windowsMediaShutdown();shutdownDownloader();RemoveClipboardFormatListener(hwnd);if(trayReady){Shell_NotifyIconW(NIM_DELETE,&trayIcon);trayReady=false;}stopProxy();if(controller){controller->Close();controller->Release();controller=nullptr;}if(webview){webview->Release();webview=nullptr;}if(authEnvironment50){authEnvironment50->Release();authEnvironment50=nullptr;}PostQuitMessage(0);return 0;
     }
     return DefWindowProcW(hwnd,msg,wp,lp);
 }

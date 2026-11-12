@@ -24,7 +24,7 @@ void navigate(const std::wstring& uri){
     if(uri.size()>4096||!trusted(uri))return;auto key=videoTabKey(uri);
     if(!key.empty()&&!officialVideoStyle()){openVideoTab(uri,key,activeTab);return;}
     Tab* t=activeTab&&(!activeTab->video||!key.empty())?activeTab:homeTab;if(!t||!t->view)return;
-    if(t!=activeTab&&normalisedPage(uri)==normalisedPage(currentSource(t))){activateTab(t);return;}
+    if(t!=activeTab&&samePage(uri,currentSource(t))){activateTab(t);return;}
     activateTab(t);t->view->Navigate(uri.c_str());
 }
 void broadcastConfig(){

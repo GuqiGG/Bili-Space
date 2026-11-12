@@ -87,6 +87,10 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
 }
 std::wstring currentSource(Tab* t){if(!t||!t->view)return {};LPWSTR source{};t->view->get_Source(&source);std::wstring s=source?source:L"";CoTaskMemFree(source);return s;}
 // Compares pages by host and path, ignoring the locale prefix, a trailing slash, the query and the fragment.
+// Same page for "just switch back" purposes: path-equal, and a search must also have the same query, or a new search would show old results.
+std::wstring normalisedPage(std::wstring uri);
+bool samePage(const std::wstring& a,const std::wstring& b){if(normalisedPage(a)!=normalisedPage(b))return false;if(a.rfind(L"https://search.bilibili.com/",0)!=0)return true;
+    auto query=[](const std::wstring& u){auto q=u.find(L"keyword=");return q==std::wstring::npos?std::wstring{}:u.substr(q,u.find_first_of(L"&#",q)-q);};return query(a)==query(b);}
 std::wstring normalisedPage(std::wstring uri){uri=uri.substr(0,uri.find_first_of(L"?#"));auto scheme=uri.find(L"://");if(scheme==std::wstring::npos)return uri;auto slash=uri.find(L'/',scheme+3);std::wstring host=uri.substr(0,slash),path=slash==std::wstring::npos?L"/":uri.substr(slash);if(path.rfind(L"/zh-Hans",0)==0)path=path.substr(8);if(path.empty())path=L"/";if(path.size()>1&&path.back()==L'/')path.pop_back();return host+path;}
 // Overseas accounts are sent from www/t.bilibili.com pages to their /zh-Hans copies, costing a round trip (or a
 // whole extra page load) on every switch. Once a host and first path segment are seen doing that, they open there
@@ -146,7 +150,7 @@ bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
         if(from==homeTab){LPWSTR source{};homeTab->view->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"https://",0)!=0)return false;}
         sender->ExecuteScript(wide("window.BiliSpace?.beginVideoLoading?.("+json(utf8(uri)).dump()+")").c_str(),nullptr);openVideoTab(uri,key,from);return true;
     }
-    if(from->video&&homeDestination(uri)){cancelNavigationFeedback(sender);if(normalisedPage(uri)!=normalisedPage(currentSource(homeTab)))homeTab->view->Navigate(uri.c_str());activateTab(homeTab);return true;}
+    if(from->video&&homeDestination(uri)){cancelNavigationFeedback(sender);if(!samePage(uri,currentSource(homeTab)))homeTab->view->Navigate(uri.c_str());activateTab(homeTab);return true;}
     return false;
 }
 void chromeStep(int direction);
