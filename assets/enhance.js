@@ -2202,7 +2202,7 @@ async function swipeAction(kind,button){
   if(kind==='share'){native('copy-video-link',{url:`https://www.bilibili.com/video/${item.bvid}`});swipePop(button);toast('已复制视频链接');return;}
   if(kind==='more'){swipeToggleMore();return;}
   if(kind==='dm-toggle'){swipeDanmakuToggle(button);return;}
-  if(kind==='clean'){const on=!swipe.layer.classList.contains('clean');swipe.layer.classList.toggle('clean',on);button.setAttribute('aria-pressed',String(on));$('b',button).textContent=on?':D':':3';swipePop(button);swipeWake();return;}
+  if(kind==='clean'){const on=!swipe.layer.classList.contains('clean');swipe.layer.classList.toggle('clean',on);button.setAttribute('aria-pressed',String(on));swipePop(button);swipeWake();return;}
   if(!swipeCookie('DedeUserID')){toast('请先登录 B站');return;}
   const aid=item.aid,fail=j=>{toast(j?.message||'操作失败，请稍后再试');};let j;
   if(kind==='like'){const on=!item.on?.like;swipeMark(item,'like',on);swipePop(button);if(on){const n=item.counts?.like??0;swipeSvga(button,n>=1e3?'thumb':n>=100?'heart':'like',n>=100?'top':'center');}
@@ -2229,7 +2229,7 @@ async function openSwipe(){
  <form class="bs-swipe-dm" autocomplete="off"><button type="button" data-swipe="dm-toggle" class="bs-swipe-dm-toggle" aria-pressed="true" aria-label="弹幕开关">弹</button><input maxlength="100" placeholder="发个友善的弹幕见证当下" aria-label="发弹幕"><button type="submit" class="bs-swipe-dm-send">发送</button></form>
  <div class="bs-swipe-progress" role="slider" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" tabindex="-1"><i></i><b></b><span></span></div>
  <div class="bs-swipe-info"><div class="bs-swipe-owner"></div><p class="bs-swipe-title"></p><p class="bs-swipe-desc"></p><button type="button" class="bs-swipe-season" data-swipe="season" hidden></button></div>
- <div class="bs-swipe-actions"><button type="button" data-swipe="clean" class="bs-swipe-clean" aria-pressed="false" aria-label="清屏"><span class="bs-swipe-icon"><b>:3</b></span><small>清</small></button>${SWIPE_ACTIONS.map(([k,l,box,d])=>`<button type="button" data-swipe="${k}" aria-label="${l}"><span class="bs-swipe-icon">${k==='like'||k==='coin'||k==='fav'?'<svg class="bs-swipe-ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/></svg>':''}<svg viewBox="0 0 ${box} ${box}" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="${d}"/></svg></span><small></small></button>`).join('')}</div>
+ <div class="bs-swipe-actions">${SWIPE_ACTIONS.map(([k,l,box,d])=>`<button type="button" data-swipe="${k}" aria-label="${l}"><span class="bs-swipe-icon">${k==='like'||k==='coin'||k==='fav'?'<svg class="bs-swipe-ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/></svg>':''}<svg viewBox="0 0 ${box} ${box}" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="${d}"/></svg></span><small></small></button>`).join('')}<button type="button" data-swipe="clean" class="bs-swipe-clean" aria-pressed="false" aria-label="清屏"><span class="bs-swipe-icon"><svg class="bs-swipe-face" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9"/><circle cx="10.5" cy="12" r="2.1"/><circle cx="10.5" cy="20" r="2.1"/><path class="bs-face-3" d="M16.5 9.6C20.6 8.6 22.6 10.1 22.6 12.2C22.6 14.2 20.8 15.4 18.6 15.9C20.8 16.4 22.6 17.6 22.6 19.8C22.6 21.9 20.6 23.4 16.5 22.4"/><path class="bs-face-d" d="M16.6 9.3V22.7C21.4 22.7 24 20 24 16S21.4 9.3 16.6 9.3Z"/></svg></span><small>清</small></button></div>
 </div>`;
   if(!document.getElementById('bs-swipe-style')){const st=document.createElement('style');st.id='bs-swipe-style';st.textContent=SWIPE_CSS;(document.head||document.documentElement).append(st);}
   document.documentElement.append(layer);document.documentElement.dataset.bsSwipe='true';
@@ -2406,7 +2406,7 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe .bs-swipe-actions button{display:grid;justify-items:center;gap:3px;min-width:40px;border:0;background:none;padding:0;user-select:none;-webkit-user-select:none;touch-action:none}
 #bs-swipe .bs-swipe-icon{position:relative;display:grid;place-items:center;width:40px;height:40px;transition:transform .16s cubic-bezier(.23,1,.32,1)}
 #bs-swipe .bs-swipe-actions button:hover .bs-swipe-icon{transform:scale(1.08)}#bs-swipe .bs-swipe-actions button:active .bs-swipe-icon{transform:scale(.9)}
-#bs-swipe .bs-swipe-icon>svg:last-of-type{width:32px;height:32px;fill:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));transition:fill .2s}
+#bs-swipe .bs-swipe-icon>svg:last-of-type:not(.bs-swipe-face){width:32px;height:32px;fill:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));transition:fill .2s}
 #bs-swipe .bs-swipe-actions button.on .bs-swipe-icon>svg:last-of-type{fill:#00aeec}
 #bs-swipe .bs-swipe-actions small{font-size:13px;font-weight:600;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.6);font-variant-numeric:tabular-nums}
 #bs-swipe .bs-swipe-ring{position:absolute;inset:-4px;width:48px;height:48px;transform:rotate(-90deg);opacity:0;pointer-events:none;fill:none;stroke:#00aeec;stroke-width:3;stroke-linecap:round;stroke-dasharray:138.3;stroke-dashoffset:138.3;transition:opacity .15s}
@@ -2422,7 +2422,10 @@ const SWIPE_CSS=`#bs-swipe{position:fixed;inset:0;z-index:2147483000;background:
 #bs-swipe.clean .bs-swipe-ui>:is(.bs-swipe-detail,.bs-swipe-nav,.bs-swipe-shade,.bs-swipe-info,.bs-swipe-progress,.bs-swipe-dm),
 #bs-swipe.clean .bs-swipe-actions>button:not(.bs-swipe-clean){opacity:0!important;visibility:hidden!important;transition:opacity .3s ease,visibility 0s .3s!important}
 #bs-swipe.idle .bs-swipe-peek i{opacity:0}
-#bs-swipe .bs-swipe-clean b{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#fff;color:#18191c;font:800 14px/1 "Segoe UI",system-ui,sans-serif;letter-spacing:0;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+#bs-swipe .bs-swipe-icon>svg.bs-swipe-face{width:32px;height:32px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+#bs-swipe .bs-swipe-face rect{fill:#fff}#bs-swipe .bs-swipe-face circle{fill:#18191c}
+#bs-swipe .bs-swipe-face path{fill:none;stroke:#18191c;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#bs-swipe .bs-swipe-clean .bs-face-d,#bs-swipe .bs-swipe-clean[aria-pressed=true] .bs-face-3{display:none}#bs-swipe .bs-swipe-clean[aria-pressed=true] .bs-face-d{display:inline}
 @media (prefers-reduced-motion:reduce){#bs-swipe :is(.bs-swipe-ui,.bs-swipe-chead){transition:none}#bs-swipe .charging .bs-swipe-icon>svg{animation:none!important}#bs-swipe .bs-swipe-peek i{transition:none}}
 @media (prefers-reduced-motion:reduce){#bs-swipe .bs-swipe-slot{transition:none!important}}`;
 function showOnboarding(){
