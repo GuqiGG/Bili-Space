@@ -2160,13 +2160,15 @@ async function swipeGo(step){
   if(to>=swipe.list.length){await swipeMore();if(to>=swipe.list.length)return;}
   if(swipe.comments)swipeComments(false);
   swipe.moving=true;const old=swipe.slots.get(swipe.index);const ov=old&&swipeVideo(old);if(ov&&!ov.paused)ov.pause();
-  swipe.index=to;swipeEnsure();swipeRenderInfo();
+  swipe.index=to;swipe.arrivedAt=performance.now();swipeEnsure();swipeRenderInfo();
   requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();const cur=swipe.slots.get(swipe.index),v=cur&&swipeVideo(cur);if(v&&cur.ready)v.play().catch(()=>{});},470);});
 }
 // The current video, the one before it and the next two exist; anything further away is dropped (frames are whole
-// pages). The second one down only starts loading once the current one shows a picture, so it never competes with it.
+// pages). The second one down starts once the current one shows a picture, or 600ms after arriving, whichever is first,
+// so quick swiping still finds the next two loaded.
 function swipeEnsure(){
-  const cur=swipe.slots.get(swipe.index),ahead=cur?.ready?[swipe.index+2]:[];
+  const cur=swipe.slots.get(swipe.index),ahead=cur?.ready||performance.now()-swipe.arrivedAt>=600?[swipe.index+2]:[];
+  clearTimeout(swipe.aheadTimer);if(!ahead.length)swipe.aheadTimer=setTimeout(()=>swipe&&swipeEnsure(),620);
   for(const i of [swipe.index,swipe.index+1,swipe.index-1,...ahead]){if(i<0||i>=swipe.list.length||swipe.slots.has(i))continue;const s=swipeSlot(i);s.el.style.transform=`translate3d(0,${(i-swipe.index)*100}%,0)`;swipe.track.append(s.el);swipe.slots.set(i,s);}
 }
 function swipePrune(){for(const [i,slot] of swipe.slots)if(i<swipe.index-1||i>swipe.index+2){clearInterval(slot.timer);slot.frame.src='about:blank';slot.el.remove();swipe.slots.delete(i);}}
@@ -2229,7 +2231,7 @@ async function openSwipe(){
 </div>`;
   if(!document.getElementById('bs-swipe-style')){const st=document.createElement('style');st.id='bs-swipe-style';st.textContent=SWIPE_CSS;(document.head||document.documentElement).append(st);}
   document.documentElement.append(layer);document.documentElement.dataset.bsSwipe='true';
-  swipe={layer,track:$('.bs-swipe-track',layer),ui:$('.bs-swipe-ui',layer),list:[],seen:new Set(),page:0,index:0,slots:new Map(),wheelAt:0,moving:false,loading:false};
+  swipe={layer,track:$('.bs-swipe-track',layer),ui:$('.bs-swipe-ui',layer),list:[],seen:new Set(),page:0,index:0,slots:new Map(),wheelAt:0,moving:false,loading:false,arrivedAt:performance.now()};
   native('swipe-state',{on:true});
   layer.addEventListener('wheel',e=>{e.preventDefault();swipeWheel(e);},{passive:false});
   layer.addEventListener('pointerdown',swipeHold);
