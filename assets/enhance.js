@@ -2123,7 +2123,8 @@ html.bs-swipe-comments #commentapp{transform:none}
 body>:is(bili-photoswipe,bili-modal,bili-comment-picture-goods-overlay,bili-comments-webview,bili-emoji-picker,bili-comment-menu,bili-popover,bili-tooltip),body>:is(bili-photoswipe,bili-modal,bili-comment-picture-goods-overlay,bili-comments-webview,bili-emoji-picker,bili-comment-menu,bili-popover,bili-tooltip) *{visibility:visible!important}
 body>:is(bili-photoswipe,bili-modal,bili-comment-picture-goods-overlay,bili-comments-webview){position:fixed;z-index:2147483647!important}
 #commentapp{font-family:var(--bs-cfont)!important}
-.bpx-player-state-wrap{left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%) scale(1.25)!important;pointer-events:none!important}`;
+.bpx-player-state-wrap{left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%) scale(1.25)!important;pointer-events:none!important}
+.bpx-player-container:not(.bpx-state-paused) .bpx-player-state-wrap{display:none!important}`;
 function swipeVideo(slot){try{return slot.frame.contentDocument?.querySelector('#bilibili-player video,video');}catch{return null;}}
 function swipeSlot(i){
   const item=swipe.list[i],el=document.createElement('div');el.className='bs-swipe-slot';
