@@ -143,15 +143,25 @@ void historyStep(ICoreWebView2* view,int direction){
 }
 // Videos opened from home (or from another video) get their own view; site pages opened from a video return to home.
 bool officialVideoStyle(){return config.value("officialVideoStyle",false);}
-bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& uri){
+// With 稍后再看 set to open as an ordinary video, its player addresses (/list/watchlater?bvid=… and
+// /medialist/play/watchlater/BV…) are that video; the home view never goes there, so returning home never bounces back.
+std::wstring watchlaterVideo(const std::wstring& uri){
+    if(config.value("watchlaterOpen",std::string("list"))!="video"||uri.size()>4096)return {};
+    static const std::wregex pattern(LR"(^https://www\.bilibili\.com/(?:list/watchlater/?\?(?:[^#]*&)?bvid=(BV[A-Za-z0-9]{10})|medialist/play/watchlater/(BV[A-Za-z0-9]{10}))(?:[/?&#].*)?$)");
+    std::wsmatch m;if(!std::regex_match(uri,m,pattern))return {};return L"https://www.bilibili.com/video/"+(m[1].matched?m[1].str():m[2].str())+L"/";
+}
+bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& requested){
     if(updateRequired||pip||!homeTab||!homeTab->view)return false;
     Tab* from=tabForView(sender);if(!from)return false;
+    const auto watchlater=watchlaterVideo(requested);const std::wstring& uri=watchlater.empty()?requested:watchlater;
     auto key=videoTabKey(uri);
     // The official style plays a video as an ordinary page in the view it was clicked in, with no video dock.
     if(!key.empty()&&officialVideoStyle())return false;
     if(!key.empty()){
         if(from->video&&from->key==key)return false;
-        if(from==homeTab){LPWSTR source{};homeTab->view->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"https://",0)!=0)return false;}
+        if(from==homeTab){LPWSTR source{};homeTab->view->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"https://",0)!=0)return false;
+            // Already on a 稍后再看 player (an in-page switch got it there): the video moves to its tab and home goes back to the list.
+            if(!watchlaterVideo(current).empty()){openVideoTab(uri,key,from);homeTab->view->Navigate(L"https://www.bilibili.com/watchlater/#/list");return true;}}
         sender->ExecuteScript(wide("window.BiliSpace?.beginVideoLoading?.("+json(utf8(uri)).dump()+")").c_str(),nullptr);openVideoTab(uri,key,from);return true;
     }
     if(from->video&&homeDestination(uri)){cancelNavigationFeedback(sender);if(!samePage(uri,currentSource(homeTab)))homeTab->view->Navigate(uri.c_str());activateTab(homeTab);return true;}
