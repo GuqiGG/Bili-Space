@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UP 主更新</title>
+<style>
+:root{--bg:#ffffff;--ink:#18191c;--sub:#61666d;--line:#e3e5e7;--ghost:#f1f2f3;--accent:#fb7299;color-scheme:light}
+:root[data-theme=dark]{--bg:#1f2023;--ink:#eeeef0;--sub:#9499a0;--line:#2f3035;--ghost:#2a2b2f;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.45 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+#list{padding:6px 0}
+.item{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;padding:12px 14px 12px 14px;animation:in .42s cubic-bezier(.23,1,.32,1) both}
+.item+.item{border-top:1px solid var(--line)}
+.item.leaving{animation:out .22s cubic-bezier(.4,0,1,1) forwards}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes out{to{opacity:0;transform:translateX(18px)}}
+.cover{position:relative;width:112px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:var(--ghost);grid-row:span 2}
+.cover img{width:100%;height:100%;object-fit:cover;display:block}
+.cover .face{position:absolute;left:5px;bottom:5px;width:24px;height:24px;border-radius:50%;border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);object-fit:cover;background:var(--ghost)}
+.head{min-width:0}
+.who{display:flex;align-items:baseline;gap:4px;font-size:14px;font-weight:700;white-space:nowrap}
+.who b{overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.who span{flex:none}
+.title{margin-top:2px;color:var(--sub);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.actions{display:flex;justify-content:flex-end;gap:8px;align-self:end}
+button{font:inherit;border:0;border-radius:8px;height:30px;padding:0 14px;cursor:pointer;transition:transform .12s cubic-bezier(.23,1,.32,1),filter .15s,background-color .15s}
+button:active{transform:scale(.95)}
+.skip{background:var(--ghost);color:var(--sub)}.skip:hover{color:var(--ink)}
+.go{background:var(--accent);color:#fff;font-weight:700}.go:hover{filter:brightness(1.07)}
+@media (prefers-reduced-motion:reduce){.item,.item.leaving{animation-duration:1ms}}
+</style>
+</head>
+<body>
+<div id="list" role="list"></div>
+<script>
+// The native host calls render(); clicks and the size of the card go back to it as web messages.
+const PHRASES=['冲冲冲！','抢前排！','走走走！'];
+const send=m=>window.chrome?.webview?.postMessage(m);
+const list=document.getElementById('list');
+let closeTimer=0,hovering=false;
+const img=(url,size)=>{url=String(url||'').replace(/^http:/,'https:');return /^https:\/\/i[0-9]\.hdslb\.com\//.test(url)?url+size:'';};
+function report(){send({type:'height',height:Math.ceil(list.getBoundingClientRect().height)});}
+function scheduleClose(){clearTimeout(closeTimer);if(!hovering)closeTimer=setTimeout(()=>closeAll(),12000);}
+function closeAll(){for(const el of list.children)el.classList.add('leaving');setTimeout(()=>send({type:'close'}),200);}
+function dismiss(row){row.classList.add('leaving');setTimeout(()=>{row.remove();if(!list.children.length)send({type:'close'});else report();},210);}
+function render(data){
+  document.documentElement.dataset.theme=data.dark?'dark':'light';
+  if(/^#[0-9a-f]{6}$/i.test(data.accent||''))document.documentElement.style.setProperty('--accent',data.accent);
+  for(const it of (data.items||[]).slice().reverse()){
+    if(list.querySelector(`[data-bvid="${it.bvid}"]`))continue;
+    const row=document.createElement('div');row.className='item';row.dataset.bvid=it.bvid;row.setAttribute('role','listitem');
+    const cover=document.createElement('div');cover.className='cover';
+    const c=document.createElement('img');c.alt='';c.referrerPolicy='no-referrer';c.src=img(it.cover,'@240w_135h_1c.webp');cover.append(c);
+    const f=document.createElement('img');f.className='face';f.alt='';f.referrerPolicy='no-referrer';f.src=img(it.face,'@64w_64h_1c.webp');cover.append(f);
+    const head=document.createElement('div');head.className='head';
+    const who=document.createElement('div');who.className='who';const name=document.createElement('b');name.textContent=it.name;const tail=document.createElement('span');tail.textContent='更新啦！';who.append(name,tail);
+    const title=document.createElement('div');title.className='title';title.textContent=it.title;title.title=it.title;head.append(who,title);
+    const actions=document.createElement('div');actions.className='actions';
+    const skip=document.createElement('button');skip.className='skip';skip.type='button';skip.textContent='不看';skip.onclick=()=>dismiss(row);
+    const go=document.createElement('button');go.className='go';go.type='button';go.textContent=PHRASES[Math.floor(Math.random()*PHRASES.length)];go.onclick=()=>{send({type:'open',bvid:it.bvid});dismiss(row);};
+    actions.append(skip,go);row.append(cover,head,actions);list.prepend(row);
+  }
+  while(list.children.length>3)list.lastElementChild.remove();
+  report();scheduleClose();
+}
+document.documentElement.addEventListener('pointerenter',()=>{hovering=true;clearTimeout(closeTimer);});
+document.documentElement.addEventListener('pointerleave',()=>{hovering=false;scheduleClose();});
+document.addEventListener('contextmenu',e=>e.preventDefault());
+send({type:'ready'});
+</script>
+</body>
+</html>

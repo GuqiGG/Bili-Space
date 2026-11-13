@@ -62,11 +62,12 @@ constexpr UINT_PTR pendingRevealTimer=7755;
 void revealPendingTab(Tab* t){
     if(!t||!t->pendingShow||t->closed||!t->controller)return;t->pendingShow=false;Tab* from=activeTab;
     if(from&&from!=t->opener&&from!=t)return;
-    auto shown=callback<ICoreWebView2ExecuteScriptCompletedHandler,HRESULT,LPCWSTR>([t,from](HRESULT,LPCWSTR){if(std::find(tabs.begin(),tabs.end(),t)==tabs.end()||t->closed)return S_OK;activateTab(t);t->view->ExecuteScript(L"window.BiliSpace?.surfaceRevealed?.()",nullptr);if(from&&from->view&&std::find(tabs.begin(),tabs.end(),from)!=tabs.end())cancelNavigationFeedback(from->view);return S_OK;});
+    auto shown=callback<ICoreWebView2ExecuteScriptCompletedHandler,HRESULT,LPCWSTR>([t,from](HRESULT,LPCWSTR){if(std::find(tabs.begin(),tabs.end(),t)==tabs.end()||t->closed)return S_OK;activateTab(t);if(testing)log("video tab revealed @"+std::to_string(GetTickCount64()));t->view->ExecuteScript(L"window.BiliSpace?.surfaceRevealed?.()",nullptr);if(from&&from->view&&std::find(tabs.begin(),tabs.end(),from)!=tabs.end())cancelNavigationFeedback(from->view);return S_OK;});
     t->view->ExecuteScript(L"window.BiliSpace?.revealFade?.()",shown);shown->Release();
 }
 void revealPendingTabs(){for(auto t:videoTabs())revealPendingTab(t);}
 void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nullptr){
+    if(testing)log("video tab requested @"+std::to_string(GetTickCount64()));
     for(auto t:videoTabs())if(t->key==key){if(t->controller)activateTab(t);return;}
     auto list=videoTabs();
     if(list.size()>=maxVideoTabs){Tab* oldest{};for(auto t:list)if(t!=activeTab&&(!oldest||t->used<oldest->used))oldest=t;closeTab(oldest);}
@@ -81,11 +82,14 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
         wireView(c,t->view,env);
         auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([t](HRESULT hr,LPCWSTR id){if(std::find(tabs.begin(),tabs.end(),t)==tabs.end()||!t->view)return S_OK;if(SUCCEEDED(hr)&&id)t->injectionId=id;t->view->Navigate(t->url.c_str());return S_OK;});
         t->view->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();
-        RECT rc{};GetClientRect(windowHandle,&rc);c->put_Bounds(rc);t->pendingShow=true;SetTimer(windowHandle,pendingRevealTimer,8000,nullptr);log("video view opened");return S_OK;
+        RECT rc{};GetClientRect(windowHandle,&rc);c->put_Bounds(rc);t->pendingShow=true;SetTimer(windowHandle,pendingRevealTimer,8000,nullptr);log("video view opened");if(testing)log("video navigate started @"+std::to_string(GetTickCount64()));return S_OK;
     });
     comp::createController(env,created);created->Release();
 }
 std::wstring currentSource(Tab* t){if(!t||!t->view)return {};LPWSTR source{};t->view->get_Source(&source);std::wstring s=source?source:L"";CoTaskMemFree(source);return s;}
+// Bilibili switches videos inside a page (related videos, parts) without a navigation; the tab must follow, or a later
+// link to the video it was opened with would just bring this tab forward, still showing the other video.
+void syncTabKey(ICoreWebView2* view){Tab* t=tabForView(view);if(!t||!t->video||t->closed)return;auto source=currentSource(t);auto key=videoTabKey(source);if(key.empty()||key==t->key)return;t->key=key;t->url=source;dockSync();}
 // Compares pages by host and path, ignoring the locale prefix, a trailing slash, the query and the fragment.
 // Same page for "just switch back" purposes: path-equal, and a search must also have the same query, or a new search would show old results.
 std::wstring normalisedPage(std::wstring uri);

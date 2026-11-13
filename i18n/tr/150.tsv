@@ -1,0 +1,171 @@
+# idx	en	yue	ja	ko	es	fr	de	ru	pt-BR
+150	Not now	住先	今はしない	나중에	Ahora no	Pas maintenant	Nicht jetzt	Не сейчас	Agora não
+151	Watch it	跳過去睇	開いて見る	보러 가기	Verlo	Regarder	Ansehen	Смотреть	Assistir
+152	-
+153	-
+154	-
+155	-
+156	-
+157	-
+158	-
+159	-
+160	-
+161	-
+162	-
+163	-
+164	-
+165	-
+166	-
+167	-
+168	-
+169	-
+170	-
+171	-
+172	-
+173	-
+174	-
+175	-
+176	-
+177	-
+178	-
+179	-
+180	-
+181	-
+182	-
+183	-
+184	-
+185	-
+186	-
+187	-
+188	-
+189	-
+190	-
+191	-
+192	-
+193	-
+194	-
+195	-
+196	-
+197	-
+198	-
+199	-
+200	-
+201	-
+202	-
+203	-
+204	-
+205	-
+206	-
+207	-
+208	-
+209	-
+210	-
+211	-
+212	-
+213	Progress bar preview	進度條預覽	プログレスバーのプレビュー	진행 표시줄 미리보기	Vista previa de la barra	Aperçu de la barre de progression	Fortschrittsbalken-Vorschau	Предпросмотр полосы прогресса	Prévia da barra de progresso
+214	Running · 127	運行緊 · 127	実行中 · 127	실행 중 · 127	En marcha · 127	En cours · 127	Läuft · 127	Работает · 127	Em execução · 127
+215	Node	節點	ノード	노드	Nodo	Nœud	Knoten	Узел	Nó
+216	Auto	自動	自動	자동	Automático	Auto	Automatisch	Авто	Automático
+217	On but not running:	開咗但未運行：	オンですが未起動：	켜져 있지만 실행되지 않음:	Activado pero sin ejecutarse:	Activé mais pas lancé :	An, aber nicht aktiv:	Включено, но не запущено:	Ligado, mas não em execução:
+218	Waiting for restart	等緊重開	再起動待ち	재시작 대기 중	Esperando reinicio	En attente de redémarrage	Wartet auf Neustart	Ожидание перезапуска	Aguardando reinício
+219	Off, direct connection	已關，直連	オフ、直接接続	꺼짐, 직접 연결	Desactivado, conexión directa	Désactivé, connexion directe	Aus, direkte Verbindung	Выключено, прямое подключение	Desligado, conexão direta
+220	No nodes	未有節點	ノードなし	노드 없음	Sin nodos	Aucun nœud	Keine Knoten	Нет узлов	Sem nós
+221	Checking the current exit…	檢查緊而家出口…	現在の出口を確認中…	현재 출구 확인 중…	Comprobando la salida actual…	Vérification de la sortie actuelle…	Aktueller Ausgang wird geprüft…	Проверяем текущий выход…	Verificando a saída atual…
+222	Service returned	接口返回	サービスの応答	서비스 응답	El servicio respondió	Réponse du service	Dienst antwortete	Ответ сервиса	O serviço retornou
+223	Mainland China	中國大陸	中国本土	중국 본토	China continental	Chine continentale	Festlandchina	Материковый Китай	China continental
+224	Current exit:	而家出口：	現在の出口：	현재 출구:	Salida actual:	Sortie actuelle :	Aktueller Ausgang:	Текущий выход:	Saída atual:
+225	Unknown	唔知	不明	알 수 없음	Desconocido	Inconnu	Unbekannt	Неизвестно	Desconhecido
+226	Mainland exit; playback still depends on licensing and account rights	大陸出口；播唔播到仲睇版權同帳號權限	本土の出口です。再生できるかは権利やアカウントの権限次第です	본토 출구입니다. 재생 여부는 판권·계정 권한에 따라 다릅니다	Salida en China continental; la reproducción depende de licencias y permisos de cuenta	Sortie en Chine continentale ; la lecture dépend toujours des licences et droits du compte	Ausgang in Festlandchina; Wiedergabe hängt weiter von Lizenzen und Kontorechten ab	Выход в материковом Китае; воспроизведение зависит от лицензий и прав аккаунта	Saída na China continental; a reprodução ainda depende de licenças e da conta
+227	Can't unlock “Mainland China only” anime	解鎖唔到「僅限中國大陸」嘅番劇	「中国本土限定」のアニメは解除できません	'중국 본토 한정' 애니는 열 수 없습니다	No desbloquea anime «solo China continental»	Ne débloque pas les animes « Chine continentale uniquement »	Entsperrt keine „nur Festlandchina“-Anime	Не открывает аниме «только для материкового Китая»	Não desbloqueia animes “só China continental”
+228	Check failed:	檢查失敗：	確認に失敗：	확인 실패:	Error al comprobar:	Échec de la vérification :	Prüfung fehlgeschlagen:	Ошибка проверки:	Falha na verificação:
+229	direct connections may be refused too)	直連都可能會畀網站拒絕）	直接接続も拒否されることがあります）	직접 연결도 거부될 수 있음)	la conexión directa también puede rechazarse)	la connexion directe peut aussi être refusée)	auch direkte Verbindungen können abgelehnt werden)	прямое подключение тоже могут отклонить)	a conexão direta também pode ser recusada)
+230	Downloads	下載任務	ダウンロード	다운로드	Descargas	Téléchargements	Downloads	Загрузки	Downloads
+231	Blocked creators	拉黑管理	ブロック管理	차단 관리	Creadores bloqueados	Créateurs bloqués	Blockierte Creator	Заблокированные авторы	Criadores bloqueados
+232	Watch stats	觀看紀錄	視聴記録	시청 기록	Estadísticas	Statistiques	Wiedergabe-Statistik	Статистика просмотров	Estatísticas
+233	Channels	分區選擇	カテゴリ選択	카테고리 선택	Categorías	Catégories	Kategorien	Разделы	Categorias
+234	Client proxy	客戶端代理	クライアントプロキシ	클라이언트 프록시	Proxy del cliente	Proxy du client	Client-Proxy	Прокси клиента	Proxy do cliente
+235	Personalize	個性化	カスタマイズ	개인화	Personalizar	Personnaliser	Personalisieren	Оформление	Personalizar
+236	Page cleanup	頁面淨化	ページ整理	페이지 정리	Limpieza de página	Nettoyage des pages	Seiten aufräumen	Очистка страниц	Limpeza de página
+237	Playback & quality	播放同畫質	再生と画質	재생 및 화질	Reproducción y calidad	Lecture et qualité	Wiedergabe & Qualität	Воспроизведение и качество	Reprodução e qualidade
+238	Plugins	擴展插件	拡張プラグイン	확장 플러그인	Complementos	Extensions	Plugins	Плагины	Plugins
+239	Feedback	意見	フィードバック	피드백	Comentarios	Avis	Feedback	Отзыв	Feedback
+240	About & updates	關於同更新	情報とアップデート	정보 및 업데이트	Acerca de y actualizaciones	À propos et mises à jour	Info & Updates	О программе и обновления	Sobre e atualizações
+241	Not checked for updates yet	未檢查過更新	まだ更新を確認していません	아직 업데이트를 확인하지 않았습니다	Aún no se han buscado actualizaciones	Mises à jour pas encore vérifiées	Noch nicht nach Updates gesucht	Обновления ещё не проверялись	Atualizações ainda não verificadas
+242	Turn on the experimental fullscreen animation?	開實驗性全螢幕動畫？	実験的な全画面アニメーションをオンにしますか？	실험적인 전체 화면 애니메이션을 켤까요?	¿Activar la animación experimental de pantalla completa?	Activer l'animation plein écran expérimentale ?	Experimentelle Vollbild-Animation einschalten?	Включить экспериментальную анимацию полноэкранного режима?	Ativar a animação experimental de tela cheia?
+243	When entering or leaving fullscreen, the video grows from its place to fill the screen and shrinks back on exit. This is still being tested: on some PCs or when switching quickly it may flicker, jump or not animate. You can turn it off here any time.	入出全螢幕嗰陣，影片會由原本位置放大到全螢幕，出返嚟就縮返原位。呢個功能仲測試緊：喺部分電腦或者轉得太快，可能會閃、畫面跳或者冇動畫。隨時可以喺度閂返。	全画面に出入りするとき、動画が元の位置から全画面へ拡大し、終了時は元に戻ります。この機能はまだテスト中で、一部の PC や素早い切り替えではちらつき・映像の跳び・アニメーションしないことがあります。いつでもここでオフにできます。	전체 화면에 들어가거나 나올 때 영상이 원래 자리에서 확대되고 나올 때 다시 줄어듭니다. 아직 테스트 중이라 일부 PC나 빠르게 전환할 때 깜박이거나 튀거나 애니메이션이 안 될 수 있습니다. 언제든 여기서 끌 수 있습니다.	Al entrar o salir de pantalla completa, el vídeo crece desde su sitio y vuelve al salir. Aún está en pruebas: en algunos equipos o al cambiar rápido puede parpadear, saltar o no animarse. Puedes desactivarlo aquí cuando quieras.	En entrant ou en sortant du plein écran, la vidéo s'agrandit depuis sa place puis revient à la sortie. C'est encore en test : sur certains PC ou en changeant vite, elle peut scintiller, sauter ou ne pas s'animer. Vous pouvez la désactiver ici à tout moment.	Beim Wechsel in den Vollbildmodus wächst das Video von seiner Position auf Bildschirmgröße und schrumpft beim Verlassen zurück. Noch im Test: Auf manchen PCs oder bei schnellem Wechsel kann es flackern, springen oder nicht animieren. Du kannst es hier jederzeit ausschalten.	При входе в полноэкранный режим видео увеличивается со своего места, а при выходе возвращается обратно. Функция ещё тестируется: на некоторых ПК или при быстром переключении возможны мерцание, рывки или отсутствие анимации. Её можно отключить здесь в любой момент.	Ao entrar ou sair da tela cheia, o vídeo cresce do lugar até a tela toda e volta ao sair. Ainda está em teste: em alguns PCs ou ao alternar rápido pode piscar, pular ou não animar. Você pode desligar aqui quando quiser.
+244	Turn on anyway	照開	それでもオンにする	그래도 켜기	Activar de todos modos	Activer quand même	Trotzdem einschalten	Всё равно включить	Ativar mesmo assim
+245	Restore default settings?	還原預設設定？	既定の設定に戻しますか？	기본 설정으로 되돌릴까요?	¿Restablecer los ajustes predeterminados?	Rétablir les réglages par défaut ?	Standardeinstellungen wiederherstellen?	Восстановить настройки по умолчанию?	Restaurar as configurações padrão?
+246	Theme, layout and playback preferences will be reset.	會重設主題、版面同播放偏好。	テーマ、レイアウト、再生の設定がリセットされます。	테마, 레이아웃, 재생 설정이 초기화됩니다.	Se restablecerán el tema, el diseño y las preferencias de reproducción.	Le thème, la mise en page et les préférences de lecture seront réinitialisés.	Design, Layout und Wiedergabe-Einstellungen werden zurückgesetzt.	Тема, раскладка и настройки воспроизведения будут сброшены.	Tema, layout e preferências de reprodução serão redefinidos.
+247	Restore defaults	還原預設	既定に戻す	기본값 복원	Restablecer	Rétablir	Zurücksetzen	Восстановить	Restaurar padrão
+248	Default settings restored	已還原預設設定	既定の設定に戻しました	기본 설정으로 되돌렸습니다	Ajustes predeterminados restablecidos	Réglages par défaut rétablis	Standardeinstellungen wiederhergestellt	Настройки по умолчанию восстановлены	Configurações padrão restauradas
+249	New version available	有新版本	新しいバージョンがあります	새 버전이 있습니다	Nueva versión disponible	Nouvelle version disponible	Neue Version verfügbar	Доступна новая версия	Nova versão disponível
+250	Later	遲啲先	あとで	나중에	Más tarde	Plus tard	Später	Позже	Depois
+251	Skip this version	略過呢個版本	このバージョンをスキップ	이 버전 건너뛰기	Omitir esta versión	Ignorer cette version	Diese Version überspringen	Пропустить эту версию	Pular esta versão
+252	Install and restart	安裝並重開	インストールして再起動	설치 후 재시작	Instalar y reiniciar	Installer et redémarrer	Installieren und neu starten	Установить и перезапустить	Instalar e reiniciar
+253	Download update	下載更新	アップデートをダウンロード	업데이트 다운로드	Descargar actualización	Télécharger la mise à jour	Update herunterladen	Скачать обновление	Baixar atualização
+254	A brand-new home page	全新嘅首頁	まったく新しいホーム	완전히 새로운 홈	Una página de inicio nueva	Une toute nouvelle page d'accueil	Eine ganz neue Startseite	Совершенно новая главная	Uma página inicial nova
+255	The header, channels and feed are redesigned; switching and expanding feel more responsive	頂欄、分區同推薦流重新設計過，切換同展開都更跟手	ヘッダー、カテゴリ、おすすめを再設計。切り替えも展開もより軽快に	헤더, 카테고리, 추천 피드를 새로 디자인해 전환과 펼치기가 더 자연스러워졌습니다	Cabecera, categorías y recomendaciones rediseñadas; todo responde mejor	En-tête, catégories et fil repensés ; tout répond plus vite	Kopfzeile, Kategorien und Feed neu gestaltet – alles reagiert direkter	Шапка, разделы и лента переработаны — всё переключается отзывчивее	Cabeçalho, categorias e feed redesenhados; tudo responde melhor
+256	A focused video page	專心嘅影片頁	集中できる動画ページ	집중하기 좋은 영상 페이지	Una página de vídeo centrada	Une page vidéo épurée	Eine fokussierte Videoseite	Страница видео без отвлечений	Uma página de vídeo focada
+257	Player, danmaku and recommendations are laid out more clearly, so nothing gets in the way	播放器、彈幕同推薦排得更清楚，睇片唔會畀人打擾	プレーヤー、弾幕、おすすめがすっきり並び、視聴の邪魔をしません	플레이어, 탄막, 추천을 깔끔하게 배치해 시청을 방해하지 않습니다	Reproductor, comentarios y recomendaciones más ordenados, sin distracciones	Lecteur, commentaires et recommandations mieux organisés, sans distraction	Player, Danmaku und Empfehlungen klarer angeordnet – nichts stört	Плеер, комментарии и рекомендации расположены аккуратнее и не мешают	Player, comentários e recomendações mais organizados, sem distrações
+258	Picture-in-picture	畫中畫	ピクチャーインピクチャー	PIP 모드	Imagen en imagen	Image dans l'image	Bild im Bild	Картинка в картинке	Picture-in-picture
+259	Shrink to a small window and keep watching while you do other things — danmaku come along too	縮細做小窗，一路睇一路做其他嘢，彈幕都跟埋	小さなウィンドウにして、ほかの作業をしながら視聴。弾幕もそのまま	작은 창으로 줄여 다른 일을 하며 볼 수 있고 탄막도 함께 따라옵니다	Encoge a una ventana pequeña y sigue viendo mientras haces otras cosas; los comentarios también	Réduisez en petite fenêtre et continuez à regarder en faisant autre chose — les commentaires suivent	In ein kleines Fenster verkleinern und nebenbei weiterschauen – Danmaku inklusive	Уменьшите в маленькое окно и смотрите, занимаясь другим — комментарии тоже на месте	Reduza para uma janela pequena e continue assistindo enquanto faz outras coisas — com comentários
+260	A look you can make your own	外觀由你話事	自分好みの見た目に	내 마음대로 바꾸는 외관	Un aspecto a tu gusto	Une apparence à votre goût	Ein Look nach deinem Geschmack	Внешний вид на ваш вкус	Uma aparência do seu jeito
+261	Theme, accent color, text size and header items all follow your habits	主題、強調色、字號、頂欄項目，全部跟你習慣嚟	テーマ、強調色、文字サイズ、ヘッダー項目をお好みで	테마, 강조색, 글자 크기, 헤더 항목을 습관에 맞게	Tema, color de acento, tamaño de texto y cabecera, como prefieras	Thème, couleur d'accent, taille du texte et en-tête, à votre façon	Design, Akzentfarbe, Textgröße und Kopfzeile ganz nach deinen Gewohnheiten	Тема, акцентный цвет, размер текста и элементы шапки — как вам привычно	Tema, cor de destaque, tamanho do texto e cabeçalho do seu jeito
+262	Bili pink	B站粉	ビリピンク	빌리 핑크	Rosa Bili	Rose Bili	Bili-Pink	Розовый Bili	Rosa Bili
+263	Sky blue	天藍	スカイブルー	하늘색	Azul cielo	Bleu ciel	Himmelblau	Небесно-голубой	Azul-céu
+264	Teal	青綠	ティール	청록	Verde azulado	Bleu-vert	Türkis	Бирюзовый	Verde-azulado
+265	Lilac	藕紫	ライラック	연보라	Lila	Lilas	Flieder	Сиреневый	Lilás
+266	Orange	橙色	オレンジ	주황	Naranja	Orange	Orange	Оранжевый	Laranja
+267	Vermilion	朱紅	朱色	주홍	Bermellón	Vermillon	Zinnoberrot	Киноварь	Vermelhão
+268	Problem	有問題	不具合	문제 신고	Problema	Problème	Problem	Проблема	Problema
+269	Suggestion	功能建議	機能の提案	기능 제안	Sugerencia	Suggestion	Vorschlag	Предложение	Sugestão
+270	Other	其他	その他	기타	Otro	Autre	Sonstiges	Другое	Outro
+271	Type	類型	種類	유형	Tipo	Type	Art	Тип	Tipo
+272	What you'd like to say	想講嘅嘢	伝えたいこと	하고 싶은 말	Lo que quieres decir	Votre message	Deine Nachricht	Ваше сообщение	O que você quer dizer
+273	What happened, on which page, and how to make it happen again… the more specific the better	遇到咩事、喺邊個頁面、點樣做先會出現……寫得越詳細越好	何が起きたか、どのページで、どう操作すると起きるか……具体的なほど助かります	무슨 일이, 어느 페이지에서, 어떻게 하면 생기는지… 자세할수록 좋아요	Qué pasó, en qué página y cómo provocarlo… cuanto más detalle, mejor	Ce qui s'est passé, sur quelle page, comment le reproduire… plus c'est précis, mieux c'est	Was passiert ist, auf welcher Seite und wie man es auslöst … je genauer, desto besser	Что случилось, на какой странице и как это повторить… чем подробнее, тем лучше	O que aconteceu, em qual página e como repetir… quanto mais detalhes, melhor
+274	Email (optional)	電郵（可以唔填）	メール（任意）	이메일(선택)	Correo (opcional)	E-mail (facultatif)	E-Mail (optional)	Email (необязательно)	E-mail (opcional)
+275	You can send without it, but then the developer can't reply.	唔填都交到，不過開發者就覆唔到你。	未入力でも送れますが、開発者から返信できません。	비워도 보낼 수 있지만 개발자가 답장할 수 없어요.	Puedes enviarlo sin él, pero el desarrollador no podrá responderte.	Vous pouvez l'envoyer sans, mais le développeur ne pourra pas répondre.	Du kannst auch ohne senden, dann kann der Entwickler aber nicht antworten.	Можно отправить и без него, но тогда разработчик не сможет ответить.	Dá para enviar sem ele, mas o desenvolvedor não poderá responder.
+276	Include version and system info (no account, cookies or browsing history)	附上版本號同系統資料（唔包括帳號、Cookie 同瀏覽紀錄）	バージョンとシステム情報を添付（アカウント・Cookie・閲覧履歴は含みません）	버전과 시스템 정보 첨부(계정·쿠키·방문 기록 제외)	Incluir versión e información del sistema (sin cuenta, cookies ni historial)	Joindre la version et les infos système (sans compte, cookies ni historique)	Version und Systeminfos anhängen (ohne Konto, Cookies und Verlauf)	Приложить версию и сведения о системе (без аккаунта, cookie и истории)	Incluir versão e informações do sistema (sem conta, cookies ou histórico)
+277	Send feedback	交意見	フィードバックを送信	피드백 보내기	Enviar comentarios	Envoyer l'avis	Feedback senden	Отправить отзыв	Enviar feedback
+278	Copy feedback text	複製意見內容	フィードバックをコピー	피드백 내용 복사	Copiar el texto	Copier le message	Feedback-Text kopieren	Скопировать текст отзыва	Copiar o texto
+279	Feedback ·	意見 ·	フィードバック ·	피드백 ·	Comentarios ·	Avis ·	Feedback ·	Отзыв ·	Feedback ·
+280	Email:	電郵：	メール：	이메일:	Correo:	E-mail :	E-Mail:	Email:	E-mail:
+281	Copied — paste it to the developer	複製咗，可以貼上發畀開發者	コピーしました。開発者に貼り付けて送れます	복사했습니다. 개발자에게 붙여넣어 보내세요	Copiado; pégalo para el desarrollador	Copié — collez-le pour le développeur	Kopiert – einfach dem Entwickler schicken	Скопировано — вставьте и отправьте разработчику	Copiado — cole para o desenvolvedor
+282	Copy failed; select the text and copy it yourself	複製唔到，請自己揀晒啲字複製	コピーに失敗しました。文字を選択してコピーしてください	복사하지 못했습니다. 글자를 직접 선택해 복사하세요	No se pudo copiar; selecciona el texto y cópialo	Échec de la copie ; sélectionnez le texte et copiez-le	Kopieren fehlgeschlagen; Text bitte selbst markieren und kopieren	Не удалось скопировать; выделите текст и скопируйте вручную	Falha ao copiar; selecione o texto e copie
+283	Please write a little more.	寫多幾隻字啦。	もう少し書いてください。	조금만 더 써 주세요.	Escribe un poco más.	Écrivez-en un peu plus.	Schreib bitte etwas mehr.	Напишите чуть подробнее.	Escreva um pouco mais.
+284	That email doesn't look right; you can also leave it empty.	電郵格式好似唔啱，留空都得。	メールの形式が正しくないようです。空欄でも大丈夫です。	이메일 형식이 이상해요. 비워 두어도 됩니다.	El correo no parece válido; también puedes dejarlo vacío.	Cet e-mail semble incorrect ; vous pouvez aussi le laisser vide.	Die E-Mail sieht falsch aus; du kannst sie auch leer lassen.	Похоже, email указан неверно; можно оставить поле пустым.	Esse e-mail parece errado; você também pode deixar vazio.
+285	Sending…	發送緊…	送信中…	보내는 중…	Enviando…	Envoi…	Wird gesendet…	Отправка…	Enviando…
+286	Received — the developer will reply by email	收到喇，開發者會用電郵覆你	受け付けました。開発者からメールで返信します	접수했습니다. 개발자가 이메일로 답장할게요	Recibido; el desarrollador te responderá por correo	Reçu — le développeur vous répondra par e-mail	Angekommen – der Entwickler antwortet per E-Mail	Получено — разработчик ответит по email	Recebido — o desenvolvedor responderá por e-mail
+287	Received — thank you for the feedback	收到喇，多謝你嘅意見	受け付けました。ありがとうございます	접수했습니다. 의견 고마워요	Recibido, gracias por tus comentarios	Reçu, merci pour votre avis	Angekommen – danke für dein Feedback	Получено — спасибо за отзыв	Recebido, obrigado pelo feedback
+288	Couldn't reach the feedback server. Copy the text and send it to the developer another way.	連唔到意見伺服器。可以複製內容，用第二個方法發畀開發者。	フィードバックサーバーに接続できません。内容をコピーして別の方法で送ってください。	피드백 서버에 연결할 수 없습니다. 내용을 복사해 다른 방법으로 보내 주세요.	No se pudo contactar con el servidor. Copia el texto y envíalo por otro medio.	Serveur de retours injoignable. Copiez le texte et envoyez-le autrement.	Feedback-Server nicht erreichbar. Kopiere den Text und schick ihn anders.	Не удалось связаться с сервером отзывов. Скопируйте текст и отправьте другим способом.	Não foi possível contatar o servidor. Copie o texto e envie de outro jeito.
+289	Sending failed; please try again later. Your text is kept.	發送失敗，遲啲再試。內容保留咗。	送信に失敗しました。しばらくしてからお試しください。内容は残っています。	보내지 못했습니다. 잠시 후 다시 시도하세요. 내용은 그대로 있어요.	Error al enviar; inténtalo más tarde. Tu texto se conserva.	Échec de l'envoi ; réessayez plus tard. Votre texte est conservé.	Senden fehlgeschlagen; bitte später erneut. Dein Text bleibt erhalten.	Не удалось отправить; попробуйте позже. Текст сохранён.	Falha no envio; tente mais tarde. Seu texto foi mantido.
+290	This version has no announcement	呢個版本冇更新公告	このバージョンにはお知らせがありません	이 버전에는 업데이트 소식이 없습니다	Esta versión no tiene novedades	Cette version n'a pas d'annonce	Diese Version hat keine Ankündigung	У этой версии нет объявления	Esta versão não tem novidades
+291	What's new	更新咗乜嘢	新機能	새로운 기능	Novedades	Nouveautés	Neuigkeiten	Что нового	Novidades
+292	Pages	頁面	ページ	페이지	Páginas	Pages	Seiten	Страницы	Páginas
+293	Page	第	ページ	페이지	Página	Page	Seite	Страница	Página
+294	-
+295	Previous	上一頁	前へ	이전	Anterior	Précédent	Zurück	Назад	Anterior
+296	Next	下一頁	次へ	다음	Siguiente	Suivant	Weiter	Далее	Próximo
+297	Got it	知道喇	OK	알겠어요	Entendido	Compris	Verstanden	Понятно	Entendi
+298	Try Bili-Space, a desktop Bilibili client: the official player and danmaku, a cleaner look, plus built-in downloads, borderless picture-in-picture, 200% volume and tons of customization. Free download: https	推薦一個 B 站電腦客戶端 Bili-Space：保留官方播放器同彈幕，介面更清爽，仲有內置下載、無邊框畫中畫、200% 音量同一大堆自訂。免費下載：https	ビリビリの PC クライアント Bili-Space がおすすめ：公式プレーヤーと弾幕そのままに、すっきりした画面、内蔵ダウンロード、枠なし PiP、200% 音量、カスタマイズも豊富。無料ダウンロード：https	빌리빌리 PC 클라이언트 Bili-Space 추천: 공식 플레이어와 탄막은 그대로, 더 깔끔한 화면에 내장 다운로드, 테두리 없는 PIP, 200% 음량, 다양한 사용자 설정까지. 무료 다운로드: https	Te recomiendo Bili-Space, un cliente de escritorio de Bilibili: reproductor y comentarios oficiales, interfaz más limpia, descargas integradas, imagen en imagen sin bordes, volumen al 200 % y mucha personalización. Descarga gratis: https	Je recommande Bili-Space, un client Bilibili pour ordinateur : lecteur et commentaires officiels, interface épurée, téléchargements intégrés, image dans l'image sans bordure, volume à 200 % et plein de réglages. Téléchargement gratuit : https	Probier Bili-Space, einen Desktop-Client für Bilibili: offizieller Player und Danmaku, aufgeräumte Oberfläche, eingebaute Downloads, randloses Bild im Bild, 200 % Lautstärke und jede Menge Anpassungen. Kostenlos: https	Советую Bili-Space — десктоп-клиент Bilibili: официальный плеер и комментарии, чистый интерфейс, встроенные загрузки, «картинка в картинке» без рамки, громкость 200% и куча настроек. Бесплатно: https	Recomendo o Bili-Space, um cliente de desktop do Bilibili: player e comentários oficiais, visual mais limpo, downloads integrados, picture-in-picture sem bordas, volume a 200% e muita personalização. Download grátis: https
+299	Copied — go send it to a friend	複製咗，快啲發畀朋友	コピーしました。友だちに送ろう	복사했어요. 친구에게 보내 보세요	Copiado; ¡mándaselo a un amigo!	Copié — envoyez-le à un ami	Kopiert – ab damit an Freunde	Скопировано — отправьте другу	Copiado — mande para um amigo
+300	Copy failed; select the text above by hand	複製唔到，請自己揀上面啲字	コピーに失敗しました。上の文字を選択してください	복사하지 못했습니다. 위의 글자를 직접 선택하세요	No se pudo copiar; selecciona el texto de arriba	Échec de la copie ; sélectionnez le texte ci-dessus	Kopieren fehlgeschlagen; markiere den Text oben selbst	Не удалось скопировать; выделите текст выше вручную	Falha ao copiar; selecione o texto acima
+301	Enjoying Bili-Space?	鍾唔鍾意 Bili-Space	Bili-Space は気に入りましたか	Bili-Space 마음에 드세요?	¿Te gusta Bili-Space?	Vous aimez Bili-Space ?	Gefällt dir Bili-Space?	Нравится Bili-Space?	Curtindo o Bili-Space?
+302	Share it with a friend	分享畀一個朋友啦	友だちにシェアしよう	친구에게 공유해 주세요	Compártelo con un amigo	Partagez-le avec un ami	Teile es mit Freunden	Поделитесь с другом	Compartilhe com um amigo
+303	is made by one person in their spare time — no ads, no fees. One share from you is the biggest reason to keep going.	係作者一個人用業餘時間整嘅，冇廣告，都唔收錢。你分享一次，就係繼續更新落去最大嘅動力。	は作者がひとりで空き時間に作っています。広告なし、無料です。あなたのシェアが、更新を続けるいちばんの力になります。	는 개발자 한 명이 여가 시간에 만듭니다. 광고도 없고 무료예요. 한 번의 공유가 계속 업데이트할 가장 큰 힘이 됩니다.	lo hace una sola persona en su tiempo libre: sin anuncios y gratis. Que lo compartas es la mayor motivación para seguir.	est fait par une seule personne sur son temps libre — sans pub ni frais. Un partage de votre part est la meilleure raison de continuer.	wird von einer Person in ihrer Freizeit gemacht – ohne Werbung, kostenlos. Dein Teilen ist der größte Ansporn weiterzumachen.	делает один человек в свободное время — без рекламы и бесплатно. Ваш репост — лучший стимул продолжать.	é feito por uma pessoa no tempo livre — sem anúncios e de graça. Compartilhar é o maior incentivo para continuar.
+304	Star it on GitHub	去 GitHub 㩒個星	GitHub でスターする	GitHub에서 별 주기	Dale una estrella en GitHub	Mettre une étoile sur GitHub	Auf GitHub einen Stern geben	Поставить звезду на GitHub	Dar uma estrela no GitHub
+305	Maybe later	遲啲先	またあとで	다음에	Quizá luego	Plus tard	Vielleicht später	Может, позже	Talvez depois
+306	Copy share text	複製分享文字	シェア用の文をコピー	공유 문구 복사	Copiar texto para compartir	Copier le texte à partager	Teiltext kopieren	Скопировать текст	Copiar texto para compartilhar
+307	Announcement	公告	お知らせ	공지	Anuncio	Annonce	Ankündigung	Объявление	Aviso
+308	Details	睇詳情	詳細を見る	자세히 보기	Ver detalles	Voir les détails	Details ansehen	Подробнее	Ver detalhes
+309	Big makeover	大翻新	大リニューアル	대규모 개편	Gran renovación	Grande refonte	Großes Makeover	Большое обновление	Grande reforma
+310	Welcome	歡迎	ようこそ	환영합니다	Bienvenido	Bienvenue	Willkommen	Добро пожаловать	Boas-vindas
+311	Welcome to Bili-Space	歡迎使用 Bili-Space	Bili-Space へようこそ	Bili-Space에 오신 것을 환영합니다	Bienvenido a Bili-Space	Bienvenue dans Bili-Space	Willkommen bei Bili-Space	Добро пожаловать в Bili-Space	Boas-vindas ao Bili-Space
+312	The header, animations and settings have all been redone. See what changed, then set up the things you use most, one by one.	頂欄、動畫同設定全部重新做過。先睇吓有乜改變，再一樣一樣設定好常用嘅。	ヘッダー、アニメーション、設定をすべて作り直しました。変更点を見てから、よく使う項目を一つずつ設定しましょう。	헤더, 애니메이션, 설정을 모두 새로 만들었습니다. 무엇이 바뀌었는지 보고 자주 쓰는 것부터 하나씩 설정해 보세요.	Cabecera, animaciones y ajustes rehechos. Mira qué cambió y configura lo que más usas, paso a paso.	En-tête, animations et réglages ont été refaits. Découvrez les nouveautés, puis réglez vos options favorites une à une.	Kopfzeile, Animationen und Einstellungen sind komplett neu. Sieh dir die Änderungen an und stell dann Schritt für Schritt das Wichtigste ein.	Шапка, анимации и настройки полностью переделаны. Посмотрите, что изменилось, а затем по шагам настройте самое нужное.	Cabeçalho, animações e configurações foram refeitos. Veja o que mudou e ajuste o que você mais usa, passo a passo.
+313	A calmer, smoother desktop client for Bilibili. Take half a minute to make it yours.	一個更靜、更順手嘅 B 站桌面客戶端。用半分鐘，調成你鍾意嘅樣。	静かで使いやすいビリビリのデスクトップクライアント。30 秒で好みに整えましょう。	더 조용하고 편한 빌리빌리 데스크톱 클라이언트. 30초면 취향대로 맞출 수 있어요.	Un cliente de escritorio de Bilibili más tranquilo y cómodo. Dedica medio minuto a dejarlo a tu gusto.	Un client Bilibili pour ordinateur, plus calme et plus fluide. Prenez trente secondes pour le personnaliser.	Ein ruhigerer, angenehmerer Desktop-Client für Bilibili. Nimm dir eine halbe Minute, um ihn einzurichten.	Более спокойный и удобный десктоп-клиент Bilibili. Полминуты — и он настроен под вас.	Um cliente de desktop do Bilibili mais calmo e prático. Leve meio minuto para deixá-lo do seu jeito.
+314	A rebuilt header and more responsive animations	重做嘅頂欄同更跟手嘅動畫	作り直したヘッダーと軽快なアニメーション	새로 만든 헤더와 더 자연스러운 애니메이션	Cabecera renovada y animaciones más ágiles	En-tête refait et animations plus réactives	Neue Kopfzeile und direktere Animationen	Новая шапка и отзывчивые анимации	Cabeçalho refeito e animações mais ágeis
+315	Drag to any text size in Settings	設定介面字號可以隨便拖	設定画面の文字サイズを自由に調整	설정 화면 글자 크기를 자유롭게 조절	Ajusta libremente el texto de los ajustes	Taille du texte des réglages réglable librement	Schriftgröße der Einstellungen frei ziehbar	Размер текста в настройках можно менять как угодно	Ajuste livre do texto das configurações
+316	Plugins can add buttons, panels, even AI	插件可以加掣、加面板，甚至駁 AI	プラグインでボタンやパネル、AI 連携まで追加できます	플러그인으로 버튼, 패널, 심지어 AI까지 추가	Los complementos añaden botones, paneles e incluso IA	Les extensions ajoutent boutons, panneaux et même l'IA	Plugins bringen Tasten, Panels und sogar KI	Плагины добавляют кнопки, панели и даже ИИ	Plugins adicionam botões, painéis e até IA
+317	Screenshots	介面展示	画面の紹介	화면 소개	Capturas	Aperçu	Einblicke	Скриншоты	Telas
+318	Theme	主題	テーマ	테마	Tema	Thème	Design	Тема	Tema
+319	Pick a theme	揀個主題	テーマを選ぶ	테마 선택	Elige un tema	Choisissez un thème	Wähle ein Design	Выберите тему	Escolha um tema

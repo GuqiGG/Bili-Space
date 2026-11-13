@@ -36,8 +36,19 @@ class App(Gtk.Application):
             return value if isinstance(value,dict) else {}
         except (OSError,ValueError):return {}
     def save(self):
+        # New pages read their settings from the injected script, so it follows every saved change
+        # (otherwise each page started from the launch-time snapshot: onboarding came back, the theme reverted).
+        self.refresh_script()
         if self.testing:return
         temporary=self.directory/'state.tmp';temporary.write_text(json.dumps(self.state,ensure_ascii=False),encoding='utf-8');temporary.chmod(0o600);temporary.replace(self.directory/'state.json')
+    def make_script(self):
+        payload={'appInfo':self.read(self.resources/'assets/app-info.json'),'config':self.state['config'],'gm':self.state['gm'],'runtime':{'platform':'linux','testing':self.testing,'running':False,'mediaFixtures':{name:base64.b64encode((self.resources/'assets/media-probe'/name).read_bytes()).decode() for name in ['avc-aac.mp4','avc-mse.mp4']} if self.testing else {}}}
+        bridge="(()=>{if(window.top!==window)return;const token="+json.dumps(self.token)+";window.__BILI_NATIVE__="+json.dumps(payload,ensure_ascii=False)+";window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(JSON.stringify({token,message:m}))};})();\n"
+        return WebKit2.UserScript.new(bridge+self.renderer,WebKit2.UserContentInjectedFrames.TOP_FRAME,WebKit2.UserScriptInjectionTime.START,None,None)
+    def refresh_script(self):
+        content=getattr(self,'content',None)
+        if not content or not getattr(self,'token',None):return
+        content.remove_all_scripts();content.add_script(self.make_script())
     def current(self):return next((p for p in self.state['profiles'] if p['id']==self.state.get('activeID')),None)
     def send(self,method,value):self.js('window.BiliSpace?.'+method+'('+json.dumps(value,ensure_ascii=False)+')')
     def js(self,source):
@@ -79,18 +90,16 @@ class App(Gtk.Application):
         security=self.context.get_security_manager();security.register_uri_scheme_as_secure('bili-space');security.register_uri_scheme_as_cors_enabled('bili-space')
         self.cookies=self.context.get_cookie_manager();self.cookies.set_persistent_storage(str(directory/'cookies.sqlite'),WebKit2.CookiePersistentStorage.SQLITE)
         content=WebKit2.UserContentManager();content.register_script_message_handler('native');content.connect('script-message-received::native',self.message)
-        payload={'appInfo':self.read(self.resources/'assets/app-info.json'),'config':self.state['config'],'gm':self.state['gm'],'runtime':{'platform':'linux','testing':self.testing,'running':False,'mediaFixtures':{name:base64.b64encode((self.resources/'assets/media-probe'/name).read_bytes()).decode() for name in ['avc-aac.mp4','avc-mse.mp4']} if self.testing else {}}}
-        bridge="(()=>{if(window.top!==window)return;const token="+json.dumps(self.token)+";window.__BILI_NATIVE__="+json.dumps(payload,ensure_ascii=False)+";window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(JSON.stringify({token,message:m}))};})();\n"
-        script=WebKit2.UserScript.new(bridge+self.renderer,WebKit2.UserContentInjectedFrames.TOP_FRAME,WebKit2.UserScriptInjectionTime.START,None,None);content.add_script(script)
+        self.content=content;content.add_script(self.make_script())
         if self.web:self.stack.remove(self.web);self.web.destroy()
         self.web=WebKit2.WebView(web_context=self.context,user_content_manager=content)
-        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False);settings.set_enable_mediasource(True);settings.set_user_agent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 BiliSpace/0.1.66')
+        settings=self.web.get_settings();settings.set_enable_developer_extras(self.testing);settings.set_media_playback_requires_user_gesture(False);settings.set_enable_mediasource(True);settings.set_user_agent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 BiliSpace/0.1.67')
         self.web.add_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.POINTER_MOTION_MASK)
         self.web.connect('button-press-event',self.resize_press);self.web.connect('motion-notify-event',self.resize_motion)
         self.web.connect('resource-load-started',self.resource_started)
         self.web.get_back_forward_list().connect('changed',lambda *_:self.navigation_state())
         self.web.connect('decide-policy',self.policy);self.web.connect('create',self.popup);self.web.connect('load-changed',self.loaded)
-        self.stack.add(self.web);self.web.show();self.web.load_html((self.resources/'assets/fixture.html').read_text(encoding='utf-8').replace('</head>','<link rel="stylesheet" href="bili-space://assets/cache-probe.css"><script src="bili-space://assets/cache-probe.js"></script></head>'),'https://www.bilibili.com/') if self.testing else self.web.load_uri('https://www.bilibili.com/')
+        self.stack.pack_start(self.web,True,True,0);self.web.show();self.web.load_html((self.resources/'assets/fixture.html').read_text(encoding='utf-8').replace('</head>','<link rel="stylesheet" href="bili-space://assets/cache-probe.css"><script src="bili-space://assets/cache-probe.js"></script></head>'),'https://www.bilibili.com/') if self.testing else self.web.load_uri('https://www.bilibili.com/')
     def resize_edge(self,event):
         if self.window.is_maximized():return None
         w,h=self.window.get_size();x,y=event.x,event.y

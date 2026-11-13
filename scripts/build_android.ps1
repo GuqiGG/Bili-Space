@@ -14,8 +14,8 @@ if ($LASTEXITCODE) { throw "renderer bundle failed: $LASTEXITCODE" }
 $renderer = "$web/renderer.js"
 [IO.File]::WriteAllText($renderer, [IO.File]::ReadAllText($renderer).Replace('bili-space://assets/', 'https://bili-space.local/'), (New-Object Text.UTF8Encoding $false))
 $assets = "$web/assets"; New-Item -ItemType Directory -Force $assets | Out-Null
-foreach ($dir in 'fonts', 'onboarding', 'whats-new', 'web-copy', 'branding') { Copy-Item "$root/assets/$dir" $assets -Recurse -Force }
-foreach ($file in 'tv.svg', 'search-quips.txt', 'startup.html') { Copy-Item "$root/assets/$file" $assets -Force }
+foreach ($dir in 'fonts', 'onboarding', 'whats-new', 'web-copy', 'branding', 'i18n') { Copy-Item "$root/assets/$dir" $assets -Recurse -Force }
+foreach ($file in 'tv.svg', 'search-quips.txt', 'search-quips.zh-TW.txt', 'search-quips.zh-HK.txt', 'search-quips.lolcat.txt', 'startup.html') { Copy-Item "$root/assets/$file" $assets -Force }
 
 $info = Get-Content "$root/assets/app-info.json" -Raw -Encoding utf8 | ConvertFrom-Json
 $info.platform = 'android'; $info.updateUrl = ''

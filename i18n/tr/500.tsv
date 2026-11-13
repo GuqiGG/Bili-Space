@@ -1,0 +1,201 @@
+# idx	en	yue	ja	ko	es	fr	de	ru	pt-BR
+500	Native (no inference)	原生（唔推理）	ネイティブ（推論なし）	원본(추론 안 함)	Nativo (sin inferencia)	Natif (sans inférence)	Nativ (keine Inferenz)	Исходное (без нейросети)	Nativo (sem inferência)
+501	Frame interpolation	補幀模式	フレーム補間	프레임 보간	Interpolación	Interpolation	Zwischenbilder	Интерполяция кадров	Interpolação
+502	Frame generation (Lossless Scaling style)	畫面補幀（Lossless Scaling 式）	フレーム生成（Lossless Scaling 方式）	프레임 생성(Lossless Scaling 방식)	Generación de fotogramas (estilo Lossless Scaling)	Génération d'images (façon Lossless Scaling)	Bildgenerierung (Lossless-Scaling-Stil)	Генерация кадров (как Lossless Scaling)	Geração de quadros (estilo Lossless Scaling)
+503	Interpolation cap	補幀上限	補間の上限	보간 상한	Límite de interpolación	Limite d'interpolation	Obergrenze	Предел интерполяции	Limite de interpolação
+504	Never above the display refresh rate	唔超過螢幕更新率	画面のリフレッシュレートを超えない	화면 주사율을 넘지 않음	Nunca por encima de la tasa de refresco	Jamais au-delà du taux de rafraîchissement	Nie über der Bildwiederholrate	Не выше частоты обновления экрана	Nunca acima da taxa de atualização
+505	Interpolation off	補幀未開	補間はオフ	보간 꺼짐	Interpolación desactivada	Interpolation désactivée	Zwischenbilder aus	Интерполяция выключена	Interpolação desligada
+506	Current processing	而家處理狀態	現在の処理状態	현재 처리 상태	Estado actual	État actuel	Aktueller Status	Текущая обработка	Estado atual
+507	Enter picture-in-picture	入畫中畫	ピクチャーインピクチャーにする	PIP 모드로	Imagen en imagen	Passer en image dans l'image	Bild im Bild starten	Картинка в картинке	Entrar no picture-in-picture
+508	Extensions	擴展	拡張	확장	Extensiones	Extensions	Erweiterungen	Расширения	Extensões
+509	Built-in plugin · settings become draggable floating panels: left-click toggles, right-click expands; Right Shift opens it too	內置插件 · 設定變成拖得郁嘅浮動面板：左撳開關，右撳展開詳情，右 Shift 都打得開	内蔵プラグイン · 設定がドラッグできるフローティングパネルに：左クリックで切替、右クリックで詳細、右 Shift でも開けます	내장 플러그인 · 설정이 끌어 옮길 수 있는 플로팅 패널로: 왼쪽 클릭 전환, 오른쪽 클릭 펼치기, 오른쪽 Shift로도 열기	Complemento integrado · los ajustes pasan a paneles flotantes: clic izquierdo activa, clic derecho despliega; también se abre con Mayús derecha	Extension intégrée · les réglages deviennent des panneaux flottants : clic gauche bascule, clic droit déplie ; Maj droite les ouvre aussi	Eingebautes Plugin · Einstellungen als verschiebbare Panels: Linksklick schaltet, Rechtsklick klappt auf; auch mit rechter Umschalttaste	Встроенный плагин · настройки как плавающие панели: ЛКМ — переключить, ПКМ — подробнее; открывается и правым Shift	Plugin integrado · configurações viram painéis flutuantes: clique esquerdo alterna, clique direito expande; o Shift direito também abre
+510	Thread Ripper	線程撕裂者	スレッドリッパー	스레드리퍼	Thread Ripper	Thread Ripper	Thread Ripper	Thread Ripper	Thread Ripper
+511	Faster buffering over parallel connections · always on	多線路並發加速影片緩衝 · 一直開住	複数回線の並列でバッファを高速化 · 常にオン	여러 연결로 버퍼링 가속 · 항상 켜짐	Búfer más rápido con conexiones paralelas · siempre activo	Mise en mémoire tampon accélérée en parallèle · toujours actif	Schnelleres Puffern über parallele Verbindungen · immer an	Ускоренная буферизация параллельными потоками · всегда вкл.	Buffer mais rápido com conexões paralelas · sempre ativo
+512	Thread Ripper settings	線程撕裂者設定	スレッドリッパーの設定	스레드리퍼 설정	Ajustes de Thread Ripper	Réglages de Thread Ripper	Thread-Ripper-Einstellungen	Настройки Thread Ripper	Configurações do Thread Ripper
+513	Refresh page	重新整理頁面	ページを再読み込み	페이지 새로고침	Recargar página	Actualiser la page	Seite neu laden	Обновить страницу	Recarregar página
+514	One-click block creators	一鍵拉黑 UP主	ワンクリックで投稿者をブロック	원클릭 크리에이터 차단	Bloquear creadores en un clic	Bloquer un créateur en un clic	Creator mit einem Klick blockieren	Блокировка авторов в один клик	Bloquear criadores com um clique
+515	Home page only · synced to your Bilibili blocklist	淨係首頁 · 同步去 B站黑名單	ホームのみ · ビリビリのブロックリストに同期	홈 전용 · 빌리빌리 차단 목록과 동기화	Solo inicio · sincronizado con tu lista de bloqueo	Accueil uniquement · synchronisé avec votre liste de blocage	Nur Startseite · mit Bilibili-Sperrliste synchronisiert	Только главная · синхронизация с чёрным списком	Só no início · sincronizado com sua lista de bloqueio
+516	Home only	首頁限定	ホーム限定	홈 전용	Solo inicio	Accueil seulement	Nur Startseite	Только главная	Só no início
+517	Built-in downloader	內置下載器	内蔵ダウンローダー	내장 다운로더	Descargador integrado	Téléchargeur intégré	Eingebauter Downloader	Встроенный загрузчик	Downloader integrado
+518	Download button on video pages	影片頁顯示下載掣	動画ページにダウンロードボタン	동영상 페이지에 다운로드 버튼	Botón de descarga en los vídeos	Bouton de téléchargement sur les vidéos	Download-Taste auf Videoseiten	Кнопка загрузки на странице видео	Botão de download nos vídeos
+519	Single AVC / AAC videos; no batch, multi-part or anime downloads yet	支援 AVC / AAC 單條片下載，暫時唔支援批量、多段同番劇	AVC / AAC の単体動画に対応。一括・複数パート・アニメは未対応	AVC / AAC 단일 영상만 지원, 일괄·다중 파트·애니는 아직 미지원	Vídeos AVC / AAC individuales; aún sin lotes, partes múltiples ni anime	Vidéos AVC / AAC seules ; pas encore de lot, multi-parties ni anime	Einzelne AVC/AAC-Videos; noch kein Stapel, Mehrteiler oder Anime	Одиночные видео AVC / AAC; пакетная загрузка, многосерийные и аниме пока не поддерживаются	Vídeos AVC / AAC únicos; ainda sem lote, várias partes ou anime
+520	Plugins	插件	プラグイン	플러그인	Complementos	Extensions	Plugins	Плагины	Plugins
+521	-
+522	Appearance	外觀	外観	외관	Apariencia	Apparence	Aussehen	Внешний вид	Aparência
+523	Header & home page	頂欄同首頁	ヘッダーとホーム	헤더 및 홈	Cabecera e inicio	En-tête et accueil	Kopfzeile & Startseite	Шапка и главная	Cabeçalho e início
+524	Window & zoom	視窗同縮放	ウィンドウと拡大率	창 및 확대	Ventana y zoom	Fenêtre et zoom	Fenster & Zoom	Окно и масштаб	Janela e zoom
+525	Playback & mini window	播放同小窗	再生とミニウィンドウ	재생 및 작은 창	Reproducción y miniventana	Lecture et mini-fenêtre	Wiedergabe & Minifenster	Воспроизведение и мини-окно	Reprodução e minijanela
+526	Clipboard	剪貼簿	クリップボード	클립보드	Portapapeles	Presse-papiers	Zwischenablage	Буфер обмена	Área de transferência
+527	Playback progress bar	播放進度條	再生プログレスバー	재생 진행 표시줄	Barra de reproducción	Barre de lecture	Wiedergabe-Fortschrittsbalken	Полоса воспроизведения	Barra de reprodução
+528	items	項	項目	항목	elementos	éléments	Einträge	шт.	itens
+529	Found	認到	検出	감지됨	Detectados	Détectés	Erkannt	Найдено	Detectados
+530	promoted items	個推廣節點	件のプロモーション	개의 홍보 요소	elementos promocionados	éléments sponsorisés	Werbeelemente	рекламных элементов	itens patrocinados
+531	Dark	暗色	ダーク	어둡게	Oscuro	Sombre	Dunkel	Тёмный	Escuro
+532	Black	黑色	黒	검정	Negro	Noir	Schwarz	Чёрный	Preto
+533	Night	夜間	夜間	야간	Noche	Nuit	Nacht	Ночь	Noite
+534	Day	日間	昼間	주간	Día	Jour	Tag	День	Dia
+535	Light	光色	明るい	밝게	Claro	Clair	Hell	Светлый	Claro
+536	Skin	皮膚	スキン	스킨	Aspecto	Habillage	Skin	Скин	Skin
+537	Color scheme	配色	配色	배색	Combinación de colores	Palette	Farbschema	Цветовая схема	Esquema de cores
+538	Color	顏色	色	색상	Color	Couleur	Farbe	Цвет	Cor
+539	Main color	主色	メインカラー	주 색상	Color principal	Couleur principale	Hauptfarbe	Основной цвет	Cor principal
+540	Pink	粉紅	ピンク	분홍	Rosa	Rose	Rosa	Розовый	Rosa
+541	Colors	色彩	色彩	색채	Colores	Couleurs	Farben	Цвета	Cores
+542	Frosted	磨砂	すりガラス	반투명	Esmerilado	Dépoli	Milchglas	Матовый	Fosco
+543	Frosted glass	毛玻璃	すりガラス	간유리	Vidrio esmerilado	Verre dépoli	Milchglas	Матовое стекло	Vidro fosco
+544	Glass	玻璃	ガラス	유리	Vidrio	Verre	Glas	Стекло	Vidro
+545	Transparent	透明	透明	투명	Transparente	Transparent	Transparent	Прозрачный	Transparente
+546	Blur	模糊	ぼかし	흐림	Desenfoque	Flou	Unschärfe	Размытие	Desfoque
+547	Acrylic	亞克力	アクリル	아크릴	Acrílico	Acrylique	Acryl	Акрил	Acrílico
+548	-
+549	Text	文字	文字	글자	Texto	Texte	Text	Текст	Texto
+550	Zoom	縮放	拡大縮小	확대/축소	Zoom	Zoom	Zoom	Масштаб	Zoom
+551	Zoom in	放大	拡大	확대	Ampliar	Agrandir	Vergrößern	Увеличить	Ampliar
+552	Zoom out	縮細	縮小	축소	Reducir	Réduire	Verkleinern	Уменьшить	Reduzir
+553	Size	大細	大きさ	크기	Tamaño	Taille	Größe	Размер	Tamanho
+554	Dimensions	尺寸	寸法	치수	Dimensiones	Dimensions	Abmessungen	Размеры	Dimensões
+555	Ratio	比例	比率	비율	Proporción	Proportion	Verhältnis	Пропорция	Proporção
+556	Volume	音量	音量	음량	Volumen	Volume	Lautstärke	Громкость	Volume
+557	Loudness	響度	ラウドネス	라우드니스	Sonoridad	Intensité sonore	Lautheit	Громкость	Intensidade
+558	Mute	靜音	ミュート	음소거	Silencio	Muet	Stumm	Без звука	Mudo
+559	Save	儲存	保存	저장	Guardar	Enregistrer	Speichern	Сохранить	Salvar
+560	Offline	離線	オフライン	오프라인	Sin conexión	Hors ligne	Offline	Офлайн	Offline
+561	Export	匯出	書き出し	내보내기	Exportar	Exporter	Exportieren	Экспорт	Exportar
+562	Progress	進度	進行状況	진행	Progreso	Progression	Fortschritt	Прогресс	Progresso
+563	Slider	拖動條	スライダー	슬라이더	Control deslizante	Curseur	Schieberegler	Ползунок	Controle deslizante
+564	Slider	滑塊	スライダー	슬라이더	Deslizador	Curseur	Regler	Ползунок	Deslizador
+565	Danmaku	彈幕	弾幕	탄막	Comentarios	Commentaires	Danmaku	Комментарии	Comentários
+566	Comments	評論	コメント	댓글	Comentarios	Commentaires	Kommentare	Комментарии	Comentários
+567	Subtitles	字幕	字幕	자막	Subtítulos	Sous-titres	Untertitel	Субтитры	Legendas
+568	Mini window	小窗	小窓	작은 창	Miniventana	Mini-fenêtre	Minifenster	Мини-окно	Minijanela
+569	Floating	浮動	フローティング	플로팅	Flotante	Flottant	Schwebend	Плавающий	Flutuante
+570	Floating window	浮窗	フローティングウィンドウ	플로팅 창	Ventana flotante	Fenêtre flottante	Schwebendes Fenster	Плавающее окно	Janela flutuante
+571	Always on top	置頂	最前面	항상 위	Siempre encima	Toujours au premier plan	Immer im Vordergrund	Поверх всех окон	Sempre no topo
+572	Navigation	導航	ナビゲーション	탐색	Navegación	Navigation	Navigation	Навигация	Navegação
+573	Title bar	標題欄	タイトルバー	제목 표시줄	Barra de título	Barre de titre	Titelleiste	Заголовок окна	Barra de título
+574	Menu bar	選單欄	メニューバー	메뉴 표시줄	Barra de menús	Barre de menus	Menüleiste	Строка меню	Barra de menus
+575	Header	頭部	ヘッダー	헤더	Cabecera	En-tête	Kopfbereich	Шапка	Cabeçalho
+576	Per row	每行	1 行あたり	한 줄당	Por fila	Par ligne	Pro Zeile	В ряду	Por linha
+577	Columns	列數	列数	열 수	Columnas	Colonnes	Spalten	Колонки	Colunas
+578	How many	幾多個	いくつ	몇 개	Cuántos	Combien	Wie viele	Сколько	Quantos
+579	Video count	影片數	動画数	영상 수	Número de vídeos	Nombre de vidéos	Videoanzahl	Число видео	Número de vídeos
+580	Cards	卡片	カード	카드	Tarjetas	Cartes	Karten	Карточки	Cards
+581	Grid	網格	グリッド	격자	Cuadrícula	Grille	Raster	Сетка	Grade
+582	Proxy	代理	プロキシ	프록시	Proxy	Proxy	Proxy	Прокси	Proxy
+583	Speed up	加速	高速化	가속	Acelerar	Accélérer	Beschleunigen	Ускорение	Acelerar
+584	VPN	梯	VPN	VPN	VPN	VPN	VPN	VPN	VPN
+585	Update	更新	更新	업데이트	Actualizar	Mise à jour	Update	Обновление	Atualizar
+586	Version	版本	バージョン	버전	Versión	Version	Version	Версия	Versão
+587	Upgrade	升級	アップグレード	업그레이드	Mejorar	Mettre à niveau	Upgrade	Обновить	Atualizar
+588	New version	新版	新版	새 버전	Versión nueva	Nouvelle version	Neue Version	Новая версия	Versão nova
+589	Quit	退出	終了	종료	Salir	Quitter	Beenden	Выйти	Sair
+590	Tray	系統匣	トレイ	트레이	Bandeja	Barre système	Tray	Трей	Bandeja
+591	Minimize	最小化	最小化	최소화	Minimizar	Réduire	Minimieren	Свернуть	Minimizar
+592	Background	後台	バックグラウンド	백그라운드	Segundo plano	Arrière-plan	Hintergrund	Фон	Segundo plano
+593	Time	時間	時刻	시간	Hora	Heure	Zeit	Время	Hora
+594	Clock	時鐘	時計	시계	Reloj	Horloge	Uhr	Часы	Relógio
+595	What time	幾點	何時	몇 시	Qué hora	Quelle heure	Uhrzeit	Который час	Que horas
+596	Logo	標誌	ロゴ	로고	Logotipo	Logo	Logo	Логотип	Logotipo
+597	Brand	品牌	ブランド	브랜드	Marca	Marque	Marke	Бренд	Marca
+598	Icon	圖示	アイコン	아이콘	Icono	Icône	Symbol	Значок	Ícone
+599	Scripts	腳本	スクリプト	스크립트	Scripts	Scripts	Skripte	Скрипты	Scripts
+600	Userscripts	油猴	ユーザースクリプト	유저스크립트	Userscripts	Scripts utilisateur	Userskripte	Юзерскрипты	Userscripts
+601	Upscaling	超解析	超解像	업스케일	Escalado	Mise à l'échelle	Hochskalierung	Апскейл	Upscaling
+602	Picture quality	畫質	画質	화질	Calidad de imagen	Qualité d'image	Bildqualität	Качество изображения	Qualidade de imagem
+603	Sharpness	清晰	鮮明さ	선명도	Nitidez	Netteté	Schärfe	Чёткость	Nitidez
+604	Enhance	增強	強化	향상	Mejorar	Améliorer	Verbessern	Улучшение	Melhorar
+605	Frame interpolation	插幀	フレーム補間	프레임 보간	Interpolación	Interpolation	Zwischenbilder	Интерполяция	Interpolação
+606	Frame rate	幀率	フレームレート	프레임 레이트	Fotogramas por segundo	Images par seconde	Bildrate	Частота кадров	Taxa de quadros
+607	Smooth	流暢	なめらか	부드러움	Fluidez	Fluidité	Flüssig	Плавность	Fluidez
+608	-
+609	Frame interpolation	補幀	フレーム補間	프레임 보간	Interpolación	Interpolation	Zwischenbilder	Интерполяция	Interpolação
+610	-
+611	Bounce	回彈	跳ね返り	되튕김	Rebote	Rebond	Rückfederung	Отскок	Ricochete
+612	Bouncy	彈跳	弾む	통통 튀기	Saltarín	Rebondissant	Hüpfend	Прыгучесть	Saltitante
+613	Experimental	實驗	実験	실험	Experimental	Expérimental	Experimentell	Эксперимент	Experimental
+614	Copy	複製	コピー	복사	Copiar	Copier	Kopieren	Копировать	Copiar
+615	Link	連結	リンク	링크	Enlace	Lien	Link	Ссылка	Link
+616	Account	帳號	アカウント	계정	Cuenta	Compte	Konto	Аккаунт	Conta
+617	Sign in	登入	ログイン	로그인	Iniciar sesión	Connexion	Anmelden	Войти	Entrar
+618	Account	帳戶	アカウント	계정	Cuenta	Compte	Konto	Учётная запись	Conta
+619	Switch account	切換帳號	アカウントを切り替え	계정 전환	Cambiar de cuenta	Changer de compte	Konto wechseln	Сменить аккаунт	Trocar de conta
+620	Multiple accounts	多帳號	複数アカウント	다중 계정	Varias cuentas	Plusieurs comptes	Mehrere Konten	Несколько аккаунтов	Várias contas
+621	Window	視窗	ウィンドウ	창	Ventana	Fenêtre	Fenster	Окно	Janela
+622	Traffic lights	紅綠燈	信号機	신호등	Semáforo	Feux tricolores	Ampel	Светофор	Semáforo
+623	Buttons	掣	ボタン	버튼	Botones	Boutons	Tasten	Кнопки	Botões
+624	Maximize	最大化	最大化	최대화	Maximizar	Agrandir	Maximieren	Развернуть	Maximizar
+625	You found an easter egg	發現咗一個彩蛋	隠し要素を見つけました	이스터에그를 찾았어요	Has encontrado un huevo de Pascua	Vous avez trouvé un easter egg	Du hast ein Easter Egg gefunden	Вы нашли пасхалку	Você achou um easter egg
+626	Channel easter egg on	分區彩蛋開咗	カテゴリの隠し要素がオン	카테고리 이스터에그 켜짐	Huevo de Pascua de categorías activado	Easter egg des catégories activé	Kategorie-Easter-Egg an	Пасхалка разделов включена	Easter egg das categorias ativado
+627	Turn on the channel easter egg	開分區彩蛋	カテゴリの隠し要素をオン	카테고리 이스터에그 켜기	Activar el huevo de Pascua de categorías	Activer l'easter egg des catégories	Kategorie-Easter-Egg einschalten	Включить пасхалку разделов	Ativar o easter egg das categorias
+628	Always triggers when channels fold · ends after restarting the client	收分區嗰陣一定觸發 · 重開客戶端就冇	カテゴリを閉じると必ず発動 · 再起動で解除	카테고리를 접을 때 항상 발동 · 재시작하면 해제	Se activa siempre al plegar categorías · termina al reiniciar	Se déclenche toujours en repliant · disparaît au redémarrage	Wird beim Zuklappen immer ausgelöst · endet nach Neustart	Срабатывает при сворачивании разделов · пропадает после перезапуска	Sempre ao recolher as categorias · acaba ao reiniciar
+629	When channels fold, one channel name always gets stuck · ends after restart	收分區嗰陣，總有一個分區字會卡住 · 重開就冇	カテゴリを閉じると、どれか 1 つの文字が引っかかります · 再起動で解除	카테고리를 접을 때 하나는 꼭 걸려요 · 재시작하면 해제	Al plegar, siempre se queda atascado un nombre · termina al reiniciar	En repliant, un nom reste toujours coincé · disparaît au redémarrage	Beim Zuklappen bleibt immer ein Name hängen · endet nach Neustart	При сворачивании одно название всегда застревает · пропадает после перезапуска	Ao recolher, um nome sempre fica preso · acaba ao reiniciar
+630	Found	搵到	見つかりました	찾음	Encontrados	Trouvé	Gefunden	Найдено	Encontrados
+631	similar settings	項相近設定	件の近い設定	개의 비슷한 설정	ajustes parecidos	réglages proches	ähnliche Einstellungen	похожих настроек	configurações parecidas
+632	settings	項設定	件の設定	개 설정	ajustes	réglages	Einstellungen	настроек	configurações
+633	No matching settings	搵唔到相關設定	一致する設定はありません	일치하는 설정 없음	Ningún ajuste coincide	Aucun réglage correspondant	Keine passenden Einstellungen	Подходящих настроек нет	Nenhuma configuração encontrada
+634	Watch Later	遲啲睇	後で見る	나중에 보기	Ver más tarde	À regarder plus tard	Später ansehen	Смотреть позже	Assistir depois
+635	Back to home	返去首頁	ホームに戻る	홈으로	Volver al inicio	Retour à l'accueil	Zur Startseite	На главную	Voltar ao início
+636	Minimize window	縮細視窗	ウィンドウを最小化	창 최소화	Minimizar ventana	Réduire la fenêtre	Fenster minimieren	Свернуть окно	Minimizar janela
+637	Maximize or restore window	最大化或者還原視窗	ウィンドウを最大化 / 元に戻す	창 최대화 또는 복원	Maximizar o restaurar ventana	Agrandir ou restaurer la fenêtre	Fenster maximieren oder wiederherstellen	Развернуть или восстановить окно	Maximizar ou restaurar janela
+638	Maximize or restore	最大化或者還原	最大化 / 元に戻す	최대화 또는 복원	Maximizar o restaurar	Agrandir ou restaurer	Maximieren oder wiederherstellen	Развернуть или восстановить	Maximizar ou restaurar
+639	Page history navigation	頁面歷史導航	ページ履歴の移動	페이지 기록 탐색	Navegación del historial	Navigation dans l'historique	Seitenverlauf	Навигация по истории	Navegação do histórico
+640	Back to the previous page	返去上一頁	前のページに戻る	이전 페이지로	Volver a la página anterior	Revenir à la page précédente	Zurück zur vorherigen Seite	На предыдущую страницу	Voltar à página anterior
+641	Back · Alt	返回 · Alt	戻る · Alt	뒤로 · Alt	Atrás · Alt	Retour · Alt	Zurück · Alt	Назад · Alt	Voltar · Alt
+642	Forward to the next page	去下一頁	次のページへ進む	다음 페이지로	Avanzar a la página siguiente	Aller à la page suivante	Weiter zur nächsten Seite	Вперёд на следующую страницу	Avançar para a próxima página
+643	Forward	前進	進む	앞으로	Adelante	Suivant	Vorwärts	Вперёд	Avançar
+644	Show channels	展開頻道分區	チャンネルカテゴリを表示	채널 카테고리 펼치기	Mostrar canales	Afficher les chaînes	Kanäle anzeigen	Показать разделы	Mostrar canais
+645	Channels	頻道分區	チャンネルカテゴリ	채널 카테고리	Canales	Chaînes	Kanäle	Разделы	Canais
+646	Main navigation	主導航	メインナビ	메인 메뉴	Navegación principal	Navigation principale	Hauptnavigation	Основная навигация	Navegação principal
+647	Current time	而家時間	現在時刻	현재 시간	Hora actual	Heure actuelle	Aktuelle Uhrzeit	Текущее время	Hora atual
+648	Search videos	搜尋影片	動画を検索	동영상 검색	Buscar vídeos	Rechercher des vidéos	Videos suchen	Поиск видео	Pesquisar vídeos
+649	Search what interests you	搜尋你有興趣嘅內容	気になる動画を検索	관심 있는 콘텐츠 검색	Busca lo que te interesa	Recherchez ce qui vous intéresse	Suche, was dich interessiert	Найдите то, что вам интересно	Pesquise o que te interessa
+650	Search	搜尋	検索	검색	Buscar	Rechercher	Suchen	Поиск	Pesquisar
+651	Search history and official suggestions	搜尋紀錄同官方聯想	検索履歴と公式の候補	검색 기록과 공식 추천어	Historial y sugerencias oficiales	Historique et suggestions officielles	Suchverlauf und offizielle Vorschläge	История поиска и официальные подсказки	Histórico e sugestões oficiais
+652	Favorites	收藏夾	お気に入り	즐겨찾기	Favoritos	Favoris	Favoriten	Избранное	Favoritos
+653	My favorites	我嘅收藏夾	マイお気に入り	내 즐겨찾기	Mis favoritos	Mes favoris	Meine Favoriten	Моё избранное	Meus favoritos
+654	Open all favorites	打開完整收藏夾	お気に入りをすべて開く	즐겨찾기 전체 열기	Abrir todos los favoritos	Ouvrir tous les favoris	Alle Favoriten öffnen	Открыть всё избранное	Abrir todos os favoritos
+655	All favorites	全部收藏	すべてのお気に入り	전체 즐겨찾기	Todos los favoritos	Tous les favoris	Alle Favoriten	Всё избранное	Todos os favoritos
+656	Close favorites	閂收藏夾	お気に入りを閉じる	즐겨찾기 닫기	Cerrar favoritos	Fermer les favoris	Favoriten schließen	Закрыть избранное	Fechar favoritos
+657	Favorite folders	收藏夾清單	お気に入りフォルダー	즐겨찾기 폴더	Carpetas de favoritos	Dossiers de favoris	Favoritenordner	Папки избранного	Pastas de favoritos
+658	Message types	訊息分類	メッセージの種類	메시지 분류	Tipos de mensaje	Types de messages	Nachrichtenarten	Типы сообщений	Tipos de mensagem
+659	Replies to me	回覆我嘅	自分への返信	나에게 온 답글	Respuestas a mí	Réponses reçues	Antworten an mich	Ответы мне	Respostas para mim
+660	Mine	我嘅	自分の	내 것	Míos	Les miens	Meine	Мои	Meus
+661	Likes received	收到嘅讚	もらったいいね	받은 좋아요	Me gusta recibidos	J'aime reçus	Erhaltene Likes	Полученные лайки	Curtidas recebidas
+662	System messages	系統訊息	システム通知	시스템 메시지	Mensajes del sistema	Messages système	Systemnachrichten	Системные сообщения	Mensagens do sistema
+663	My messages	我嘅訊息	マイメッセージ	내 메시지	Mis mensajes	Mes messages	Meine Nachrichten	Мои сообщения	Minhas mensagens
+664	Upload	投稿	投稿	업로드	Subir	Publier	Hochladen	Загрузить	Enviar
+665	Upload to Bilibili	投稿去 B站	ビリビリに投稿	빌리빌리에 업로드	Subir a Bilibili	Publier sur Bilibili	Bei Bilibili hochladen	Загрузить на Bilibili	Enviar ao Bilibili
+666	My account	我嘅帳戶資料	マイアカウント	내 계정 정보	Mi cuenta	Mon compte	Mein Konto	Мой аккаунт	Minha conta
+667	Followers	粉絲	フォロワー	팔로워	Seguidores	Abonnés	Follower	Подписчики	Seguidores
+668	Likes	讚好	いいね	좋아요	Me gusta	J'aime	Likes	Лайки	Curtidas
+669	Window controls	視窗控制	ウィンドウ操作	창 제어	Controles de ventana	Contrôles de fenêtre	Fenstersteuerung	Управление окном	Controles da janela
+670	Client settings	客戶端設定	クライアント設定	클라이언트 설정	Ajustes del cliente	Réglages du client	Client-Einstellungen	Настройки клиента	Configurações do cliente
+671	Search client settings	搜尋客戶端設定	クライアント設定を検索	클라이언트 설정 검색	Buscar en los ajustes	Rechercher dans les réglages	Client-Einstellungen durchsuchen	Поиск по настройкам	Pesquisar configurações
+672	Search settings	搜尋設定	設定を検索	설정 검색	Buscar ajustes	Rechercher un réglage	Einstellungen suchen	Поиск настроек	Pesquisar configurações
+673	Matching settings	相關設定	一致する設定	일치하는 설정	Ajustes coincidentes	Réglages correspondants	Passende Einstellungen	Подходящие настройки	Configurações correspondentes
+674	Settings categories	設定分類	設定カテゴリ	설정 분류	Categorías de ajustes	Catégories de réglages	Einstellungskategorien	Разделы настроек	Categorias de configurações
+675	Close settings	閂設定	設定を閉じる	설정 닫기	Cerrar ajustes	Fermer les réglages	Einstellungen schließen	Закрыть настройки	Fechar configurações
+676	Restore default settings	還原預設設定	既定の設定に戻す	기본 설정 복원	Restablecer ajustes	Rétablir les réglages par défaut	Standardeinstellungen wiederherstellen	Восстановить настройки по умолчанию	Restaurar configurações padrão
+677	Easter egg on: open the channels and fold them again	彩蛋開咗：去展開再收埋分區試吓	隠し要素オン：カテゴリを開いて閉じてみて	이스터에그 켜짐: 카테고리를 펼쳤다 접어 보세요	Huevo de Pascua activo: abre y pliega las categorías	Easter egg activé : dépliez puis repliez les catégories	Easter Egg an: Kategorien auf- und wieder zuklappen	Пасхалка включена: раскройте и сверните разделы	Easter egg ativado: abra e recolha as categorias
+678	Restarting…	重開緊…	再起動中…	재시작 중…	Reiniciando…	Redémarrage…	Neustart…	Перезапуск…	Reiniciando…
+679	Default header layout restored	已還原頂欄預設排版	ヘッダーを既定の配置に戻しました	헤더 기본 배치를 복원했어요	Cabecera restablecida	En-tête par défaut rétabli	Kopfzeile zurückgesetzt	Шапка восстановлена	Cabeçalho padrão restaurado
+680	Turn on Thread Ripper and refresh the page first	請先開線程撕裂者再重新整理頁面	先にスレッドリッパーをオンにしてページを再読み込みしてください	먼저 스레드리퍼를 켜고 페이지를 새로고침하세요	Activa Thread Ripper y recarga la página primero	Activez d'abord Thread Ripper puis actualisez	Erst Thread Ripper einschalten und Seite neu laden	Сначала включите Thread Ripper и обновите страницу	Ative o Thread Ripper e recarregue a página primeiro
+681	Switched to	轉咗做	切り替えました：	다음으로 전환:	Cambiado a	Passé à	Gewechselt zu	Переключено на	Alterado para
+682	Takes effect after refreshing the page	重新整理頁面之後生效	ページを再読み込みすると反映されます	새로고침 후 적용	Se aplica al recargar la página	Effet après actualisation	Wirkt nach Neuladen	Применится после обновления страницы	Vale após recarregar a página
+683	Takes effect after restarting	重開之後生效	再起動後に反映されます	재시작 후 적용	Se aplica tras reiniciar	Effet après redémarrage	Wirkt nach Neustart	Применится после перезапуска	Vale após reiniciar
+684	Open a video first, then enter picture-in-picture	先開一條片，再入畫中畫	先に動画を開いてからピクチャーインピクチャーにしてください	먼저 영상을 연 뒤 PIP 모드로 들어가세요	Abre un vídeo antes de usar imagen en imagen	Ouvrez d'abord une vidéo, puis passez en image dans l'image	Erst ein Video öffnen, dann Bild im Bild	Сначала откройте видео, затем «картинка в картинке»	Abra um vídeo antes de entrar no picture-in-picture
+685	Leave fullscreen before entering picture-in-picture	請先退出全螢幕再入畫中畫	全画面を終了してからピクチャーインピクチャーにしてください	전체 화면을 끝낸 뒤 PIP 모드로 들어가세요	Sal de pantalla completa antes de usar imagen en imagen	Quittez le plein écran avant de passer en image dans l'image	Erst Vollbild verlassen, dann Bild im Bild	Выйдите из полноэкранного режима перед «картинкой в картинке»	Saia da tela cheia antes do picture-in-picture
+686	-
+687	-
+688	-
+689	-
+690	Super-resolution components timed out	超解析組件載入逾時	超解像コンポーネントの読み込みがタイムアウトしました	초해상도 구성 요소 로딩 시간 초과	Se agotó el tiempo al cargar la superresolución	Délai dépassé pour la super-résolution	Zeitüberschreitung beim Laden der Super-Resolution	Компоненты суперразрешения не загрузились вовремя	Tempo esgotado ao carregar a super-resolução
+691	Requires a WebGPU graphics card	要 WebGPU 顯示卡支援	WebGPU 対応 GPU が必要です	WebGPU 지원 그래픽 카드 필요	Requiere una tarjeta gráfica con WebGPU	Nécessite une carte graphique WebGPU	Benötigt eine WebGPU-Grafikkarte	Нужна видеокарта с WebGPU	Requer placa de vídeo com WebGPU
+692	No WebGPU graphics card found	搵唔到 WebGPU 顯示卡	WebGPU 対応 GPU が見つかりません	WebGPU 그래픽 카드를 찾을 수 없음	No se encontró una gráfica con WebGPU	Aucune carte graphique WebGPU trouvée	Keine WebGPU-Grafikkarte gefunden	Видеокарта с WebGPU не найдена	Nenhuma placa com WebGPU encontrada
+693	Graphics card was reset:	顯示卡重設咗：	GPU がリセットされました：	그래픽 카드가 재설정됨:	La gráfica se reinició:	Carte graphique réinitialisée :	Grafikkarte zurückgesetzt:	Видеокарта сброшена:	A placa de vídeo foi redefinida:
+694	Canvas unavailable	畫布用唔到	キャンバスを利用できません	캔버스를 사용할 수 없음	Lienzo no disponible	Canevas indisponible	Canvas nicht verfügbar	Холст недоступен	Canvas indisponível
+695	Upscaling: anime model (Anime4K)	超解析：動畫模型（Anime4K）	超解像：アニメモデル（Anime4K）	초해상도: 애니 모델(Anime4K)	Escalado: modelo de anime (Anime4K)	Mise à l'échelle : modèle anime (Anime4K)	Hochskalierung: Anime-Modell (Anime4K)	Апскейл: аниме-модель (Anime4K)	Upscaling: modelo de anime (Anime4K)
+696	Upscaling: general model	超解析：通用模型	超解像：汎用モデル	초해상도: 범용 모델	Escalado: modelo general	Mise à l'échelle : modèle général	Hochskalierung: allgemeines Modell	Апскейл: общая модель	Upscaling: modelo geral
+697	Waiting for video frames	等緊影片幀	映像フレームを待っています	영상 프레임 대기 중	Esperando fotogramas	En attente d'images	Warte auf Videobilder	Ожидание кадров	Aguardando quadros
+698	Interpolation ready, waiting for video frames	補幀準備好，等緊影片幀	補間の準備完了、映像フレームを待っています	보간 준비 완료, 영상 프레임 대기 중	Interpolación lista, esperando fotogramas	Interpolation prête, en attente d'images	Zwischenbilder bereit, warte auf Videobilder	Интерполяция готова, ожидание кадров	Interpolação pronta, aguardando quadros
+699	Anime model Anime4K	動畫模型 Anime4K	アニメモデル Anime4K	애니 모델 Anime4K	Modelo de anime Anime4K	Modèle anime Anime4K	Anime-Modell Anime4K	Аниме-модель Anime4K	Modelo de anime Anime4K

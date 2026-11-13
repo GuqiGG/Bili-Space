@@ -6,6 +6,8 @@ json updateState={{"status","idle"},{"message","尚未检查更新"}};
 std::string ignoredUpdateVersion;
 std::string updateNoticeShownVersion;
 fs::path readyUpdatePackage;
+// Set when a verified package should be installed after the user quits (a small update, or 稍后 on a big one).
+bool installUpdateOnExit=false;
 bool updateGateOrigin(const std::wstring& uri){return updateGateShown&&(uri==L"about:blank"||uri.rfind(L"data:text/html;charset=utf-8;base64,",0)==0);}
 std::string updateFileHash(const fs::path& file);
 #ifdef BILI_UPDATE_TEST
@@ -16,7 +18,8 @@ void updateLog(const std::string& message){
     try{fs::create_directories(dataPath/L"updates");SYSTEMTIME t{};GetSystemTime(&t);char stamp[32];snprintf(stamp,sizeof(stamp),"%04d-%02d-%02dT%02d:%02d:%02dZ",t.wYear,t.wMonth,t.wDay,t.wHour,t.wMinute,t.wSecond);std::ofstream(dataPath/L"updates/update.log",std::ios::app|std::ios::binary)<<stamp<<" "<<message<<'\n';}catch(...){}
 }
 void saveUpdateJson(const fs::path& file,const json& value){auto tmp=file;tmp+=L".tmp";{std::ofstream f(tmp,std::ios::binary);f<<value.dump(2);if(!f)throw std::runtime_error("无法保存更新状态");}if(!MoveFileExW(tmp.c_str(),file.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("无法写入更新状态");}
-json updatePayload(){auto payload=updateState;payload["prompt"]=payload.value("available",false)&&!payload.value("required",false)&&!payload.value("ignored",false)&&payload.value("version",std::string{})!=updateNoticeShownVersion;return payload;}
+// Only a big update that is already downloaded asks; a small one never interrupts.
+json updatePayload(){auto payload=updateState;payload["onExit"]=installUpdateOnExit;payload["prompt"]=payload.value("available",false)&&!payload.value("required",false)&&!payload.value("ignored",false)&&!payload.value("silent",false)&&payload.value("ready",false)&&!installUpdateOnExit&&payload.value("version",std::string{})!=updateNoticeShownVersion;return payload;}
 void pushUpdateState(){const auto payload=updatePayload();executeEverywhere("window.BiliSpace?.acceptUpdateStatus("+payload.dump()+");window.renderUpdate?.("+payload.dump()+")");}
 void showRequiredUpdate(){
     if(!webview||updateGateShown)return;updateGateShown=true;startupTarget.clear();KillTimer(windowHandle,73);cancelDownload();execute("document.querySelectorAll('video,audio').forEach(v=>v.pause())");
@@ -106,9 +109,12 @@ void acceptUpdate(const json& reply){
         const bool wasRequired=updateRequired;updateRequired=required;readyUpdatePackage.clear();updateState=value;updateState["busy"]=false;updateState["ignored"]=!required&&value["version"]==ignoredUpdateVersion;
         updateState["status"]=required?"required":value["available"]==true?"available":"current";
         updateState["message"]=required?"必须更新后才能继续使用":value["available"]==true?(updateState["ignored"]==true?"已忽略此版本，可手动下载":"发现新版本"):"当前已是最新版本";
-        if(value.value("ready",false)&&value.value("available",false)){readyUpdatePackage=dataPath/L"updates"/wide("Bili-Space-"+value.at("version").get<std::string>()+"-Setup.exe");updateState["message"]="更新已就绪，点击安装并重启。";}
+        if(value.value("ready",false)&&value.value("available",false)){readyUpdatePackage=dataPath/L"updates"/wide("Bili-Space-"+value.at("version").get<std::string>()+"-Setup.exe");updateState["message"]="更新已就绪，点击安装并重启。";if(value.value("silent",false)&&!updateState.value("ignored",false))installUpdateOnExit=true;}
         updateLog(std::string(required?"required ":"checked ")+value.at("version").get<std::string>());if(required)showRequiredUpdate();else if(wasRequired){updateGateShown=false;if(webview)webview->Navigate(L"https://www.bilibili.com/");}
-    }else if(event=="ready"){readyUpdatePackage=wide(reply.at("path").get<std::string>());updateState["ready"]=true;updateState["message"]="更新已就绪，点击安装并重启。";updateLog("download verified "+utf8(readyUpdatePackage.filename().wstring()));}
+        // Everything that is not required downloads by itself; nothing restarts on its own.
+        if(!required&&value.value("available",false)&&!value.value("ready",false)&&!updateState.value("ignored",false)&&updateState.contains("setupUrl")&&!testing){pushUpdateState();startUpdateDownload();return;}
+    }else if(event=="ready"){readyUpdatePackage=wide(reply.at("path").get<std::string>());updateState["ready"]=true;updateState["message"]="更新已就绪，点击安装并重启。";updateLog("download verified "+utf8(readyUpdatePackage.filename().wstring()));
+        if(updateState.value("silent",false)){installUpdateOnExit=true;updateState["message"]="小更新已下载，下次打开客户端时就是新版本。";updateLog("silent update waits for exit");}}
     else{updateState["message"]=reply.value("message",std::string("更新失败"));updateState["status"]=updateRequired?"required":"error";updateLog("error "+updateState["message"].get<std::string>());}
     pushUpdateState();
 }
@@ -123,6 +129,7 @@ void updateAction(const std::string& action,const std::string& version={}){
     else if(action=="download")startUpdateDownload();
     else if(action=="ignore"&&!updateRequired&&!updateBusy&&updateState.value("available",false)){ignoredUpdateVersion=updateState.at("version").get<std::string>();try{saveUpdateJson(dataPath/L"updates/preferences.json",{{"ignoredVersion",ignoredUpdateVersion}});updateState["ignored"]=true;updateState["message"]="已忽略此版本，后续新版本仍会提醒";updateLog("ignored "+ignoredUpdateVersion);}catch(...){updateState["message"]="保存忽略设置失败";}pushUpdateState();}
     else if(action=="install")startUpdateInstall();
+    else if(action=="later"&&!readyUpdatePackage.empty()&&updateState.value("ready",false)){installUpdateOnExit=true;updateState["message"]="退出客户端时会自动安装，下次打开就是新版本。";updateLog("update deferred to exit");pushUpdateState();}
     else if(action=="log"){updateLog("log viewed");ShellExecuteW(windowHandle,L"open",(dataPath/L"updates/update.log").c_str(),nullptr,nullptr,SW_SHOWNORMAL);}
     else if(action=="exit")PostMessageW(windowHandle,WM_CLOSE,0,0);
 }
