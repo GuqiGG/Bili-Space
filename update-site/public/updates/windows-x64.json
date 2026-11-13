@@ -2,17 +2,18 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.68",
+  "version": "0.1.69",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
   "silent": true,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.68-win64.zip",
-  "sha256": "077e08cff91163ef9d5560c81286718eb2304da4cee651646aec552a10f00763",
-  "size": 36958207,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.68/Bili-Space-0.1.68-Setup.exe",
-  "setupSha256": "1d2060da99e4a624400276743b1b6ed5526b9a939351ae285b8edcc05199ca99",
-  "setupSize": 28434202,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.69-win64.zip",
+  "sha256": "002546e0a14b9831ce9846b6745787a2a213a7d38c2e3bd8ed70ed3d51cd5fc4",
+  "size": 36967074,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.69/Bili-Space-0.1.69-Setup.exe",
+  "setupSha256": "676413b970a73ac8d8c8b2fad505ada6ad75ee50e92d5700820127e113b37a8c",
+  "setupSize": 28440309,
   "changelog": [
-    "修复：稍后再看设成跳转到普通视频页时，从视频点视频栏里的主页会闪一下又跳回视频的问题"
+    "新增视频线路：扩展插件 → 线程撕裂者下面可以选大陆节点、海外节点或指定节点，还能测速、一键选最快的 3 个",
+    "修复：UP 主更新通知弹出的卡片一片空白、点不动的问题"
   ]
 }
