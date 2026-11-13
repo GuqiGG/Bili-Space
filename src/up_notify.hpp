@@ -9,7 +9,7 @@ constexpr UINT_PTR animTimer=1;
 double ease(double t,bool out){return out?t*t*t:1-std::pow(1-t,3);}
 // Only the part inside the work area is drawn while it slides, so it appears from the screen edge, not over the next monitor.
 void place(int x){
-    if(!window)return;SetWindowPos(window,HWND_TOPMOST,x,finalY,width,height,SWP_NOACTIVATE);
+    if(!window)return;SetWindowPos(window,HWND_TOPMOST,x,finalY,width,height,SWP_NOACTIVATE);if(ctl)ctl->NotifyParentWindowPositionChanged();
     if(x==finalX){SetWindowRgn(window,nullptr,TRUE);return;}
     const int visible=std::max(0,int(work.right)-x);SetWindowRgn(window,CreateRectRgn(0,0,std::min(visible,width),height),TRUE);
 }
@@ -37,7 +37,8 @@ void message(const json& m){
     const auto type=m.value("type",std::string{});
     if(type=="ready"){ready=true;deliver();}
     else if(type=="height"){const int dip=std::clamp(m.value("height",0),40,520);const bool first=!IsWindowVisible(window);layout(dip);
-        if(first){place(work.right);ShowWindow(window,SW_SHOWNOACTIVATE);animate(finalX,360,false);}else if(!leaving){KillTimer(window,animTimer);place(finalX);}}
+        // The view was made while its window was hidden; once the window is on screen it must be told to show and draw.
+        if(first){place(work.right);ShowWindow(window,SW_SHOWNOACTIVATE);if(ctl){ctl->put_IsVisible(FALSE);ctl->put_IsVisible(TRUE);RECT b{0,0,width,height};ctl->put_Bounds(b);ctl->NotifyParentWindowPositionChanged();}animate(finalX,360,false);}else if(!leaving){KillTimer(window,animTimer);place(finalX);}}
     else if(type=="close"){if(window&&!leaving)animate(work.right,240,true);}
     else if(type=="open"){const auto bvid=m.value("bvid",std::string{});if(!std::regex_match(bvid,std::regex("BV[0-9A-Za-z]{10}")))return;
         const std::wstring uri=L"https://www.bilibili.com/video/"+wide(bvid)+L"/";restoreFromTray();
