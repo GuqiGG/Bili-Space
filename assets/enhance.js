@@ -2510,6 +2510,34 @@ async function checkUpUpdates(){
 }
 async function testUpNotify(){const items=(await upFeed()).slice(0,2);if(items.length)native('up-notify',upNotifyPayload(items));return items.length;}
 if(CHROME_VIEW){setTimeout(checkUpUpdates,45000);setInterval(checkUpUpdates,4*60*1000);}
+// 视频线路 (CDN choice): the thread ripper already downloads from several of Bilibili's video servers at once; this picks
+// which ones, through its own settings (its mode and customHosts, kept in the GM "sync" value). The hosts are the ones the
+// thread ripper itself knows. Latency is the time to the first reply from each server's root (it answers at once, without a
+// video), the best available measure before a video is open. Changes reach newly opened videos.
+const CDN_NODES=[['upos-sz-mirrorali.bilivideo.com','阿里云'],['upos-sz-mirrorcos.bilivideo.com','腾讯云'],['upos-sz-mirrorcoso1.bilivideo.com','腾讯云 2'],['upos-sz-mirrorhw.bilivideo.com','华为云'],['upos-sz-mirrorbd.bilivideo.com','百度云'],['upos-sz-mirrorbos.bilivideo.com','百度智能云 BOS'],['upos-sz-mirror08c.bilivideo.com','08c'],['upos-sz-mirror14b.bilivideo.com','14b'],['upos-sz-estgoss.bilivideo.com','estgoss'],['upos-sz-mirroraliov.bilivideo.com','阿里云 · 海外'],['upos-sz-mirrorcosov.bilivideo.com','腾讯云 · 海外'],['cn-hk-eq-01-01.bilivideo.com','香港 01'],['cn-hk-eq-01-03.bilivideo.com','香港 03']];
+let cdnLatency={};
+function btrSync(){let v;try{v=typeof gmValues!=='undefined'?gmValues.sync:GM_INITIAL?.sync;}catch{}if(typeof v==='string')try{v=JSON.parse(v);}catch{v=null;}return v&&typeof v==='object'?v:{};}
+function saveBtrSync(patch){const next={...btrSync(),...patch};GM.setValue('sync',JSON.stringify(next));return next;}
+function cdnRows(){
+  const b=btrSync(),mode=['overseas','custom'].includes(b.mode)?b.mode:'mainland',chosen=new Set(Array.isArray(b.customHosts)?b.customHosts:[]);
+  const nodes=[...CDN_NODES].sort((x,y)=>(cdnLatency[x[0]]??1e9)-(cdnLatency[y[0]]??1e9));
+  return `<div class="section-label">视频线路</div><div class="row"><label for="cdn-mode">下载视频用的服务器<span class="hint">线程撕裂者从这些 B 站服务器同时下载 · 重新打开视频后生效</span></label><select id="cdn-mode" style="max-width:220px">${[['mainland','自动 · 大陆节点'],['overseas','自动 · 海外节点'],['custom','指定节点']].map(([v,t])=>`<option value="${v}" ${v===mode?'selected':''}>${t}</option>`).join('')}</select></div>`+
+    `<div id="cdn-custom" ${mode==='custom'?'':'hidden'}>${nodes.map(([h,n])=>{const ms=cdnLatency[h];return `<div class="row"><label for="cdn-${h}">${escapeHtml(n)}<span class="hint">${h}</span></label><span class="status" style="margin-left:auto;margin-right:12px">${ms==null?'':ms<0?'超时':ms+' ms'}</span><input id="cdn-${h}" type="checkbox" data-cdn-host="${h}" ${chosen.has(h)?'checked':''}></div>`;}).join('')}</div>`+
+    `<div class="actions"><button id="cdn-test" class="link">测速</button>${mode==='custom'?'<button id="cdn-fastest" class="link">选最快的 3 个</button>':''}<span class="status" id="cdn-status"></span></div>`;
+}
+async function cdnProbe(host){
+  let best=-1;for(let i=0;i<3;i++){const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),3000),start=performance.now();
+    try{await fetch(`https://${host}/?bs-probe=${Date.now()}${i}`,{mode:'no-cors',cache:'no-store',signal:ctl.signal,credentials:'omit',referrerPolicy:'no-referrer'});const ms=Math.round(performance.now()-start);if(best<0||ms<best)best=ms;}catch{}clearTimeout(t);}
+  return best;
+}
+async function cdnTest(){
+  const line=shadow&&$('#cdn-status',shadow);if(line)line.textContent='正在测速…';
+  const results=await Promise.all(CDN_NODES.map(async([h])=>[h,await cdnProbe(h)]));cdnLatency=Object.fromEntries(results);
+  if(shadow&&$('#cdn-mode',shadow))renderSettings();
+  const ok=results.filter(([,ms])=>ms>=0).sort((a,b)=>a[1]-b[1]);
+  toast(ok.length?`测速完成，最快的是 ${CDN_NODES.find(n=>n[0]===ok[0][0])[1]}（${ok[0][1]} ms）`:'所有节点都没有响应');
+  return results;
+}
 function showOnboarding(){
   const renewed=!(typeof RUNTIME!=='undefined'&&RUNTIME.firstRun);
   const still=matchMedia('(prefers-reduced-motion: reduce)').matches,EASE='cubic-bezier(.32,.72,0,1)';
@@ -2654,7 +2682,7 @@ function tabContent(tab=currentTab){
     `<div class="row block-list"><label for="block-users">屏蔽用户名<span class="hint">一行一个，昵称完全一样才屏蔽</span></label><textarea id="block-users" data-block-list="commentBlockUsers" rows="4" spellcheck="false" placeholder="一行一个用户名">${escapeHtml((PREFS.commentBlockUsers||[]).join('\n'))}</textarea></div>`+
     `<div class="row block-list"><label for="block-words">屏蔽词<span class="hint">一行一个，评论里出现就屏蔽</span></label><textarea id="block-words" data-block-list="commentBlockWords" rows="4" spellcheck="false" placeholder="一行一个词">${escapeHtml((PREFS.commentBlockWords||[]).join('\n'))}</textarea></div>`;
   if(tab==='play')return withoutVideoAi(`<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">WebGPU · 每个源帧只计算一次</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srModel">超分模型<span class="hint">自动：番剧、国创、动画区用动画模型，其余用通用模型</span></label><select id="pref-srModel" data-pref="srModel"><option value="auto">自动识别</option><option value="anime">动画（Anime4K）</option><option value="general">通用</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">画面补帧（Lossless Scaling 式）</option></select></div><div class="row"><label for="pref-fiFps">补帧上限<span class="hint">不超过屏幕刷新率</span></label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option><option value="144">144 fps</option><option value="240">240 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`);
-  return `<div class="compact-tab"><h2>扩展</h2>${toggle('clickGui','悬浮设置面板','内置插件 · 设置变成可拖动的悬浮面板：左键开关，右键展开详情，右 Shift 也能打开')}<div class="row"><label for="pref-btr">Bilibili 线程撕裂者<span class="hint">多线路并发加速视频缓冲 · 始终开启</span></label><input id="pref-btr" type="checkbox" checked disabled aria-describedby="btr-locked"></div><div class="actions"><button id="btr-settings" class="link">线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div><div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器</div>${toggle('downloader','视频页显示下载按钮','支持 AVC / AAC 单视频下载，暂不支持批量、多段与番剧')}<div class="section-label">插件</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本 主题"></div></div>`;
+  return `<div class="compact-tab"><h2>扩展</h2>${toggle('clickGui','悬浮设置面板','内置插件 · 设置变成可拖动的悬浮面板：左键开关，右键展开详情，右 Shift 也能打开')}<div class="row"><label for="pref-btr">Bilibili 线程撕裂者<span class="hint">多线路并发加速视频缓冲 · 始终开启</span></label><input id="pref-btr" type="checkbox" checked disabled aria-describedby="btr-locked"></div><div class="actions"><button id="btr-settings" class="link">线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div>${cdnRows()}<div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器</div>${toggle('downloader','视频页显示下载按钮','支持 AVC / AAC 单视频下载，暂不支持批量、多段与番剧')}<div class="section-label">插件</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本 主题"></div></div>`;
 }
 const settingsGroupsOpen=new Map();
 function organizeSettings(panel){
@@ -2810,7 +2838,9 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
     if(b?.id==='reset')showResetConfirmation();
     if(b?.id==='header-reset'){update(Object.fromEntries(HEADER_ITEMS.map(([key])=>[key,true])));toast('已恢复顶部默认布局');}
     if(b?.id==='rescan'){markAds();renderSettings();}
-    if(b?.id==='feedback-open'){openFeedback();return;}if(b?.id==='whats-new-open'){closeSettings();openWhatsNew();return;}if(b?.id==='share-open'){closeSettings();showShare();return;}if(b?.id==='btr-settings'){closeSettings();if(!PREFS.btr)toast('请先开启线程撕裂者并刷新页面');else document.dispatchEvent(new CustomEvent('btr-userscript-open-settings'));}
+    if(b?.id==='feedback-open'){openFeedback();return;}if(b?.id==='whats-new-open'){closeSettings();openWhatsNew();return;}if(b?.id==='share-open'){closeSettings();showShare();return;}if(b?.id==='cdn-test'){cdnTest();return;}
+    if(b?.id==='cdn-fastest'){const fast=Object.entries(cdnLatency).filter(([,ms])=>ms>=0).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([h])=>h);if(!fast.length){toast('先点「测速」');return;}saveBtrSync({mode:'custom',customHosts:fast});renderSettings();toast('已选最快的 '+fast.length+' 个节点，重新打开视频后生效');return;}
+    if(b?.id==='btr-settings'){closeSettings();if(!PREFS.btr)toast('请先开启线程撕裂者并刷新页面');else document.dispatchEvent(new CustomEvent('btr-userscript-open-settings'));}
     if(b?.id==='reload')native('window',{action:'reload'});
     if(b?.id==='pip-action'){closeSettings();requestPip();}
     if(b?.id==='downloader-check'){native('downloader',{action:'status'});}
@@ -2818,7 +2848,10 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
     if(b?.id==='downloader-open')native('downloader',{action:'open'});
     if(b?.id==='downloader-browse')native('downloader',{action:'browse'});
   });
-  shadow.addEventListener('change',e=>{const list=e.target?.dataset?.blockList;if(list){const lines=[...new Set(e.target.value.split(/\r?\n/).map(x=>x.trim()).filter(x=>x&&x.length<=60))].slice(0,300);update({[list]:lines});e.target.value=lines.join('\n');toast(lines.length?`已保存 ${lines.length} 条`:'已清空');return;}
+  shadow.addEventListener('change',e=>{
+    if(e.target?.id==='cdn-mode'){saveBtrSync({mode:e.target.value});renderSettings();toast('已保存，重新打开视频后生效');return;}
+    if(e.target?.dataset?.cdnHost){const hosts=new Set(btrSync().customHosts||[]);if(e.target.checked)hosts.add(e.target.dataset.cdnHost);else hosts.delete(e.target.dataset.cdnHost);saveBtrSync({mode:'custom',customHosts:[...hosts]});toast(hosts.size?`已选 ${hosts.size} 个节点，重新打开视频后生效`:'一个都没选时按大陆节点自动选择');return;}
+    const list=e.target?.dataset?.blockList;if(list){const lines=[...new Set(e.target.value.split(/\r?\n/).map(x=>x.trim()).filter(x=>x&&x.length<=60))].slice(0,300);update({[list]:lines});e.target.value=lines.join('\n');toast(lines.length?`已保存 ${lines.length} 条`:'已清空');return;}
     if(e.target?.dataset?.pref==='settingsZoom')update({settingsZoom:Math.min(160,Math.max(80,Math.round(Number(e.target.value)||100)))});});
   shadow.addEventListener('input',e=>{
     const el=e.target;
