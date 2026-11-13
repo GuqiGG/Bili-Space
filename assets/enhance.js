@@ -2174,7 +2174,7 @@ function swipeSlot(i){
     if(!v.dataset.bsSwipe){v.dataset.bsSwipe='1';v.addEventListener('ended',()=>{if(swipe&&swipe.slots.get(swipe.index)===slot)swipeGo(1);});v.addEventListener('play',()=>{if(swipe&&swipe.slots.get(swipe.index)!==slot)v.pause();});}
     if(swipe.slots.get(swipe.index)===slot){swipeProgress();swipeSyncDanmakuToggle();if(swipe.comments&&(slot.tick=(slot.tick||0)+1)%4===0){swipeStyleComments(doc);filterComments(doc.querySelector('#commentapp bili-comments'));}}
     if(swipe.slots.get(swipe.index)!==slot){if(!v.paused)v.pause();slot.preloaded=true;}
-    else if(!slot.started&&v.readyState>=2){slot.started=true;if(slot.preloaded&&v.currentTime<3)v.currentTime=0;v.play().catch(()=>{});if(PREFS.fiMode!=='off'||PREFS.srMode!=='off')startEnhancer();}
+    else if(!slot.started&&v.readyState>=2){slot.started=true;if(slot.preloaded&&v.currentTime<3)v.currentTime=0;swipePlay(slot,true);if(PREFS.fiMode!=='off'||PREFS.srMode!=='off')startEnhancer();}
     if(!slot.ready&&v.readyState>=2&&slot.styled){slot.ready=true;el.classList.add('ready');if(swipe.slots.get(swipe.index)===slot)swipeEnsure();}
   },120);
   return slot;
@@ -2208,7 +2208,7 @@ async function swipeGo(step){
   if(swipe.comments)swipeComments(false);
   swipe.moving=true;const old=swipe.slots.get(swipe.index);const ov=old&&swipeVideo(old);if(ov&&!ov.paused)ov.pause();
   swipe.index=to;swipe.arrivedAt=performance.now();swipeEnsure();swipeRenderInfo();
-  requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();swipePark();const cur=swipe.slots.get(swipe.index),v=cur&&swipeVideo(cur);if(v&&cur.ready)v.play().catch(()=>{});},470);});
+  requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();swipePark();const cur=swipe.slots.get(swipe.index);if(cur?.ready)swipePlay(cur,true);},470);});
 }
 // The current video, the one before it and the next two exist; anything further away is dropped (frames are whole
 // pages). The second one down starts once the current one shows a picture, or 600ms after arriving, whichever is first,
@@ -2296,7 +2296,11 @@ async function openSwipe(){
   swipeEnsure();swipePlace(false);swipePark();swipeRenderInfo();
 }
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
-function swipeTogglePlay(){const v=swipe&&swipeVideo(swipe.slots.get(swipe.index));if(!v)return;if(v.paused)v.play().catch(()=>{});else v.pause();}
+// Play and pause go through the page's own player, so its state (and the centre mark) matches the picture; the bare
+// element is the fallback.
+function swipePlay(slot,on){const v=swipeVideo(slot);if(!v)return;let p;try{p=slot.frame.contentWindow?.player;}catch{}
+  try{if(p?.play&&p?.pause){on?p.play():p.pause();return;}}catch{}if(on)v.play().catch(()=>{});else v.pause();}
+function swipeTogglePlay(){const slot=swipe?.slots.get(swipe.index),v=slot&&swipeVideo(slot);if(!v)return;swipePlay(slot,v.paused);}
 function swipeToggleMore(){
   const ui=swipe.ui,info=$('.bs-swipe-info',ui),desc=$('.bs-swipe-desc',ui),open=!ui.classList.contains('expanded');
   info.getAnimations().forEach(a=>a.cancel());desc.getAnimations().forEach(a=>a.cancel());
