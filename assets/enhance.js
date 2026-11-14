@@ -78,7 +78,11 @@ let root, shadow, style, currentTab='appearance', lastFocus, scanTimer, gpu, int
 let status='未开启', pipActive=false, fullActive=false;
 let downloaderInfo={installed:false,mcp:false,running:false,message:'正在检测下载器…'};
 const pipHiddenHosts=new Map();
-let revision=0;
+// Each view numbers its own setting changes; the native echo carries the sender's id, so a view only skips an echo of
+// its own older change (a dragged slider) and never a change made in another view - the header's settings panel and the
+// page count separately, and comparing one's number with the other's dropped every panel change once the page had
+// saved anything itself (the per-row setting then never reached the feed).
+let revision=0;const VIEW_ID=Math.random().toString(36).slice(2,12);
 let routeKey='', loadingTimer, accountRequest, accountChecked=0;
 let homeLoadWakeKey='',homeLoadWakeTimer,homeLoadRetryTimer;
 const mediaTheme=matchMedia('(prefers-color-scheme: dark)');
@@ -1259,7 +1263,7 @@ function applyPreferences() {root?.style.setProperty('--bs-settings-zoom',String
 function update(patch) {
 
   const before=PREFS.srMode+PREFS.srScale+PREFS.srModel;
-  const langBefore=uiLanguage();Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision});
+  const langBefore=uiLanguage();Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision,origin:VIEW_ID});
   if('language' in patch&&uiLanguage()!==langBefore){setLanguage(uiLanguage());if(!PREFS.languageChosen)update({languageChosen:true});}
   if(before!==PREFS.srMode+PREFS.srScale+PREFS.srModel||'fiMode' in patch)startEnhancer();
   if('downloader' in patch)mountVideoHome();
@@ -3495,7 +3499,7 @@ function boot(){
     downloadStarted(){const button=$('#bili-space-video-download');if(button?.dataset.state==='busy'){downloadCancelling=false;$('span',button).textContent='下载中';const cancel=$('#bili-space-download-cancel');if(cancel){cancel.dataset.started='true';cancel.hidden=false;cancel.disabled=false;}downloadDisplay('0% · 0 B/s · 预计剩余 计算中');}},
     downloadResult(result){settleDownload(Boolean(result?.ok),String(result?.message||''));},
     downloaderNotice(text){toast(String(text||''));},
-    acceptConfig(next,ack){if(ack<revision)return;const langBefore=uiLanguage();Object.assign(PREFS,next);applyPreferences();if(uiLanguage()!==langBefore)setLanguage(uiLanguage());},
+    acceptConfig(next,ack,origin){if(origin===VIEW_ID&&ack<revision)return;const langBefore=uiLanguage();Object.assign(PREFS,next);applyPreferences();if(uiLanguage()!==langBefore)setLanguage(uiLanguage());},
     setPip(on){
       pipActive=on;document.documentElement.dataset.bsPip=String(on);root.style.display=on?'none':'';syncPipPresentation();
       // Upstream hosts use inline all:initial!important; a stylesheet cannot override it.

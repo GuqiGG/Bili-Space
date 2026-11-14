@@ -472,6 +472,7 @@ void setSurface(bool dark){surfaceDark=dark;if(surfaceWaiting)InvalidateRect(win
 // The page zoom the user set by hand, as a factor on top of the client's own zoom; kept across resizes, maximize,
 // fullscreen and settings changes instead of being reset by them.
 double manualZoom=1,zoomBase=1,zoomApplied=1;
+std::string lastConfigOrigin;int lastConfigRevision=0;
 bool configDirty=false;void flushConfig(){if(!configDirty)return;configDirty=false;KillTimer(windowHandle,7772);save();refreshInjection();}
 // A Ctrl+wheel step glides from the shown zoom to the new one (ease-out, ~200ms) instead of jumping.
 bool zoomDeferred=false,zoomAnimating=false;double zoomFrom=1,zoomTo=1;ULONGLONG zoomStart=0;ICoreWebView2Controller* zoomCtl=nullptr;
@@ -778,7 +779,9 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             mergeConfig(changed);configDirty=true;SetTimer(windowHandle,7772,800,nullptr);if(zoomChanged){if(changed.contains("zoom"))manualZoom=1;applyZoom();}
             if(m.at("value").contains("proxyAll")){flushConfig();proxyAction("reload","","");}
             log("config saved: "+m.at("value").dump());
-            chromeAcceptConfig();dockSync();execute("window.BiliSpace?.acceptConfig("+config.dump()+","+std::to_string(m.value("revision",0))+")");
+            // The sender's id goes back with the echo: only the view that made the change compares revisions (see enhance.js).
+            std::string origin=m.value("origin",std::string{});if(origin.size()>16||!std::all_of(origin.begin(),origin.end(),[](char c){return std::isalnum((unsigned char)c);}))origin.clear();lastConfigOrigin=origin;lastConfigRevision=m.value("revision",0);
+            chromeAcceptConfig();dockSync();execute("window.BiliSpace?.acceptConfig("+config.dump()+","+std::to_string(m.value("revision",0))+","+json(origin).dump()+")");
         }else if(type=="gm-set"){
             auto key=m.value("key",std::string{});
             if((key=="sync"||key=="local")&&m.contains("value")){gm[key]=m["value"];save();refreshInjection();}
@@ -891,7 +894,7 @@ void chromeRescript(){chromeHost::rescript();}
 void pluginsBroadcast(const std::string& js){auto w=wide(js);for(auto t:tabs)if(t->view&&!t->closed)t->view->ExecuteScript(w.c_str(),nullptr);if(chromeHost::view)chromeHost::view->ExecuteScript(w.c_str(),nullptr);}
 void pluginsReloadViews(){if(activeTab&&activeTab->view)activeTab->view->Reload();if(chromeHost::view)chromeHost::view->Reload();}
 void chromeStep(int direction){if(chromeHost::view&&chromeHost::ready)chromeHost::view->ExecuteScript(direction<0?L"window.BiliSpace?.chromeStep?.('back')":L"window.BiliSpace?.chromeStep?.('forward')",nullptr);}
-void chromeAcceptConfig(){if(chromeHost::view&&webview!=chromeHost::view)chromeHost::view->ExecuteScript(wide("window.BiliSpace?.acceptConfig?.("+config.dump()+",0)").c_str(),nullptr);}
+void chromeAcceptConfig(){if(chromeHost::view&&webview!=chromeHost::view)chromeHost::view->ExecuteScript(wide("window.BiliSpace?.acceptConfig?.("+config.dump()+","+std::to_string(lastConfigRevision)+","+json(lastConfigOrigin).dump()+")").c_str(),nullptr);}
 // Work no page here needs: SmartScreen reputation lookups (an extra request on every navigation, for a client that only
 // opens Bilibili) and address/card form autofill parsing on every page. Saved passwords are left as they are.
 void lightenSettings(ICoreWebView2Settings* settings){

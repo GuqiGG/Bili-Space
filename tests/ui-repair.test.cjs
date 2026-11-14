@@ -29,3 +29,14 @@ test('reused search cards discard stale advertising markers',async()=>{
  await new Promise(r=>setTimeout(r,300));assert.equal(card.dataset.bsAd,undefined);
  }finally{a.close();}
 });
+test('a setting changed in another view applies even after this view saved its own changes',()=>{
+ const a=app();try{
+ for(let i=0;i<5;i++)a.w.BiliSpace.update({volumeBoost:100+i});
+ const mine=a.messages.filter(m=>m.type==='config').pop();assert(mine.origin);
+ a.w.BiliSpace.acceptConfig({feedColumns:8},1,'otherview1');
+ assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:8}/);
+ // an echo of this view's own older change is still skipped
+ a.w.BiliSpace.acceptConfig({feedColumns:2},mine.revision-1,mine.origin);
+ assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:8}/);
+ }finally{a.close();}
+});
