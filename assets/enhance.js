@@ -390,35 +390,39 @@ function mountHomeBanner(){
     }
   }
 }
+// Writes only what changed, and reads styles only after every write: setting a card's markers and then asking for its
+// style straight away made the browser recompute styles once per card, hundreds of times each time the feed grew.
+const setData=(el,key,value)=>{if(el.dataset[key]!==value)el.dataset[key]=value;};
 function compactHomeFeed(){
   if(pageKind()!=='home'||document.documentElement.dataset.bsSwipe)return;
-  markAds();
+  markAds();const inners=[],grids=[];
   const cardSelector='.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card';
   for(const layout of $$('.bili-feed4-layout')){
     const feeds=$$('.feed2',layout);
     const hosts=feeds.length?feeds:$$('.recommended-container_floor-aside,.recommended-container_overseas',layout);
     for(const host of hosts){
-      host.dataset.bsFeed='grid';
-      host.dataset.bsPrefetch=String(!navigator.connection?.saveData);
+      setData(host,'bsFeed','grid');grids.push(host);
+      setData(host,'bsPrefetch',String(!navigator.connection?.saveData));
       for(const card of $$(cardSelector,host)){
         // A promotion may itself contain video-card markup; never flatten its clipping box.
         if(card.closest('[data-bs-ad=true]'))continue;
         const sentinel=card.closest('.load-more-anchor');
-        if(sentinel){sentinel.dataset.bsFeed='sentinel';continue;}
+        if(sentinel){setData(sentinel,'bsFeed','sentinel');continue;}
         // Keep Vue-owned nodes and their event handlers; flatten layout boxes only.
         const outer=card.parentElement.closest(cardSelector);
         if(outer&&host.contains(outer))continue;
-        card.dataset.bsFeed='card';const inner=card.matches('.bili-video-card')?null:$('.bili-video-card',card);if(inner&&getComputedStyle(inner).display==='none')card.dataset.bsEmpty='true';else delete card.dataset.bsEmpty;
-        for(let p=card.parentElement;p&&p!==host;p=p.parentElement)p.dataset.bsFeed='wrapper';
+        setData(card,'bsFeed','card');const inner=card.matches('.bili-video-card')?null:$('.bili-video-card',card);inners.push([card,inner]);
+        for(let p=card.parentElement;p&&p!==host;p=p.parentElement)setData(p,'bsFeed','wrapper');
       }
-      wakeHomeLoader(host);
     }
   }
+  for(const [card,inner] of inners){const empty=!!inner&&getComputedStyle(inner).display==='none';if(empty)setData(card,'bsEmpty','true');else if(card.dataset.bsEmpty)delete card.dataset.bsEmpty;}
+  for(const host of grids)wakeHomeLoader(host);
   if(!navigator.connection?.saveData){
     let budget=12;
     for(const img of $$('.bili-feed4-layout [data-bs-feed=card] img[loading=lazy]')){
-      if(!budget)break;const r=img.getBoundingClientRect();
-      if(r.bottom>=0&&r.top<innerHeight*2.5){img.loading='eager';img.decoding='async';if(r.top>innerHeight)img.fetchPriority='low';budget--;}
+      if(!budget)break;const r=img.getBoundingClientRect();if(r.top>=innerHeight*2.5)break;
+      if(r.bottom>=0){img.loading='eager';img.decoding='async';if(r.top>innerHeight)img.fetchPriority='low';budget--;}
     }
   }
 }
@@ -1359,16 +1363,22 @@ function linkifyDescriptions(){
    them, such as the load-more placeholders below the fold; a shimmer that moves a background even restyles on the main
    thread each frame. They are paused while off screen and resume as soon as they come near the viewport, so what is
    visible never changes. */
-const loopObserver=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(entries=>{for(const e of entries)for(const a of e.target.getAnimations?e.target.getAnimations({subtree:true}):[]){if(a.effect?.getTiming?.().iterations!==Infinity)continue;if(e.isIntersecting){if(a.__bsPaused){a.__bsPaused=false;a.play();}}else if(a.playState==='running'){a.__bsPaused=true;a.pause();}}},{rootMargin:'200px'}):null;
+// Each watched element's endless animations are remembered; they are listed again only once one of them has gone away.
+const loopAnims=new WeakMap();
+const loopList=t=>{let list=loopAnims.get(t);if(!list||list.some(a=>a.playState==='idle')){list=t.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming?.().iterations===Infinity);loopAnims.set(t,list);}return list;};
+const loopObserver=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(entries=>{for(const e of entries)for(const a of e.target.getAnimations?loopList(e.target):[]){if(e.isIntersecting){if(a.__bsPaused){a.__bsPaused=false;a.play();}}else if(a.playState==='running'){a.__bsPaused=true;a.pause();}}},{rootMargin:'200px'}):null;
 const loopTargets=new WeakSet();
 function watchLoop(t){
   if(!loopObserver||!t?.getAnimations||!t.isConnected||loopTargets.has(t)||t.closest?.('#bili-space-root'))return;
   // Shimmers usually run on ::before/::after, which an element's own animation list leaves out without subtree.
-  if(!t.getAnimations({subtree:true}).some(a=>a.effect?.getTiming?.().iterations===Infinity))return;
+  if(!loopList(t).length)return;
   loopTargets.add(t);loopObserver.observe(t);
 }
+// A sweep over every animation on the page catches the ones that started before this script; new ones announce themselves
+// (animationstart below), so the sweep runs at most every few seconds instead of after every change to the page.
+let loopSweepAt=-1e9;
 function pauseOffscreenLoops(){
-  if(!loopObserver||!document.getAnimations)return;
+  if(!loopObserver||!document.getAnimations)return;const now=performance.now();if(now-loopSweepAt<4000)return;loopSweepAt=now;
   for(const a of document.getAnimations())if(a.effect?.getTiming?.().iterations===Infinity)watchLoop(a.effect.target);
 }
 // Every CSS animation announces its start, including ones that began before this script looked.
@@ -2171,7 +2181,9 @@ function swipeSlot(i){
     // The frame starts on a blank document; only the video page's own document counts.
     if(doc.location.href==='about:blank')return;if(slot.doc!==doc){slot.doc=doc;slot.styled=false;slot.wired=false;
       // A preloading page's own autoplay is held back (no sound, no head start); play() works again once it is the current one.
-      try{const proto=frame.contentWindow.HTMLMediaElement.prototype,play=proto.play;proto.play=function(){return swipe&&swipe.slots.get(swipe.index)!==slot?Promise.resolve():play.call(this);};}catch{}}
+      try{const proto=frame.contentWindow.HTMLMediaElement.prototype,play=proto.play;proto.play=function(){return swipe&&swipe.slots.get(swipe.index)!==slot?Promise.resolve():play.call(this);};
+      // The page's own autoplay can start the current video while 精选 is behind another tab: it is paused again through the player.
+      doc.addEventListener('play',()=>{if(swipe?.away&&swipe.slots.get(swipe.index)===slot){swipe.resumeOnShow=true;setTimeout(()=>swipePlay(slot,false));}},true);}catch{}}
     if(!slot.styled&&doc.head){const s=doc.createElement('style');s.id='bs-swipe-frame';s.textContent=SWIPE_FRAME_CSS;doc.head.append(s);slot.styled=true;}
     else if(slot.styled&&!doc.getElementById('bs-swipe-frame')&&doc.head){const s=doc.createElement('style');s.id='bs-swipe-frame';s.textContent=SWIPE_FRAME_CSS;doc.head.append(s);}
     if(!slot.wired&&doc.body){slot.wired=true;swipeWireFrame(slot,frame.contentWindow,doc);}
@@ -2303,7 +2315,7 @@ async function openSwipe(){
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
 // Play and pause go through the page's own player, so its state (and the centre mark) matches the picture; the bare
 // element is the fallback.
-function swipePlay(slot,on){const v=swipeVideo(slot);if(!v)return;let p;try{p=slot.frame.contentWindow?.player;}catch{}
+function swipePlay(slot,on){const v=swipeVideo(slot);if(!v)return;if(on&&(document.hidden||swipe?.away)){if(swipe)swipe.resumeOnShow=true;return;}let p;try{p=slot.frame.contentWindow?.player;}catch{}
   try{if(p?.play&&p?.pause){on?p.play():p.pause();return;}}catch{}if(on)v.play().catch(()=>{});else v.pause();}
 function swipeTogglePlay(){const slot=swipe?.slots.get(swipe.index),v=slot&&swipeVideo(slot);if(!v)return;swipePlay(slot,v.paused);}
 function swipeToggleMore(){
@@ -2392,6 +2404,14 @@ function closeSwipe(){
   if(location.hash==='#swipe')history.replaceState(history.state,'',location.pathname+location.search);
   const done=()=>s.layer.remove();if(swipeStill())done();else s.layer.animate([{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}).onfinish=done;
 }
+// 精选 behind a video tab (or a minimized window) used to keep its video playing: two videos at once, and the hidden
+// page spent about a third of the main thread on it. Its videos sit in frames, which the tab switch's pause never
+// reached, and a view hidden by the host still reports itself visible; the host's tabHidden/tabShown calls drive it.
+// Away while another tab is shown or the page is hidden; the two are tracked apart because a view hidden by the host can
+// still get a 'visible' event during the switch, which must not count as coming back.
+function swipeAway(){if(!swipe)return;const away=!!(swipe.tabAway||document.hidden);if(away===!!swipe.away)return;swipe.away=away;swipe.layer.dataset.away=String(away);const slot=swipe.slots.get(swipe.index),v=slot&&swipeVideo(slot);if(!v)return;
+  if(away){if(!v.paused){swipe.resumeOnShow=true;swipePlay(slot,false);}}else if(swipe.resumeOnShow){swipe.resumeOnShow=false;swipePlay(slot,true);}}
+document.addEventListener('visibilitychange',()=>swipeAway());
 function syncSwipeHash(){if(!CONTENT_VIEW)return;if(location.hash==='#swipe'&&pageKind()==='home')openSwipe();else if(swipe&&location.hash!=='#swipe')closeSwipe();}
 document.addEventListener('keydown',e=>{if(!swipe||e.target?.closest?.('input,textarea,[contenteditable=true]'))return;
   if(e.key===' '){e.preventDefault();if(!e.repeat)swipeTogglePlay();}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();swipeGo(e.key==='ArrowDown'?1:-1);}else if(e.key==='Escape'&&swipe.comments){e.preventDefault();swipeComments(false);}else if(e.key==='Escape'&&!document.fullscreenElement){e.preventDefault();closeSwipe();}},true);
@@ -3427,8 +3447,8 @@ function installChromeView(){
   surfaceRevealed();acceptRouteOrigin('');native('navigation-state',{action:'read'});reportChromeLayout();
 }
 let resumeMedia=[];
-function tabShown(){reportTabInfo();refreshMessageUnread?.(true);const media=resumeMedia.filter(m=>m.isConnected);resumeMedia=[];for(const m of media)m.play?.().catch(()=>{});}
-function tabHidden(){resumeMedia=[...document.querySelectorAll('video,audio')].filter(m=>!m.paused&&!m.ended);for(const m of resumeMedia)m.pause();closeSearchPanel?.();favoritesController?.close();hideMessageMenu?.(true);}
+function tabShown(){if(swipe){swipe.tabAway=false;swipeAway();}reportTabInfo();refreshMessageUnread?.(true);const media=resumeMedia.filter(m=>m.isConnected);resumeMedia=[];for(const m of media)m.play?.().catch(()=>{});}
+function tabHidden(){if(swipe){swipe.tabAway=true;swipeAway();}resumeMedia=[...document.querySelectorAll('video,audio')].filter(m=>!m.paused&&!m.ended);for(const m of resumeMedia)m.pause();closeSearchPanel?.();favoritesController?.close();hideMessageMenu?.(true);}
 window.addEventListener('load',()=>{reportTabInfo();const title=document.querySelector('title');if(title)new MutationObserver(reportTabInfo).observe(title,{childList:true,characterData:true,subtree:true});},{once:true});
 function prepareShell(){if(root||!document.documentElement)return;applyUiScale();style=document.createElement('style');style.id='bili-space-style';style.textContent=pageCss;document.documentElement.append(style);mountShell();warmProfileMediaCache();applyHeaderPreferences();const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);root.dataset.theme=dark?'dark':'light';document.documentElement.dataset.bsTheme=dark?'dark':'light';root.style.setProperty('--accent',PREFS.accent);if(pageKind()==='search')setLoading(true);startPagePending();surfaceRevealed();}
 function boot(){

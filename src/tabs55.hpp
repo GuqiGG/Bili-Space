@@ -2,7 +2,7 @@
 #include "composition56.hpp"
 // Video pages open as their own native WebView next to the single home view. Only the active view is
 // visible; a view that is switched away from pauses its media, is suspended and asks for low memory.
-struct Tab{ICoreWebView2Controller* controller{};ICoreWebView2* view{};Tab* opener{};bool video=false,closed=false,suspended=false,pendingShow=false;std::wstring url,key,injectionId;std::string title,cover;unsigned long long used=0,order=0;};
+struct Tab{ICoreWebView2Controller* controller{};ICoreWebView2* view{};Tab* opener{};bool video=false,closed=false,suspended=false,pendingShow=false,spare=false,warm=false;std::wstring url,key,injectionId;std::string title,cover;unsigned long long used=0,order=0;};
 std::vector<Tab*> tabs;Tab* homeTab{};Tab* activeTab{};unsigned long long tabClock=0;bool viewScopeActive=true;
 constexpr size_t maxVideoTabs=9;
 void fit();void applyZoom();std::string script();void wireView(ICoreWebView2Controller*,ICoreWebView2*,ICoreWebView2Environment*);
@@ -60,17 +60,49 @@ void closeTab(Tab* t){
 constexpr UINT_PTR pendingRevealTimer=7755;
 // A new video view loads hidden while the page that opened it keeps its loading animation, then takes over once ready.
 void revealPendingTab(Tab* t){
-    if(!t||!t->pendingShow||t->closed||!t->controller)return;t->pendingShow=false;Tab* from=activeTab;
+    if(!t||!t->pendingShow||t->closed||!t->controller)return;
+    // A prepared view reports its blank first page as loaded once its video starts loading; that is not the video yet.
+    {LPWSTR source{};t->view->get_Source(&source);const bool blank=!source||wcsncmp(source,L"about:",6)==0;CoTaskMemFree(source);if(blank)return;}
+    t->pendingShow=false;Tab* from=activeTab;
     if(from&&from!=t->opener&&from!=t)return;
     auto shown=callback<ICoreWebView2ExecuteScriptCompletedHandler,HRESULT,LPCWSTR>([t,from](HRESULT,LPCWSTR){if(std::find(tabs.begin(),tabs.end(),t)==tabs.end()||t->closed)return S_OK;activateTab(t);if(testing)log("video tab revealed @"+std::to_string(GetTickCount64()));t->view->ExecuteScript(L"window.BiliSpace?.surfaceRevealed?.()",nullptr);if(from&&from->view&&std::find(tabs.begin(),tabs.end(),from)!=tabs.end())cancelNavigationFeedback(from->view);return S_OK;});
     t->view->ExecuteScript(L"window.BiliSpace?.revealFade?.()",shown);shown->Release();
 }
 void revealPendingTabs(){for(auto t:videoTabs())revealPendingTab(t);}
+// A spare view waits hidden on its blank first page with the page script already registered. The first registration on a
+// new view waits about half a second or more for WebView2 itself, whatever the script's size; a video opened into the
+// spare starts loading at once. It is not a video tab (the dock and the tab list skip it) until it is used.
+Tab* spareTab{};constexpr UINT_PTR spareTimer=7757;
+void scheduleSpare(UINT ms){if(!spareTab&&windowHandle)SetTimer(windowHandle,spareTimer,ms,nullptr);}
+void dropSpare(){if(!spareTab)return;Tab* t=spareTab;spareTab=nullptr;tabs.erase(std::remove(tabs.begin(),tabs.end(),t),tabs.end());
+    if(t->controller){comp::forget(t->controller);t->controller->Close();t->controller->Release();}if(t->view)t->view->Release();delete t;}
+void warmSpareTab(){
+    if(spareTab||!authEnvironment50||updateRequired)return;
+    for(auto o:videoTabs())if(o->pendingShow){scheduleSpare(3000);return;} // a video is still loading: stay out of its way
+    auto t=new Tab;t->spare=true;spareTab=t;tabs.push_back(t);auto env=authEnvironment50;
+    auto created=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([t,env](HRESULT hr,ICoreWebView2Controller* c){
+        if(spareTab!=t){if(SUCCEEDED(hr)&&c)c->Close();return S_OK;}
+        if(FAILED(hr)||!c){log("spare view creation failed: "+std::to_string(hr));spareTab=nullptr;tabs.erase(std::remove(tabs.begin(),tabs.end(),t),tabs.end());delete t;return S_OK;}
+        t->controller=c;c->AddRef();c->get_CoreWebView2(&t->view);c->put_IsVisible(FALSE);
+        wireView(c,t->view,env);
+        auto injected=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([t](HRESULT hr,LPCWSTR id){if(spareTab!=t)return S_OK;if(SUCCEEDED(hr)&&id){t->injectionId=id;t->warm=true;if(testing)log("spare tab warm");}return S_OK;});
+        t->view->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();
+        RECT rc{};GetClientRect(windowHandle,&rc);c->put_Bounds(rc);return S_OK;
+    });
+    comp::createController(env,created);created->Release();
+}
 void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nullptr){
     if(testing)log("video tab requested @"+std::to_string(GetTickCount64()));
     for(auto t:videoTabs())if(t->key==key){if(t->controller)activateTab(t);return;}
     auto list=videoTabs();
     if(list.size()>=maxVideoTabs){Tab* oldest{};for(auto t:list)if(t!=activeTab&&(!oldest||t->used<oldest->used))oldest=t;closeTab(oldest);}
+    if(spareTab&&spareTab->warm&&spareTab->controller&&spareTab->view){
+        auto t=spareTab;spareTab=nullptr;t->spare=t->warm=false;t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
+        ICoreWebView2Controller2* c2{};if(SUCCEEDED(t->controller->QueryInterface(__uuidof(ICoreWebView2Controller2),reinterpret_cast<void**>(&c2)))){COREWEBVIEW2_COLOR color{255,BYTE(surfaceDark?22:250),BYTE(surfaceDark?22:250),BYTE(surfaceDark?24:250)};c2->put_DefaultBackgroundColor(color);c2->Release();}
+        RECT rc{};GetClientRect(windowHandle,&rc);t->controller->put_Bounds(rc);t->pendingShow=true;SetTimer(windowHandle,pendingRevealTimer,8000,nullptr);
+        t->view->Navigate(uri.c_str());log("video view opened (prepared)");if(testing)log("video navigate started @"+std::to_string(GetTickCount64()));
+        scheduleSpare(6000);return;
+    }
     auto t=new Tab;t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;tabs.push_back(t);dockSync();
     if(!authEnvironment50){closeTab(t);return;}
     auto env=authEnvironment50;
@@ -84,7 +116,7 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
         t->view->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),injected);injected->Release();
         RECT rc{};GetClientRect(windowHandle,&rc);c->put_Bounds(rc);t->pendingShow=true;SetTimer(windowHandle,pendingRevealTimer,8000,nullptr);log("video view opened");if(testing)log("video navigate started @"+std::to_string(GetTickCount64()));return S_OK;
     });
-    comp::createController(env,created);created->Release();
+    comp::createController(env,created);created->Release();scheduleSpare(6000);
 }
 std::wstring currentSource(Tab* t){if(!t||!t->view)return {};LPWSTR source{};t->view->get_Source(&source);std::wstring s=source?source:L"";CoTaskMemFree(source);return s;}
 // Bilibili switches videos inside a page (related videos, parts) without a navigation; the tab must follow, or a later
@@ -183,6 +215,9 @@ bool tabAccelerator(UINT key,COREWEBVIEW2_KEY_EVENT_KIND kind){
     return false;
 }
 void refreshTabInjections(){
+    // The spare's script is replaced by building a new spare once the settings have settled; a video must never open into a
+    // view whose old script was removed before the new one is registered.
+    if(spareTab){dropSpare();scheduleSpare(4000);}
     for(auto t:tabs){if(t==homeTab||!t->view)continue;if(!t->injectionId.empty())t->view->RemoveScriptToExecuteOnDocumentCreated(t->injectionId.c_str());t->injectionId.clear();
         auto h=callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler,HRESULT,LPCWSTR>([t](HRESULT hr,LPCWSTR id){if(std::find(tabs.begin(),tabs.end(),t)!=tabs.end()&&SUCCEEDED(hr)&&id)t->injectionId=id;return S_OK;});
         t->view->AddScriptToExecuteOnDocumentCreated(wide(script()).c_str(),h);h->Release();}
@@ -193,5 +228,5 @@ void acceptTabInfo(const json& m){
     auto cover=m.value("cover",std::string{});if(cover.size()>2048)cover.clear();
     if(title!=t->title||cover!=t->cover){t->title=title;t->cover=cover;dockSync();}
 }
-void closeAllTabs(){if(homeTab){webview=homeTab->view;controller=homeTab->controller;}activeTab=homeTab;auto list=videoTabs();for(auto t:list){t->closed=true;if(t->controller){comp::forget(t->controller);t->controller->Close();t->controller->Release();}if(t->view)t->view->Release();delete t;}for(auto t:tabs)if(!t->video)delete t;tabs.clear();homeTab=activeTab=nullptr;}
+void closeAllTabs(){dropSpare();if(windowHandle)KillTimer(windowHandle,spareTimer);if(homeTab){webview=homeTab->view;controller=homeTab->controller;}activeTab=homeTab;auto list=videoTabs();for(auto t:list){t->closed=true;if(t->controller){comp::forget(t->controller);t->controller->Close();t->controller->Release();}if(t->view)t->view->Release();delete t;}for(auto t:tabs)if(!t->video)delete t;tabs.clear();homeTab=activeTab=nullptr;}
 #include "dock55.hpp"
