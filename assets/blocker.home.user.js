@@ -823,6 +823,7 @@
     }
 
     function positionVideoCardOverlays() {
+        if (videoCardOverlays.size === 0) return;
         if (isVideoPlayerExpanded()) {
             hideVideoCardOverlays();
             return;
@@ -1051,14 +1052,15 @@
         positionVideoCardOverlays();
     }
 
+    // Only floating overlays follow the page while it scrolls. The home feed's buttons sit inside their cards, so a
+    // scroll there costs nothing; it used to run a whole-document player query and walk every card on each frame.
     function scheduleOverlayPosition() {
-        if (positionTick) return;
+        if (positionTick || (!videoProfileOverlay && videoCardOverlays.size === 0)) return;
         positionTick = true;
         requestAnimationFrame(() => {
             positionTick = false;
             positionVideoProfileOverlay();
             positionVideoCardOverlays();
-            positionHomeCardOverlays();
         });
     }
 
@@ -1130,6 +1132,7 @@
             }
         }
         roots.forEach(root => processPageRoot(root, false));
+        if (homeCardOverlays.size) positionHomeCardOverlays();
         scheduleOverlayPosition();
     }
 

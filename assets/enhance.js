@@ -390,35 +390,39 @@ function mountHomeBanner(){
     }
   }
 }
+// Writes only what changed, and reads styles only after every write: setting a card's markers and then asking for its
+// style straight away made the browser recompute styles once per card, hundreds of times each time the feed grew.
+const setData=(el,key,value)=>{if(el.dataset[key]!==value)el.dataset[key]=value;};
 function compactHomeFeed(){
   if(pageKind()!=='home'||document.documentElement.dataset.bsSwipe)return;
-  markAds();
+  markAds();const inners=[],grids=[];
   const cardSelector='.feed-card,.bili-feed-card,.bili-video-card,.floor-single-card';
   for(const layout of $$('.bili-feed4-layout')){
     const feeds=$$('.feed2',layout);
     const hosts=feeds.length?feeds:$$('.recommended-container_floor-aside,.recommended-container_overseas',layout);
     for(const host of hosts){
-      host.dataset.bsFeed='grid';
-      host.dataset.bsPrefetch=String(!navigator.connection?.saveData);
+      setData(host,'bsFeed','grid');grids.push(host);
+      setData(host,'bsPrefetch',String(!navigator.connection?.saveData));
       for(const card of $$(cardSelector,host)){
         // A promotion may itself contain video-card markup; never flatten its clipping box.
         if(card.closest('[data-bs-ad=true]'))continue;
         const sentinel=card.closest('.load-more-anchor');
-        if(sentinel){sentinel.dataset.bsFeed='sentinel';continue;}
+        if(sentinel){setData(sentinel,'bsFeed','sentinel');continue;}
         // Keep Vue-owned nodes and their event handlers; flatten layout boxes only.
         const outer=card.parentElement.closest(cardSelector);
         if(outer&&host.contains(outer))continue;
-        card.dataset.bsFeed='card';const inner=card.matches('.bili-video-card')?null:$('.bili-video-card',card);if(inner&&getComputedStyle(inner).display==='none')card.dataset.bsEmpty='true';else delete card.dataset.bsEmpty;
-        for(let p=card.parentElement;p&&p!==host;p=p.parentElement)p.dataset.bsFeed='wrapper';
+        setData(card,'bsFeed','card');const inner=card.matches('.bili-video-card')?null:$('.bili-video-card',card);inners.push([card,inner]);
+        for(let p=card.parentElement;p&&p!==host;p=p.parentElement)setData(p,'bsFeed','wrapper');
       }
-      wakeHomeLoader(host);
     }
   }
+  for(const [card,inner] of inners){const empty=!!inner&&getComputedStyle(inner).display==='none';if(empty)setData(card,'bsEmpty','true');else if(card.dataset.bsEmpty)delete card.dataset.bsEmpty;}
+  for(const host of grids)wakeHomeLoader(host);
   if(!navigator.connection?.saveData){
     let budget=12;
     for(const img of $$('.bili-feed4-layout [data-bs-feed=card] img[loading=lazy]')){
-      if(!budget)break;const r=img.getBoundingClientRect();
-      if(r.bottom>=0&&r.top<innerHeight*2.5){img.loading='eager';img.decoding='async';if(r.top>innerHeight)img.fetchPriority='low';budget--;}
+      if(!budget)break;const r=img.getBoundingClientRect();if(r.top>=innerHeight*2.5)break;
+      if(r.bottom>=0){img.loading='eager';img.decoding='async';if(r.top>innerHeight)img.fetchPriority='low';budget--;}
     }
   }
 }
@@ -1359,16 +1363,22 @@ function linkifyDescriptions(){
    them, such as the load-more placeholders below the fold; a shimmer that moves a background even restyles on the main
    thread each frame. They are paused while off screen and resume as soon as they come near the viewport, so what is
    visible never changes. */
-const loopObserver=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(entries=>{for(const e of entries)for(const a of e.target.getAnimations?e.target.getAnimations({subtree:true}):[]){if(a.effect?.getTiming?.().iterations!==Infinity)continue;if(e.isIntersecting){if(a.__bsPaused){a.__bsPaused=false;a.play();}}else if(a.playState==='running'){a.__bsPaused=true;a.pause();}}},{rootMargin:'200px'}):null;
+// Each watched element's endless animations are remembered; they are listed again only once one of them has gone away.
+const loopAnims=new WeakMap();
+const loopList=t=>{let list=loopAnims.get(t);if(!list||list.some(a=>a.playState==='idle')){list=t.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming?.().iterations===Infinity);loopAnims.set(t,list);}return list;};
+const loopObserver=typeof IntersectionObserver!=='undefined'?new IntersectionObserver(entries=>{for(const e of entries)for(const a of e.target.getAnimations?loopList(e.target):[]){if(e.isIntersecting){if(a.__bsPaused){a.__bsPaused=false;a.play();}}else if(a.playState==='running'){a.__bsPaused=true;a.pause();}}},{rootMargin:'200px'}):null;
 const loopTargets=new WeakSet();
 function watchLoop(t){
   if(!loopObserver||!t?.getAnimations||!t.isConnected||loopTargets.has(t)||t.closest?.('#bili-space-root'))return;
   // Shimmers usually run on ::before/::after, which an element's own animation list leaves out without subtree.
-  if(!t.getAnimations({subtree:true}).some(a=>a.effect?.getTiming?.().iterations===Infinity))return;
+  if(!loopList(t).length)return;
   loopTargets.add(t);loopObserver.observe(t);
 }
+// A sweep over every animation on the page catches the ones that started before this script; new ones announce themselves
+// (animationstart below), so the sweep runs at most every few seconds instead of after every change to the page.
+let loopSweepAt=-1e9;
 function pauseOffscreenLoops(){
-  if(!loopObserver||!document.getAnimations)return;
+  if(!loopObserver||!document.getAnimations)return;const now=performance.now();if(now-loopSweepAt<4000)return;loopSweepAt=now;
   for(const a of document.getAnimations())if(a.effect?.getTiming?.().iterations===Infinity)watchLoop(a.effect.target);
 }
 // Every CSS animation announces its start, including ones that began before this script looked.
