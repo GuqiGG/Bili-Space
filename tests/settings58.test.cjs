@@ -10,10 +10,10 @@ test('settings search finds related words and typed-in-order fragments, exact hi
   assert.match(s.querySelector('#settings-search-status').textContent,/找到/);
  }finally{a.close();}
 });
-test('the feed setting is a per-row count and the bouncy-button experiment exists',()=>{
+test('the feed setting is a per-row minimum and the bouncy-button experiment exists',()=>{
  const a=app();try{const s=a.w.document.querySelector('#bili-space-root').shadowRoot;a.w.BiliSpace.openSettings();
   const all=[...s.querySelectorAll('[data-tab]')];for(const t of all){t.click();if(s.querySelector('[data-pref=feedColumns]'))break;}
-  const select=s.querySelector('[data-pref=feedColumns]');assert(select);assert.match(select.closest('.row').textContent,/每行视频数/);assert.match(select.textContent,/4 个/);assert.doesNotMatch(select.textContent,/至少/);
+  const select=s.querySelector('[data-pref=feedColumns]');assert(select);assert.match(select.closest('.row').textContent,/每行最少视频数/);assert.match(select.textContent,/至少 4 个/);
   a.w.BiliSpace.update({experimentalBounce:true});assert.equal(s.host.dataset.bounce,'true');
  }finally{a.close();}
 });
