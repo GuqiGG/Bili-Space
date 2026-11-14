@@ -2,18 +2,20 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.69",
+  "version": "0.1.70",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
   "silent": true,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.69-win64.zip",
-  "sha256": "002546e0a14b9831ce9846b6745787a2a213a7d38c2e3bd8ed70ed3d51cd5fc4",
-  "size": 36967074,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.69/Bili-Space-0.1.69-Setup.exe",
-  "setupSha256": "676413b970a73ac8d8c8b2fad505ada6ad75ee50e92d5700820127e113b37a8c",
-  "setupSize": 28440309,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.70-win64.zip",
+  "sha256": "01fa137c1bbabcb27b73f427fb1ebe951e886b70095d92cfbabeb3d6a80ea074",
+  "size": 36971835,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.70/Bili-Space-0.1.70-Setup.exe",
+  "setupSha256": "15048080fd08e3edbcaa87a2ce97793b877913b49231d82a9c877960328c7840",
+  "setupSize": 28447492,
   "changelog": [
-    "新增视频线路：扩展插件 → 线程撕裂者下面可以选大陆节点、海外节点或指定节点，还能测速、一键选最快的 3 个",
-    "修复：UP 主更新通知弹出的卡片一片空白、点不动的问题"
+    "修复：「首页每行最少视频数」改了没用。设置面板里改的设置有时到不了网页，现在都能生效；设置是下限，窗口更宽时还会自动多放",
+    "首页每行的视频数跟着页面宽度和页面缩放变：放大页面列数变少、卡片变大，大屏上不再挤成很多列小封面",
+    "首页卡片的标题、UP 主和播放数跟着卡片大小缩放，一行放很多个时字也会变小；番剧、综艺卡片标题限两行",
+    "修复：精选里视频在播放时中间还显示暂停图标"
   ]
 }
