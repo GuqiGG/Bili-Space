@@ -6,10 +6,10 @@ test('back invokes native history and personalization combines header and progre
  a.w.BiliSpace.openSettings();assert(!s.querySelector('[data-tab=header]'));assert(!s.querySelector('[data-tab=progress]'));
  for(const key of ['headerUpload','logoAutoHide','feedColumns','progressHeight'])assert(s.querySelector(`[data-pref=${key}]`),key);
  assert.equal(s.querySelector('.upload').parentNode,s);
- // The page is 1024 CSS px wide here: a chosen count that fits is used as it is, a larger one is lowered to what fits.
+ // A chosen count is used exactly, even when the page (1024 CSS px here) is narrow for it.
  a.w.BiliSpace.update({headerUpload:false,feedColumns:3});assert(s.querySelector('.upload').hidden);
  assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:3}/);
- a.w.BiliSpace.update({feedColumns:8});assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:4}/);
+ a.w.BiliSpace.update({feedColumns:8});assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:8}/);
  a.w.BiliSpace.update({feedColumns:0});assert.equal(a.w.document.documentElement.style.getPropertyValue('--bs-feed-columns'),'');
  }finally{a.close();}
 });
