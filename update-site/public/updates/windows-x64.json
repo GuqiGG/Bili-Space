@@ -2,20 +2,19 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.70",
+  "version": "0.1.71",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
   "silent": true,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.70-win64.zip",
-  "sha256": "01fa137c1bbabcb27b73f427fb1ebe951e886b70095d92cfbabeb3d6a80ea074",
-  "size": 36971835,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.70/Bili-Space-0.1.70-Setup.exe",
-  "setupSha256": "15048080fd08e3edbcaa87a2ce97793b877913b49231d82a9c877960328c7840",
-  "setupSize": 28447492,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.71-win64.zip",
+  "sha256": "e94ecbaa62d04366f51ed6370f76ccddf2f536029fa9f61f85e32e1885559f1d",
+  "size": 36978522,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.71/Bili-Space-0.1.71-Setup.exe",
+  "setupSha256": "54f2708a8de6d5e1d47db878ce023aaf7339a178ac261c4147ab2083b27ca1d0",
+  "setupSize": 28445080,
   "changelog": [
-    "修复：「首页每行最少视频数」改了没用。设置面板里改的设置有时到不了网页，现在都能生效；设置是下限，窗口更宽时还会自动多放",
-    "首页每行的视频数跟着页面宽度和页面缩放变：放大页面列数变少、卡片变大，大屏上不再挤成很多列小封面",
-    "首页卡片的标题、UP 主和播放数跟着卡片大小缩放，一行放很多个时字也会变小；番剧、综艺卡片标题限两行",
-    "修复：精选里视频在播放时中间还显示暂停图标"
+    "打开视频更快：后台提前准备好视频页面，点了就开始加载，从点击到出画面约 1.4 秒（以前 1.7–3 秒）",
+    "精选切到别的视频标签时会暂停，切回来接着播；以前精选会在后台一直播放，两个视频同时出声还很占性能",
+    "首页滚动更顺：滚动时少做了很多无用的计算"
   ]
 }
