@@ -2171,7 +2171,9 @@ function swipeSlot(i){
     // The frame starts on a blank document; only the video page's own document counts.
     if(doc.location.href==='about:blank')return;if(slot.doc!==doc){slot.doc=doc;slot.styled=false;slot.wired=false;
       // A preloading page's own autoplay is held back (no sound, no head start); play() works again once it is the current one.
-      try{const proto=frame.contentWindow.HTMLMediaElement.prototype,play=proto.play;proto.play=function(){return swipe&&swipe.slots.get(swipe.index)!==slot?Promise.resolve():play.call(this);};}catch{}}
+      try{const proto=frame.contentWindow.HTMLMediaElement.prototype,play=proto.play;proto.play=function(){return swipe&&swipe.slots.get(swipe.index)!==slot?Promise.resolve():play.call(this);};
+      // The page's own autoplay can start the current video while 精选 is behind another tab: it is paused again through the player.
+      doc.addEventListener('play',()=>{if(swipe?.away&&swipe.slots.get(swipe.index)===slot){swipe.resumeOnShow=true;setTimeout(()=>swipePlay(slot,false));}},true);}catch{}}
     if(!slot.styled&&doc.head){const s=doc.createElement('style');s.id='bs-swipe-frame';s.textContent=SWIPE_FRAME_CSS;doc.head.append(s);slot.styled=true;}
     else if(slot.styled&&!doc.getElementById('bs-swipe-frame')&&doc.head){const s=doc.createElement('style');s.id='bs-swipe-frame';s.textContent=SWIPE_FRAME_CSS;doc.head.append(s);}
     if(!slot.wired&&doc.body){slot.wired=true;swipeWireFrame(slot,frame.contentWindow,doc);}
@@ -2303,7 +2305,7 @@ async function openSwipe(){
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
 // Play and pause go through the page's own player, so its state (and the centre mark) matches the picture; the bare
 // element is the fallback.
-function swipePlay(slot,on){const v=swipeVideo(slot);if(!v)return;let p;try{p=slot.frame.contentWindow?.player;}catch{}
+function swipePlay(slot,on){const v=swipeVideo(slot);if(!v)return;if(on&&(document.hidden||swipe?.away)){if(swipe)swipe.resumeOnShow=true;return;}let p;try{p=slot.frame.contentWindow?.player;}catch{}
   try{if(p?.play&&p?.pause){on?p.play():p.pause();return;}}catch{}if(on)v.play().catch(()=>{});else v.pause();}
 function swipeTogglePlay(){const slot=swipe?.slots.get(swipe.index),v=slot&&swipeVideo(slot);if(!v)return;swipePlay(slot,v.paused);}
 function swipeToggleMore(){
@@ -2392,6 +2394,14 @@ function closeSwipe(){
   if(location.hash==='#swipe')history.replaceState(history.state,'',location.pathname+location.search);
   const done=()=>s.layer.remove();if(swipeStill())done();else s.layer.animate([{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}).onfinish=done;
 }
+// 精选 behind a video tab (or a minimized window) used to keep its video playing: two videos at once, and the hidden
+// page spent about a third of the main thread on it. Its videos sit in frames, which the tab switch's pause never
+// reached, and a view hidden by the host still reports itself visible; the host's tabHidden/tabShown calls drive it.
+// Away while another tab is shown or the page is hidden; the two are tracked apart because a view hidden by the host can
+// still get a 'visible' event during the switch, which must not count as coming back.
+function swipeAway(){if(!swipe)return;const away=!!(swipe.tabAway||document.hidden);if(away===!!swipe.away)return;swipe.away=away;swipe.layer.dataset.away=String(away);const slot=swipe.slots.get(swipe.index),v=slot&&swipeVideo(slot);if(!v)return;
+  if(away){if(!v.paused){swipe.resumeOnShow=true;swipePlay(slot,false);}}else if(swipe.resumeOnShow){swipe.resumeOnShow=false;swipePlay(slot,true);}}
+document.addEventListener('visibilitychange',()=>swipeAway());
 function syncSwipeHash(){if(!CONTENT_VIEW)return;if(location.hash==='#swipe'&&pageKind()==='home')openSwipe();else if(swipe&&location.hash!=='#swipe')closeSwipe();}
 document.addEventListener('keydown',e=>{if(!swipe||e.target?.closest?.('input,textarea,[contenteditable=true]'))return;
   if(e.key===' '){e.preventDefault();if(!e.repeat)swipeTogglePlay();}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();swipeGo(e.key==='ArrowDown'?1:-1);}else if(e.key==='Escape'&&swipe.comments){e.preventDefault();swipeComments(false);}else if(e.key==='Escape'&&!document.fullscreenElement){e.preventDefault();closeSwipe();}},true);
@@ -3427,8 +3437,8 @@ function installChromeView(){
   surfaceRevealed();acceptRouteOrigin('');native('navigation-state',{action:'read'});reportChromeLayout();
 }
 let resumeMedia=[];
-function tabShown(){reportTabInfo();refreshMessageUnread?.(true);const media=resumeMedia.filter(m=>m.isConnected);resumeMedia=[];for(const m of media)m.play?.().catch(()=>{});}
-function tabHidden(){resumeMedia=[...document.querySelectorAll('video,audio')].filter(m=>!m.paused&&!m.ended);for(const m of resumeMedia)m.pause();closeSearchPanel?.();favoritesController?.close();hideMessageMenu?.(true);}
+function tabShown(){if(swipe){swipe.tabAway=false;swipeAway();}reportTabInfo();refreshMessageUnread?.(true);const media=resumeMedia.filter(m=>m.isConnected);resumeMedia=[];for(const m of media)m.play?.().catch(()=>{});}
+function tabHidden(){if(swipe){swipe.tabAway=true;swipeAway();}resumeMedia=[...document.querySelectorAll('video,audio')].filter(m=>!m.paused&&!m.ended);for(const m of resumeMedia)m.pause();closeSearchPanel?.();favoritesController?.close();hideMessageMenu?.(true);}
 window.addEventListener('load',()=>{reportTabInfo();const title=document.querySelector('title');if(title)new MutationObserver(reportTabInfo).observe(title,{childList:true,characterData:true,subtree:true});},{once:true});
 function prepareShell(){if(root||!document.documentElement)return;applyUiScale();style=document.createElement('style');style.id='bili-space-style';style.textContent=pageCss;document.documentElement.append(style);mountShell();warmProfileMediaCache();applyHeaderPreferences();const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);root.dataset.theme=dark?'dark':'light';document.documentElement.dataset.bsTheme=dark?'dark':'light';root.style.setProperty('--accent',PREFS.accent);if(pageKind()==='search')setLoading(true);startPagePending();surfaceRevealed();}
 function boot(){
