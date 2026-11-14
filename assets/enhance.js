@@ -78,7 +78,11 @@ let root, shadow, style, currentTab='appearance', lastFocus, scanTimer, gpu, int
 let status='未开启', pipActive=false, fullActive=false;
 let downloaderInfo={installed:false,mcp:false,running:false,message:'正在检测下载器…'};
 const pipHiddenHosts=new Map();
-let revision=0;
+// Each view numbers its own setting changes; the native echo carries the sender's id, so a view only skips an echo of
+// its own older change (a dragged slider) and never a change made in another view - the header's settings panel and the
+// page count separately, and comparing one's number with the other's dropped every panel change once the page had
+// saved anything itself (the per-row setting then never reached the feed).
+let revision=0;const VIEW_ID=Math.random().toString(36).slice(2,12);
 let routeKey='', loadingTimer, accountRequest, accountChecked=0;
 let homeLoadWakeKey='',homeLoadWakeTimer,homeLoadRetryTimer;
 const mediaTheme=matchMedia('(prefers-color-scheme: dark)');
@@ -1259,7 +1263,7 @@ function applyPreferences() {root?.style.setProperty('--bs-settings-zoom',String
 function update(patch) {
 
   const before=PREFS.srMode+PREFS.srScale+PREFS.srModel;
-  const langBefore=uiLanguage();Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision});
+  const langBefore=uiLanguage();Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision,origin:VIEW_ID});
   if('language' in patch&&uiLanguage()!==langBefore){setLanguage(uiLanguage());if(!PREFS.languageChosen)update({languageChosen:true});}
   if(before!==PREFS.srMode+PREFS.srScale+PREFS.srModel||'fiMode' in patch)startEnhancer();
   if('downloader' in patch)mountVideoHome();
@@ -1538,6 +1542,7 @@ html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card][data-bs-empty=true
 html[data-bs-page=home][data-bs-ads=true] .fixed-channel-shim{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;pointer-events:none!important}
 html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=wrapper]{display:contents!important}
 html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=wrapper]::before,html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=wrapper]::after{content:none!important}
+/* Text follows the card's width: with more cards per row the covers shrink, and titles at a fixed 15px would crowd them. Full size from about 240px wide cards, smaller below, never under a readable floor. */html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card]{container-type:inline-size}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__info--tit,html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__info--tit a{font-size:clamp(11px,6.25cqi,15px)!important;line-height:1.45!important}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__info--tit{min-height:0!important;height:auto!important;max-height:2.9em!important}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__info--bottom,html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__info--bottom *{font-size:clamp(10px,5.4cqi,13px)!important}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__stats,html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__stats *{font-size:clamp(10px,5.4cqi,13px)!important}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .info-container .title,html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .info-container .title a,html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .info-container .title span{font-size:clamp(11px,6.25cqi,15px)!important;line-height:1.45!important}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .info-container .title{display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;overflow:hidden!important}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .info-container .sub-title,html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .info-container .sub-title span{font-size:clamp(10px,5.4cqi,13px)!important}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .badge .floor-title{font-size:clamp(11px,6.25cqi,15px)!important}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__info--date{white-space:nowrap!important}@container (max-width:170px){html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__info--icon-text{display:none!important}html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card] .bili-video-card__stats--left .bili-video-card__stats--item:nth-child(2){display:none!important}}
 html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=card]{position:relative!important;inset:auto!important;grid-area:auto!important;order:0!important;width:auto!important;min-width:0!important;max-width:100%!important;height:auto!important;min-height:0!important;margin:0!important;align-self:start!important}
 html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=grid] .load-more-anchor{display:block!important;position:absolute!important;bottom:0!important;left:0!important;width:100%!important;height:1px!important;overflow:hidden!important;margin:0!important}
 html[data-bs-page=home][data-bs-ads=true] [data-bs-feed=grid][data-bs-prefetch=true] .load-more-anchor{bottom:min(140vh,80%)!important}
@@ -2174,7 +2179,7 @@ function swipeSlot(i){
     if(!v.dataset.bsSwipe){v.dataset.bsSwipe='1';v.addEventListener('ended',()=>{if(swipe&&swipe.slots.get(swipe.index)===slot)swipeGo(1);});v.addEventListener('play',()=>{if(swipe&&swipe.slots.get(swipe.index)!==slot)v.pause();});}
     if(swipe.slots.get(swipe.index)===slot){swipeProgress();swipeSyncDanmakuToggle();if(swipe.comments&&(slot.tick=(slot.tick||0)+1)%4===0){swipeStyleComments(doc);filterComments(doc.querySelector('#commentapp bili-comments'));}}
     if(swipe.slots.get(swipe.index)!==slot){if(!v.paused)v.pause();slot.preloaded=true;}
-    else if(!slot.started&&v.readyState>=2){slot.started=true;if(slot.preloaded&&v.currentTime<3)v.currentTime=0;v.play().catch(()=>{});if(PREFS.fiMode!=='off'||PREFS.srMode!=='off')startEnhancer();}
+    else if(!slot.started&&v.readyState>=2){slot.started=true;if(slot.preloaded&&v.currentTime<3)v.currentTime=0;swipePlay(slot,true);if(PREFS.fiMode!=='off'||PREFS.srMode!=='off')startEnhancer();}
     if(!slot.ready&&v.readyState>=2&&slot.styled){slot.ready=true;el.classList.add('ready');if(swipe.slots.get(swipe.index)===slot)swipeEnsure();}
   },120);
   return slot;
@@ -2208,7 +2213,7 @@ async function swipeGo(step){
   if(swipe.comments)swipeComments(false);
   swipe.moving=true;const old=swipe.slots.get(swipe.index);const ov=old&&swipeVideo(old);if(ov&&!ov.paused)ov.pause();
   swipe.index=to;swipe.arrivedAt=performance.now();swipeEnsure();swipeRenderInfo();
-  requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();swipePark();const cur=swipe.slots.get(swipe.index),v=cur&&swipeVideo(cur);if(v&&cur.ready)v.play().catch(()=>{});},470);});
+  requestAnimationFrame(()=>{swipePlace(true);setTimeout(()=>{if(!swipe)return;swipe.moving=false;swipePrune();swipePark();const cur=swipe.slots.get(swipe.index);if(cur?.ready)swipePlay(cur,true);},470);});
 }
 // The current video, the one before it and the next two exist; anything further away is dropped (frames are whole
 // pages). The second one down starts once the current one shows a picture, or 600ms after arriving, whichever is first,
@@ -2296,7 +2301,11 @@ async function openSwipe(){
   swipeEnsure();swipePlace(false);swipePark();swipeRenderInfo();
 }
 function swipeStill(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
-function swipeTogglePlay(){const v=swipe&&swipeVideo(swipe.slots.get(swipe.index));if(!v)return;if(v.paused)v.play().catch(()=>{});else v.pause();}
+// Play and pause go through the page's own player, so its state (and the centre mark) matches the picture; the bare
+// element is the fallback.
+function swipePlay(slot,on){const v=swipeVideo(slot);if(!v)return;let p;try{p=slot.frame.contentWindow?.player;}catch{}
+  try{if(p?.play&&p?.pause){on?p.play():p.pause();return;}}catch{}if(on)v.play().catch(()=>{});else v.pause();}
+function swipeTogglePlay(){const slot=swipe?.slots.get(swipe.index),v=slot&&swipeVideo(slot);if(!v)return;swipePlay(slot,v.paused);}
 function swipeToggleMore(){
   const ui=swipe.ui,info=$('.bs-swipe-info',ui),desc=$('.bs-swipe-desc',ui),open=!ui.classList.contains('expanded');
   info.getAnimations().forEach(a=>a.cancel());desc.getAnimations().forEach(a=>a.cancel());
@@ -3329,12 +3338,15 @@ function startPagePending(){
 }
 /* The header grows in small windows and the gain eases off as the window widens: 1240px gives about 20%, 2000px about 8%, 2560px about 5%. */
 // The scale lives in its own stylesheet: Bilibili rewrites the root element's inline style while it loads.
-// The client zooms pages so they stay near 1280 CSS px wide; the feed's column count follows the window's real width.
+// The client zooms pages so they stay near 1280 CSS px wide. The feed's column count follows the page's own CSS width, so
+// zooming in gives fewer, larger cards and covers keep their size next to the titles; counting from the window's real
+// width put 7 columns into a 1280px page on big screens (small covers under full-size titles) and ignored page zoom.
+// The setting is a minimum: at least that many at any width, more when the page is wide enough for them.
 let pageZoom=1;function setPageZoom(z){z=Number(z);if(!(z>0)||Math.abs(z-pageZoom)<.001)return;pageZoom=z;applyUiScale();}
 function applyUiScale(){const html=document.documentElement;if(!html)return;const width=Math.max(320,innerWidth||1240),scale=Math.round(Math.min(1.28,Math.max(1,1+.2*Math.pow(1240/width,2)))*50)/50;
   let sheet=document.getElementById('bs-ui-scale');if(!sheet){sheet=document.createElement('style');sheet.id='bs-ui-scale';html.append(sheet);}
-  const real=width*(CONTENT_VIEW?pageZoom:1),auto=real<=800?2:real<=1100?3:real<1500?4:real<1900?5:real<2300?6:7,floor=Number.isInteger(PREFS.feedColumns)&&PREFS.feedColumns>=2&&PREFS.feedColumns<=8?PREFS.feedColumns:0;
-  const css='html:root{--bs-ui-scale:'+scale+';--bs-header-height:'+Math.round((width<=800?102:58)*scale)+'px;--bs-feed-columns:'+Math.max(auto,floor)+'}';if(sheet.textContent!==css)sheet.textContent=css;if(!sheet.isConnected)html.append(sheet);}
+  const auto=width<=800?2:width<=1100?3:width<1500?4:width<1900?5:width<2300?6:7,least=Number.isInteger(PREFS.feedColumns)&&PREFS.feedColumns>=2&&PREFS.feedColumns<=8?PREFS.feedColumns:0;
+  const css='html:root{--bs-ui-scale:'+scale+';--bs-header-height:'+Math.round((width<=800?102:58)*scale)+'px;--bs-feed-columns:'+Math.max(auto,least)+'}';if(sheet.textContent!==css)sheet.textContent=css;if(!sheet.isConnected)html.append(sheet);}
 // These variables sit on the root, so changing them restyles the whole page. A window drag used to change the scale on
 // nearly every step (it was kept to 0.001), restyling and relaying out every element of a long feed each frame; the scale
 // now moves in 0.02 steps and is only applied once the size has stopped changing.
@@ -3488,7 +3500,7 @@ function boot(){
     downloadStarted(){const button=$('#bili-space-video-download');if(button?.dataset.state==='busy'){downloadCancelling=false;$('span',button).textContent='下载中';const cancel=$('#bili-space-download-cancel');if(cancel){cancel.dataset.started='true';cancel.hidden=false;cancel.disabled=false;}downloadDisplay('0% · 0 B/s · 预计剩余 计算中');}},
     downloadResult(result){settleDownload(Boolean(result?.ok),String(result?.message||''));},
     downloaderNotice(text){toast(String(text||''));},
-    acceptConfig(next,ack){if(ack<revision)return;const langBefore=uiLanguage();Object.assign(PREFS,next);applyPreferences();if(uiLanguage()!==langBefore)setLanguage(uiLanguage());},
+    acceptConfig(next,ack,origin){if(origin===VIEW_ID&&ack<revision)return;const langBefore=uiLanguage();Object.assign(PREFS,next);applyPreferences();if(uiLanguage()!==langBefore)setLanguage(uiLanguage());},
     setPip(on){
       pipActive=on;document.documentElement.dataset.bsPip=String(on);root.style.display=on?'none':'';syncPipPresentation();
       // Upstream hosts use inline all:initial!important; a stylesheet cannot override it.

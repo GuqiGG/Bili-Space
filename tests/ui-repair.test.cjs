@@ -6,8 +6,11 @@ test('back invokes native history and personalization combines header and progre
  a.w.BiliSpace.openSettings();assert(!s.querySelector('[data-tab=header]'));assert(!s.querySelector('[data-tab=progress]'));
  for(const key of ['headerUpload','logoAutoHide','feedColumns','progressHeight'])assert(s.querySelector(`[data-pref=${key}]`),key);
  assert.equal(s.querySelector('.upload').parentNode,s);
- a.w.BiliSpace.update({headerUpload:false,feedColumns:6});assert(s.querySelector('.upload').hidden);
- assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:6}/);
+ // The setting is a minimum: the page is 1024 CSS px wide here, where auto gives 3; 8 still shows 8, 2 shows auto's 3.
+ a.w.BiliSpace.update({headerUpload:false,feedColumns:3});assert(s.querySelector('.upload').hidden);
+ assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:3}/);
+ a.w.BiliSpace.update({feedColumns:8});assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:8}/);
+ a.w.BiliSpace.update({feedColumns:2});assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:3}/);
  a.w.BiliSpace.update({feedColumns:0});assert.equal(a.w.document.documentElement.style.getPropertyValue('--bs-feed-columns'),'');
  }finally{a.close();}
 });
@@ -24,5 +27,16 @@ test('reused search cards discard stale advertising markers',async()=>{
  await new Promise(r=>setTimeout(r,250));
  card.querySelector('span').firstChild.data='123 次播放';
  await new Promise(r=>setTimeout(r,300));assert.equal(card.dataset.bsAd,undefined);
+ }finally{a.close();}
+});
+test('a setting changed in another view applies even after this view saved its own changes',()=>{
+ const a=app();try{
+ for(let i=0;i<5;i++)a.w.BiliSpace.update({volumeBoost:100+i});
+ const mine=a.messages.filter(m=>m.type==='config').pop();assert(mine.origin);
+ a.w.BiliSpace.acceptConfig({feedColumns:8},1,'otherview1');
+ assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:8}/);
+ // an echo of this view's own older change is still skipped
+ a.w.BiliSpace.acceptConfig({feedColumns:2},mine.revision-1,mine.origin);
+ assert.match(a.w.document.getElementById('bs-ui-scale').textContent,/--bs-feed-columns:8}/);
  }finally{a.close();}
 });
