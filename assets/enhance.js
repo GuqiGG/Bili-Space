@@ -2203,6 +2203,12 @@ function swipeSlot(i){
   },120);
   return slot;
 }
+// 手机和平板上手指上下一划就换视频（往上是下一条），轻点还是暂停/播放；评论区里、按钮和输入框上的手势不管。
+function swipeTouch(target,skip){let y0=null,x0=0,at=0;
+  target.addEventListener('touchstart',e=>{if(e.touches.length!==1||skip(e)){y0=null;return;}y0=e.touches[0].clientY;x0=e.touches[0].clientX;at=performance.now();},{passive:true,capture:true});
+  target.addEventListener('touchmove',e=>{if(y0!==null&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
+  target.addEventListener('touchend',e=>{if(y0===null)return;const p=e.changedTouches[0],dy=p.clientY-y0,dx=p.clientX-x0;y0=null;
+    if(Math.abs(dy)>60&&Math.abs(dy)>Math.abs(dx)*1.5&&performance.now()-at<900){if(e.cancelable)e.preventDefault();swipeGo(dy<0?1:-1);}},{passive:false,capture:true});}
 // Wheel, ↑/↓ and Esc reach the frame first; they switch videos instead of scrolling the hidden page or changing volume.
 function swipeWireFrame(slot,win,doc){
   const inPanel=e=>!!swipe?.comments&&e.composedPath().some(n=>n.id==='commentapp');
@@ -2210,6 +2216,7 @@ function swipeWireFrame(slot,win,doc){
   for(const t of ['pointermove','pointerdown','keydown'])doc.addEventListener(t,()=>{if(swipe?.slots.get(swipe.index)===slot)swipeWake();},{passive:true,capture:true});
   doc.addEventListener('click',e=>{if(e.button!==0||swipe?.slots.get(swipe.index)!==slot||!e.target?.closest?.('.bpx-player-video-area')||inPanel(e))return;e.preventDefault();e.stopImmediatePropagation();swipeTogglePlay();},true);
   win.addEventListener('wheel',e=>{if(inPanel(e))return;e.preventDefault();swipeWheel(e);},{passive:false,capture:true});
+  swipeTouch(doc,e=>inPanel(e)||swipe?.slots.get(swipe.index)!==slot||typing(e));
   doc.addEventListener('keydown',e=>{if(typing(e))return;if(e.key===' '&&!inPanel(e)){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat)swipeTogglePlay();return;}if(e.key==='Escape'&&swipe?.comments){e.preventDefault();e.stopImmediatePropagation();swipeComments(false);return;}if(inPanel(e)&&(e.key==='ArrowDown'||e.key==='ArrowUp'))return;
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();swipeGo(e.key==='ArrowDown'?1:-1);}
     else if(e.key==='Escape'&&!doc.fullscreenElement){e.preventDefault();closeSwipe();}},true);
@@ -2307,6 +2314,7 @@ async function openSwipe(){
   native('swipe-state',{on:true});
   layer.addEventListener('wheel',e=>{e.preventDefault();swipeWheel(e);},{passive:false});
   layer.addEventListener('pointerdown',swipeHold);
+  swipeTouch(layer,e=>e.composedPath().some(n=>n.nodeType===1&&(n.matches('button,input,textarea,form,.bs-swipe-progress')||n.id==='commentapp')));
   layer.addEventListener('mousedown',e=>{if(e.target.closest?.('button'))e.preventDefault();});
   for(const t of ['pointermove','pointerdown','wheel','keydown'])layer.addEventListener(t,swipeWake,{passive:true});swipeWake();
   $('.bs-swipe-dm',layer).addEventListener('submit',swipeDanmakuSend);$('.bs-swipe-dm input',layer).addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();e.target.blur();}});

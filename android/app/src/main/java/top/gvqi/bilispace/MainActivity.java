@@ -55,6 +55,10 @@ public class MainActivity extends Activity {
 
     WebView web;
     FrameLayout root;
+    androidx.webkit.ScriptHandler scriptHandle;
+    final Set<String> origins = new HashSet<>();
+    boolean early;
+    String rendererBody = "";
     View fullscreen;
     WebChromeClient.CustomViewCallback fullscreenDone;
     SharedPreferences store;
@@ -105,12 +109,10 @@ public class MainActivity extends Activity {
         CookieManager.getInstance().setAcceptCookie(true); CookieManager.getInstance().setAcceptThirdPartyCookies(web, true);
 
         web.addJavascriptInterface(new Bridge(), "BiliSpaceAndroid");
-        String renderer = bridgeScript() + asset("web/renderer.js");
-        boolean early = WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT);
-        if (early) {
-            Set<String> origins = new HashSet<>(); for (String h : ALLOWED) origins.add("https://" + h);
-            WebViewCompat.addDocumentStartJavaScript(web, renderer, origins);
-        }
+        rendererBody = asset("web/renderer.js");
+        early = WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT);
+        for (String h : ALLOWED) origins.add("https://" + h);
+        registerScript();
         web.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri u = request.getUrl(); String scheme = u.getScheme();
@@ -120,7 +122,7 @@ public class MainActivity extends Activity {
                 return true;
             }
             @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
-                if (!early && trusted(url)) view.evaluateJavascript(renderer, null);
+                if (!early && trusted(url)) view.evaluateJavascript(pageScript(), null);
             }
             // The client's own files (fonts, onboarding media, what's-new) are served from the APK.
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
@@ -171,7 +173,23 @@ public class MainActivity extends Activity {
         main.post(() -> web.evaluateJavascript("window.BiliSpace?." + method + "?.(" + value + ")", null));
     }
 
-    void save() { store.edit().putString("config", config.toString()).putString("gm", gm.toString()).apply(); }
+    // 新打开的页面要用最新的设置：以前脚本只在启动时注册一次，带的是启动那一刻的设置，
+    // 之后每打开一个页面都当成没看过引导和更新公告，又弹出来、又跳回首页。设置一变就重新注册。
+    void save() { store.edit().putString("config", config.toString()).putString("gm", gm.toString()).apply(); registerScript(); }
+    void registerScript() {
+        if (!early) return;
+        if (scriptHandle != null) scriptHandle.remove();
+        scriptHandle = WebViewCompat.addDocumentStartJavaScript(web, pageScript(), origins);
+    }
+    String pageScript() { return bridgeScript() + viewportScript() + rendererBody; }
+    // 手机上不再把桌面版整页缩小：页面按 760 宽排，字和封面大得多，首页一行两个、顶栏分两排；平板按自己的实际宽度排。
+    String viewportScript() {
+        int width = Math.max(760, getResources().getConfiguration().screenWidthDp);
+        return "(()=>{if(window.top!==window)return;const put=()=>{const h=document.head;if(!h)return false;let m=document.querySelector('meta[name=viewport]');"
+            + "if(!m){m=document.createElement('meta');m.name='viewport';h.prepend(m);}m.content='width=" + width + "';return true;};"
+            + "if(!put())new MutationObserver((r,o)=>{if(put())o.disconnect();}).observe(document,{childList:true,subtree:true});})();" + "\n";
+    }
+    @Override public void onConfigurationChanged(android.content.res.Configuration c) { super.onConfigurationChanged(c); registerScript(); }
 
     class Bridge {
         @JavascriptInterface public void post(String raw) {
