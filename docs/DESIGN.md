@@ -199,6 +199,14 @@
 - 没有 Xcode 工程：CI 的 macOS 任务里 `scripts/build_ios.sh` 用 `xcrun -sdk iphoneos clang` 直接编、拼 Payload、打成没签名的 `Bili-Space-<版本>-ios-unsigned.ipa`，用户自己用 AltStore/Sideloadly 等签名。这一步 `continue-on-error`，发布脚本有包就带上、没有不挡其它平台。
 - 这台 Windows 机器编不了 iOS，第一次真正编译是在发布时的 CI 上；编不过就看 CI 日志修。
 
+## 5.20 手机排版（安卓、iPhone 竖屏）
+
+- 用 apple-design / ux-audit / design-taste 三个技能定的方向：内容优先、安静的界面、一个强调色。以前把 760 宽的桌面页缩到手机上，字只有 8pt 左右。
+- 现在安卓和 iOS 都按设备实际宽度排版（`width=device-width`），屏幕窄于 600 时客户端进入手机模式（`html[data-bs-mobile]`、顶栏 `:host([data-mobile])`）：顶栏一行（搜索最宽、消息、头像/登录），窗口按钮、Logo、横幅、分区条、卡片上的「拉黑」、悬浮的上传按钮都不要；主导航变成底部标签栏（首页·精选·动态·历史·设置，图标加文字，留出底部安全区，背景 93% 不透明的毛玻璃）；首页一行两个，标题 14px、信息 12px，左右 12px。
+- 动态页只留中间的动态列表并占满宽度（B 站的左右栏、悬浮工具在手机上会把页面撑出屏幕）。精选里顶栏收起，视频铺满，只留底部标签栏，精选标签高亮。
+- 安卓、Mac、iOS 没有单独的顶栏层（`CONTENT_VIEW` 是 false），以前精选和换一换都直接不运行；改用 `PAGE_VIEW`（不是顶栏层就算）。
+- 手机排版在 Windows 上用 Playwright 的 WebKit 模拟（412×915、注入安卓同款脚本）截图检查；真机还要再看。
+
 ## 6. 否决过的方案（不要再做）
 
 - **启动时的屏外窗口 + 从小电视展开的启动动画**：用户觉得难看。保留原来窗口内的启动页。
