@@ -5,13 +5,13 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: Publish verified 0.1.71 release
+        description: Publish verified 0.1.72 release
         type: boolean
         default: false
 permissions:
   contents: read
 concurrency:
-  group: platforms-0.1.71-${{ github.ref }}
+  group: platforms-0.1.72-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   macos:
@@ -33,11 +33,18 @@ jobs:
           codesign --force --deep --sign - build/macos/Bili-Space.app
           build/macos/Bili-Space.app/Contents/MacOS/Bili-Space --self-test
           mkdir -p releases
-          ditto -c -k --sequesterRsrc --keepParent build/macos/Bili-Space.app releases/Bili-Space-0.1.71-macos-universal.zip
+          ditto -c -k --sequesterRsrc --keepParent build/macos/Bili-Space.app releases/Bili-Space-0.1.72-macos-universal.zip
+      # iOS 包还是新的：打不出来时不拖累其它平台的发布
+      - name: Build unsigned iOS app
+        continue-on-error: true
+        run: bash scripts/build_ios.sh
       - uses: actions/upload-artifact@v4
         with:
           name: macos-universal
-          path: releases/Bili-Space-0.1.71-macos-universal.zip
+          path: |
+            releases/Bili-Space-0.1.72-macos-universal.zip
+            releases/Bili-Space-0.1.72-ios-unsigned.ipa
+          if-no-files-found: warn
   android:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -54,11 +61,11 @@ jobs:
           "sdk.dir=$env:ANDROID_HOME" | Set-Content android/local.properties
           ./scripts/build_android.ps1
           New-Item -ItemType Directory -Force releases | Out-Null
-          Move-Item dist/Bili-Space-0.1.71-android.apk releases/
+          Move-Item dist/Bili-Space-0.1.72-android.apk releases/
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: releases/Bili-Space-0.1.71-android.apk
+          path: releases/Bili-Space-0.1.72-android.apk
   linux:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -78,11 +85,11 @@ jobs:
           python3 scripts/test_linux51_policy.py
           python3 scripts/package_linux.py
           BILI_SPACE_RESOURCES="$PWD/build/linux-package/usr/lib/bili-space" WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 xvfb-run -a dbus-run-session -- /usr/bin/python3 src/linux_main.py --self-test
-          dpkg-deb --contents releases/Bili-Space-0.1.71-linux.deb
+          dpkg-deb --contents releases/Bili-Space-0.1.72-linux.deb
       - uses: actions/upload-artifact@v4
         with:
           name: linux-deb
-          path: releases/Bili-Space-0.1.71-linux.deb
+          path: releases/Bili-Space-0.1.72-linux.deb
   windows:
     runs-on: windows-latest
     timeout-minutes: 25
@@ -118,11 +125,11 @@ jobs:
         with:
           name: windows-compatibility
           path: |
-            releases/Bili-Space-0.1.71-win7-x64.zip
-            releases/Bili-Space-0.1.71-win64.zip
-            releases/Bili-Space-0.1.71-Setup.exe
+            releases/Bili-Space-0.1.72-win7-x64.zip
+            releases/Bili-Space-0.1.72-win64.zip
+            releases/Bili-Space-0.1.72-Setup.exe
   publish:
-    if: (github.event_name == 'workflow_dispatch' && inputs.publish) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[release-0.1.71]'))
+    if: (github.event_name == 'workflow_dispatch' && inputs.publish) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[release-0.1.72]'))
     needs: [windows, macos, linux, android]
     runs-on: ubuntu-latest
     permissions:

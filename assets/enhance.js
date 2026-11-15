@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,holdSpeed:200,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,feedColumns:0,experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
    keep their header space but hide their own copy (content mode). */
@@ -790,7 +790,7 @@ function installVideoLinkDrag(){
 // Lines are drawn from a shuffled deck, and two lines of the same kind (same opening) never come back to back.
 let categoryEggForced=false,searchQuips=null,searchQuipDeck=[],searchQuipLast='';
 const SEARCH_QUIPS_FALLBACK=['今天也要好好吃饭哦','三连不迷路，搜索不迷茫','搜索框：我准备好了','据说按回车会有好事发生','猫猫视频包治百病'];
-function localAsset(path){return (typeof RUNTIME!=='undefined'&&['macos','linux'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+path;}
+function localAsset(path){return (typeof RUNTIME!=='undefined'&&['macos','linux','ios'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+path;}
 // Languages: the client's own UI (the shell's shadow root and the few elements it adds to pages) is written in Simplified
 // Chinese and translated as it renders, from assets/i18n/<lang>.json (source text → translation; scripts/i18n_build.py).
 // A text is only replaced when known phrases cover every Chinese character in it, so Bilibili's own content
@@ -1430,7 +1430,14 @@ function scheduleScan(){
 }
 
 // Short wheel easing only: precision gestures retain the OS's own momentum.
+// 长按快进：B 站播放器按住 → 键会切到 3 倍；按住期间它切到 3 倍时改成设置里的倍速，松开后由播放器自己恢复。
+let holdingRight=false;
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'&&!e.target?.closest?.('input,textarea,[contenteditable=true]'))holdingRight=true;},true);
+document.addEventListener('keyup',e=>{if(e.key==='ArrowRight')holdingRight=false;},true);window.addEventListener('blur',()=>{holdingRight=false;});
+document.addEventListener('ratechange',e=>{const v=e.target,want=(Number(PREFS.holdSpeed)||200)/100;if(!holdingRight||!(v instanceof HTMLMediaElement)||v.playbackRate!==3||want===3)return;v.playbackRate=want;},true);
 function installWheelInertia(){
+  // macOS scrolls with its own momentum for both mice and trackpads; taking the wheel over there only gets in the way.
+  if(NATIVE_PLATFORM==='macos')return;
   let motion,frame;
   const cancel=()=>{cancelAnimationFrame(frame);motion=null;};
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -1894,7 +1901,7 @@ const ONBOARDING_SHOTS=[
 ];
 const ONBOARDING_ACCENTS=[['#fb7299','B站粉'],['#00aeec','天蓝'],['#20b486','青绿'],['#8b6cf5','藕紫'],['#ff8a3d','橘橙'],['#e5484d','朱红']];
 let onboardingTimer,onboardingTries=0;
-function onboardingAsset(name){return (typeof RUNTIME!=='undefined'&&['macos','linux'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+'onboarding/'+name;}
+function onboardingAsset(name){return (typeof RUNTIME!=='undefined'&&['macos','linux','ios'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+'onboarding/'+name;}
 // While the welcome tour is open the page behind it is blurred and dimmed (the tour lives in the header view, which
 // cannot blur another view); closing it lets the blur go slowly so the configured client comes into view.
 function tourBackdrop(on){if(CHROME_VIEW)return;const html=document.documentElement;if(on){html.classList.add('bs-tour-blur');return;}
@@ -2196,6 +2203,12 @@ function swipeSlot(i){
   },120);
   return slot;
 }
+// 手机和平板上手指上下一划就换视频（往上是下一条），轻点还是暂停/播放；评论区里、按钮和输入框上的手势不管。
+function swipeTouch(target,skip){let y0=null,x0=0,at=0;
+  target.addEventListener('touchstart',e=>{if(e.touches.length!==1||skip(e)){y0=null;return;}y0=e.touches[0].clientY;x0=e.touches[0].clientX;at=performance.now();},{passive:true,capture:true});
+  target.addEventListener('touchmove',e=>{if(y0!==null&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
+  target.addEventListener('touchend',e=>{if(y0===null)return;const p=e.changedTouches[0],dy=p.clientY-y0,dx=p.clientX-x0;y0=null;
+    if(Math.abs(dy)>60&&Math.abs(dy)>Math.abs(dx)*1.5&&performance.now()-at<900){if(e.cancelable)e.preventDefault();swipeGo(dy<0?1:-1);}},{passive:false,capture:true});}
 // Wheel, ↑/↓ and Esc reach the frame first; they switch videos instead of scrolling the hidden page or changing volume.
 function swipeWireFrame(slot,win,doc){
   const inPanel=e=>!!swipe?.comments&&e.composedPath().some(n=>n.id==='commentapp');
@@ -2203,6 +2216,7 @@ function swipeWireFrame(slot,win,doc){
   for(const t of ['pointermove','pointerdown','keydown'])doc.addEventListener(t,()=>{if(swipe?.slots.get(swipe.index)===slot)swipeWake();},{passive:true,capture:true});
   doc.addEventListener('click',e=>{if(e.button!==0||swipe?.slots.get(swipe.index)!==slot||!e.target?.closest?.('.bpx-player-video-area')||inPanel(e))return;e.preventDefault();e.stopImmediatePropagation();swipeTogglePlay();},true);
   win.addEventListener('wheel',e=>{if(inPanel(e))return;e.preventDefault();swipeWheel(e);},{passive:false,capture:true});
+  swipeTouch(doc,e=>inPanel(e)||swipe?.slots.get(swipe.index)!==slot||typing(e));
   doc.addEventListener('keydown',e=>{if(typing(e))return;if(e.key===' '&&!inPanel(e)){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat)swipeTogglePlay();return;}if(e.key==='Escape'&&swipe?.comments){e.preventDefault();e.stopImmediatePropagation();swipeComments(false);return;}if(inPanel(e)&&(e.key==='ArrowDown'||e.key==='ArrowUp'))return;
     if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();swipeGo(e.key==='ArrowDown'?1:-1);}
     else if(e.key==='Escape'&&!doc.fullscreenElement){e.preventDefault();closeSwipe();}},true);
@@ -2300,6 +2314,7 @@ async function openSwipe(){
   native('swipe-state',{on:true});
   layer.addEventListener('wheel',e=>{e.preventDefault();swipeWheel(e);},{passive:false});
   layer.addEventListener('pointerdown',swipeHold);
+  swipeTouch(layer,e=>e.composedPath().some(n=>n.nodeType===1&&(n.matches('button,input,textarea,form,.bs-swipe-progress')||n.id==='commentapp')));
   layer.addEventListener('mousedown',e=>{if(e.target.closest?.('button'))e.preventDefault();});
   for(const t of ['pointermove','pointerdown','wheel','keydown'])layer.addEventListener(t,swipeWake,{passive:true});swipeWake();
   $('.bs-swipe-dm',layer).addEventListener('submit',swipeDanmakuSend);$('.bs-swipe-dm input',layer).addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();e.target.blur();}});
@@ -2710,7 +2725,7 @@ function tabContent(tab=currentTab){
     `<div class="section-label">评论屏蔽</div>${toggle('commentBlock','屏蔽评论','名单里的用户发的评论，或者含有屏蔽词的评论（楼中楼回复也算）不显示')}`+
     `<div class="row block-list"><label for="block-users">屏蔽用户名<span class="hint">一行一个，昵称完全一样才屏蔽</span></label><textarea id="block-users" data-block-list="commentBlockUsers" rows="4" spellcheck="false" placeholder="一行一个用户名">${escapeHtml((PREFS.commentBlockUsers||[]).join('\n'))}</textarea></div>`+
     `<div class="row block-list"><label for="block-words">屏蔽词<span class="hint">一行一个，评论里出现就屏蔽</span></label><textarea id="block-words" data-block-list="commentBlockWords" rows="4" spellcheck="false" placeholder="一行一个词">${escapeHtml((PREFS.commentBlockWords||[]).join('\n'))}</textarea></div>`;
-  if(tab==='play')return withoutVideoAi(`<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">WebGPU · 每个源帧只计算一次</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srModel">超分模型<span class="hint">自动：番剧、国创、动画区用动画模型，其余用通用模型</span></label><select id="pref-srModel" data-pref="srModel"><option value="auto">自动识别</option><option value="anime">动画（Anime4K）</option><option value="general">通用</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">画面补帧（Lossless Scaling 式）</option></select></div><div class="row"><label for="pref-fiFps">补帧上限<span class="hint">不超过屏幕刷新率</span></label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option><option value="144">144 fps</option><option value="240">240 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`);
+  if(tab==='play')return withoutVideoAi(`<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div><div class="row"><label for="pref-holdSpeed">长按快进倍速<span class="hint">按住 → 键时的速度，B 站原本是 3 倍</span></label><select id="pref-holdSpeed" data-pref="holdSpeed">${[150,200,250,300,400].map(n=>`<option value="${n}">${n/100} 倍</option>`).join('')}</select></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分与补帧仍在测试，可能卡顿、闪烁或产生伪影。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">WebGPU · 每个源帧只计算一次</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srModel">超分模型<span class="hint">自动：番剧、国创、动画区用动画模型，其余用通用模型</span></label><select id="pref-srModel" data-pref="srModel"><option value="auto">自动识别</option><option value="anime">动画（Anime4K）</option><option value="general">通用</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">画面补帧（Lossless Scaling 式）</option></select></div><div class="row"><label for="pref-fiFps">补帧上限<span class="hint">不超过屏幕刷新率</span></label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option><option value="144">144 fps</option><option value="240">240 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`);
   return `<div class="compact-tab"><h2>扩展</h2>${toggle('clickGui','悬浮设置面板','内置插件 · 设置变成可拖动的悬浮面板：左键开关，右键展开详情，右 Shift 也能打开')}<div class="row"><label for="pref-btr">Bilibili 线程撕裂者<span class="hint">多线路并发加速视频缓冲 · 始终开启</span></label><input id="pref-btr" type="checkbox" checked disabled aria-describedby="btr-locked"></div><div class="actions"><button id="btr-settings" class="link">线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div>${cdnRows()}<div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器</div>${toggle('downloader','视频页显示下载按钮','支持 AVC / AAC 单视频下载，暂不支持批量、多段与番剧')}<div class="section-label">插件</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本 主题"></div></div>`;
 }
 const settingsGroupsOpen=new Map();
@@ -2901,7 +2916,7 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
     if(key==='settingsZoom'){const out=el.parentElement?.querySelector('output');if(out)out.textContent=el.value+'%';return;}
     // The experimental fullscreen motion asks first; the switch stays off unless the warning is accepted.
     if(key==='experimentalFullscreenMotion'&&el.checked&&!PREFS.experimentalFullscreenMotion){el.checked=false;confirmFullscreenMotion(el);return;}
-    let v=el.type==='checkbox'?el.checked:['range','number'].includes(el.type)||['srScale','srFps','fiFps','fiFlowScale','autoZoomTarget','downloadConnections','feedColumns','settingsZoom'].includes(key)?Number(el.value):el.value;
+    let v=el.type==='checkbox'?el.checked:['range','number'].includes(el.type)||['srScale','srFps','fiFps','fiFlowScale','autoZoomTarget','downloadConnections','feedColumns','settingsZoom','holdSpeed'].includes(key)?Number(el.value):el.value;
     update({[key]:v});
     if(key==='btr')toast('刷新页面后生效');
     if(key==='proxyAll')toast('重启后生效');
@@ -2951,8 +2966,15 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
   renderSettings();
 }
 
+// macOS has no shrunken always-on-top client window: there the system's own picture in picture floats the video instead.
+function systemPip(video){
+  try{if(document.pictureInPictureElement===video){document.exitPictureInPicture();return true;}
+    if(typeof video.webkitSetPresentationMode==='function'){video.webkitSetPresentationMode(video.webkitPresentationMode==='picture-in-picture'?'inline':'picture-in-picture');return true;}
+    if(video.requestPictureInPicture){video.requestPictureInPicture().catch(()=>toast('画中画暂时打不开'));return true;}}catch{}
+  return false;}
 function requestPip(){
   const video=playbackVideo();if(!video){toast('先打开一个视频，再进入画中画');return;}
+  if(NATIVE_PLATFORM==='macos'||NATIVE_PLATFORM==='ios'){if(!systemPip(video))toast('这台设备不支持画中画');return;}
   const enter=()=>native('window',{action:'pip'});if(document.fullscreenElement)document.exitFullscreen().then(enter).catch(()=>toast('请先退出全屏后进入画中画'));else enter();
 }
 function syncPlayerAppearance(quality){

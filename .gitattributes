@@ -10,3 +10,6 @@ assets/web-copy/** -text
 verification/** linguist-generated
 assets/web-copy/** linguist-vendored
 vendor/** linguist-vendored
+
+# 在 macOS 上跑的脚本要保持 Unix 换行
+*.sh text eol=lf
