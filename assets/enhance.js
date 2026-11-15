@@ -790,7 +790,7 @@ function installVideoLinkDrag(){
 // Lines are drawn from a shuffled deck, and two lines of the same kind (same opening) never come back to back.
 let categoryEggForced=false,searchQuips=null,searchQuipDeck=[],searchQuipLast='';
 const SEARCH_QUIPS_FALLBACK=['今天也要好好吃饭哦','三连不迷路，搜索不迷茫','搜索框：我准备好了','据说按回车会有好事发生','猫猫视频包治百病'];
-function localAsset(path){return (typeof RUNTIME!=='undefined'&&['macos','linux'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+path;}
+function localAsset(path){return (typeof RUNTIME!=='undefined'&&['macos','linux','ios'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+path;}
 // Languages: the client's own UI (the shell's shadow root and the few elements it adds to pages) is written in Simplified
 // Chinese and translated as it renders, from assets/i18n/<lang>.json (source text → translation; scripts/i18n_build.py).
 // A text is only replaced when known phrases cover every Chinese character in it, so Bilibili's own content
@@ -1901,7 +1901,7 @@ const ONBOARDING_SHOTS=[
 ];
 const ONBOARDING_ACCENTS=[['#fb7299','B站粉'],['#00aeec','天蓝'],['#20b486','青绿'],['#8b6cf5','藕紫'],['#ff8a3d','橘橙'],['#e5484d','朱红']];
 let onboardingTimer,onboardingTries=0;
-function onboardingAsset(name){return (typeof RUNTIME!=='undefined'&&['macos','linux'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+'onboarding/'+name;}
+function onboardingAsset(name){return (typeof RUNTIME!=='undefined'&&['macos','linux','ios'].includes(RUNTIME.platform)?'bili-space://assets/':'https://bili-space.local/')+'onboarding/'+name;}
 // While the welcome tour is open the page behind it is blurred and dimmed (the tour lives in the header view, which
 // cannot blur another view); closing it lets the blur go slowly so the configured client comes into view.
 function tourBackdrop(on){if(CHROME_VIEW)return;const html=document.documentElement;if(on){html.classList.add('bs-tour-blur');return;}
@@ -2974,7 +2974,7 @@ function systemPip(video){
   return false;}
 function requestPip(){
   const video=playbackVideo();if(!video){toast('先打开一个视频，再进入画中画');return;}
-  if(NATIVE_PLATFORM==='macos'){if(!systemPip(video))toast('这台 Mac 不支持画中画');return;}
+  if(NATIVE_PLATFORM==='macos'||NATIVE_PLATFORM==='ios'){if(!systemPip(video))toast('这台设备不支持画中画');return;}
   const enter=()=>native('window',{action:'pip'});if(document.fullscreenElement)document.exitFullscreen().then(enter).catch(()=>toast('请先退出全屏后进入画中画'));else enter();
 }
 function syncPlayerAppearance(quality){

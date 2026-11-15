@@ -34,10 +34,17 @@ jobs:
           build/macos/Bili-Space.app/Contents/MacOS/Bili-Space --self-test
           mkdir -p releases
           ditto -c -k --sequesterRsrc --keepParent build/macos/Bili-Space.app releases/Bili-Space-0.1.71-macos-universal.zip
+      # iOS 包还是新的：打不出来时不拖累其它平台的发布
+      - name: Build unsigned iOS app
+        continue-on-error: true
+        run: bash scripts/build_ios.sh
       - uses: actions/upload-artifact@v4
         with:
           name: macos-universal
-          path: releases/Bili-Space-0.1.71-macos-universal.zip
+          path: |
+            releases/Bili-Space-0.1.71-macos-universal.zip
+            releases/Bili-Space-0.1.71-ios-unsigned.ipa
+          if-no-files-found: warn
   android:
     runs-on: ubuntu-24.04
     timeout-minutes: 20

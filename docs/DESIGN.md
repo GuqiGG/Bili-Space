@@ -193,6 +193,12 @@
 - 手机上不再把桌面版整页缩小：注入 `meta viewport width=max(760, 屏幕宽 dp)`，页面按 760 宽排，首页自动一行两个，客户端顶栏在 ≤800 宽时本来就分两排；平板按实际宽度排。转屏时重新注册（下一个页面生效）。
 - 精选支持手指上下划：上划下一条、下划上一条，竖向位移超过 60px、比横向大 1.5 倍、0.9 秒内才算；评论区里、按钮和输入框上的手势不管；轻点还是暂停/播放。
 
+## 5.19 iOS / iPadOS
+
+- `src/ios_main.m`：一个全屏 WKWebView，和 Mac 一样注入同一份页面脚本（`renderer.js`），设置存 NSUserDefaults，设置一变就重新注册脚本；客户端自己的文件走 `bili-space://`；手机按 760 宽排（一行两个、顶栏两排），iPad 用实际宽度；画中画用系统的。站外 https 链接交给 Safari。
+- 没有 Xcode 工程：CI 的 macOS 任务里 `scripts/build_ios.sh` 用 `xcrun -sdk iphoneos clang` 直接编、拼 Payload、打成没签名的 `Bili-Space-<版本>-ios-unsigned.ipa`，用户自己用 AltStore/Sideloadly 等签名。这一步 `continue-on-error`，发布脚本有包就带上、没有不挡其它平台。
+- 这台 Windows 机器编不了 iOS，第一次真正编译是在发布时的 CI 上；编不过就看 CI 日志修。
+
 ## 6. 否决过的方案（不要再做）
 
 - **启动时的屏外窗口 + 从小电视展开的启动动画**：用户觉得难看。保留原来窗口内的启动页。
