@@ -24,9 +24,8 @@ static NSString *const DesktopUA=@"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_
 - (NSString *)pageScript {
     NSDictionary *payload=@{@"appInfo":[self readJSON:@"app-info.json"],@"config":self.config,@"gm":self.gm,@"runtime":@{@"platform":@"ios",@"testing":@NO,@"running":@NO}};
     NSString *bridge=[NSString stringWithFormat:@"(()=>{if(window.top!==window)return;window.__BILI_NATIVE__=%@;window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(m)};})();\n",JSONString(payload)];
-    // Phones lay the site out 760 px wide (two videos a row, a two-row header) instead of shrinking the desktop page; iPads use their own width.
-    BOOL phone=UIDevice.currentDevice.userInterfaceIdiom==UIUserInterfaceIdiomPhone;
-    NSString *width=phone?@"760":@"device-width";
+    // 按设备实际宽度排版；手机上客户端会换成手机排版（底部标签栏、首页一行两个）。
+    NSString *width=@"device-width,initial-scale=1,viewport-fit=cover";
     NSString *viewport=[NSString stringWithFormat:@"(()=>{if(window.top!==window)return;const put=()=>{const h=document.head;if(!h)return false;let m=document.querySelector('meta[name=viewport]');if(!m){m=document.createElement('meta');m.name='viewport';h.prepend(m);}m.content='width=%@';return true;};if(!put())new MutationObserver((r,o)=>{if(put())o.disconnect();}).observe(document,{childList:true,subtree:true});})();\n",width];
     return [[bridge stringByAppendingString:viewport] stringByAppendingString:self.renderer?:@""];
 }

@@ -182,11 +182,10 @@ public class MainActivity extends Activity {
         scriptHandle = WebViewCompat.addDocumentStartJavaScript(web, pageScript(), origins);
     }
     String pageScript() { return bridgeScript() + viewportScript() + rendererBody; }
-    // 手机上不再把桌面版整页缩小：页面按 760 宽排，字和封面大得多，首页一行两个、顶栏分两排；平板按自己的实际宽度排。
+    // 按设备的实际宽度排版，不把桌面版整页缩小；手机上客户端会换成手机排版（底部标签栏、首页一行两个）。
     String viewportScript() {
-        int width = Math.max(760, getResources().getConfiguration().screenWidthDp);
         return "(()=>{if(window.top!==window)return;const put=()=>{const h=document.head;if(!h)return false;let m=document.querySelector('meta[name=viewport]');"
-            + "if(!m){m=document.createElement('meta');m.name='viewport';h.prepend(m);}m.content='width=" + width + "';return true;};"
+            + "if(!m){m=document.createElement('meta');m.name='viewport';h.prepend(m);}m.content='width=device-width,initial-scale=1,viewport-fit=cover';return true;};"
             + "if(!put())new MutationObserver((r,o)=>{if(put())o.disconnect();}).observe(document,{childList:true,subtree:true});})();" + "\n";
     }
     @Override public void onConfigurationChanged(android.content.res.Configuration c) { super.onConfigurationChanged(c); registerScript(); }
