@@ -2,22 +2,19 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.72",
+  "version": "0.1.73",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
-  "silent": false,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.72-win64.zip",
-  "sha256": "4f18d9e87c589464ada46109e3cdf46fa58dbaa539f2bd99ea6d5632445c511c",
-  "size": 36986345,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.72/Bili-Space-0.1.72-Setup.exe",
-  "setupSha256": "529a457bb04be4b80c2fee485de57e7b39e141bcb983aadaf30d368fefaaa7ea",
-  "setupSize": 28444828,
+  "silent": true,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.73-win64.zip",
+  "sha256": "d11fbb4fd7875f713c908259fce827629039c67bb0f8c24b1ded67a19e9ac9b3",
+  "size": 36992671,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.73/Bili-Space-0.1.73-Setup.exe",
+  "setupSha256": "af3573518d1fe387819029a1742019875ac26c6d45933e3e01107365fa1a1b5f",
+  "setupSize": 28449714,
   "changelog": [
-    "新增 iPhone / iPad 版：没签名的安装包（-ios-unsigned.ipa），用 AltStore、Sideloadly 等自己签名安装",
-    "首页推荐不再丢：去历史等页面再回到首页，之前刷出来的推荐和看到的位置都还在",
-    "新设置「长按快进倍速」：按住 → 键快进，默认改成 2 倍（以前固定 3 倍）",
-    "安卓：不再一打开页面就跳回首页、反复弹窗；页面变大，首页一行两个，顶栏分两排",
-    "手机和平板的精选：手指上划下一条，下划上一条",
-    "Mac：画中画改用系统画中画；首页滚动交给系统处理"
+    "手机版重新排版：按手机实际宽度显示，字号正常，首页一行两个，顶栏一行，首页 · 精选 · 动态 · 历史 · 设置放到底部标签栏",
+    "修复：安卓、Mac、iPhone 上点「精选」打不开；手机上精选全屏，只留底部标签栏",
+    "修复：手机上动态页被两边栏撑出屏幕，现在只留中间的动态列表"
   ]
 }
