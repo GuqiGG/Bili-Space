@@ -22,7 +22,7 @@ static NSString *const DesktopUA=@"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_
 // The injected script carries the current settings; it is rebuilt whenever they change, so every new page starts from
 // what was last saved (a script built once at launch made each page think the onboarding had never been seen).
 - (NSString *)pageScript {
-    NSDictionary *payload=@{@"appInfo":[self readJSON:@"app-info.json"],@"config":self.config,@"gm":self.gm,@"runtime":@{@"platform":@"ios",@"testing":@NO,@"running":@NO}};
+    NSDictionary *payload=@{@"appInfo":[self readJSON:@"app-info.json"],@"config":self.config,@"gm":self.gm,@"runtime":@{@"platform":@"ios",@"device":(UIDevice.currentDevice.userInterfaceIdiom==UIUserInterfaceIdiomPad?@"tablet":@"phone"),@"testing":@NO,@"running":@NO}};
     NSString *bridge=[NSString stringWithFormat:@"(()=>{if(window.top!==window)return;window.__BILI_NATIVE__=%@;window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>window.webkit.messageHandlers.native.postMessage(m)};})();\n",JSONString(payload)];
     // 按设备实际宽度排版；手机上客户端会换成手机排版（底部标签栏、首页一行两个）。
     NSString *width=@"device-width,initial-scale=1,viewport-fit=cover";
