@@ -1,8 +1,8 @@
 {
   "name": "Bili-Space",
-  "version": "0.1.74",
+  "version": "0.1.75",
   "author": "未署名",
   "platform": "windows-x64",
   "updateUrl": "https://bili.gvqi.top/updates/windows-x64.json",
-  "releaseName": "Bili-Space 0.1.74 · 全屏一键关视频、下载选清晰度"
+  "releaseName": "Bili-Space 0.1.75 · 手机、平板、电视分开适配"
 }
