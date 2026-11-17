@@ -103,8 +103,10 @@ public class MainActivity extends Activity {
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setDatabaseEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        // The desktop site, laid out at desktop width and scaled to the screen; pinch zoom stays available.
-        s.setUserAgentString(DESKTOP_UA); s.setUseWideViewPort(true); s.setLoadWithOverviewMode(true);
+        // 手机：按屏幕实际宽度排版（不读网页的 viewport，免得先按 980 宽的桌面版排、整页缩得很小）；
+        // 平板和电视：电脑版排版。
+        boolean phone = "phone".equals(deviceClass());
+        s.setUserAgentString(DESKTOP_UA); s.setUseWideViewPort(!phone); s.setLoadWithOverviewMode(!phone);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false);
         CookieManager.getInstance().setAcceptCookie(true); CookieManager.getInstance().setAcceptThirdPartyCookies(web, true);
 
@@ -163,7 +165,7 @@ public class MainActivity extends Activity {
         try {
             JSONObject info = json(asset("web/app-info.json"));
             payload.put("appInfo", info); payload.put("config", config); payload.put("gm", gm);
-            payload.put("runtime", new JSONObject().put("platform", "android").put("testing", false).put("running", false));
+            payload.put("runtime", new JSONObject().put("platform", "android").put("device", deviceClass()).put("testing", false).put("running", false));
         } catch (Exception ignored) {}
         return "(()=>{if(window.top!==window)return;const token=" + JSONObject.quote(token) + ";window.__BILI_NATIVE__=" + payload
                 + ";window.chrome=window.chrome||{};window.chrome.webview={postMessage:m=>BiliSpaceAndroid.post(JSON.stringify({token,message:m})),addEventListener(){},removeEventListener(){}};})();\n";
@@ -182,12 +184,21 @@ public class MainActivity extends Activity {
         scriptHandle = WebViewCompat.addDocumentStartJavaScript(web, pageScript(), origins);
     }
     String pageScript() { return bridgeScript() + viewportScript() + rendererBody; }
+    // 设备类型：电视（遥控器操作）、平板（最短边 ≥ 600dp）、手机。
+    String deviceClass() {
+        android.app.UiModeManager ui = (android.app.UiModeManager) getSystemService(UI_MODE_SERVICE);
+        if ((ui != null && ui.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION)
+                || getPackageManager().hasSystemFeature("android.software.leanback")) return "tv";
+        return getResources().getConfiguration().smallestScreenWidthDp >= 600 ? "tablet" : "phone";
+    }
     // 按设备的实际宽度排版，不把桌面版整页缩小；手机上客户端会换成手机排版（底部标签栏、首页一行两个）。
     String viewportScript() {
         return "(()=>{if(window.top!==window)return;const put=()=>{const h=document.head;if(!h)return false;let m=document.querySelector('meta[name=viewport]');"
-            + "if(!m){m=document.createElement('meta');m.name='viewport';h.prepend(m);}m.content='width=device-width,initial-scale=1,viewport-fit=cover';return true;};"
+            + "if(!m){m=document.createElement('meta');m.name='viewport';h.prepend(m);}m.content=" + JSONObject.quote(viewport()) + ";return true;};"
             + "if(!put())new MutationObserver((r,o)=>{if(put())o.disconnect();}).observe(document,{childList:true,subtree:true});})();" + "\n";
     }
+    // 电视的屏幕按 CSS 像素算往往只有 960 宽，电脑版会挤；固定按 1280 宽排，再缩放到屏幕。
+    String viewport() { return "tv".equals(deviceClass()) ? "width=1280" : "width=device-width,initial-scale=1,viewport-fit=cover"; }
     @Override public void onConfigurationChanged(android.content.res.Configuration c) { super.onConfigurationChanged(c); registerScript(); }
 
     class Bridge {
@@ -227,7 +238,7 @@ public class MainActivity extends Activity {
                 else if ("close".equals(action)) finish();
                 break;
             case "navigation-state":
-                if ("read".equals(action)) web.evaluateJavascript("window.__bsAcceptNavigationState?.(" + new JSONObject().put("back", web.canGoBack()).put("forward", web.canGoForward()).put("visible", 3).put("categoryVisible", false).put("route", "") + ")", null);
+                if ("read".equals(action)) web.evaluateJavascript("window.__bsAcceptNavigationState?.(" + new JSONObject().put("back", web.canGoBack()).put("forward", web.canGoForward()).put("visible", 3).put("categoryVisible", true).put("route", "") + ")", null);
                 break;
             case "copy-video-link": {
                 String url = m.optString("url");
