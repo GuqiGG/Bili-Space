@@ -726,6 +726,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
                 manualZoom=std::clamp(next/zoomBase,.25,5.0);zoomDeferred=true;applyZoom();zoomDeferred=false;
                 zoomFrom=shown;zoomTo=zoomApplied;zoomStart=GetTickCount64();zoomCtl=controller;zoomAnimating=true;controller=scoped;SetTimer(windowHandle,7770,10,nullptr);}
         }else if(type=="news"){fetchNews();
+        }else if(type=="corner-reveal"){chromeExecute(m.value("on",false)?L"window.BiliSpace?.setCornerReveal?.(true)":L"window.BiliSpace?.setCornerReveal?.(false)");
         }else if(type=="swipe-state"){chromeExecute(m.value("on",false)?L"window.BiliSpace?.setSwipeActive?.(true)":L"window.BiliSpace?.setSwipeActive?.(false)");chromePush();
         }else if(type=="up-notify"){if(config.value("upNotify",true))upNotify::show(m);
         }else if(type=="swipe-header"){chromeExecute(L"window.BiliSpace?.revealSwipeHeader?.()");
