@@ -2063,9 +2063,9 @@ function showWhatsNew(data){
 const SHARE_TEXT='推荐一个 B 站电脑客户端 Bili-Space：保留官方播放器和弹幕，界面更清爽，还有内置下载、无边框画中画、200% 音量和一大堆自定义。免费下载：https://bili.gvqi.top';
 let shareTimer=0;
 function scheduleShare(delay=700){
-  if(!CHROME_VIEW||PREFS.shareSeen===APP_META.version)return;
+  if(!CHROME_VIEW||PREFS.shareSeen===APP_META.version||PREFS.shareSeen==='never')return;
   clearTimeout(shareTimer);shareTimer=setTimeout(()=>{
-    if(PREFS.shareSeen===APP_META.version||!shadow)return;
+    if(PREFS.shareSeen===APP_META.version||PREFS.shareSeen==='never'||!shadow)return;
     if($('#language-pick',shadow)||$('#whats-new',shadow)||$('#onboarding',shadow)||$('#settings:not([hidden])',shadow)||$('#feedback',shadow)||document.visibilityState!=='visible'){scheduleShare(1500);return;}
     showShare();
   },delay);
@@ -2074,20 +2074,21 @@ function scheduleShare(delay=700){
 function shareCopied(ok){const b=shadow&&$('#share-card [data-share=copy]',shadow);if(!b)return;b.textContent=ok?'已复制，去发给好友吧':'复制失败，请手动选中上面的文字';if(ok)b.dataset.done='true';}
 function showShare(){
   if(!CHROME_VIEW||!shadow||$('#share-card',shadow))return;
-  update({shareSeen:APP_META.version});
+  if(PREFS.shareSeen!=='never')update({shareSeen:APP_META.version});
   const still=matchMedia('(prefers-reduced-motion: reduce)').matches,previous=shadow.activeElement;
   const layer=document.createElement('div');layer.id='share-card';layer.className='wn-layer';
   layer.innerHTML=`<section class="wn-card share-card" role="dialog" aria-modal="true" aria-labelledby="share-title">
 <header><div><p class="wn-eyebrow">喜欢 Bili-Space 吗</p><h2 id="share-title">分享给一个朋友吧</h2></div><button type="button" class="wn-close" data-share="close" aria-label="关闭"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
 <p class="share-lead">Bili-Space 是作者一个人在业余时间做的，没有广告，也不收费。你的一次分享，就是继续更新下去的最大动力。</p>
 <blockquote class="share-text">${escapeHtml(SHARE_TEXT)}</blockquote>
-<footer><button type="button" class="wn-ghost" data-share="star">去 GitHub 点个星</button><span class="wn-gap"></span><button type="button" class="wn-ghost" data-share="close">以后再说</button><button type="button" class="wn-primary" data-share="copy">复制分享文案</button></footer></section>`;
+<footer><button type="button" class="wn-ghost" data-share="star">去 GitHub 点个星</button><span class="wn-gap"></span><button type="button" class="wn-ghost" data-share="never">不再显示</button><button type="button" class="wn-ghost" data-share="close">以后再说</button><button type="button" class="wn-primary" data-share="copy">复制分享文案</button></footer></section>`;
   shadow.append(layer);reportChromeLayout();
   const card=$('.wn-card',layer),copy=$('[data-share=copy]',layer);let closed=false;
   const close=()=>{if(closed)return;closed=true;const done=()=>{layer.remove();reportChromeLayout();previous?.focus?.();};
     if(still)done();else{card.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(8px) scale(.97)'}],{duration:220,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});layer.animate([{opacity:1},{opacity:0}],{duration:260,easing:'ease-in',fill:'forwards'}).onfinish=done;}};
   layer.addEventListener('click',e=>{if(e.target===layer){close();return;}const a=e.target.closest('[data-share]')?.dataset.share;
     if(a==='close')close();
+    else if(a==='never'){update({shareSeen:'never'});close();}
     else if(a==='star')native('open-external',{url:'https://github.com/GuqiGG/Bili-Space'});
     else if(a==='copy')native('copy-share');});
   layer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}
