@@ -2,8 +2,10 @@
 // UP 主更新通知: a small always-on-top card at the bottom right of the screen (the work area of the monitor the client
 // is on, not the client window). It never takes focus, slides in from the right edge and out again, and opens a video
 // in the client when its button is pressed. The page is assets/up-notify.html; the header layer finds the uploads.
+void refreshInjection();
 namespace upNotify {
 HWND window{};ICoreWebView2Controller* ctl{};ICoreWebView2* view{};bool ready=false;json queued;
+json deferred; // 全屏看视频时找到的更新，退出全屏后再弹
 RECT work{};double scale=1;int width=0,height=0,finalX=0,finalY=0;double animFrom=0,animTo=0;ULONGLONG animStart=0;int animMs=0;bool leaving=false;
 constexpr UINT_PTR animTimer=1;
 double ease(double t,bool out){return out?t*t*t:1-std::pow(1-t,3);}
@@ -40,6 +42,8 @@ void message(const json& m){
         // The view was made while its window was hidden; once the window is on screen it must be told to show and draw.
         if(first){place(work.right);ShowWindow(window,SW_SHOWNOACTIVATE);if(ctl){ctl->put_IsVisible(FALSE);ctl->put_IsVisible(TRUE);RECT b{0,0,width,height};ctl->put_Bounds(b);ctl->NotifyParentWindowPositionChanged();}animate(finalX,360,false);}else if(!leaving){KillTimer(window,animTimer);place(finalX);}}
     else if(type=="close"){if(window&&!leaving)animate(work.right,240,true);}
+    // 「关闭通知」：把这个功能关掉，所有页面马上知道，新页面也带上新设置
+    else if(type=="disable"){config["upNotify"]=false;save();refreshInjection();executeEverywhere("window.BiliSpace?.acceptConfig?.("+config.dump()+",0,\"native\")");if(window&&!leaving)animate(work.right,240,true);}
     else if(type=="open"){const auto bvid=m.value("bvid",std::string{});if(!std::regex_match(bvid,std::regex("BV[0-9A-Za-z]{10}")))return;
         const std::wstring uri=L"https://www.bilibili.com/video/"+wide(bvid)+L"/";restoreFromTray();
         if(activeTab&&activeTab->view)activeTab->view->Navigate(uri.c_str());else if(webview)webview->Navigate(uri.c_str());}
@@ -55,6 +59,7 @@ json clean(const json& payload){
 }
 void show(const json& payload){
     auto items=clean(payload);if(items.empty()||!authEnvironment50)return;
+    if(full){deferred=payload;return;} // 全屏追剧时不打扰
     json data={{"items",items},{"dark",payload.value("dark",false)},{"accent",payload.value("accent",std::string("#fb7299"))}};
     if(window&&!leaving){queued=data;deliver();return;}
     if(window){KillTimer(window,animTimer);destroy();}
@@ -73,4 +78,6 @@ void show(const json& payload){
         view->Navigate(L"https://bili-space.local/up-notify.html");return S_OK;});
     authEnvironment50->CreateCoreWebView2Controller(window,created);created->Release();
 }
+// 退出全屏后，把全屏期间攒下的更新弹出来
+void flush(){if(full||deferred.is_null())return;json d=deferred;deferred=nullptr;show(d);}
 }

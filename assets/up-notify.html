@@ -9,7 +9,12 @@
 :root[data-theme=dark]{--bg:#1f2023;--ink:#eeeef0;--sub:#9499a0;--line:#2f3035;--ghost:#2a2b2f;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.45 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
-#list{padding:6px 0}
+#list{padding:0 0 6px}
+.bar{display:flex;align-items:center;gap:6px;padding:8px 8px 2px 14px;color:var(--sub);font-size:12px}
+.bar b{flex:1;font-weight:600}
+.bar button{height:26px;padding:0 8px;background:none;color:var(--sub);border-radius:6px}
+.bar button:hover{background:var(--ghost);color:var(--ink)}
+.bar .x{width:26px;padding:0;display:grid;place-items:center;font-size:16px;line-height:1}
 .item{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;padding:12px 14px 12px 14px;animation:in .42s cubic-bezier(.23,1,.32,1) both}
 .item+.item{border-top:1px solid var(--line)}
 .item.leaving{animation:out .22s cubic-bezier(.4,0,1,1) forwards}
@@ -32,7 +37,7 @@ button:active{transform:scale(.95)}
 </style>
 </head>
 <body>
-<div id="list" role="list"></div>
+<div id="box"><div class="bar"><b>UP 主更新</b><button type="button" id="mute" title="以后不再弹出，可以在设置 → 个性化 → 通知里重新打开">关闭通知</button><button type="button" class="x" id="close" aria-label="关闭">✕</button></div><div id="list" role="list"></div></div>
 <script>
 // The native host calls render(); clicks and the size of the card go back to it as web messages.
 const PHRASES=['冲冲冲！','抢前排！','走走走！'];
@@ -40,7 +45,8 @@ const send=m=>window.chrome?.webview?.postMessage(m);
 const list=document.getElementById('list');
 let closeTimer=0,hovering=false;
 const img=(url,size)=>{url=String(url||'').replace(/^http:/,'https:');return /^https:\/\/i[0-9]\.hdslb\.com\//.test(url)?url+size:'';};
-function report(){send({type:'height',height:Math.ceil(list.getBoundingClientRect().height)});}
+const box=document.getElementById('box');
+function report(){send({type:'height',height:Math.ceil(box.getBoundingClientRect().height)});}
 function scheduleClose(){clearTimeout(closeTimer);if(!hovering)closeTimer=setTimeout(()=>closeAll(),12000);}
 function closeAll(){for(const el of list.children)el.classList.add('leaving');setTimeout(()=>send({type:'close'}),200);}
 function dismiss(row){row.classList.add('leaving');setTimeout(()=>{row.remove();if(!list.children.length)send({type:'close'});else report();},210);}
@@ -66,6 +72,8 @@ function render(data){
 }
 document.documentElement.addEventListener('pointerenter',()=>{hovering=true;clearTimeout(closeTimer);});
 document.documentElement.addEventListener('pointerleave',()=>{hovering=false;scheduleClose();});
+document.getElementById('close').onclick=()=>closeAll();
+document.getElementById('mute').onclick=()=>{send({type:'disable'});closeAll();};
 document.addEventListener('contextmenu',e=>e.preventDefault());
 send({type:'ready'});
 </script>

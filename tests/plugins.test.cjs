@@ -124,3 +124,17 @@ test('page scripts cannot pose as the host: plugin calls need the run secret and
     assert.equal(seen.length, 0);
   } finally { w.close(); }
 });
+
+test('userscripts run only where their @match says and get the common GM_ functions', () => {
+  const head = (match) => `// ==UserScript==\n// @name 测试脚本\n// @version 1.2\n// @match ${match}\n// @grant GM_addStyle\n// ==/UserScript==\n`;
+  const a = host([
+    { id: 'us-video', name: 'v', version: '1', code: head('https://www.bilibili.com/video/*') + "GM_addStyle('.x{color:red}');GM_setValue('n',3);window.__us1={n:GM_getValue('n'),name:GM_info.script.name,win:unsafeWindow===window,list:GM_listValues()};" },
+    { id: 'us-dyn', name: 'd', version: '1', code: head('https://t.bilibili.com/*') + 'window.__us2=true;' },
+  ]);
+  try {
+    a.api.start({});
+    assert.deepEqual(JSON.parse(JSON.stringify(a.w.__us1)), { n: 3, name: '测试脚本', win: true, list: ['n'] });
+    assert.equal(a.w.document.querySelector('style[data-bs-plugin="us-video"]').textContent, '.x{color:red}');
+    assert.equal(a.w.__us2, undefined);
+  } finally { a.close(); }
+});
