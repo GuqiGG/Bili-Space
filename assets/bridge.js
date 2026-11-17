@@ -1,3 +1,6 @@
+// HDR：客户端的画面合成在一些 HDR 显示器上会把 HDR 视频显示得发白（浏览器里正常）。用户关掉「HDR 画质」时，告诉 B 站屏幕不支持 HDR，它就不给 HDR/杜比视界，放普通画质。
+if(typeof INITIAL!=='undefined'&&INITIAL&&INITIAL.hdrVideo===false&&typeof window.matchMedia==='function'){const realMatch=window.matchMedia.bind(window);
+  window.matchMedia=q=>{const m=realMatch(q);if(!/dynamic-range\s*:\s*high/i.test(String(q)))return m;return new Proxy(m,{get(t,k){if(k==='matches')return false;const v=Reflect.get(t,k);return typeof v==='function'?v.bind(t):v;}});};}
 // 首页推荐的记录与回放：首页从客户端的本地缓存打开（启动更快），这样打开的页面浏览器放不进后退缓存，
 // 去历史等页面再回来时首页会重新加载，之前往下刷出来的推荐全没了。这里把 B 站每次请求到的推荐（每页 12 条）记下来，
 // 回到首页时按原来的顺序交给 B 站自己渲染，补齐到离开时的条数再滚回原位；手动刷新还是换一批。

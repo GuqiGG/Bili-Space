@@ -497,13 +497,63 @@
     return changed;
   }
 
+  // ---- 油猴脚本兼容：带 ==UserScript== 头的插件按 @match/@include/@exclude 只在对应的 B 站页面里跑，并带上常用的 GM_ 函数 ----
+  function userscriptMeta(code) {
+    const head = /\/\/\s*==UserScript==([\s\S]*?)\/\/\s*==\/UserScript==/.exec(code);
+    if (!head) return null;
+    const meta = { match: [], include: [], exclude: [], name: '', version: '' };
+    for (const line of head[1].split(/\r?\n/)) {
+      const m = /^\s*\/\/\s*@(\S+)\s+(.+?)\s*$/.exec(line);
+      if (!m) continue;
+      if (m[1] === 'match' || m[1] === 'include' || m[1] === 'exclude') meta[m[1]].push(m[2]);
+      else if (m[1] === 'name' && !meta.name) meta.name = m[2];
+      else if (m[1] === 'version') meta.version = m[2];
+    }
+    return meta;
+  }
+  function userscriptPattern(p) {
+    if (/^\/.*\/[a-z]*$/.test(p)) { try { const i = p.lastIndexOf('/'); return new RegExp(p.slice(1, i), p.slice(i + 1)); } catch { return null; } }
+    return new RegExp('^' + p.split('*').map((x) => x.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '$');
+  }
+  function userscriptMatches(meta, url) {
+    const test = (list) => list.some((p) => { const re = userscriptPattern(p); return re ? re.test(url) : false; });
+    const wanted = meta.match.concat(meta.include);
+    return (!wanted.length || test(wanted)) && !test(meta.exclude);
+  }
+  function userscriptPrelude(id, meta) {
+    return [
+      'const GM_info={script:{name:' + JSON.stringify(meta.name || id) + ',version:' + JSON.stringify(meta.version) + '},scriptHandler:"Bili-Space",version:"1"};',
+      'const __bsKey=' + JSON.stringify('bs-userscript:' + id + ':') + ';',
+      'const GM_getValue=(k,d)=>{try{const v=localStorage.getItem(__bsKey+k);return v===null?d:JSON.parse(v);}catch{return d;}};',
+      'const GM_setValue=(k,v)=>{try{localStorage.setItem(__bsKey+k,JSON.stringify(v));}catch{}};',
+      'const GM_deleteValue=k=>{try{localStorage.removeItem(__bsKey+k);}catch{}};',
+      'const GM_listValues=()=>{try{return Object.keys(localStorage).filter(x=>x.startsWith(__bsKey)).map(x=>x.slice(__bsKey.length));}catch{return [];}};',
+      'const GM_addStyle=css=>{const s=document.createElement("style");s.dataset.bsPlugin=' + JSON.stringify(id) + ';s.textContent=String(css);(document.head||document.documentElement).append(s);return s;};',
+      'const GM_xmlhttpRequest=d=>{const c=new AbortController();fetch(d.url,{method:d.method||"GET",headers:d.headers,body:d.data,credentials:d.anonymous?"omit":"include",signal:c.signal}).then(async r=>{const t=await r.text();let body=t;if(d.responseType==="json"){try{body=JSON.parse(t);}catch{body=null;}}' +
+      'const res={status:r.status,statusText:r.statusText,responseText:t,response:body,finalUrl:r.url,readyState:4,responseHeaders:[...r.headers].map(([k,v])=>k+": "+v).join("\\r\\n")};d.onload&&d.onload(res);d.onloadend&&d.onloadend(res);}).catch(e=>{d.onerror&&d.onerror({error:String(e)});d.onloadend&&d.onloadend({error:String(e)});});return {abort:()=>c.abort()};};',
+      'const GM_openInTab=u=>window.open(u,"_blank");',
+      'const GM_setClipboard=t=>navigator.clipboard&&navigator.clipboard.writeText(String(t));',
+      'const GM_registerMenuCommand=()=>0,GM_unregisterMenuCommand=()=>{};',
+      'const GM_notification=d=>{const t=typeof d==="string"?d:(d&&d.text)||"";if(api.toast)api.toast(t);};',
+      'const unsafeWindow=window;',
+      'const GM={info:GM_info,getValue:async(k,d)=>GM_getValue(k,d),setValue:async(k,v)=>GM_setValue(k,v),deleteValue:async k=>GM_deleteValue(k),listValues:async()=>GM_listValues(),addStyle:GM_addStyle,xmlHttpRequest:GM_xmlhttpRequest,openInTab:GM_openInTab,setClipboard:GM_setClipboard,notification:GM_notification,registerMenuCommand:GM_registerMenuCommand};',
+      '',
+    ].join('\n');
+  }
   function run(def) {
     if (instances.has(def.id) && instances.get(def.id).state === 'running') return;
     const { api, own } = apiFor(def);
     const instance = { id: def.id, state: 'running', own, schema: [] };
     instances.set(def.id, instance);
+    let code = def.code;
+    const meta = userscriptMeta(code);
+    if (meta) {
+      // 油猴脚本只在页面里跑，而且只在它声明的网址上跑
+      if (api.view !== 'page' || !userscriptMatches(meta, location.href)) return;
+      code = userscriptPrelude(def.id, meta) + code;
+    }
     try {
-      const factory = new Function('api', def.code + '\n//# sourceURL=bs-plugin://' + def.id);
+      const factory = new Function('api', code + '\n//# sourceURL=bs-plugin://' + def.id);
       factory(api);
     } catch (error) {
       unload(def.id, 'failed');
