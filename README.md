@@ -2,6 +2,7 @@
   <img src="assets/branding/bili-space.png" width="112" alt="Bili-Space 小电视 Logo">
 </p>
 <h1 align="center">Bili-Space</h1>
+<h1 align="center">注意：更新推迟几天，抱歉因为很忙</h1>
 <p align="center"><strong>你的最后一款B站客户端</strong></p>
 <p align="center">熟悉的 B 站，属于你的空间。</p>
 <p align="center">
