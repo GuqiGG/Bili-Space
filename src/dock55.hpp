@@ -21,7 +21,7 @@ struct CoverReply{uintptr_t id;std::string cover,bytes;};
 ULONG_PTR gdiplusToken{};State view;std::vector<std::unique_ptr<Item>> items;Spring pill,homeScale{1,0};float shown=0,homeShown=0,tipAlpha=0,pillHeight=PAD*2+ITEM;
 // island: maximized or fullscreen windows get a horizontal dock at the bottom edge that folds into a thin bar while a video plays.
 Spring collapse;bool island=false,inside=false;ULONGLONG lastInside=0;
-int hovered=-2,pressed=-2;bool closeHovered=false,tracking=false,animating=false,outside=true;LONGLONG lastFrame=0;std::string tipText;std::unique_ptr<GraphicsPath> homeGlyph;
+RECT lastRect{};ULONGLONG revealUntil=0;int hovered=-2,pressed=-2;bool closeHovered=false,tracking=false,animating=false,outside=true;LONGLONG lastFrame=0;std::string tipText;std::unique_ptr<GraphicsPath> homeGlyph;
 HDC canvasDc{};HBITMAP canvasBitmap{};HGDIOBJ canvasPrevious{};void* canvasBits{};int canvasW=0,canvasH=0;
 
 bool reduceMotion(){BOOL on=TRUE;SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&on,0);return !on;}
@@ -66,7 +66,7 @@ void fetchCover(Item& item){
         if(!IsWindow(target))return;auto reply=new CoverReply{id,cover,std::move(bytes)};if(!PostMessageW(target,coverMessage,0,reinterpret_cast<LPARAM>(reply)))delete reply;
     }).detach();
 }
-void kick();
+void kick();bool wanted();
 void acceptCover(CoverReply* reply){
     std::unique_ptr<CoverReply> owned(reply);
     for(auto& item:items)if(item->entry.id==reply->id){item->fetching=false;if(reply->bytes.empty()||item->entry.cover!=reply->cover)return;
@@ -151,8 +151,8 @@ void paint(){
         }
     }
     HDC screen=GetDC(nullptr);POINT origin{geo.x,geo.y},zero{0,0};SIZE size{geo.w,geo.h};BLENDFUNCTION blend{AC_SRC_OVER,0,255,AC_SRC_ALPHA};
-    UpdateLayeredWindow(h,screen,&origin,&size,canvasDc,&zero,0,&blend,ULW_ALPHA);ReleaseDC(nullptr,screen);
-    if(shown>.01f&&!IsWindowVisible(h))ShowWindow(h,SW_SHOWNOACTIVATE);else if(shown<=.01f&&!view.show&&IsWindowVisible(h))ShowWindow(h,SW_HIDE);
+    UpdateLayeredWindow(h,screen,&origin,&size,canvasDc,&zero,0,&blend,ULW_ALPHA);ReleaseDC(nullptr,screen);lastRect={geo.x,geo.y,geo.x+geo.w,geo.y+geo.h};
+    if(shown>.01f&&!IsWindowVisible(h))ShowWindow(h,SW_SHOWNOACTIVATE);else if(shown<=.01f&&IsWindowVisible(h))ShowWindow(h,SW_HIDE);
 }
 void step(){
     // Frame time comes from the performance counter: the tick count is too coarse for a 200 Hz display.
@@ -160,7 +160,7 @@ void step(){
     auto move=[&](float& v,float target,float tau){float n=approach(v,target,dt,tau);if(std::fabs(n-target)<.002f)n=target;if(n!=v)moving=true;v=n;};
     auto bounce=[&](Spring& sp,float target){float k=calm?300.f:560.f,d=calm?2*std::sqrt(k):23.f;for(int i=0;i<2;++i)moving|=sp.step(target,dt/2,k,d);};
     auto glide=[&](Spring& sp,float target){float k=calm?320.f:420.f,d=calm?2*std::sqrt(k):31.f;for(int i=0;i<2;++i)moving|=sp.step(target,dt/2,k,d);};
-    move(shown,view.show?1.f:0.f,.06f);move(homeShown,view.video?1.f:0.f,.07f);bounce(homeScale,hovered==-1?(pressed==-1?.94f:1.12f):1.f);
+    move(shown,view.show&&wanted()?1.f:0.f,.06f);move(homeShown,view.video?1.f:0.f,.07f);bounce(homeScale,hovered==-1?(pressed==-1?.94f:1.12f):1.f);
     float y=PAD+homeShown*(ITEM+GAP);
     for(size_t i=0;i<items.size();++i){auto& it=*items[i];if(!it.placed){it.y.value=y;it.placed=true;}
         // Dock-style magnification: the hovered tile swells and its neighbours lean in a little.
@@ -175,9 +175,14 @@ void step(){
     glide(pill,contentHeight());pillHeight=std::max(PAD*2+ITEM*.5f,pill.value);move(tipAlpha,hovered>=0?1.f:0.f,.05f);
     paint();if(!moving){animating=false;lastFrame=0;}
 }
+// 平时完全藏起来（看直播、看大图时不挡画面）；鼠标到坞附近、正按着、或刚加了新视频时才出来
+bool wanted(){if(inside||pressed!=-2||GetTickCount64()<revealUntil)return true;if(lastRect.right<=lastRect.left)return true;
+    POINT p;if(!GetCursorPos(&p))return false;RECT r=lastRect;const int m=MulDiv(56,int(view.dpi?view.dpi:96),96);InflateRect(&r,m,m);if(PtInRect(&r,p))return true;
+    // 底部的坞：鼠标滑到窗口最下边就出来
+    const RECT& w=view.main;return island&&p.x>=w.left&&p.x<w.right&&p.y>=w.bottom-m&&p.y<=w.bottom+m/4;}
 void kick(){HWND h=window;if(!h)return;if(!animating){animating=true;lastFrame=0;}step();}
 void acceptState(){
-    {std::lock_guard<std::mutex> guard(stateLock);view=latest;}
+    const size_t before=items.size();{std::lock_guard<std::mutex> guard(stateLock);view=latest;}if(view.entries.size()>before)revealUntil=GetTickCount64()+1500;
     std::vector<std::unique_ptr<Item>> next;
     for(auto& e:view.entries){std::unique_ptr<Item> item;for(auto& old:items)if(old&&old->entry.id==e.id){item=std::move(old);break;}
         if(!item)item=std::make_unique<Item>();bool coverChanged=item->entry.cover!=e.cover;item->entry=e;item->leaving=false;if(coverChanged){item->fetching=false;fetchCover(*item);}next.push_back(std::move(item));}
@@ -201,7 +206,7 @@ void act(WPARAM action,uintptr_t id){PostMessageW(windowHandle,dockActionMessage
 LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     switch(msg){
     case WM_MOUSEACTIVATE:return MA_NOACTIVATE;
-    case WM_TIMER:if(wp==2){KillTimer(h,2);kick();return 0;}step();return 0;
+    case WM_TIMER:if(wp==2){KillTimer(h,2);kick();return 0;}if(wp==3){if(!animating&&view.show&&wanted()!=(shown>.5f))kick();return 0;}step();return 0;
     case stateMessage:acceptState();return 0;
     case coverMessage:acceptCover(reinterpret_cast<CoverReply*>(lp));return 0;
     case WM_SETCURSOR:{POINT p;GetCursorPos(&p);bool c=false;if(hit(p,&c)>=-1){SetCursor(LoadCursorW(nullptr,IDC_HAND));return TRUE;}break;}
@@ -223,7 +228,7 @@ void run(HWND owner){
     homeGlyph=parseGlyph("M19.469 12.594l3.625 3.313c0.438 0.406 0.313 0.719-0.281 0.719h-2.719v8.656c0 0.594-0.5 1.125-1.094 1.125h-4.719v-6.063c0-0.594-0.531-1.125-1.125-1.125h-2.969c-0.594 0-1.125 0.531-1.125 1.125v6.063h-4.719c-0.594 0-1.125-0.531-1.125-1.125v-8.656h-2.688c-0.594 0-0.719-0.313-0.281-0.719l10.594-9.625c0.438-0.406 1.188-0.406 1.656 0l2.406 2.156v-1.719c0-0.594 0.531-1.125 1.125-1.125h2.344c0.594 0 1.094 0.531 1.094 1.125v5.875z");
     WNDCLASSEXW wc{sizeof(wc)};wc.lpfnWndProc=proc;wc.hInstance=GetModuleHandleW(nullptr);wc.hCursor=LoadCursorW(nullptr,IDC_ARROW);wc.lpszClassName=L"BiliSpaceVideoDock";RegisterClassExW(&wc);
     HWND h=CreateWindowExW(WS_EX_LAYERED|WS_EX_TOOLWINDOW|WS_EX_NOACTIVATE,wc.lpszClassName,L"",WS_POPUP,0,0,1,1,owner,nullptr,wc.hInstance,nullptr);
-    pill.value=pillHeight;window=h;if(h)acceptState();
+    pill.value=pillHeight;window=h;if(h){SetTimer(h,3,120,nullptr);acceptState();}
     MSG m;bool quit=false;
     // While anything moves, frames are paced by the compositor (DwmFlush waits for the next vblank), so the dock
     // animates at the display's own refresh rate rather than the 64 Hz system timer.
@@ -245,7 +250,7 @@ void shutdown(){if(HWND h=window)PostMessageW(h,quitMessage,0,0);if(worker.joina
 void dockSync(){
     dock::State state;auto list=videoTabs();
     if(list.empty()&&!dock::running)return;
-    state.show=!list.empty()&&!officialVideoStyle()&&IsWindowVisible(windowHandle)&&!IsIconic(windowHandle)&&!pip&&!closePending;state.full=full;
+    state.show=!list.empty()&&!officialVideoStyle()&&IsWindowVisible(windowHandle)&&!IsIconic(windowHandle)&&!pip&&!closePending&&!immersiveView;state.full=full;
     state.video=activeTab&&activeTab->video;state.zoomed=IsZoomed(windowHandle)||full;state.dark=surfaceDark;GetWindowRect(windowHandle,&state.main);
     using Dpi=UINT(WINAPI*)(HWND);static auto dpi=reinterpret_cast<Dpi>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"GetDpiForWindow"));state.dpi=dpi?dpi(windowHandle):96;
     for(auto t:list)state.entries.push_back({reinterpret_cast<uintptr_t>(t),t->title,t->cover,t==activeTab});
