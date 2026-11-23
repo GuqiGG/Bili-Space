@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,holdSpeed:200,hdrVideo:true,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,blacklistButtons:true,cornerAutoHide:true,feedColumns:0,feedMargin:'auto',experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,holdSpeed:200,hdrVideo:true,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,blacklistButtons:true,cornerAutoHide:false,feedColumns:0,feedMargin:'auto',experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
    keep their header space but hide their own copy (content mode). */
@@ -1040,7 +1040,11 @@ function scrollPageTop(){if(CONTENT_VIEW)scrollTo({top:0,behavior:matchMedia('(p
 // 刷新首页推荐：B 站自己的「换一换」只换最上面那一块，下面刷过的一整片都不变；这里整页重新载入，换一整批新的。
 // 记下的推荐回放（bridge.js）遇到手动刷新不会回放，所以一定是新内容。
 function rollFeed(){if(!PAGE_VIEW)return;try{sessionStorage.removeItem('bs-feed-log');sessionStorage.removeItem('bs-feed-pos');}catch{}
-  history.scrollRestoration='manual';scrollTo(0,0);location.reload();}
+  history.scrollRestoration='manual';scrollTo(0,0);
+  // 带上 bs-roll：客户端看到它就不用本地缓存的首页（缓存里的首页自带前几个推荐，刷新也不会变）
+  const u=new URL(location.href);u.searchParams.set('bs-roll',Date.now().toString(36));location.replace(u.href);}
+// 换一换带的标记用完就从地址栏去掉
+(()=>{try{const u=new URL(location.href);if(u.searchParams.has('bs-roll')){u.searchParams.delete('bs-roll');history.replaceState(history.state,'',u.pathname+u.search+u.hash);}}catch{}})();
 // The search box's left edge is a grip: drag it to make the box wider or narrower (remembered; double-click resets).
 // While it moves the box squashes like jelly with the speed of the drag, and on release it springs back with a wobble.
 function installSearchGrip(){
@@ -1451,6 +1455,15 @@ function scheduleScan(){
 
 // Short wheel easing only: precision gestures retain the OS's own momentum.
 // 左下角按钮的显示：鼠标在它们上面，或（同一个文档里有页面时）鼠标进到左下角 140×200 的范围
+// 视频页的复制链接挂在中间品牌位左边、往左长；导航或展开的分区一长就会盖上去。按两者之间的空当限制它的宽度，太窄就藏起来
+function fitVideoLink(){if(!CHROME_VIEW||!shadow)return;const lead=$('.brand-leading',shadow),link=$('.video-link',shadow),brand=$('.brand',shadow);if(!lead||!link||!brand)return;
+  if(link.hidden){lead.style.maxWidth='';lead.style.visibility='';return;}
+  const open=$('.back',shadow)?.getAttribute('aria-expanded')==='true';let right=0;
+  for(const e of [$('.primary-nav',shadow),open&&$('#header-categories',shadow),$('.history-controls',shadow),$('.back',shadow)])if(e&&e.getClientRects().length){const r=e.getBoundingClientRect();if(r.width)right=Math.max(right,r.right);}
+  const room=brand.getBoundingClientRect().left-12-right-16;lead.style.maxWidth=Math.max(0,room/(headerZoom()||1))+'px';lead.style.visibility=room<44?'hidden':'';}
+// 顶栏这一层里别的脚本后来弹出的窗口（登录、人机验证）：一出现就重新上报可点区域，不然点击会落到下面的网页上，看起来像被吞了
+function installForeignLayerWatch(){if(!CHROME_VIEW||!document.body)return;new MutationObserver(()=>reportChromeLayout()).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class','hidden']});}
+function installVideoLinkFit(){if(!CHROME_VIEW)return;addEventListener('resize',fitVideoLink);setInterval(fitVideoLink,500);fitVideoLink();}
 function installCornerReveal(){if(!shadow)return;const host=shadow.host;let timer;
   const show=on=>{clearTimeout(timer);if(on)host.setAttribute('data-corner','');else timer=setTimeout(()=>host.removeAttribute('data-corner'),600);};
   for(const el of [$('#settings-trigger',shadow),$('.upload',shadow)])if(el){el.addEventListener('pointerenter',()=>show(true));el.addEventListener('pointerleave',()=>show(false));}
@@ -1638,6 +1651,8 @@ html[data-bs-frost=true] :is(button,.bs-player-tool){border-color:transparent!im
 html[data-bs-font=true] body,html[data-bs-font=true] button,html[data-bs-font=true] input,html[data-bs-font=true] textarea{font-family:BiliDouyin,"Microsoft YaHei UI",sans-serif!important}
 html[data-bs-theme=dark]{color-scheme:dark;--bg1:#161618;--bg2:#202023;--bg3:#29292e;--bg1_rgb:22,22,24;--bg2_rgb:32,32,35;--bg3_rgb:41,41,46;--bg1_float_rgb:32,32,35;--bg2_float_rgb:41,41,46;--bg3_float_rgb:51,51,56;--text1_rgb:238,238,240;--text2_rgb:176,176,184;--line_regular_rgb:48,48,52;--bg1_float:#202023;--bg2_float:#29292e;--bg3_float:#333338;--graph_bg_thin:#202023;--graph_bg_regular:#29292e;--graph_bg_thick:#333338;--text1:#eeeef0;--text2:#b0b0b8;--text3:#8a8a94;--text4:#73737e;--line_light:#27272c;--line_regular:#303034;--line_bold:#45454c}
 html[data-bs-theme=dark] body{background:#161618!important;color:#eeeef0}
+/* 动态页底下有一层浅色插画背景（.bg），深色模式下不会跟着变，去掉 */
+html[data-bs-theme=dark][data-bs-page=dynamic] :is(.bg,.bili-dyn-home__bg,.bili-dyn-home--member>.bg){background:#161618!important;background-image:none!important}
 /* Space backgrounds deliberately use negative layers; isolate them above the document surface. */
 html[data-bs-page=space] #app{isolation:isolate;background-color:transparent!important}html[data-bs-page=space] .space-header{isolation:isolate;background-color:transparent!important}html[data-bs-page=space] .space-theme-bg{pointer-events:none}html[data-bs-page=space] .header-toutu{display:block!important}
 html[data-bs-theme=light]{color-scheme:light;--bg1:#fafafa;--bg2:#f1f1f3;--text1:#202024;--text2:#67676e}
@@ -1864,7 +1879,7 @@ nav{display:flex;flex-shrink:0;gap:4px;height:100%;align-items:center}nav a{font
 .search-panel{position:absolute;top:calc(100% + 9px);left:0;right:0;max-height:min(460px,calc(100vh - var(--bs-header-height,58px) - 24px));overflow:auto;overscroll-behavior:contain;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 12px 32px #0004;pointer-events:auto;text-align:left}.search-panel[hidden]{display:none}.search-panel h2{position:relative;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0 9px;font-size:12px;color:var(--muted);font-weight:500}.search-panel p{font-size:12px;color:var(--muted);margin:12px 2px}.search-history-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.search-history-chip{display:inline-flex;align-items:center;max-width:100%;min-width:0;background:var(--field);border-radius:6px}.search-history-chip .search-choice{flex:0 1 auto!important;max-width:200px;padding:6px 8px!important;font-size:12px!important}.search-history-chip .search-remove{width:22px!important;height:24px!important;font-size:16px!important}.search-row{display:flex;align-items:center;min-width:0;border-radius:7px}.search-panel button{border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}.search-panel .search-choice{flex:1;min-width:0;text-align:left;padding:9px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;border-radius:7px}.search-choice:hover,.search-choice.selected{background:var(--field);color:var(--accent)}.search-panel .search-remove{flex:none;width:28px;height:28px;color:var(--muted);font-size:19px;border-radius:6px}.search-remove:hover,.search-panel .search-clear:hover{color:var(--accent);background:var(--field)}.search-panel .search-clear{padding:3px 5px;color:var(--muted);font-size:11px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @keyframes bs-search-spin{to{transform:rotate(360deg)}}@keyframes bs-search-progress{0%{transform:scaleX(.1)}70%{transform:scaleX(.85)}100%{transform:scaleX(1);opacity:.35}}
-:host([data-web-full]) :is(#settings-trigger,.upload,#feed-roll,#page-top),:host([data-swipe]) :is(#settings-trigger,.upload,#feed-roll,#page-top){opacity:0!important;transform:translateY(8px)!important;pointer-events:none!important}:host([data-swipe]) #chrome{transition:translate .34s cubic-bezier(.23,1,.32,1),opacity .22s ease}:host([data-swipe][data-swipe-tuck]) #chrome{translate:0 calc(-100% - 12px);opacity:0;pointer-events:none}@media (prefers-reduced-motion:reduce){:host([data-swipe]) #chrome{transition:opacity .15s}:host([data-swipe][data-swipe-tuck]) #chrome{translate:none}}:is(#settings-trigger,.upload){transition:opacity .24s cubic-bezier(.32,.72,0,1),transform .24s cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}#settings-trigger{position:fixed;bottom:22px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
+:host([data-immersive]) #chrome{opacity:0!important;pointer-events:none!important;transition:opacity .22s cubic-bezier(.23,1,.32,1)!important}:host([data-immersive]) :is(#settings-trigger,.upload,#feed-roll,#page-top),:host([data-web-full]) :is(#settings-trigger,.upload,#feed-roll,#page-top),:host([data-swipe]) :is(#settings-trigger,.upload,#feed-roll,#page-top){opacity:0!important;transform:translateY(8px)!important;pointer-events:none!important}:host([data-swipe]) #chrome{transition:translate .34s cubic-bezier(.23,1,.32,1),opacity .22s ease}:host([data-swipe][data-swipe-tuck]) #chrome{translate:0 calc(-100% - 12px);opacity:0;pointer-events:none}@media (prefers-reduced-motion:reduce){:host([data-swipe]) #chrome{transition:opacity .15s}:host([data-swipe][data-swipe-tuck]) #chrome{translate:none}}:is(#settings-trigger,.upload){transition:opacity .24s cubic-bezier(.32,.72,0,1),transform .24s cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}#settings-trigger{position:fixed;bottom:22px;left:20px;width:44px;height:44px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:13px;box-shadow:0 4px 18px #0002}
 #settings-trigger svg{width:23px;height:23px}#settings-trigger circle,#settings-trigger path{stroke:currentColor}
 .scrim{position:fixed;inset:0;background:#08080c80;display:grid;place-items:center;padding:40px;pointer-events:auto}
 .dialog{width:min(940px,100%);height:min(660px,calc(100vh - 80px));min-height:260px;min-width:min(360px,100%);max-width:100%;max-height:100%;resize:both;display:grid;grid-template-columns:calc(210px * var(--bs-settings-zoom,1)) 1fr;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 32px 100px #0006;overflow:hidden}#settings .dialog>:is(aside,main){zoom:var(--bs-settings-zoom,1)}
@@ -3549,7 +3564,7 @@ function chromeActive(state){
     chromeDirection=null;
   }else{navigationState={back:!!state.back||!!chromeAssume.back,forward:!!state.forward||!!chromeAssume.forward};chromeHoldControls=false;}chromeLocation=next;syncRoute();syncNavigationControls();reportChromeLayout();
 }
-let chromeLayoutKey='',chromeLayoutFrame,webFullscreen=false;
+let chromeLayoutKey='',chromeLayoutFrame,webFullscreen=false,immersive=false;
 // The player's web fullscreen fills the page; the floating buttons of the header would cover its controls.
 // 全屏看视频时，鼠标移到屏幕最上面出现一个小条：退出全屏、关闭视频（像 B 站网页版全屏时顶上那样顺手）
 function installFullscreenTopBar(){if(CHROME_VIEW)return;let bar=null,hideTimer=0;
@@ -3567,6 +3582,17 @@ function installFullscreenTopBar(){if(CHROME_VIEW)return;let bar=null,hideTimer=
     if(e.clientY<36){clearTimeout(hideTimer);bar.setAttribute('data-on','');}
     else if(e.clientY>120&&bar.hasAttribute('data-on')&&!bar.matches(':hover')){clearTimeout(hideTimer);hideTimer=setTimeout(()=>bar.removeAttribute('data-on'),400);}},{passive:true});
   document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)bar?.removeAttribute('data-on');});}
+// 看大图（评论区笔记图片等）：屏幕中间被一层盖满整个窗口、里面有图片的固定层盖住时，顶栏淡出、底部的坞收起，关掉再回来
+function installImmersive(){if(!CONTENT_VIEW)return;let on=false,timer=0;
+  const deep=(x,y)=>{let root=document,e=null;for(let i=0;i<8;i++){const n=root.elementFromPoint(x,y);if(!n||n===e)break;e=n;if(n.shadowRoot)root=n.shadowRoot;else break;}return e;};
+  const viewer=()=>{let e=deep(innerWidth/2,innerHeight/2);for(let i=0;e&&i<40;i++){if(e.nodeType===1){const cs=getComputedStyle(e);if(cs.position==='fixed'){const r=e.getBoundingClientRect();
+        if(r.width>=innerWidth*.95&&r.height>=innerHeight*.95&&cs.visibility!=='hidden'&&Number(cs.opacity)>0&&!e.closest?.('.bpx-player-container,#bs-swipe')&&(e.querySelector?.('img,canvas')||e.shadowRoot?.querySelector('img,canvas')))return true;}}
+      e=e.parentNode||e.host;if(e===document)break;}return false;};
+  const check=()=>{const v=viewer();if(v!==on){on=v;native('immersive',{on});}if(on){clearTimeout(timer);timer=setTimeout(check,500);}};
+  const soon=()=>{setTimeout(check,350);setTimeout(check,900);};
+  document.addEventListener('click',soon,true);document.addEventListener('keydown',e=>{if(e.key==='Escape')soon();},true);
+  const leave=()=>{if(on){on=false;native('immersive',{on:false});}};document.addEventListener('visibilitychange',()=>{if(document.hidden)leave();});addEventListener('pagehide',leave);if(window.__bsImmersiveLeft!==true){window.__bsImmersiveLeft=true;native('immersive',{on:false});}}
+function setImmersive(v){if(!CHROME_VIEW||!shadow)return;immersive=!!v;shadow.host.toggleAttribute('data-immersive',immersive);reportChromeLayout();}
 function watchWebFullscreen(){if(!CONTENT_VIEW)return;let was=false;const check=()=>{const on=!!document.querySelector('.bpx-player-container[data-screen=web],.bpx-player-container[data-screen=full]');if(on!==was){was=on;native('web-fullscreen',{on});}};
   new MutationObserver(check).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['data-screen']});check();
   // The tab that comes to the front tells the header its own state.
@@ -3576,11 +3602,13 @@ function reportChromeLayout(){
   if(!CHROME_VIEW||!shadow)return;cancelAnimationFrame(chromeLayoutFrame);chromeLayoutFrame=requestAnimationFrame(()=>{
     const rects=[],scale=devicePixelRatio||1;
     const add=el=>{if(!el||el.hidden||!el.isConnected)return;const look=getComputedStyle(el);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)return;const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)rects.push([Math.floor(r.left*scale),Math.floor(r.top*scale),Math.ceil(r.right*scale),Math.ceil(r.bottom*scale)]);};
-    if(!swipeTucked)add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories',...(webFullscreen?[]:['#settings-trigger','.upload','#feed-roll','#page-top']),'#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));for(const p of $$('.bs-plugin-panel',shadow))add(p);
+    if(!swipeTucked&&!immersive)add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories',...(webFullscreen||immersive?[]:['#settings-trigger','.upload','#feed-roll','#page-top']),'#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));for(const p of $$('.bs-plugin-panel',shadow))add(p);
     // Windows that other scripts open in this document (the login panel, the thread ripper's settings dialog) sit
     // outside the shadow root; without their rectangles the clicks would land on the page underneath.
     let foreignModal=false;
-    for(const el of document.querySelectorAll('html>*:not(head):not(body),body>*')){if(el.id==='bili-space-root'||el.matches('style,script,link,meta,iframe,template,dialog:not([open])'))continue;
+    for(const el of document.querySelectorAll('html>*:not(head):not(body),body>*')){if(el.id==='bili-space-root'||el.matches('style,script,link,meta,template,dialog:not([open])'))continue;
+      // 验证码之类直接挂在 body 下的 iframe：看得见才算
+      if(el.matches('iframe')){const r=el.getBoundingClientRect();if(r.width<40||r.height<40)continue;}
       if(el.matches('dialog[open]')&&el.matches(':modal')){foreignModal=true;continue;}if(getComputedStyle(el).pointerEvents!=='none')add(el);}
     const modal=foreignModal||!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow)||!!$('#plugin-dialog',shadow)||!!$('#onboarding',shadow)||!!$('#feedback',shadow)||!!$('#whats-new',shadow)||!!$('#share-card',shadow)||!!$('#news-card',shadow)||!!$('#language-pick',shadow)||!!$('#clickgui',shadow);
     const key=JSON.stringify([rects,modal]);if(key===chromeLayoutKey)return;chromeLayoutKey=key;native('chrome-layout',{rects,modal});
@@ -3609,7 +3637,7 @@ function tabHidden(){if(swipe){swipe.tabAway=true;swipeAway();}resumeMedia=[...d
 window.addEventListener('load',()=>{reportTabInfo();const title=document.querySelector('title');if(title)new MutationObserver(reportTabInfo).observe(title,{childList:true,characterData:true,subtree:true});},{once:true});
 function prepareShell(){if(root||!document.documentElement)return;applyUiScale();style=document.createElement('style');style.id='bili-space-style';style.textContent=pageCss;document.documentElement.append(style);mountShell();warmProfileMediaCache();applyHeaderPreferences();const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mediaTheme.matches);root.dataset.theme=dark?'dark':'light';document.documentElement.dataset.bsTheme=dark?'dark':'light';root.style.setProperty('--accent',PREFS.accent);if(pageKind()==='search')setLoading(true);startPagePending();surfaceRevealed();}
 function boot(){
-  prepareShell();native('app-visibility');installWheelInertia();installMobile();installTV();installCornerReveal();installFullscreenTopBar();installPlayerInteractions();
+  prepareShell();native('app-visibility');installWheelInertia();installMobile();installTV();installVideoLinkFit();installForeignLayerWatch();installCornerReveal();installFullscreenTopBar();installPlayerInteractions();
   if(pageKind()==='video'){beginVideoLoading();settleVideoLoading();}
   document.addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;const link=e.composedPath().find(el=>el?.matches?.('a[href]'));if(!link)return;const opened=link.target&&link.target!=='_self';const download=link.hasAttribute('download');try{const url=new URL(link.href,location.href);if(/(^|\.)bilibili\.com$/i.test(url.hostname)&&/\/video\/BV[a-z0-9]{10}/i.test(url.pathname)&&!download&&!(opened&&pageKind()!=='video'))beginVideoLoading(url.href);}catch{}},true);
   // One-time migration: profiles that never touched the category list still carry all 18.
@@ -3644,7 +3672,7 @@ function boot(){
   document.body.append(controls);$('button',controls).onclick=()=>native('window',{action:'pip'});$('.bs-pip-play',controls).onclick=()=>{const v=playbackVideo();if(v){if(v.paused)v.play().catch(()=>{});else v.pause();}syncPipPlayback();};
   for(const type of ['play','pause','ended','emptied'])document.addEventListener(type,()=>{syncPipPlayback();if(pipDanmaku.timer)pipDanmaku.tick();},true);document.addEventListener('loadedmetadata',()=>{if(pipActive)syncPipPresentation();},true);
   window.addEventListener('resize',()=>{layoutHeaderLeading();syncPipPresentation();});
-  scheduleHeaderClock();syncPipPlayback();watchWebFullscreen();watchPageScroll();
+  scheduleHeaderClock();syncPipPlayback();watchWebFullscreen();installImmersive();watchPageScroll();
   document.addEventListener('keydown',e=>{
     if(e.ctrlKey&&e.key.toLowerCase()==='w'){e.preventDefault();e.stopImmediatePropagation();native('window',{action:'close'});return;}
     if(e.ctrlKey&&e.key===','){e.preventDefault();openSettings();}
@@ -3687,7 +3715,7 @@ function boot(){
         for(const [el,[value,priority]] of pipHiddenHosts){if(value)el.style.setProperty('display',value,priority);else el.style.removeProperty('display');}pipHiddenHosts.clear();
       }
     },
-    setWebFullscreen,setSwipeActive,setCornerReveal,revealSwipeHeader,testUpNotify,openSwipe,closeSwipe,openFeedback,feedbackResult,clearSearchBusy,setPageZoom,openWhatsNew,showShare,shareCopied,acceptNews,rollFeed,setPageScrolled,scrollPageTop,
+    setWebFullscreen,setSwipeActive,setCornerReveal,setImmersive,revealSwipeHeader,testUpNotify,openSwipe,closeSwipe,openFeedback,feedbackResult,clearSearchBusy,setPageZoom,openWhatsNew,showShare,shareCopied,acceptNews,rollFeed,setPageScrolled,scrollPageTop,
     setFullscreen(on){if(!on)holdPlayer(false);fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
     emitPipDanmaku(items,time){for(const item of items)pipDanmaku.emit(item,time);},
     get state(){return {headerBrand:{shown:brandShown,moving:brandMotion.length>0},pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status}:null};}
