@@ -3593,7 +3593,16 @@ function installImmersive(){if(!CONTENT_VIEW)return;let on=false,timer=0;
   const viewer=()=>{let e=deep(innerWidth/2,innerHeight/2);for(let i=0;e&&i<40;i++){if(e.nodeType===1){const cs=getComputedStyle(e);if(cs.position==='fixed'){const r=e.getBoundingClientRect();
         if(r.width>=innerWidth*.95&&r.height>=innerHeight*.95&&cs.visibility!=='hidden'&&Number(cs.opacity)>0&&!e.closest?.('.bpx-player-container,#bs-swipe')&&(e.querySelector?.('img,canvas')||e.shadowRoot?.querySelector('img,canvas')))return true;}}
       e=e.parentNode||e.host;if(e===document)break;}return false;};
-  const check=()=>{const v=viewer();if(v!==on){on=v;native('immersive',{on});}if(on){clearTimeout(timer);timer=setTimeout(check,500);}};
+  // B 站的笔记大图没有关闭按钮，只能点空白处；补一个
+  let closer=null;const showCloser=v=>{if(v&&!closer){closer=document.createElement('button');closer.type='button';closer.id='bs-viewer-close';closer.setAttribute('aria-label','关闭图片');
+      closer.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+      closer.style.cssText='position:fixed;top:18px;right:18px;z-index:2147483647;width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;color:#fff;background:rgba(20,20,24,.62);backdrop-filter:blur(10px);box-shadow:0 6px 20px rgba(0,0,0,.35);transition:transform .15s,background .15s';
+      closer.onmouseenter=()=>{closer.style.background='rgba(251,114,153,.9)';};closer.onmouseleave=()=>{closer.style.background='rgba(20,20,24,.62)';};
+      closer.onclick=e=>{e.stopPropagation();const esc=t=>t.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',code:'Escape',keyCode:27,bubbles:true,composed:true}));esc(document);esc(window);
+        setTimeout(()=>{if(viewer()){const blank=deep(24,innerHeight/2);blank?.click();}setTimeout(check,120);},250);};
+      document.documentElement.append(closer);}
+    else if(!v&&closer){closer.remove();closer=null;}};
+  const check=()=>{const v=viewer();if(v!==on){on=v;native('immersive',{on});showCloser(on);}if(on){clearTimeout(timer);timer=setTimeout(check,500);}};
   const soon=()=>{setTimeout(check,350);setTimeout(check,900);};
   document.addEventListener('click',soon,true);document.addEventListener('keydown',e=>{if(e.key==='Escape')soon();},true);
   const leave=()=>{if(on){on=false;native('immersive',{on:false});}};document.addEventListener('visibilitychange',()=>{if(document.hidden)leave();});addEventListener('pagehide',leave);if(window.__bsImmersiveLeft!==true){window.__bsImmersiveLeft=true;native('immersive',{on:false});}}
