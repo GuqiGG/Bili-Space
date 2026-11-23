@@ -85,7 +85,7 @@ std::wstring injectionId;
 bool injectionPending=false, injectionDirty=false;
 json config, gm, searchHistory=json::array();
 void save();
-void copyVideoLink(const std::string& value);void copyShareText();void fetchNews();
+void copyVideoLink(const std::string& value);void copyShareText();void fetchNews();void offerLastCrash();
 bool externalWebUrl(const std::wstring& uri);
 HANDLE proxyProcess{},proxyJob{};int proxyPort{},proxyControlPort{};std::string proxyStatus="代理已关闭",proxySecret;
 bool proxyEnabled=false,proxyRunning=false;
@@ -101,7 +101,24 @@ std::string utf8(const std::wstring& s) {
 }
 std::string read(const fs::path& path) {std::ifstream f(path,std::ios::binary); return {std::istreambuf_iterator<char>(f),{}};}
 // Lines in the first minute carry the time since launch, which is what startup work is measured by.
-void log(const std::string& line) { static const ULONGLONG launched=GetTickCount64();const auto since=GetTickCount64()-launched;std::ofstream f(dataPath/L"runtime.log",std::ios::app);if(f)f<<(since<60000?"[+"+std::to_string(since)+"ms] ":std::string{})<<line<<'\n';else{std::ofstream fallback(root/L"runtime-fallback.log",std::ios::app);fallback<<line<<'\n';} }
+std::string crashStage="startup";
+void log(const std::string& line) {if(line.rfind("startup",0)==0||line.rfind("header view ready",0)==0)crashStage=line.substr(0,80); static const ULONGLONG launched=GetTickCount64();const auto since=GetTickCount64()-launched;std::ofstream f(dataPath/L"runtime.log",std::ios::app);if(f)f<<(since<60000?"[+"+std::to_string(since)+"ms] ":std::string{})<<line<<'\n';else{std::ofstream fallback(root/L"runtime-fallback.log",std::ios::app);fallback<<line<<'\n';} }
+
+// 崩溃记录：未处理的异常或 std::terminate 时，把异常码、出事的模块和偏移、启动阶段写进 runtime.log 和 last-crash.json；
+// 下次启动时请用户把它附在反馈里发回来（用户同意才发）。处理函数尽量少分配内存。
+std::string windowsDescription();
+void writeCrash(const std::string& what){
+    try{std::ofstream f(dataPath/L"runtime.log",std::ios::app);if(f)f<<"CRASH "<<what<<" stage="<<crashStage<<" version="<<appVersion<<"\n";}catch(...){}
+    try{std::ofstream f(dataPath/L"last-crash.json",std::ios::trunc);if(f)f<<json{{"what",what},{"stage",crashStage},{"version",appVersion},{"os",windowsDescription()},{"time",(long long)time(nullptr)}}.dump();}catch(...){}
+}
+LONG WINAPI crashFilter(EXCEPTION_POINTERS* e){
+    char text[512]{};auto code=e&&e->ExceptionRecord?e->ExceptionRecord->ExceptionCode:0;void* at=e&&e->ExceptionRecord?e->ExceptionRecord->ExceptionAddress:nullptr;
+    HMODULE module{};wchar_t path[MAX_PATH]{};GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,reinterpret_cast<LPCWSTR>(at),&module);
+    if(module)GetModuleFileNameW(module,path,MAX_PATH);std::wstring name=path;auto slash=name.find_last_of(L"\\/");if(slash!=std::wstring::npos)name=name.substr(slash+1);
+    snprintf(text,sizeof(text),"exception 0x%08lX at %s+0x%llX",static_cast<unsigned long>(code),utf8(name.empty()?L"?":name).c_str(),static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(at)-reinterpret_cast<uintptr_t>(module)));
+    writeCrash(text);return EXCEPTION_CONTINUE_SEARCH;
+}
+void installCrashRecorder(){SetUnhandledExceptionFilter(crashFilter);std::set_terminate([]{std::string what="terminate";try{if(auto p=std::current_exception())std::rethrow_exception(p);}catch(const std::exception& x){what+=std::string(": ")+x.what();}catch(...){}writeCrash(what.substr(0,300));std::abort();});}
 void execute(const std::string& s) {if(webview) webview->ExecuteScript(wide(s).c_str(),nullptr);}
 void pushNavigationState(){if(!webview)return;BOOL back{},forward{};webview->get_CanGoBack(&back);webview->get_CanGoForward(&forward);execute("window.__bsAcceptNavigationState?.("+json{{"back",bool(back)},{"forward",bool(forward)},{"visible",navigationVisible},{"categoryVisible",categoryVisible},{"route",headerRoute}}.dump()+")");}
 
@@ -726,6 +743,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
                 manualZoom=std::clamp(next/zoomBase,.25,5.0);zoomDeferred=true;applyZoom();zoomDeferred=false;
                 zoomFrom=shown;zoomTo=zoomApplied;zoomStart=GetTickCount64();zoomCtl=controller;zoomAnimating=true;controller=scoped;SetTimer(windowHandle,7770,10,nullptr);}
         }else if(type=="news"){fetchNews();
+        }else if(type=="crash-check"){offerLastCrash();
         }else if(type=="corner-reveal"){chromeExecute(m.value("on",false)?L"window.BiliSpace?.setCornerReveal?.(true)":L"window.BiliSpace?.setCornerReveal?.(false)");
         }else if(type=="swipe-state"){chromeExecute(m.value("on",false)?L"window.BiliSpace?.setSwipeActive?.(true)":L"window.BiliSpace?.setSwipeActive?.(false)");chromePush();
         }else if(type=="up-notify"){if(config.value("upNotify",true))upNotify::show(m);
@@ -828,6 +846,10 @@ json cleanNews(const std::string& raw){
     }
     return out;
 }
+// 上次崩溃留下的记录：交给顶栏，问用户要不要附在反馈里发给开发者；只问一次
+void offerLastCrash(){static bool done=false;if(done)return;done=true;auto file=dataPath/L"last-crash.json";std::error_code ec;if(!fs::exists(file,ec))return;
+    json info;try{info=json::parse(read(file));}catch(...){}fs::rename(file,dataPath/L"last-crash.reported.json",ec);if(!info.is_object())return;
+    chromeExecute(wide("window.BiliSpace?.offerCrashReport?.("+info.dump()+")").c_str());}
 void pushNews(){chromeExecute(wide("window.BiliSpace?.acceptNews?.("+newsCache.dump()+")").c_str());}
 void fetchNews(){
     // At most one request every 10 minutes; in between the header gets the last answer again.
@@ -1069,10 +1091,33 @@ LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     }
     return DefWindowProcW(hwnd,msg,wp,lp);
 }
+// 启动时浏览器组件打不开（多半是上次留下的 WebView2 进程还没退干净：刚关、崩溃、后台更新、改了代理）：
+// 先悄悄重开自己，最多两次、每次等 2.5 秒；还不行再提示，并且只有真没装 WebView2 才叫人去装。
+int startupRetry=0;std::wstring startupCommand;
+bool retryStartup(const std::string& what,HRESULT hr){
+    char code[16];snprintf(code,sizeof(code),"0x%08lX",static_cast<unsigned long>(hr));log(what+" "+code+(startupRetry<2?" (retrying)":""));
+    if(startupRetry<2){
+        wchar_t self[MAX_PATH]{};GetModuleFileNameW(nullptr,self,MAX_PATH);
+        auto args=startupCommand;auto at=args.find(L"--startup-retry=");if(at!=std::wstring::npos)args.erase(at,args.find(L' ',at)==std::wstring::npos?std::wstring::npos:args.find(L' ',at)-at+1);
+        std::wstring line=L"\""+std::wstring(self)+L"\" "+args+L" --startup-retry="+std::to_wstring(startupRetry+1);
+        STARTUPINFOW si{sizeof(si)};PROCESS_INFORMATION pi{};
+        if(CreateProcessW(nullptr,line.data(),nullptr,nullptr,FALSE,0,nullptr,nullptr,&si,&pi)){CloseHandle(pi.hThread);CloseHandle(pi.hProcess);return true;}
+    }
+    return false;
+}
+void startupFailed(HRESULT hr){
+    using Version=HRESULT(STDAPICALLTYPE*)(PCWSTR,LPWSTR*);LPWSTR installed{};bool present=false;
+    if(auto dll=GetModuleHandleW(L"WebView2Loader.dll"))if(auto get=reinterpret_cast<Version>(GetProcAddress(dll,"GetAvailableCoreWebView2BrowserVersionString"))){present=SUCCEEDED(get(nullptr,&installed))&&installed;if(installed)CoTaskMemFree(installed);}
+    wchar_t code[16];swprintf(code,16,L"0x%08lX",static_cast<unsigned long>(hr));
+    if(!present)MessageBoxW(windowHandle,L"没有找到 Microsoft Edge WebView2 运行库，请安装 WebView2 Evergreen Runtime 后重试。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);
+    else MessageBoxW(windowHandle,(std::wstring(L"浏览器组件暂时打不开（错误码 ")+code+L"）。\n\n请在任务管理器里结束所有 Bili-Space 和 msedgewebview2 进程后再打开；还不行就重启电脑。登录数据不会被清除。").c_str(),L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);
+}
 int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     if(auto result=runUpdateWorker(command);result>=0)return result;
     // A quiet update may still be installing from the last quit; start once it is done (it gives up after two minutes).
     if(HANDLE installing=OpenMutexW(SYNCHRONIZE,FALSE,L"Local\\BiliSpaceUpdateInstalling")){WaitForSingleObject(installing,120000);CloseHandle(installing);}
+    // 重试启动：等上一个实例和它的浏览器进程退干净
+    startupCommand=command?command:L"";if(auto at=startupCommand.find(L"--startup-retry=");at!=std::wstring::npos){startupRetry=_wtoi(startupCommand.c_str()+at+16);Sleep(2500);}
     using DpiAwareness=BOOL(WINAPI*)(HANDLE);
     auto dpi=reinterpret_cast<DpiAwareness>(GetProcAddress(GetModuleHandleW(L"user32.dll"),"SetProcessDpiAwarenessContext"));
     if(dpi)dpi(reinterpret_cast<HANDLE>(-4));
@@ -1082,7 +1127,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     wchar_t exe[MAX_PATH];GetModuleFileNameW(nullptr,exe,MAX_PATH);root=fs::path(exe).parent_path();
     testing=std::wstring(command).find(L"--test")!=std::wstring::npos;lifecyclePreview=args.find(L"--lifecycle-preview")!=std::wstring::npos;
     if(!testing){auto existing=FindWindowW(L"BetterBiliSpace",L"Bili-Space");if(existing){ShowWindow(existing,SW_RESTORE);SetForegroundWindow(existing);return 0;}}
-    PWSTR local{};SHGetKnownFolderPath(FOLDERID_LocalAppData,0,nullptr,&local);dataPath=testing?root/L".appdata":fs::path(local?local:L".")/L"BetterBiliSpace";CoTaskMemFree(local);
+    PWSTR local{};SHGetKnownFolderPath(FOLDERID_LocalAppData,0,nullptr,&local);dataPath=testing?root/L".appdata":fs::path(local?local:L".")/L"BetterBiliSpace";CoTaskMemFree(local);installCrashRecorder();if(testing&&args.find(L"--crash-test")!=std::wstring::npos){log("startup: crash test");*static_cast<volatile int*>(nullptr)=1;}
     try{if(!prepareAppData()){MessageBoxW(nullptr,L"应用数据目录不可写。请将完整程序目录放到可写位置后重试，原登录数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}}catch(const std::exception&){MessageBoxW(nullptr,L"无法准备应用数据目录，原数据未改动。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);return 2;}
     config=defaults();gm=json::object();
     log(std::string("startup ")+appVersion+(testing?" test":" normal"));
@@ -1124,10 +1169,10 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     auto create=dll?reinterpret_cast<Create>(GetProcAddress(dll,"CreateCoreWebView2EnvironmentWithOptions")):nullptr;
     if(!create){MessageBoxW(windowHandle,L"WebView2Loader.dll 缺失，请使用完整 dist 目录。",L"启动失败",MB_OK|MB_ICONERROR);return 1;}
     auto envHandler=callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler,HRESULT,ICoreWebView2Environment*>([resumeUrl](HRESULT hr,ICoreWebView2Environment* env){
-        if(FAILED(hr)||!env){log("WebView2 environment failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"请安装 Microsoft Edge WebView2 Evergreen Runtime 后重试。",L"启动失败",MB_OK);DestroyWindow(windowHandle);return S_OK;}
+        if(FAILED(hr)||!env){if(!retryStartup("WebView2 environment failed",hr))startupFailed(hr);DestroyWindow(windowHandle);return S_OK;}
         log("startup: browser environment ready");authEnvironment50=env;authEnvironment50->AddRef();
         auto h=callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler,HRESULT,ICoreWebView2Controller*>([resumeUrl,env](HRESULT hr,ICoreWebView2Controller* c){
-            if(SUCCEEDED(hr)&&c)log("startup: home view created");if(FAILED(hr)||!c){log("controller creation failed: "+std::to_string(hr));MessageBoxW(windowHandle,L"浏览器数据目录暂时无法打开。请关闭其他 Bili-Space 窗口后重试；登录数据不会被清除。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);DestroyWindow(windowHandle);return S_OK;}
+            if(SUCCEEDED(hr)&&c)log("startup: home view created");if(FAILED(hr)||!c){if(!retryStartup("controller creation failed",hr))startupFailed(hr);DestroyWindow(windowHandle);return S_OK;}
             controller=c;controller->AddRef();setSurface(config.value("theme",std::string("dark"))!="light");controller->get_CoreWebView2(&webview);fit();applyZoom();PostMessageW(windowHandle,restoreWebFocusMessage,0,0);
             homeTab=new Tab;homeTab->controller=controller;homeTab->view=webview;homeTab->used=++tabClock;tabs.push_back(homeTab);activeTab=homeTab;
             wireView(controller,webview,env);chromeHost::create(env);EventRegistrationToken token;
@@ -1139,8 +1184,9 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
 #ifdef BILI_LEGACY_WIN7
     if(fs::exists(root/L"runtime/webview2-109/msedgewebview2.exe"))fixedBrowser=(root/L"runtime/webview2-109").wstring();
 #endif
+    if(testing&&startupCommand.find(L"--env-fail-test")!=std::wstring::npos&&startupRetry==0){envHandler->Release();if(!retryStartup("simulated environment failure",E_FAIL))startupFailed(E_FAIL);DestroyWindow(windowHandle);return 2;}
     auto hr=create(fixedBrowser.empty()?nullptr:fixedBrowser.c_str(),(dataPath/L"WebView2").c_str(),nullptr,envHandler);envHandler->Release();
-    if(FAILED(hr)){log("environment start failed: "+std::to_string(hr));DestroyWindow(windowHandle);return 2;}
+    if(FAILED(hr)){if(!retryStartup("environment start failed",hr))startupFailed(hr);DestroyWindow(windowHandle);return 2;}
     MSG msg;while(GetMessageW(&msg,nullptr,0,0)>0){TranslateMessage(&msg);DispatchMessageW(&msg);}windowsMediaShutdown();CoUninitialize();return 0;
 }
 

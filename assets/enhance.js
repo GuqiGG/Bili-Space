@@ -2050,6 +2050,11 @@ function scheduleOnboarding(delay=900){
 // developer; an address is optional and only there so the developer can answer.
 const FEEDBACK_KINDS=[['bug','遇到问题'],['idea','功能建议'],['other','其他']];
 let feedbackBusy=false;
+// 上次异常退出：打开反馈窗，把错误信息先填进去，用户补一句、点发送才会发出去
+function offerCrashReport(info){if(!CHROME_VIEW||!info)return;const when=info.time?new Date(info.time*1000).toLocaleString():'';
+  const text='客户端上次异常退出了。当时在做什么（比如刚启动、弹出了什么窗口）：\n\n\n—— 以下是自动附带的错误信息 ——\n'+[info.what,'阶段：'+info.stage,'版本：'+info.version,info.os,when].filter(Boolean).join('\n');
+  try{localStorage.setItem('bs-feedback-draft',JSON.stringify({kind:'bug',text:text.slice(0,3900)}));}catch{}
+  openFeedback();toast('客户端上次异常退出了，可以把错误信息发给开发者');}
 function openFeedback(){
   if(!CHROME_VIEW||!shadow)return;if($('#feedback',shadow)){$('#feedback textarea',shadow)?.focus();return;}
   closeSettings();const previous=shadow.activeElement,layer=document.createElement('div');layer.id='feedback';layer.className='fb-layer';
@@ -2224,7 +2229,7 @@ ${item.text?`<p class="share-lead news-text">${escapeHtml(item.text)}</p>`:''}
   if(!still){layer.animate([{opacity:0},{opacity:1}],{duration:240,easing:'ease-out'});card.animate([{opacity:0,transform:'translateY(14px) scale(.97)'},{opacity:1,transform:'none'}],{duration:440,easing:'cubic-bezier(.32,.72,0,1)'});}
   requestAnimationFrame(()=>$('.wn-primary',card)?.focus({preventScroll:true}));
 }
-function startNews(){if(!CHROME_VIEW)return;setTimeout(()=>native('news'),5000);setInterval(()=>native('news'),3*3600*1000);}
+function startNews(){if(!CHROME_VIEW)return;setTimeout(()=>native('crash-check'),4000);setTimeout(()=>native('news'),5000);setInterval(()=>native('news'),3*3600*1000);}
 // 精选: recommended videos one at a time over the home page, switched with the wheel, ↑/↓ or the side arrows, like the
 // official desktop client's 精选. Each video is the real video page in a same-origin frame, reduced to its player, so
 // quality, danmaku (sending included) and the account all behave as usual; the neighbours are preloaded and kept paused.
@@ -3715,7 +3720,7 @@ function boot(){
         for(const [el,[value,priority]] of pipHiddenHosts){if(value)el.style.setProperty('display',value,priority);else el.style.removeProperty('display');}pipHiddenHosts.clear();
       }
     },
-    setWebFullscreen,setSwipeActive,setCornerReveal,setImmersive,revealSwipeHeader,testUpNotify,openSwipe,closeSwipe,openFeedback,feedbackResult,clearSearchBusy,setPageZoom,openWhatsNew,showShare,shareCopied,acceptNews,rollFeed,setPageScrolled,scrollPageTop,
+    setWebFullscreen,setSwipeActive,setCornerReveal,setImmersive,offerCrashReport,revealSwipeHeader,testUpNotify,openSwipe,closeSwipe,openFeedback,feedbackResult,clearSearchBusy,setPageZoom,openWhatsNew,showShare,shareCopied,acceptNews,rollFeed,setPageScrolled,scrollPageTop,
     setFullscreen(on){if(!on)holdPlayer(false);fullActive=on;document.documentElement.dataset.bsFull=String(on);root.style.display=on?'none':'';},
     emitPipDanmaku(items,time){for(const item of items)pipDanmaku.emit(item,time);},
     get state(){return {headerBrand:{shown:brandShown,moving:brandMotion.length>0},pipDanmaku:{active:!!pipDanmaku.timer,status:pipDanmaku.status,font:pipDanmaku.font||0,comments:pipDanmaku.active.length},prefs:{...PREFS},status,headerSurfaceReady,videoLoadingEvents:[...videoLoadingEvents],audioBoost:PREFS.volumeBoost,soundBalance:{enabled:!!PREFS.soundBalance,status:playbackVideo()?.dataset.bsBalance||'waiting',gainDb:audioGraphs.get(playbackVideo())?.balanceDb||0},audioState:playbackVideo()?.dataset.bsAudio||'native',frames:gpu?.frames||0,stopped:gpu?.stopped??true,pip:pipActive,full:fullActive,route:pageKind(),loading:$('.search',shadow).getAttribute('aria-busy')==='true',ads:$$('[data-bs-ad=true]').length,proxy:proxyInfo,interpolation:interpolator?{frames:interpolator.frames,generated:interpolator.generated,stopped:interpolator.stopped,status:interpolator.status}:null};}
