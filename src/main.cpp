@@ -1133,6 +1133,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){
     log(std::string("startup ")+appVersion+(testing?" test":" normal"));
     // No settings yet means a first install: the welcome tour greets it as new rather than as an update.
     try{auto stored=json::parse(read(dataPath/L"settings.json"));firstRun=false;mergeConfig(stored.value("config",json::object()));if(stored.contains("window")&&stored["window"].is_object())windowState=stored["window"];if(stored.contains("localeRoutes")&&stored["localeRoutes"].is_array())localeRoutes=stored["localeRoutes"];if(stored.contains("pluginData")&&stored["pluginData"].is_object())pluginData=stored["pluginData"];if(stored.contains("gm")&&stored["gm"].is_object())gm=stored["gm"];searchHistory=cleanSearchHistory(stored.value("searchHistory",json::array()));}catch(...){}
+    if(testing&&std::wstring(command).find(L"--no-btr")!=std::wstring::npos)config["btr"]=false;
     log("startup: settings loaded");
     proxyEnabled=config.value("proxy",false);
     if(!proxyEnabled&&fs::exists(dataPath/L"proxy-enabled")){proxyEnabled=true;config["proxy"]=true;}

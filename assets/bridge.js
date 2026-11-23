@@ -92,3 +92,40 @@ EventTarget.prototype.addEventListener=function(type,listener,options){
   return keyboardAdd.call(this,type,wrapped,options);
 };
 EventTarget.prototype.removeEventListener=function(type,listener,options){const key=type+':'+Boolean(typeof options==='boolean'?options:options?.capture),wrapped=listener&&keyboardWrappers.get(this)?.get(key)?.get(listener);return keyboardRemove.call(this,type,wrapped||listener,options);};
+// 个人空间秒开：空间页的资料、粉丝数、投稿列表这些接口，打开时先用上次存下的数据（24 小时内）让页面马上画出来，
+// 同时在后台照常请求一遍，把新数据存好给下次用。关注状态这类说错了会误导的不缓存。存在 localStorage，最多 80 条。
+if(location.hostname==='space.bilibili.com')try{
+const STORE='bs-api-cache',MAX_AGE=24*3600*1000,MAX_ITEMS=80,MAX_BYTES=400*1024;
+const CACHEABLE=/^https:\/\/api\.bilibili\.com\/x\/(?:space\/(?:wbi\/)?(?:acc\/info|arc\/search|upstat|navnum|top\/arc|masterpiece|notice|setting\/app|myinfo|album\/index|channel\/video)|relation\/stat|polymer\/web-space\/(?:seasons_series_list|home\/seasons_series))/;
+const NEVER=/\/relation(?:\?|$)|acc\/relation|\/relation\/(?:tags|tag)/;
+const keyOf=url=>{try{const u=new URL(url,location.href);if(!CACHEABLE.test(u.origin+u.pathname)||NEVER.test(u.pathname))return '';
+  for(const k of ['w_rid','wts','web_location','dm_img_list','dm_img_str','dm_cover_img_str','dm_img_inter','x-bili-device-req-json','w_webid'])u.searchParams.delete(k);
+  u.searchParams.sort();return u.pathname+'?'+u.searchParams.toString();}catch{return '';}};
+let table={};try{table=JSON.parse(localStorage.getItem(STORE)||'{}')||{};}catch{table={};}
+const save=()=>{try{const keys=Object.keys(table).sort((a,b)=>table[b].at-table[a].at);for(const k of keys.slice(MAX_ITEMS))delete table[k];localStorage.setItem(STORE,JSON.stringify(table));}catch{try{table={};localStorage.removeItem(STORE);}catch{}}};
+const remember=(key,text)=>{if(!key||text.length>MAX_BYTES||!/^\s*\{"code":0[,}]/.test(text))return;table[key]={at:Date.now(),body:text};save();};
+const fresh=key=>{const hit=key&&table[key];return hit&&Date.now()-hit.at<MAX_AGE?hit.body:null;};
+// 后台照常请求一遍，只为了更新缓存
+const refresh=(url,key)=>{realFetch(url,{credentials:'include'}).then(r=>r.ok?r.text():null).then(t=>{if(t)remember(key,t);}).catch(()=>{});};
+const stat=window.__bsApiCache={served:0,net:0};
+const realFetch=window.fetch;
+window.fetch=function(input,init){const url=typeof input==='string'?input:input?.url||'';const method=(init?.method||input?.method||'GET').toUpperCase();
+  const key=method==='GET'?keyOf(url):'';if(!key)return realFetch.apply(this,arguments);
+  const body=fresh(key);if(body){stat.served++;refresh(url,key);return Promise.resolve(new Response(body,{status:200,headers:{'Content-Type':'application/json; charset=utf-8'}}));}
+  stat.net++;return realFetch.apply(this,arguments).then(r=>{if(r.ok)r.clone().text().then(t=>remember(key,t)).catch(()=>{});return r;});};
+// B 站空间页大多用 XHR（axios）：命中缓存时直接把这个请求做成「已完成」
+const XO=XMLHttpRequest.prototype.open,XS=XMLHttpRequest.prototype.send;
+XMLHttpRequest.prototype.open=function(method,url){this.__bsKey=String(method).toUpperCase()==='GET'?keyOf(url):'';this.__bsUrl=url;return XO.apply(this,arguments);};
+XMLHttpRequest.prototype.send=function(){const key=this.__bsKey,xhr=this;
+  if(key){const body=fresh(key);
+    if(body){stat.served++;refresh(new URL(xhr.__bsUrl,location.href).href,key);
+      const json=()=>{try{return JSON.parse(body);}catch{return null;}};
+      const define=(k,v)=>{try{Object.defineProperty(xhr,k,{configurable:true,get:typeof v==='function'?v:()=>v});}catch{}};
+      define('readyState',4);define('status',200);define('statusText','OK');define('responseURL',new URL(xhr.__bsUrl,location.href).href);
+      define('responseText',body);define('response',()=>xhr.responseType==='json'?json():body);
+      xhr.getAllResponseHeaders=()=>'content-type: application/json; charset=utf-8\r\n';xhr.getResponseHeader=n=>/content-type/i.test(n)?'application/json; charset=utf-8':null;
+      setTimeout(()=>{for(const type of ['readystatechange','load','loadend'])xhr.dispatchEvent(new ProgressEvent(type));},0);
+      return;}
+    stat.net++;xhr.addEventListener('load',()=>{if(xhr.status===200&&(xhr.responseType===''||xhr.responseType==='text'))remember(key,xhr.responseText);else if(xhr.status===200&&xhr.responseType==='json'&&xhr.response)remember(key,JSON.stringify(xhr.response));});}
+  return XS.apply(this,arguments);};
+}catch(e){}

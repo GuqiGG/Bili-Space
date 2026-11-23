@@ -310,7 +310,8 @@ const chrome = (() => {
       episodeEnabled: source.episodeEnabled !== false,
       // "full" replaces Bilibili's playback core; "compat" leaves it in charge and only
       // downloads its media requests.
-      takeover: source.takeover === "compat" ? "compat" : "full",
+      takeover: source.takeover === "full" && source.takeoverChosen === true ? "full" : "compat",
+      takeoverChosen: source.takeoverChosen === true,
       mode: ["overseas", "custom"].includes(source.mode) ? source.mode : "mainland",
       customHosts: (Array.isArray(source.customHosts) ? source.customHosts : [])
         .map(normalizeCdnHost)
@@ -4365,7 +4366,7 @@ const chrome = (() => {
         <label><input type="radio" name="takeover" value="full"><span>全接管</span></label>
         <label><input type="radio" name="takeover" value="compat"><span>兼容模式</span></label>
       </section>
-      <p class="takeover-note">Safari 用户建议使用兼容模式。<br><br>全接管：播放内核由BTR接管，速度最快。<br>兼容模式：遇到任何问题，尝试兼容模式。</p>
+      <p class="takeover-note">Safari 用户建议使用兼容模式。<br><br>全接管：播放内核由BTR接管，缓冲最快，但每次开始播放要多等约 1 秒。<br>兼容模式（默认）：开始播放和网页一样快，只加速下载。</p>
 
       <details id="advanced" class="advanced">
         <summary>
@@ -4822,7 +4823,7 @@ const chrome = (() => {
       });
     }
     for (const radio of shadow.querySelectorAll('input[name="takeover"]')) {
-      radio.addEventListener("change", () => { if (radio.checked) save({ takeover: radio.value }); });
+      radio.addEventListener("change", () => { if (radio.checked) save({ takeover: radio.value, takeoverChosen: radio.value === "full" }); });
     }
     $("known-hosts").addEventListener("change", (event) => {
       const input = event.target;
@@ -7935,7 +7936,7 @@ const chrome = (() => {
   const ERROR_NOTICE_ID = "__bilibili_thread_ripper_error_notice__";
   const ERROR_NOTICE_STYLE_ID = "__bilibili_thread_ripper_error_notice_style__";
   const THREAD_OPTIONS = Object.freeze([4, 8, 16, 32, 64, 128]);
-  const DEFAULTS = { enabled: true, liveEnabled: false, episodeEnabled: true, theme: "auto", concurrency: 8, autoConcurrency: true, takeover: "full", mode: "mainland", customHosts: [], floatingButton: true, floatingButtonLeft: null, floatingButtonTop: null, debugNotices: false, errorNotices: false, debugCategories: {} };
+  const DEFAULTS = { enabled: true, liveEnabled: false, episodeEnabled: true, theme: "auto", concurrency: 8, autoConcurrency: true, takeover: "compat", mode: "mainland", customHosts: [], floatingButton: true, floatingButtonLeft: null, floatingButtonTop: null, debugNotices: false, errorNotices: false, debugCategories: {} };
   // Settings of the old ArtPlayer version, of the removed compatibility modes, and the flag
   // of the first-run guide that 0.9.4.2 removed.
   const RETIRED_KEYS = ["statusNotice", "compatibilityMode", "volume", "danmaku", "danmakuFontSize", "subtitleLanguage", "subtitleLastLanguage", "btrOnboardingRevision"];
@@ -7955,7 +7956,8 @@ const chrome = (() => {
       theme: ["light", "dark"].includes(input?.theme) ? input.theme : "auto",
       concurrency: THREAD_OPTIONS.includes(threads) ? threads : 8,
       autoConcurrency: input?.autoConcurrency !== false,
-      takeover: input?.takeover === "compat" ? "compat" : "full",
+      takeover: input?.takeover === "full" && input?.takeoverChosen === true ? "full" : "compat",
+      takeoverChosen: input?.takeoverChosen === true,
       mode: ["overseas", "custom"].includes(input?.mode) ? input.mode : "mainland",
       customHosts: (Array.isArray(input?.customHosts) ? input.customHosts : [])
         .map((host) => String(host).trim().toLowerCase())
