@@ -2,7 +2,7 @@
 #include "composition56.hpp"
 // Video pages open as their own native WebView next to the single home view. Only the active view is
 // visible; a view that is switched away from pauses its media, is suspended and asks for low memory.
-struct Tab{ICoreWebView2Controller* controller{};ICoreWebView2* view{};Tab* opener{};bool video=false,closed=false,suspended=false,pendingShow=false,spare=false,warm=false;std::wstring url,key,injectionId;std::string title,cover;unsigned long long used=0,order=0;};
+struct Tab{ICoreWebView2Controller* controller{};ICoreWebView2* view{};Tab* opener{};bool video=false,closed=false,suspended=false,pendingShow=false,spare=false,warm=false;std::wstring url,key,injectionId,prewarmKey;std::string title,cover;unsigned long long used=0,order=0;};
 std::vector<Tab*> tabs;Tab* homeTab{};Tab* activeTab{};unsigned long long tabClock=0;bool viewScopeActive=true;
 constexpr size_t maxVideoTabs=9;
 void fit();void applyZoom();std::string script();void wireView(ICoreWebView2Controller*,ICoreWebView2*,ICoreWebView2Environment*);
@@ -91,13 +91,26 @@ void warmSpareTab(){
     });
     comp::createController(env,created);created->Release();
 }
+
+// 首页预加载：鼠标停在视频卡片上，后台备用页先把这个视频打开（页面那边看到 #bs-prewarm 就不自动播放）
+void prewarmVideo(const std::wstring& uri){
+    if(uri.size()>4096||!trusted(uri)||!spareTab||!spareTab->warm||!spareTab->view)return;auto key=videoTabKey(uri);if(key.empty()||spareTab->prewarmKey==key)return;
+    for(auto t:videoTabs())if(t->key==key)return;
+    spareTab->prewarmKey=key;auto target=uri.substr(0,uri.find(L'#'))+L"#bs-prewarm";spareTab->view->Navigate(target.c_str());if(testing)log("spare prewarm "+utf8(key));
+}
 void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nullptr){
     if(testing)log("video tab requested @"+std::to_string(GetTickCount64()));
     for(auto t:videoTabs())if(t->key==key){if(t->controller)activateTab(t);return;}
     auto list=videoTabs();
     if(list.size()>=maxVideoTabs){Tab* oldest{};for(auto t:list)if(t!=activeTab&&(!oldest||t->used<oldest->used))oldest=t;closeTab(oldest);}
+    if(spareTab&&spareTab->warm&&spareTab->controller&&spareTab->view&&!spareTab->prewarmKey.empty()&&spareTab->prewarmKey==key){
+        auto t=spareTab;spareTab=nullptr;t->spare=t->warm=false;t->prewarmKey.clear();t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
+        RECT rc{};GetClientRect(windowHandle,&rc);t->controller->put_Bounds(rc);t->pendingShow=true;log("video view opened (prewarmed)");
+        t->view->ExecuteScript(L"window.BiliSpace?.prewarmShown?.()",nullptr);revealPendingTab(t);if(t->pendingShow)SetTimer(windowHandle,pendingRevealTimer,1500,nullptr);
+        scheduleSpare(6000);return;
+    }
     if(spareTab&&spareTab->warm&&spareTab->controller&&spareTab->view){
-        auto t=spareTab;spareTab=nullptr;t->spare=t->warm=false;t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
+        auto t=spareTab;spareTab=nullptr;t->spare=t->warm=false;t->prewarmKey.clear();t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
         ICoreWebView2Controller2* c2{};if(SUCCEEDED(t->controller->QueryInterface(__uuidof(ICoreWebView2Controller2),reinterpret_cast<void**>(&c2)))){COREWEBVIEW2_COLOR color{255,BYTE(surfaceDark?22:250),BYTE(surfaceDark?22:250),BYTE(surfaceDark?24:250)};c2->put_DefaultBackgroundColor(color);c2->Release();}
         RECT rc{};GetClientRect(windowHandle,&rc);t->controller->put_Bounds(rc);t->pendingShow=true;SetTimer(windowHandle,pendingRevealTimer,8000,nullptr);
         t->view->Navigate(uri.c_str());log("video view opened (prepared)");if(testing)log("video navigate started @"+std::to_string(GetTickCount64()));
@@ -185,6 +198,8 @@ std::wstring watchlaterVideo(const std::wstring& uri){
 bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& requested){
     if(updateRequired||pip||!homeTab||!homeTab->view)return false;
     Tab* from=tabForView(sender);if(!from)return false;
+    // 备用页自己在预先打开视频（首页预加载），不当成点了链接
+    if(from->spare)return false;
     const auto watchlater=watchlaterVideo(requested);const std::wstring& uri=watchlater.empty()?requested:watchlater;
     auto key=videoTabKey(uri);
     // The official style plays a video as an ordinary page in the view it was clicked in, with no video dock.

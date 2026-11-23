@@ -129,3 +129,16 @@ XMLHttpRequest.prototype.send=function(){const key=this.__bsKey,xhr=this;
     stat.net++;xhr.addEventListener('load',()=>{if(xhr.status===200&&(xhr.responseType===''||xhr.responseType==='text'))remember(key,xhr.responseText);else if(xhr.status===200&&xhr.responseType==='json'&&xhr.response)remember(key,JSON.stringify(xhr.response));});}
   return XS.apply(this,arguments);};
 }catch(e){}
+// 首页预加载：后台备用页预先打开的视频（地址带 #bs-prewarm）先不播放，等真的被点开、显示出来再播
+if(location.hash==='#bs-prewarm')(()=>{let held=true;const was=new WeakMap();
+  // 后台静音先播一下，出了第一帧就停：播放器把开头缓冲好，点进来时接着播、恢复声音
+  const grab=v=>{if(!held||was.has(v))return;was.set(v,v.muted);v.muted=true;const stop=()=>{if(held&&v.currentTime>0){v.pause();v.removeEventListener('timeupdate',stop);}};v.addEventListener('timeupdate',stop);};
+  const realPlay=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){if(held)grab(this);return realPlay.apply(this,arguments);};
+  const kick=()=>{if(!held)return;for(const v of document.querySelectorAll('video')){grab(v);if(v.paused&&v.currentTime===0)realPlay.call(v).catch(()=>{});}};
+  const timer=setInterval(()=>{if(!held){clearInterval(timer);return;}kick();},500);
+  // 被点开、真正显示出来时自己放开（不只靠客户端通知：页面可能跳转过一次，通知会落在旧页上）
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')window.__bsPrewarmRelease?.();});
+  window.__bsPrewarmRelease=()=>{if(!held)return;held=false;HTMLMediaElement.prototype.play=realPlay;try{history.replaceState(history.state,'',location.pathname+location.search);}catch{}
+    const restore=()=>{for(const v of document.querySelectorAll('video')){if(was.has(v))v.muted=was.get(v);if(v.paused)realPlay.call(v).catch(()=>{});}};
+    // B 站播放器起来时可能又把静音设回去，多恢复几次
+    restore();setTimeout(restore,300);setTimeout(restore,1000);setTimeout(restore,2500);};})();
