@@ -93,10 +93,13 @@ void warmSpareTab(){
 }
 
 // 首页预加载：鼠标停在视频卡片上，后台备用页先把这个视频打开（页面那边看到 #bs-prewarm 就不自动播放）
+constexpr UINT_PTR prewarmDropTimer=7791;
+// 预先打开的视频 45 秒没被点开就清掉，备用页回到空白，不一直占着内存
+void dropPrewarm(){if(!spareTab||spareTab->prewarmKey.empty())return;dropSpare();scheduleSpare(4000);if(testing)log("spare prewarm dropped");} // 整个关掉才真正还内存，再备一个空白的
 void prewarmVideo(const std::wstring& uri){
     if(uri.size()>4096||!trusted(uri)||!spareTab||!spareTab->warm||!spareTab->view)return;auto key=videoTabKey(uri);if(key.empty()||spareTab->prewarmKey==key)return;
     for(auto t:videoTabs())if(t->key==key)return;
-    spareTab->prewarmKey=key;auto target=uri.substr(0,uri.find(L'#'))+L"#bs-prewarm";spareTab->view->Navigate(target.c_str());if(testing)log("spare prewarm "+utf8(key));
+    spareTab->prewarmKey=key;auto target=uri.substr(0,uri.find(L'#'))+L"#bs-prewarm";spareTab->view->Navigate(target.c_str());SetTimer(windowHandle,prewarmDropTimer,45000,nullptr);if(testing)log("spare prewarm "+utf8(key));
 }
 void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nullptr){
     if(testing)log("video tab requested @"+std::to_string(GetTickCount64()));
@@ -106,7 +109,7 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
     if(spareTab&&spareTab->warm&&spareTab->controller&&spareTab->view&&!spareTab->prewarmKey.empty()&&spareTab->prewarmKey==key){
         auto t=spareTab;spareTab=nullptr;t->spare=t->warm=false;t->prewarmKey.clear();t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
         RECT rc{};GetClientRect(windowHandle,&rc);t->controller->put_Bounds(rc);t->pendingShow=true;log("video view opened (prewarmed)");
-        t->view->ExecuteScript(L"window.BiliSpace?.prewarmShown?.()",nullptr);revealPendingTab(t);if(t->pendingShow)SetTimer(windowHandle,pendingRevealTimer,1500,nullptr);
+        t->view->ExecuteScript(L"window.BiliSpace?.prewarmShown?.()",nullptr);SetTimer(windowHandle,pendingRevealTimer,260,nullptr); // 先让首页的加载动画播完，再淡入
         scheduleSpare(6000);return;
     }
     if(spareTab&&spareTab->warm&&spareTab->controller&&spareTab->view){
