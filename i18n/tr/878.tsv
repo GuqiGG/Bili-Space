@@ -166,3 +166,9 @@
 1042	Turn off frame interpolation	閂補幀	フレーム補間をオフ	프레임 보간 끄기	Desactivar interpolación	Désactiver l’interpolation	Zwischenbilder ausschalten	Выключить интерполяцию	Desligar interpolação
 1043	Turn on frame interpolation	開補幀	フレーム補間をオン	프레임 보간 켜기	Activar interpolación	Activer l’interpolation	Zwischenbilder einschalten	Включить интерполяцию	Ligar interpolação
 1044	Experimental feature on: super-resolution may stutter or flicker.	測試功能已開：超分可能會卡或者閃。	試験機能がオン：超解像はカクつきやちらつきが出ることがあります。	테스트 기능 켜짐: 초해상도는 끊기거나 깜빡일 수 있습니다.	Función experimental activada: la superresolución puede tartamudear o parpadear.	Fonction expérimentale activée : la super-résolution peut saccader ou scintiller.	Experimentelle Funktion an: Super-Resolution kann ruckeln oder flackern.	Экспериментальная функция включена: суперразрешение может дёргаться или мерцать.	Recurso experimental ligado: a super-resolução pode travar ou piscar.
+1045	Mode	模式	モード	모드	Modo	Mode	Modus	Режим	Modo
+1046	Model	模型	モデル	모델	Modelo	Modèle	Modell	Модель	Modelo
+1047	Super-resolution off	超分已閂	超解像オフ	초해상도 꺼짐	Superresolución desactivada	Super-résolution désactivée	Super-Resolution aus	Суперразрешение выключено	Super-resolução desligada
+1048	Super-resolution model:	超分模型：	超解像モデル：	초해상도 모델:	Modelo de superresolución:	Modèle de super-résolution :	Super-Resolution-Modell:	Модель суперразрешения:	Modelo de super-resolução:
+1049	Turn off super-resolution	閂超分	超解像をオフ	초해상도 끄기	Desactivar superresolución	Désactiver la super-résolution	Super-Resolution ausschalten	Выключить суперразрешение	Desligar super-resolução
+1050	Turn on super-resolution	開超分	超解像をオン	초해상도 켜기	Activar superresolución	Activer la super-résolution	Super-Resolution einschalten	Включить суперразрешение	Ligar super-resolução

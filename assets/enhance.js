@@ -1300,7 +1300,7 @@ function update(patch) {
   if('showClock' in patch)scheduleHeaderClock();
   if('videoLinkButton' in patch||'videoLinkCompact' in patch)syncVideoLink();
   if('headerMessages' in patch){if(patch.headerMessages)refreshMessageUnread(true);else{messageRequest?.abort();messageRequest=null;}}
-  if(patch.srMode&&patch.srMode!=='off')toast('警告：超分是测试功能，可能卡顿、闪烁或抖动；不保证画质提升，异常时请关闭。');if('fiMode' in patch)syncFiButton();
+  if(patch.srMode&&patch.srMode!=='off')toast('警告：超分是测试功能，可能卡顿、闪烁或抖动；不保证画质提升，异常时请关闭。');if('fiMode' in patch||'fiFps' in patch)syncFiButton();if('srMode' in patch||'srModel' in patch)syncSrButton();
 }
 
 function clipboardVideoTarget(value){
@@ -1659,6 +1659,8 @@ html[data-bs-frost=true] :is(button,.bs-player-tool){border-color:transparent!im
 html[data-bs-font=true] body,html[data-bs-font=true] button,html[data-bs-font=true] input,html[data-bs-font=true] textarea{font-family:BiliDouyin,"Microsoft YaHei UI",sans-serif!important}
 html[data-bs-theme=dark]{color-scheme:dark;--bg1:#161618;--bg2:#202023;--bg3:#29292e;--bg1_rgb:22,22,24;--bg2_rgb:32,32,35;--bg3_rgb:41,41,46;--bg1_float_rgb:32,32,35;--bg2_float_rgb:41,41,46;--bg3_float_rgb:51,51,56;--text1_rgb:238,238,240;--text2_rgb:176,176,184;--line_regular_rgb:48,48,52;--bg1_float:#202023;--bg2_float:#29292e;--bg3_float:#333338;--graph_bg_thin:#202023;--graph_bg_regular:#29292e;--graph_bg_thick:#333338;--text1:#eeeef0;--text2:#b0b0b8;--text3:#8a8a94;--text4:#73737e;--line_light:#27272c;--line_regular:#303034;--line_bold:#45454c}
 html[data-bs-theme=dark] body{background:#161618!important;color:#eeeef0}
+/* 首页卡片只排版、绘制看得见的：拖窗口改大小时，屏幕外的上百张卡片不用跟着重新排版 */
+html[data-bs-page=home] .bili-feed4-layout :is(.feed-card,.bili-video-card,.floor-single-card){content-visibility:auto;contain-intrinsic-size:auto 300px}
 /* 首页顶部横幅关掉：整块去掉，不留空 */
 html[data-bs-page=home][data-bs-home-banner=false] .bili-header__banner{display:none!important}
 /* 首页卡片过滤 */
@@ -3143,13 +3145,38 @@ function syncPlayerAppearance(quality){
 }
 function mountPlayerTools(){
   $$('.bs-player-tool').forEach(el=>el.remove());
-  mountFiButton();
+  mountFiButton();mountSrButton();
 }
+// 超分按钮：放在补帧左边，样子和补帧一样；悬停出面板（开关、模式、模型）
+let lastSrMode='quality';
+function mountSrButton(){
+  if(NATIVE_PLATFORM!=='windows'||(typeof RUNTIME!=='undefined'&&RUNTIME.legacyWin7))return;
+  const fi=document.querySelector('.bpx-player-control-bottom-right .bs-fi-ctrl:not(.bs-sr-ctrl)');if(!fi)return;
+  let btn=fi.parentElement.querySelector('.bs-sr-ctrl');
+  if(!btn){btn=document.createElement('div');btn.className='bpx-player-ctrl-btn bs-fi-ctrl bs-sr-ctrl';btn.setAttribute('role','button');btn.tabIndex=0;
+    const item=(attr,value,text)=>'<div class="bs-fi-menu-item" '+attr+'="'+value+'"><span>'+text+'</span></div>';
+    btn.innerHTML='<div class="bs-fi-ctrl-text">超分</div><div class="bs-fi-menu"><div class="bs-fi-menu-box"><div class="bs-fi-menu-item" data-sr="toggle"><span>超分</span><i class="bs-fi-switch"></i></div>'
+      +'<div class="bs-fi-menu-sep"></div><div class="bs-fi-menu-title">模式</div>'+item('data-sr-mode','performance','性能')+item('data-sr-mode','quality','质量')
+      +'<div class="bs-fi-menu-sep"></div><div class="bs-fi-menu-title">模型</div>'+item('data-sr-model','auto','自动识别')+item('data-sr-model','anime','动画（Anime4K）')+item('data-sr-model','general','通用')+'</div></div>';
+    const toggle=()=>{const on=PREFS.srMode==='off';if(!on)lastSrMode=PREFS.srMode;update({srMode:on?lastSrMode:'off'});if(!on)toast('超分已关闭');setTimeout(syncSrButton,50);};
+    btn.addEventListener('click',e=>{e.stopPropagation();const mode=e.target.closest('[data-sr-mode]')?.dataset.srMode,model=e.target.closest('[data-sr-model]')?.dataset.srModel;
+      if(mode){lastSrMode=mode;update({srMode:mode});setTimeout(syncSrButton,50);return;}
+      if(model){update({srModel:model});toast('超分模型：'+e.target.closest('[data-sr-model]').textContent.trim());setTimeout(syncSrButton,50);return;}
+      if(e.target.closest('.bs-fi-menu')&&!e.target.closest('[data-sr=toggle]'))return;toggle();});
+    btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
+    fi.before(btn);}
+  syncSrButton();
+}
+function syncSrButton(){const btn=document.querySelector('.bs-sr-ctrl');if(!btn)return;const on=PREFS.srMode!=='off';if(on)lastSrMode=PREFS.srMode;
+  btn.dataset.on=String(on);btn.setAttribute('aria-pressed',String(on));btn.setAttribute('aria-label',on?'关闭超分':'开启超分');
+  btn.querySelector('[data-sr=toggle]')?.setAttribute('data-on',String(on));
+  btn.querySelectorAll('[data-sr-mode]').forEach(el=>el.dataset.on=String(on&&el.dataset.srMode===PREFS.srMode));
+  btn.querySelectorAll('[data-sr-model]').forEach(el=>el.dataset.on=String(el.dataset.srModel===(PREFS.srModel||'auto')));}
 // 补帧按钮：放在播放器右下角「清晰度」左边，用播放器自己的按钮样式，看起来就是原生的；点一下开/关
 function mountFiButton(){
   if(NATIVE_PLATFORM!=='windows'||(typeof RUNTIME!=='undefined'&&RUNTIME.legacyWin7))return;
   const quality=document.querySelector('.bpx-player-control-bottom-right .bpx-player-ctrl-quality');if(!quality)return;
-  let btn=quality.parentElement.querySelector('.bs-fi-ctrl');
+  let btn=quality.parentElement.querySelector('.bs-fi-ctrl:not(.bs-sr-ctrl)');
   if(!btn){btn=document.createElement('div');btn.className='bpx-player-ctrl-btn bs-fi-ctrl';btn.setAttribute('role','button');btn.tabIndex=0;
     btn.innerHTML='<div class="bs-fi-ctrl-text">补帧</div><div class="bs-fi-menu"><div class="bs-fi-menu-box"><div class="bs-fi-menu-item" data-fi="toggle"><span>补帧</span><i class="bs-fi-switch"></i></div><div class="bs-fi-menu-sep"></div><div class="bs-fi-menu-title">最高帧率（不超过屏幕刷新率）</div>'+[60,120,144,240].map(n=>'<div class="bs-fi-menu-item" data-fi-fps="'+n+'"><span>'+n+' 帧</span></div>').join('')+'</div></div>';
     if(!document.getElementById('bs-fi-ctrl-style')){const st=document.createElement('style');st.id='bs-fi-ctrl-style';
@@ -3160,7 +3187,7 @@ function mountFiButton(){
     quality.before(btn);}
   syncFiButton();
 }
-function syncFiButton(){const btn=document.querySelector('.bs-fi-ctrl');if(!btn)return;const on=PREFS.fiMode!=='off';btn.dataset.on=String(on);btn.querySelector('[data-fi=toggle]')?.setAttribute('data-on',String(on));btn.querySelectorAll('[data-fi-fps]').forEach(el=>el.dataset.on=String(on&&Number(el.dataset.fiFps)===Number(PREFS.fiFps||60)));btn.setAttribute('aria-pressed',String(on));btn.setAttribute('aria-label',on?'关闭补帧':'开启补帧');}
+function syncFiButton(){const btn=document.querySelector('.bs-fi-ctrl:not(.bs-sr-ctrl)');if(!btn)return;const on=PREFS.fiMode!=='off';btn.dataset.on=String(on);btn.querySelector('[data-fi=toggle]')?.setAttribute('data-on',String(on));btn.querySelectorAll('[data-fi-fps]').forEach(el=>el.dataset.on=String(on&&Number(el.dataset.fiFps)===Number(PREFS.fiFps||60)));btn.setAttribute('aria-pressed',String(on));btn.setAttribute('aria-label',on?'关闭补帧':'开启补帧');}
 
 const originalVideoOpacity=new WeakMap(),originalHostPosition=new WeakMap();
 function rememberVideo(video){if(!originalVideoOpacity.has(video))originalVideoOpacity.set(video,video.style.opacity);const host=video.parentElement;if(!originalHostPosition.has(host))originalHostPosition.set(host,host.style.position);return originalVideoOpacity.get(video);}
