@@ -94,12 +94,14 @@ void warmSpareTab(){
 
 // 首页预加载：鼠标停在视频卡片上，后台备用页先把这个视频打开（页面那边看到 #bs-prewarm 就不自动播放）
 constexpr UINT_PTR prewarmDropTimer=7791;
+// 告诉首页某个视频的预加载状态（loading / ready / none），首页在封面右上角显示转圈或绿色勾
+void notifyPrewarm(const std::wstring& key,const char* state){if(key.empty()||!homeTab||!homeTab->view)return;homeTab->view->ExecuteScript(wide("window.BiliSpace?.prewarmState?.("+json(utf8(key)).dump()+","+json(state).dump()+")").c_str(),nullptr);}
 // 预先打开的视频 45 秒没被点开就清掉，备用页回到空白，不一直占着内存
-void dropPrewarm(){if(!spareTab||spareTab->prewarmKey.empty())return;dropSpare();scheduleSpare(4000);if(testing)log("spare prewarm dropped");} // 整个关掉才真正还内存，再备一个空白的
+void dropPrewarm(){if(!spareTab||spareTab->prewarmKey.empty())return;notifyPrewarm(spareTab->prewarmKey,"none");dropSpare();scheduleSpare(4000);if(testing)log("spare prewarm dropped");} // 整个关掉才真正还内存，再备一个空白的
 void prewarmVideo(const std::wstring& uri){
     if(uri.size()>4096||!trusted(uri)||!spareTab||!spareTab->warm||!spareTab->view)return;auto key=videoTabKey(uri);if(key.empty()||spareTab->prewarmKey==key)return;
     for(auto t:videoTabs())if(t->key==key)return;
-    spareTab->prewarmKey=key;auto target=uri.substr(0,uri.find(L'#'))+L"#bs-prewarm";spareTab->view->Navigate(target.c_str());SetTimer(windowHandle,prewarmDropTimer,45000,nullptr);if(testing)log("spare prewarm "+utf8(key));
+    if(!spareTab->prewarmKey.empty())notifyPrewarm(spareTab->prewarmKey,"none");spareTab->prewarmKey=key;notifyPrewarm(key,"loading");auto target=uri.substr(0,uri.find(L'#'))+L"#bs-prewarm";spareTab->view->Navigate(target.c_str());SetTimer(windowHandle,prewarmDropTimer,45000,nullptr);if(testing)log("spare prewarm "+utf8(key));
 }
 void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nullptr){
     if(testing)log("video tab requested @"+std::to_string(GetTickCount64()));
@@ -107,13 +109,13 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
     auto list=videoTabs();
     if(list.size()>=maxVideoTabs){Tab* oldest{};for(auto t:list)if(t!=activeTab&&(!oldest||t->used<oldest->used))oldest=t;closeTab(oldest);}
     if(spareTab&&spareTab->warm&&spareTab->controller&&spareTab->view&&!spareTab->prewarmKey.empty()&&spareTab->prewarmKey==key){
-        auto t=spareTab;spareTab=nullptr;t->spare=t->warm=false;t->prewarmKey.clear();t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
+        auto t=spareTab;spareTab=nullptr;notifyPrewarm(t->prewarmKey,"none");t->spare=t->warm=false;t->prewarmKey.clear();t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
         RECT rc{};GetClientRect(windowHandle,&rc);t->controller->put_Bounds(rc);t->pendingShow=true;log("video view opened (prewarmed)");
         t->view->ExecuteScript(L"window.BiliSpace?.prewarmShown?.()",nullptr);revealPendingTab(t);if(t->pendingShow)SetTimer(windowHandle,pendingRevealTimer,300,nullptr); // 已经准备好了，直接显示
         scheduleSpare(6000);return;
     }
     if(spareTab&&spareTab->warm&&spareTab->controller&&spareTab->view){
-        auto t=spareTab;spareTab=nullptr;t->spare=t->warm=false;t->prewarmKey.clear();t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
+        auto t=spareTab;spareTab=nullptr;notifyPrewarm(t->prewarmKey,"none");t->spare=t->warm=false;t->prewarmKey.clear();t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
         ICoreWebView2Controller2* c2{};if(SUCCEEDED(t->controller->QueryInterface(__uuidof(ICoreWebView2Controller2),reinterpret_cast<void**>(&c2)))){COREWEBVIEW2_COLOR color{255,BYTE(surfaceDark?22:250),BYTE(surfaceDark?22:250),BYTE(surfaceDark?24:250)};c2->put_DefaultBackgroundColor(color);c2->Release();}
         RECT rc{};GetClientRect(windowHandle,&rc);t->controller->put_Bounds(rc);t->pendingShow=true;SetTimer(windowHandle,pendingRevealTimer,8000,nullptr);
         t->view->Navigate(uri.c_str());log("video view opened (prepared)");if(testing)log("video navigate started @"+std::to_string(GetTickCount64()));
