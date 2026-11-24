@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,holdSpeed:200,hdrVideo:true,homePreload:false,homeBanner:false,feedHideLive:false,feedHideBangumi:false,feedHideCourse:false,feedHideManga:false,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,blacklistButtons:true,cornerAutoHide:false,feedColumns:0,feedMargin:'auto',experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,videoDock:true,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,holdSpeed:200,hdrVideo:true,homePreload:false,homeBanner:true,feedHideLive:false,feedHideBangumi:false,feedHideCourse:false,feedHideManga:false,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,blacklistButtons:true,cornerAutoHide:false,feedColumns:0,feedMargin:'auto',experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,videoDock:true,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
    keep their header space but hide their own copy (content mode). */
@@ -1570,9 +1570,9 @@ function syncPrewarmBadges(){if(!PAGE_VIEW||pageKind()!=='home')return;const on=
     let badge=cover.querySelector(':scope>.bs-pw-badge');
     if(!on){badge?.remove();continue;}
     const bv=card.querySelector('a[href*="/video/BV"]')?.href.match(/BV[a-zA-Z0-9]{10}/)?.[0];if(!bv){badge?.remove();continue;}
-    const state=prewarmStates.get(bv)==='ready'?'ready':'wait';
+    const state=prewarmStates.get(bv)||'idle';
     if(!badge){badge=document.createElement('span');badge.className='bs-pw-badge';cover.append(badge);}
-    if(badge.dataset.state!==state){badge.dataset.state=state;badge.innerHTML=state==='ready'?PREWARM_CHECK:'';badge.title=state==='ready'?'已缓存，点开直接显示':'还没缓存';}}}
+    if(badge.dataset.state!==state){badge.dataset.state=state;badge.innerHTML=state==='ready'?PREWARM_CHECK:'';badge.title=state==='ready'?'已缓存，点开直接显示':state==='loading'?'正在缓存':'还没缓存';}}}
 
 function installMobile(){applyMobile();let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(applyMobile,150);});}
 // 长按快进：B 站播放器按住 → 键会切到 3 倍；按住期间它切到 3 倍时改成设置里的倍速，松开后由播放器自己恢复。
@@ -1678,10 +1678,11 @@ html[data-bs-page=home] .bili-feed4-layout :is(.feed-card,.bili-video-card,.floo
 /* 首页预加载状态标记：封面右上角，转圈 = 还没缓存，绿色勾 = 已缓存 */
 html[data-bs-page=home] .bili-video-card__image{position:relative}
 .bs-pw-badge{position:absolute;top:8px;right:8px;z-index:5;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;pointer-events:none;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);box-shadow:0 2px 6px rgba(0,0,0,.25)}
-.bs-pw-badge[data-state=wait]::after{content:"";width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:bs-pw-spin .8s linear infinite}
+.bs-pw-badge[data-state=idle]::after{content:"";width:8px;height:8px;border-radius:50%;border:2px solid rgba(255,255,255,.7)}
+.bs-pw-badge[data-state=loading]::after{content:"";width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:bs-pw-spin .8s linear infinite}
 .bs-pw-badge[data-state=ready]{background:#22c55e}
 @keyframes bs-pw-spin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.bs-pw-badge[data-state=wait]::after{animation:none}}
+@media(prefers-reduced-motion:reduce){.bs-pw-badge[data-state=loading]::after{animation:none}}
 /* 首页顶部横幅关掉：整块去掉，不留空 */
 html[data-bs-page=home][data-bs-home-banner=false] .bili-header__banner{display:none!important}
 /* 首页卡片过滤 */
