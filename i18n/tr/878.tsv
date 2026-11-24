@@ -172,3 +172,6 @@
 1048	Super-resolution model:	超分模型：	超解像モデル：	초해상도 모델:	Modelo de superresolución:	Modèle de super-résolution :	Super-Resolution-Modell:	Модель суперразрешения:	Modelo de super-resolução:
 1049	Turn off super-resolution	閂超分	超解像をオフ	초해상도 끄기	Desactivar superresolución	Désactiver la super-résolution	Super-Resolution ausschalten	Выключить суперразрешение	Desligar super-resolução
 1050	Turn on super-resolution	開超分	超解像をオン	초해상도 켜기	Activar superresolución	Activer la super-résolution	Super-Resolution einschalten	Включить суперразрешение	Ligar super-resolução
+1051	Cached — opens instantly	已緩存，㩒開即刻顯示	キャッシュ済み、すぐ開けます	캐시됨, 바로 열림	En caché, se abre al instante	En cache, s’ouvre instantanément	Zwischengespeichert, öffnet sofort	Кэшировано, откроется мгновенно	Em cache, abre na hora
+1052	Not cached yet	仲未緩存	まだキャッシュされていません	아직 캐시 안 됨	Aún no está en caché	Pas encore en cache	Noch nicht zwischengespeichert	Ещё не кэшировано	Ainda não está em cache
+1053	Caching	緩存緊	キャッシュ中	캐시 중	Guardando en caché	Mise en cache	Wird zwischengespeichert	Кэшируется	Salvando em cache
