@@ -109,7 +109,7 @@ void openVideoTab(const std::wstring& uri,const std::wstring& key,Tab* opener=nu
     if(spareTab&&spareTab->warm&&spareTab->controller&&spareTab->view&&!spareTab->prewarmKey.empty()&&spareTab->prewarmKey==key){
         auto t=spareTab;spareTab=nullptr;t->spare=t->warm=false;t->prewarmKey.clear();t->video=true;t->url=uri;t->key=key;t->opener=opener;t->order=++tabClock;t->used=t->order;dockSync();tabMemory(t,false);
         RECT rc{};GetClientRect(windowHandle,&rc);t->controller->put_Bounds(rc);t->pendingShow=true;log("video view opened (prewarmed)");
-        t->view->ExecuteScript(L"window.BiliSpace?.prewarmShown?.()",nullptr);SetTimer(windowHandle,pendingRevealTimer,260,nullptr); // 先让首页的加载动画播完，再淡入
+        t->view->ExecuteScript(L"window.BiliSpace?.prewarmShown?.()",nullptr);revealPendingTab(t);if(t->pendingShow)SetTimer(windowHandle,pendingRevealTimer,300,nullptr); // 已经准备好了，直接显示
         scheduleSpare(6000);return;
     }
     if(spareTab&&spareTab->warm&&spareTab->controller&&spareTab->view){
@@ -213,7 +213,9 @@ bool routeTabNavigation(ICoreWebView2* sender,const std::wstring& requested){
         if(from==homeTab){LPWSTR source{};homeTab->view->get_Source(&source);std::wstring current=source?source:L"";CoTaskMemFree(source);if(current.rfind(L"https://",0)!=0)return false;
             // Already on a 稍后再看 player (an in-page switch got it there): the video moves to its tab and home goes back to the list.
             if(!watchlaterVideo(current).empty()){openVideoTab(uri,key,from);homeTab->view->Navigate(L"https://www.bilibili.com/watchlater/#/list");return true;}}
-        sender->ExecuteScript(wide("window.BiliSpace?.beginVideoLoading?.("+json(utf8(uri)).dump()+")").c_str(),nullptr);openVideoTab(uri,key,from);return true;
+        // 首页预加载已经把这个视频打开好了：不放加载动画，直接显示
+        const bool prewarmed=spareTab&&spareTab->warm&&!spareTab->prewarmKey.empty()&&spareTab->prewarmKey==key;
+        if(!prewarmed)sender->ExecuteScript(wide("window.BiliSpace?.beginVideoLoading?.("+json(utf8(uri)).dump()+")").c_str(),nullptr);openVideoTab(uri,key,from);return true;
     }
     if(from->video&&homeDestination(uri)){cancelNavigationFeedback(sender);if(!samePage(uri,currentSource(homeTab)))homeTab->view->Navigate(uri.c_str());activateTab(homeTab);return true;}
     return false;
