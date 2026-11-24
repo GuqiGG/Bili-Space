@@ -190,7 +190,8 @@ void historyStep(ICoreWebView2* view,int direction){
     done->Release();
 }
 // Videos opened from home (or from another video) get their own view; site pages opened from a video return to home.
-bool officialVideoStyle(){return config.value("officialVideoStyle",false);}
+// 「视频坞」关掉（或老版本的「官方视频播放样式」开着）：视频直接在当前页面播放，没有视频坞和多视频切换
+bool officialVideoStyle(){return config.value("officialVideoStyle",false)||!config.value("videoDock",true);}
 // With 稍后再看 set to open as an ordinary video, its player addresses (/list/watchlater?bvid=… and
 // /medialist/play/watchlater/BV…) are that video; the home view never goes there, so returning home never bounces back.
 std::wstring watchlaterVideo(const std::wstring& uri){
