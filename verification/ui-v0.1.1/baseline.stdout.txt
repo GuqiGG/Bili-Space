@@ -1,1 +1,0 @@
-{"brandCentered":false,"maximizeSquare":false,"glyphFade":false,"providedMessageIcon":false,"videoHome":null,"headerTab":false,"hideHome":false,"hideMessages":false,"independentVideoHome":false}

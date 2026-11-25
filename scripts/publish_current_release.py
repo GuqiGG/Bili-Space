@@ -16,11 +16,11 @@ manifest = None
 if tuple(map(int,version.split('.'))) >= (0,1,38):
     zipfile, setup = files[:2]
     # A release titled 小更新 installs quietly: downloaded in the background and applied when the user next quits.
-    silent = '小更新' in (ROOT/'docs'/f'RELEASE-{version}.md').read_text(encoding='utf8').splitlines()[0]
+    silent = '小更新' in (ROOT/'docs'/'releases'/f'RELEASE-{version}.md').read_text(encoding='utf8').splitlines()[0]
     manifest = {'schema':1,'appId':'bili-space','platform':'windows-x64','version':version,'minimumSupportedVersion':'0.1.0','force':False,'silent':silent,
         'downloadUrl':f'https://bili.gvqi.top/releases/{zipfile.name}','sha256':hashlib.sha256(zipfile.read_bytes()).hexdigest(),'size':zipfile.stat().st_size,
         'setupUrl':f'https://github.com/{repo}/releases/download/{tag}/{setup.name}','setupSha256':hashlib.sha256(setup.read_bytes()).hexdigest(),'setupSize':setup.stat().st_size,
-        'changelog':[line[2:].strip() for line in (ROOT/'docs'/f'RELEASE-{version}.md').read_text(encoding='utf8').splitlines() if line.startswith('- ')]}
+        'changelog':[line[2:].strip() for line in (ROOT/'docs'/'releases'/f'RELEASE-{version}.md').read_text(encoding='utf8').splitlines() if line.startswith('- ')]}
     manifest_file=ROOT/'releases/windows-x64.json'
     manifest_file.write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf8',newline='\n')
     files.append(manifest_file)
@@ -36,7 +36,7 @@ def api(path,method='GET',data=None,content_type='application/json'):
     with urllib.request.urlopen(request, timeout=60) as r: return json.load(r)
 release = next((r for r in api('/releases?per_page=100') if r['tag_name']==tag),None)
 release_name=json.loads((ROOT/'assets/app-info.json').read_text(encoding='utf8')).get('releaseName','Bili-Space '+version)
-metadata={'tag_name':tag,'target_commitish':os.environ['GITHUB_SHA'],'name':release_name,'body':(ROOT/'docs'/f'RELEASE-{version}.md').read_text(encoding='utf8')}
+metadata={'tag_name':tag,'target_commitish':os.environ['GITHUB_SHA'],'name':release_name,'body':(ROOT/'docs'/'releases'/f'RELEASE-{version}.md').read_text(encoding='utf8')}
 if release is None: release = api('/releases','POST',{**metadata,'draft':True})
 elif release['draft']: release = api('/releases/'+str(release['id']),'PATCH',metadata)
 for p in files:

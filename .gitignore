@@ -17,3 +17,10 @@ vendor/Bili23-Downloader-source/
 .userdata/
 startup-probe.log
 runtime-fallback.log
+
+# Generated locally; never commit
+/verification/
+/releases/
+/update-site/public/releases/
+build.log
+.workbuddy/
