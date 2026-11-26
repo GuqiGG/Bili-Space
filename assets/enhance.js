@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,holdSpeed:200,hdrVideo:true,homePreload:false,homeBanner:true,feedHideLive:false,feedHideBangumi:false,feedHideCourse:false,feedHideManga:false,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,blacklistButtons:true,cornerAutoHide:false,feedColumns:0,feedMargin:'auto',experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,videoDock:true,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {dockTipSeen:false,updateChannel:'',theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,holdSpeed:200,hdrVideo:true,homePreload:false,homeBanner:true,feedHideLive:false,feedHideBangumi:false,feedHideCourse:false,feedHideManga:false,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,blacklistButtons:true,cornerAutoHide:false,feedColumns:0,feedMargin:'auto',experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,videoDock:true,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
    keep their header space but hide their own copy (content mode). */
@@ -413,6 +413,7 @@ function mountHomeBanner(){
 // Writes only what changed, and reads styles only after every write: setting a card's markers and then asking for its
 // style straight away made the browser recompute styles once per card, hundreds of times each time the feed grew.
 const setData=(el,key,value)=>{if(el.dataset[key]!==value)el.dataset[key]=value;};
+const skeletonSince=new WeakMap();let stuckCheckTimer=0;
 function compactHomeFeed(){
   if(pageKind()!=='home'||document.documentElement.dataset.bsSwipe)return;
   markAds();const inners=[],grids=[];
@@ -437,6 +438,13 @@ function compactHomeFeed(){
     }
   }
   for(const [card,inner] of inners){const empty=!!inner&&getComputedStyle(inner).display==='none';if(empty)setData(card,'bsEmpty','true');else if(card.dataset.bsEmpty)delete card.dataset.bsEmpty;}
+  // 一直停在灰色骨架的卡片（多半是被净化掉内容的广告位，B 站永远不会再填它）：3 秒后还是空的就收起来，不留灰块
+  const now=Date.now();let pending=false;
+  for(const [card] of inners){const filled=!!card.querySelector('a[href]:not([href="javascript:;"]),img[src]:not([src=""])');
+    if(filled){if(card.dataset.bsStuck)delete card.dataset.bsStuck;skeletonSince.delete(card);continue;}
+    if(!skeletonSince.has(card))skeletonSince.set(card,now);
+    if(now-skeletonSince.get(card)>=3000)setData(card,'bsStuck','true');else pending=true;}
+  if(pending){clearTimeout(stuckCheckTimer);stuckCheckTimer=setTimeout(compactHomeFeed,3100);}
   for(const host of grids)wakeHomeLoader(host);
   if(!navigator.connection?.saveData){
     let budget=12;
@@ -1046,7 +1054,9 @@ function rollFeed(){if(!PAGE_VIEW)return;try{sessionStorage.removeItem('bs-feed-
   // 带上 bs-roll：客户端看到它就不用本地缓存的首页（缓存里的首页自带前几个推荐，刷新也不会变）
   const u=new URL(location.href);u.searchParams.set('bs-roll',Date.now().toString(36));location.replace(u.href);}
 // 换一换带的标记用完就从地址栏去掉
-(()=>{try{const u=new URL(location.href);if(u.searchParams.has('bs-roll')){u.searchParams.delete('bs-roll');history.replaceState(history.state,'',u.pathname+u.search+u.hash);}}catch{}})();
+(()=>{try{const u=new URL(location.href);if(u.searchParams.has('bs-roll')){u.searchParams.delete('bs-roll');history.replaceState(history.state,'',u.pathname+u.search+u.hash);
+  // 服务器直出的首页自带最上面一批推荐，几分钟内重新载入还是同一批（反馈：前六个不换）；再按一次 B 站自己的换一换，把这一批也换掉
+  if(PAGE_VIEW){let tries=0;const roll=()=>{const b=document.querySelector('.feed-roll-btn button,.feed-roll-btn,.roll-btn');if(b){b.click();return;}if(++tries<40)setTimeout(roll,150);};setTimeout(roll,400);}}}catch{}})();
 // The search box's left edge is a grip: drag it to make the box wider or narrower (remembered; double-click resets).
 // While it moves the box squashes like jelly with the speed of the drag, and on release it springs back with a wobble.
 function installSearchGrip(){
@@ -1132,7 +1142,7 @@ function saveClickGuiLayout(layout){try{localStorage.setItem(CLICKGUI_LAYOUT_KEY
 function clickGuiModules(){
   const selected=currentTab,pages=[];
   try{for(const [tab,[category]] of Object.entries(tabs)){
-    currentTab=tab;const template=document.createElement('template');template.innerHTML=tabContent();const seen=new Set(),modules=[];
+    currentTab=tab;const template=document.createElement('template');template.innerHTML=tabContent();if(LOOK_TABS.includes(tab)){const box=document.createElement('div');box.append(template.content);organizeSettings(box,tab);template.content.append(...box.childNodes);}const seen=new Set(),modules=[];
     for(const control of $$('input[data-pref],select[data-pref]',template.content)){
       const key=control.dataset.pref;if(!key||seen.has(key))continue;seen.add(key);
       const holder=control.closest('.row,.chip,label')||control.parentElement;const labelNode=($('label,.label,span',holder)||holder).cloneNode(true);
@@ -1290,7 +1300,7 @@ function applyPreferences() {root?.style.setProperty('--bs-settings-zoom',String
   const launcher=$('#__bilibili_thread_ripper_launcher__');if(launcher)launcher.style.setProperty('display','none','important');
   scheduleScan();
 }
-function update(patch) {
+function update(patch) {if(patch&&typeof patch.updateChannel==='string'&&patch.updateChannel!==PREFS.updateChannel)setTimeout(()=>native('updates',{action:'check'}),300);
 
   const before=PREFS.srMode+PREFS.srScale+PREFS.srModel;
   const langBefore=uiLanguage();Object.assign(PREFS,patch);applyPreferences();native('config',{value:patch,revision:++revision,origin:VIEW_ID});
@@ -1528,6 +1538,8 @@ function installTV(){if(deviceKind()!=='tv'||window.__bsTV)return;window.__bsTV=
     return false;}
   function swipeKey(k){const btn=l=>[...document.querySelectorAll('#bs-swipe button,button')].find(b=>b.getAttribute('aria-label')===l);
     if(k==='ArrowDown'){btn('下一个')?.click();return true;}if(k==='ArrowUp'){btn('上一个')?.click();return true;}
+    if(k==='ArrowLeft'||k==='ArrowRight')return true; // 精选自己的快进快退处理（按住 → 加速）
+    if(k==='Enter'){swipeTogglePlay?.();return true;}
     return playerKey(k);}
   document.addEventListener('keydown',e=>{const k=e.key;if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(k))return;
     const typing=document.activeElement?.matches?.('input,textarea')||shadow?.activeElement?.matches?.('input,textarea');
@@ -1590,17 +1602,16 @@ function installWheelInertia(){
   document.addEventListener('pointerdown',cancel,{passive:true});
   document.addEventListener('keydown',cancel,{passive:true});
   window.addEventListener('blur',cancel);
+  // 跟着屏幕刷新走：每一帧按实际经过的时间把位置朝目标收拢（指数平滑），60/144/240Hz 都一样顺；
+  // 连续滚动时只是把目标往前推，速度是连续的，不会每一格都从头起步（反馈：高刷屏上一顿一顿、割裂）。
   function tick(now){
     if(!motion)return;
     const m=motion;
     if(!m.el.isConnected||reduced.matches){cancel();return;}
-    const t=Math.min(1,(now-m.start)/150);
-    // CSS ease-out (0,0,.58,1), evaluated for the scroll offset, not a visual transform.
-    let lo=0,hi=1,u=0;
-    for(let i=0;i<12;i++){u=(lo+hi)/2;const x=3*(1-u)*u*u*.58+u*u*u;if(x<t)lo=u;else hi=u;}
-    const progress=3*(1-u)*u*u+u*u*u;
-    m.el.scrollTo({top:t===1?m.to:m.from+(m.to-m.from)*progress,behavior:'instant'});
-    if(t<1)frame=requestAnimationFrame(tick);else motion=null;
+    const dt=Math.min(64,Math.max(1,now-(m.last||now-16)));m.last=now;
+    const k=1-Math.exp(-dt/75);m.pos+=(m.to-m.pos)*k;
+    if(Math.abs(m.to-m.pos)<.5){m.el.scrollTo({top:m.to,behavior:'instant'});motion=null;return;}
+    m.el.scrollTo({top:m.pos,behavior:'instant'});frame=requestAnimationFrame(tick);
   }
   document.addEventListener('wheel',e=>{
     if(e.defaultPrevented||!e.cancelable||e.ctrlKey||e.metaKey||e.shiftKey||reduced.matches||pipActive||fullActive){cancel();return;}
@@ -1620,7 +1631,7 @@ function installWheelInertia(){
     const previous=motion&&motion.el===el&&Math.sign(motion.to-from)===Math.sign(step)?motion.to:from;
     const to=Math.max(0,Math.min(max,previous+Math.max(-180,Math.min(180,step))));
     if(Math.abs(to-from)<.5)return;
-    e.preventDefault();cancel();motion={el,from,to,start:performance.now()};frame=requestAnimationFrame(tick);
+    e.preventDefault();if(motion&&motion.el===el){motion.to=to;return;}cancel();motion={el,pos:from,to,last:0};frame=requestAnimationFrame(tick);
   },{passive:false});
 }
 
@@ -1686,12 +1697,15 @@ html[data-bs-page=home] .bili-video-card__image{position:relative}
 /* 首页顶部横幅关掉：整块去掉，不留空 */
 html[data-bs-page=home][data-bs-home-banner=false] .bili-header__banner{display:none!important}
 /* 首页卡片过滤 */
+html[data-bs-page=home] [data-bs-stuck=true]{display:none!important}
 html[data-bs-page=home][data-bs-hide-live=true] .bili-feed4-layout :is(.bili-live-card,.floor-single-card,.feed-card,.bili-video-card):has(a[href*="live.bilibili.com"]){display:none!important}
 html[data-bs-page=home][data-bs-hide-bangumi=true] .bili-feed4-layout :is(.floor-single-card,.feed-card,.bili-video-card):has(a[href*="/bangumi/"]){display:none!important}
 html[data-bs-page=home][data-bs-hide-course=true] .bili-feed4-layout :is(.floor-single-card,.feed-card,.bili-video-card):has(a[href*="/cheese/"]){display:none!important}
 html[data-bs-page=home][data-bs-hide-manga=true] .bili-feed4-layout :is(.floor-single-card,.feed-card,.bili-video-card):has(a[href*="manga.bilibili.com"]){display:none!important}
 /* 动态页底下有一层浅色插画背景（.bg），深色模式下不会跟着变，去掉 */
 html[data-bs-theme=dark][data-bs-page=dynamic] :is(.bg,.bili-dyn-home__bg,.bili-dyn-home--member>.bg){background:#161618!important;background-image:none!important}
+html[data-bs-theme=dark][data-bs-page=dynamic],html[data-bs-theme=dark][data-bs-page=dynamic] :is(body,#app,#app>div,.bili-dyn-home--member,.bili-dyn-home--visitor,.bili-dyn-home__main,.bili-dyn-home,.opus-detail,.bili-opus-view,.app-layout){background-color:#161618!important;background-image:none!important}
+html[data-bs-theme=dark][data-bs-page=dynamic]{--graph_bg_regular:#202023;--graph_bg_thin:#1b1b1e;--graph_bg_thick:#29292e;--bg1_float:#202023}
 /* Space backgrounds deliberately use negative layers; isolate them above the document surface. */
 html[data-bs-page=space] #app{isolation:isolate;background-color:transparent!important}html[data-bs-page=space] .space-header{isolation:isolate;background-color:transparent!important}html[data-bs-page=space] .space-theme-bg{pointer-events:none}html[data-bs-page=space] .header-toutu{display:block!important}
 html[data-bs-theme=light]{color-scheme:light;--bg1:#fafafa;--bg2:#f1f1f3;--text1:#202024;--text2:#67676e}
@@ -2004,7 +2018,9 @@ async function checkProxyRegion(){
     out.textContent=`当前出口：${data.country||'未知'}${data.city?' · '+data.city:''}${data.addr?' · '+data.addr:''} — ${mainland?'大陆出口；是否能播放仍受版权、账号权限等限制':'不能解锁“仅限中国大陆”的番剧'}`;
   }catch(e){out.textContent='检测失败：'+e.message+'（直连也可能被网站拒绝）';}
 }
-const tabs={downloads:['下载任务','plugins'],blocklist:['拉黑管理','plugins'],community:['观看记录','sparkles'],categories:['分区选择','progress'],network:['客户端代理','plugins'],appearance:['个性化','appearance'],clean:['页面净化','clean'],play:['播放与画质','sparkles'],plugins:['扩展插件','plugins'],feedback:['反馈','sparkles'],about:['关于与更新','plugins']};
+const tabs={appearance:['外观','appearance'],home:['顶栏与首页','progress'],play:['播放与画质','sparkles'],window:['窗口与画中画','appearance'],clean:['页面净化','clean'],general:['通用','plugins'],categories:['分区选择','progress'],downloads:['下载任务','plugins'],blocklist:['拉黑管理','plugins'],community:['观看记录','sparkles'],network:['网络代理','plugins'],plugins:['扩展插件','plugins'],feedback:['反馈','sparkles'],about:['关于与更新','plugins']};
+// 这几页共用一份「个性化」内容，按分组拆到各自的页里（organizeSettings）
+const LOOK_TABS=['appearance','home','window','general'];
 if(NATIVE_PLATFORM!=='windows'){for(const tab of ['downloads','network','plugins'])delete tabs[tab];}
 
 const toggle=(key,title,hint)=>`<div class="row"><label for="pref-${key}">${title}${hint?`<span class="hint">${hint}</span>`:''}</label><input id="pref-${key}" data-pref="${key}" type="checkbox" ${PREFS[key]?'checked':''}></div>`;
@@ -2339,7 +2355,10 @@ const SWIPE_FRAME_CSS=`html,body{overflow:hidden!important;background:#000!impor
 .bs-gpu-canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:2;background:#000}
 .bpx-player-ending-panel,.bpx-player-ending-wrap,.bpx-player-toast-auto{display:none!important}
 .bpx-player-sending-area,.bpx-player-control-wrap,.bpx-player-shadow-progress-area,.bpx-player-top-wrap,.bpx-player-dialog-wrap{display:none!important}
-#bilibili-player .bpx-player-video-area{height:100%!important}
+#bilibili-player .bpx-player-video-area{height:100%!important;width:100%!important}
+#bilibili-player .bpx-player-video-wrap{width:100%!important;height:100%!important;left:0!important;right:0!important;margin:0!important;transform:none!important}
+#bilibili-player .bpx-player-video-wrap video{width:100%!important;height:100%!important;object-fit:contain!important;left:0!important}
+.bpx-player-state-wrap{display:none!important}
 #bilibili-player{transform-origin:0 50%;transition:transform .46s cubic-bezier(.32,.72,0,1)}
 html.bs-swipe-comments #bilibili-player{transform:scale(var(--bs-ck,.7))}
 #commentapp,#commentapp *{visibility:visible!important}
@@ -2608,6 +2627,16 @@ document.addEventListener('visibilitychange',()=>swipeAway());
 function syncSwipeHash(){if(!PAGE_VIEW)return;if(location.hash==='#swipe'&&pageKind()==='home')openSwipe();else if(swipe&&location.hash!=='#swipe')closeSwipe();}
 document.addEventListener('keydown',e=>{if(!swipe||e.target?.closest?.('input,textarea,[contenteditable=true]'))return;
   if(e.key===' '){e.preventDefault();if(!e.repeat)swipeTogglePlay();}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();swipeGo(e.key==='ArrowDown'?1:-1);}else if(e.key==='Escape'&&swipe.comments){e.preventDefault();swipeComments(false);}else if(e.key==='Escape'&&!document.fullscreenElement){e.preventDefault();closeSwipe();}},true);
+// 精选：← → 快退快进 5 秒，按住 → 按设置的倍速快进（和视频页一样），其余快捷键交给当前这条视频的播放器
+let swipeKeyHeld=false,swipeKeyRate=1;
+function swipeSeek(d){const v=swipeCurrentVideo();if(!v)return;v.currentTime=Math.max(0,Math.min((v.duration||1e9)-.2,v.currentTime+d));}
+document.addEventListener('keydown',e=>{if(!swipe||e.target?.closest?.('input,textarea,[contenteditable=true]')||e.ctrlKey||e.altKey||e.metaKey)return;
+  if(e.key==='ArrowLeft'){e.preventDefault();swipeSeek(-5);return;}
+  if(e.key==='ArrowRight'){e.preventDefault();if(e.repeat){if(!swipeKeyHeld){const v=swipeCurrentVideo();if(v){swipeKeyHeld=true;swipeKeyRate=v.playbackRate;v.playbackRate=(Number(PREFS.holdSpeed)||200)/100;}}}return;}
+  if([' ','ArrowUp','ArrowDown','Escape','Shift','Control','Alt','Meta','Tab'].includes(e.key))return;
+  const doc=swipeFrameDoc();if(!doc)return;
+  try{(doc.querySelector('.bpx-player-container')||doc).dispatchEvent(new KeyboardEvent('keydown',{key:e.key,code:e.code,keyCode:e.keyCode,which:e.which,shiftKey:e.shiftKey,bubbles:true,cancelable:true}));}catch{}},true);
+document.addEventListener('keyup',e=>{if(!swipe||e.key!=='ArrowRight')return;e.preventDefault();const v=swipeCurrentVideo();if(swipeKeyHeld){swipeKeyHeld=false;if(v)v.playbackRate=swipeKeyRate;}else swipeSeek(5);},true);
 // The header's 精选 link takes the route indicator while the feed is open.
 // While the feed is open the header tucks away; the grip at the top (or the very top edge) brings it back, and it
 // tucks again once the pointer leaves it with nothing of its own open.
@@ -2886,7 +2915,7 @@ function tabContent(tab=currentTab){
   if(tab==='blocklist')return '<h2>拉黑管理</h2><div id="blacklist44-panel" tabindex="-1" data-setting-keywords="拉黑 黑名单 取消拉黑 UP主"></div>';
   if(tab==='community')return '<h2>观看记录</h2><div id="community44-panel" tabindex="-1" data-setting-keywords="观看统计 周报 订阅提醒"></div>';
   if(tab==='feedback')return `<h2>反馈</h2><p class="subtitle">遇到问题、想要新功能，都可以直接告诉开发者。</p><div class="row"><label>写一条反馈<span class="hint">邮箱可选，不填开发者就没法回复你；不会附带账号、Cookie 和浏览记录</span></label><button id="feedback-open" class="link" type="button">写反馈</button></div><div class="note">也可以在托盘图标的右键菜单里选「反馈问题…」。</div>`;
-  if(tab==='about')return `<h2>Bili-Space</h2><div class="row"><span>版本号</span><strong id="app-version"></strong></div><div class="row"><span>作者</span><strong id="app-author"></strong></div><p class="subtitle">更新源 · bili.gvqi.top</p><div class="section-label">更新 / UPDATES</div><p id="client-update-status" role="status" aria-live="polite"></p><strong id="update-version"></strong><ul id="update-notes"></ul><div class="actions"><button class="link" data-update="check">检查更新</button><button class="link" data-update="download" hidden>下载更新</button><button class="link" data-update="ignore" hidden>忽略此版本</button><button class="link" data-update="install" hidden>安装并重启</button><button class="link" data-update="log">查看检查日志</button><button class="link" id="whats-new-open">查看更新公告</button><button class="link" id="share-open">分享 Bili-Space</button></div><div class="note">下载完成后可在此安装并重启，保留登录和设置。</div>`;
+  if(tab==='about')return `<h2>Bili-Space</h2><div class="row"><span>版本号</span><strong id="app-version"></strong></div><div class="row"><span>作者</span><strong id="app-author"></strong></div><p class="subtitle">更新源 · bili.gvqi.top</p><div class="section-label">更新 / UPDATES</div><div class="row"><label for="pref-updateChannel">更新通道<span class="hint">稳定版只更新大版本，最新版跟着 GitHub 上的每一个版本</span></label><select id="pref-updateChannel" data-pref="updateChannel"><option value="latest">最新版</option><option value="stable">稳定版</option></select></div><p id="client-update-status" role="status" aria-live="polite"></p><strong id="update-version"></strong><ul id="update-notes"></ul><div class="actions"><button class="link" data-update="check">检查更新</button><button class="link" data-update="download" hidden>下载更新</button><button class="link" data-update="ignore" hidden>忽略此版本</button><button class="link" data-update="install" hidden>安装并重启</button><button class="link" data-update="log">查看检查日志</button><button class="link" id="whats-new-open">查看更新公告</button><button class="link" id="share-open">分享 Bili-Space</button></div><div class="note">下载完成后可在此安装并重启，保留登录和设置。</div>`;
 
   if(tab==='categories'){
     const total=CATEGORIES.length,chosen=PREFS.categorySelection.length;
@@ -2897,22 +2926,38 @@ function tabContent(tab=currentTab){
     return `<h2>网络代理</h2><p class="subtitle">Mihomo · 仅代理客户端</p><div class="row"><label for="proxy-switch">代理开关<span class="hint">更改后重启客户端</span></label><input id="proxy-switch" type="checkbox" data-action="proxy-toggle" ${on?'checked':''}></div><div class="note" id="proxy-status">${escapeHtml(proxyLine())}</div><div class="row"><label for="proxy-node">当前节点</label><select id="proxy-node" aria-label="代理节点"></select></div>${toggle('proxyAll','全局代理','所有客户端流量通过代理')}<div class="actions"><button class="link" id="proxy-free">用内置免费节点</button><button class="link" id="proxy-import">导入 Clash 配置…</button><button class="link" id="proxy-check">检测出口地区</button></div><div class="note" id="proxy-region">尚未检测</div><div class="note">节点出口需符合番剧授权地区。免费节点来源不受信任，请勿用于敏感账户。</div>`;
   }
   if(tab==='header')return `<h2>顶部栏</h2>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,'')).join('')}<div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>`;
-  if(tab==='appearance')return `<h2>个性化</h2><div class="row"><label for="pref-language">语言 · Language</label><select id="pref-language" data-pref="language" data-i18n-skip>${LANGUAGES.map(([k,n])=>`<option value="${k}">${escapeHtml(n)}</option>`).join('')}</select></div><div class="section-label">顶部栏与投稿</div>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,'')).join('')}<div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>${toggle('showChannels','显示网页分区导航栏','网页原有的动态、热门、番剧等分区；开启磨砂后同步适配')}${toggle('logoAutoHide','自动隐藏 Logo','只在首页显示')+toggle('blacklistButtons','显示拉黑按钮','首页卡片和视频页 UP 主旁边的「拉黑」')+toggle('cornerAutoHide','左下角按钮半透明','设置和投稿按钮平时半透明，鼠标移过去变清楚')}<div class="row"><label for="pref-feedColumns">首页每行最少视频数<span class="hint">窗口变宽时仍会自动增加</span></label><select id="pref-feedColumns" data-pref="feedColumns"><option value="0">自动适应窗口</option>${[2,3,4,5,6,7,8].map(n=>`<option value="${n}">至少 ${n} 个</option>`).join('')}</select></div><div class="row"><label for="pref-feedMargin">首页两边留白<span class="hint">推荐视频两边空出来的宽度</span></label><select id="pref-feedMargin" data-pref="feedMargin">${[['auto','默认'],['64','宽松'],['32','适中'],['16','紧凑'],['8','最窄']].map(([v,t])=>`<option value="${v}">${t}${v==='auto'?'':' · '+v+'px'}</option>`).join('')}</select></div>${toggle('trafficLights','使用红绿灯窗口按钮','')}${toggle('showClock','显示时间','Logo 左侧')}${toggle('videoLinkButton','视频页显示复制链接','顶栏 Logo 左侧，点击复制当前视频链接')}${toggle('videoLinkCompact','复制链接变小','只显示圆角链接图标，不显示网址')}<div class="row"><label for="pref-watchlaterOpen">稍后再看的视频<span class="hint">从稍后再看里打开视频时</span></label><select id="pref-watchlaterOpen" data-pref="watchlaterOpen"><option value="list">保留稍后再看列表</option><option value="video">跳转到普通视频页</option></select></div>${NATIVE_PLATFORM==='windows'?toggle('videoDock','视频坞','点开的视频放在视频坞里，可以边看边逛、在几个视频之间切换；关掉后视频直接在当前页面播放，视频坞、多视频切换和首页预加载都一起关掉'):''}${toggle('pipDanmaku','画中画弹幕','')}${range('pipDanmakuMinWidth','弹幕显示最小宽度',320,1200,'px')}<div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W</label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="row"><label for="pref-videoLoadingMode">加载动画结束时机</label><select id="pref-videoLoadingMode" data-pref="videoLoadingMode"><option value="page">页面就绪</option><option value="video">视频画面就绪</option></select></div>${toggle('clipboardAutoOpen','剪贴板视频提示','检测新复制的 BV 号或视频链接，确认后跳转')}${toggle('upNotify','UP 主更新通知','关注的 UP 主发新视频时，在屏幕右下角提醒')}${toggle('dynamicCards','关注动态卡片','动态页排成卡片网格，一屏看更多')}${toggle('experimentalFrost','测试版磨砂','按钮与主页卡片使用跟随主题和强调色的磨砂材质')}${toggle('experimentalBounce','弹性按钮','鼠标移到客户端按钮上时轻轻弹一下')}${toggle('experimentalFullscreenMotion','全屏动画（实验性）','进出全屏时视频从原位放大、缩回；仍可能闪烁')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色</label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','')}${range('settingsZoom','设置界面字号',80,160,'%')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">数值越小，界面越大</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div>${tabContent('progress')}`;
+  if(LOOK_TABS.includes(tab))return `<h2>${tabs[tab][0]}</h2><div class="row"><label for="pref-language">语言 · Language</label><select id="pref-language" data-pref="language" data-i18n-skip>${LANGUAGES.map(([k,n])=>`<option value="${k}">${escapeHtml(n)}</option>`).join('')}</select></div><div class="section-label">顶部栏与投稿</div>${HEADER_ITEMS.map(([key,label])=>toggle(key,label,'')).join('')}<div class="actions"><button id="header-reset" class="link">恢复顶部默认布局</button></div>${toggle('showChannels','显示网页分区导航栏','网页原有的动态、热门、番剧等分区；开启磨砂后同步适配')}${toggle('logoAutoHide','自动隐藏 Logo','只在首页显示')+toggle('blacklistButtons','显示拉黑按钮','首页卡片和视频页 UP 主旁边的「拉黑」')+toggle('cornerAutoHide','左下角按钮半透明','设置和投稿按钮平时半透明，鼠标移过去变清楚')}<div class="row"><label for="pref-feedColumns">首页每行最少视频数<span class="hint">窗口变宽时仍会自动增加</span></label><select id="pref-feedColumns" data-pref="feedColumns"><option value="0">自动适应窗口</option>${[2,3,4,5,6,7,8].map(n=>`<option value="${n}">至少 ${n} 个</option>`).join('')}</select></div><div class="row"><label for="pref-feedMargin">首页两边留白<span class="hint">推荐视频两边空出来的宽度</span></label><select id="pref-feedMargin" data-pref="feedMargin">${[['auto','默认'],['64','宽松'],['32','适中'],['16','紧凑'],['8','最窄']].map(([v,t])=>`<option value="${v}">${t}${v==='auto'?'':' · '+v+'px'}</option>`).join('')}</select></div>${toggle('trafficLights','使用红绿灯窗口按钮','')}${toggle('showClock','显示时间','Logo 左侧')}${toggle('videoLinkButton','视频页显示复制链接','顶栏 Logo 左侧，点击复制当前视频链接')}${toggle('videoLinkCompact','复制链接变小','只显示圆角链接图标，不显示网址')}<div class="row"><label for="pref-watchlaterOpen">稍后再看的视频<span class="hint">从稍后再看里打开视频时</span></label><select id="pref-watchlaterOpen" data-pref="watchlaterOpen"><option value="list">保留稍后再看列表</option><option value="video">跳转到普通视频页</option></select></div>${NATIVE_PLATFORM==='windows'?toggle('videoDock','视频坞','点开的视频放在视频坞里，可以边看边逛、在几个视频之间切换；关掉后视频直接在当前页面播放，视频坞、多视频切换和首页预加载都一起关掉'):''}${toggle('pipDanmaku','画中画弹幕','')}${range('pipDanmakuMinWidth','弹幕显示最小宽度',320,1200,'px')}<div class="row"><label for="pref-closeAction">关闭窗口 / Ctrl+W</label><select id="pref-closeAction" data-pref="closeAction"><option value="tray">隐藏到托盘</option><option value="exit">直接退出</option></select></div><div class="row"><label for="pref-videoLoadingMode">加载动画结束时机</label><select id="pref-videoLoadingMode" data-pref="videoLoadingMode"><option value="page">页面就绪</option><option value="video">视频画面就绪</option></select></div>${toggle('clipboardAutoOpen','剪贴板视频提示','检测新复制的 BV 号或视频链接，确认后跳转')}${toggle('upNotify','UP 主更新通知','关注的 UP 主发新视频时，在屏幕右下角提醒')}${toggle('dynamicCards','关注动态卡片','动态页排成卡片网格，一屏看更多')}${toggle('experimentalFrost','测试版磨砂','按钮与主页卡片使用跟随主题和强调色的磨砂材质')}${toggle('experimentalBounce','弹性按钮','鼠标移到客户端按钮上时轻轻弹一下')}${toggle('experimentalFullscreenMotion','全屏动画（实验性）','进出全屏时视频从原位放大、缩回；仍可能闪烁')}<div class="section-label">主题 / APPEARANCE</div><div class="themes">${[['light','浅色'],['dark','深色'],['system','跟随系统']].map(([id,title])=>`<button class="theme" data-theme-choice="${id}" aria-pressed="${PREFS.theme===id}"><div class="mini ${id==='system'?'auto':id}"><i></i><em></em></div><span>${title}</span></button>`).join('')}</div><div class="row"><label for="pref-accent">强调色</label><input id="pref-accent" data-pref="accent" type="color" value="${PREFS.accent}"></div>${toggle('font','抖音美好体','')}${range('settingsZoom','设置界面字号',80,160,'%')}${range('zoom','窗口缩放',75,200,'%')}${toggle('autoZoom','最大化 / 全屏时自动放大','')}<div class="row"><label for="pref-autoZoomTarget">全屏放大档位<span class="hint">数值越小，界面越大</span></label><select id="pref-autoZoomTarget" data-pref="autoZoomTarget"><option value="1100">超大 · 1100</option><option value="1280">舒适 · 1280</option><option value="1440">标准 · 1440</option><option value="1600">紧凑 · 1600</option></select></div>${tabContent('progress')}`;
   if(tab==='progress')return `<h2>进度条</h2><div class="preview" style="--height:${PREFS.progressHeight}px;--radius:${PREFS.progressRadius}px;--progress:${PREFS.progressColor}"><div class="track"><div class="buffer"></div><div class="played">${PREFS.progressThumb?'<i class="thumb"></i>':''}</div></div></div><div class="row"><label for="pref-progressColor">播放进度颜色</label><input id="pref-progressColor" data-pref="progressColor" type="color" value="${PREFS.progressColor}"></div>${range('progressHeight','进度条高度',1,12,'px')}${range('progressRadius','圆角',0,12,'px')}${toggle('progressThumb','显示拖动圆点','')}${toggle('progressAlways','始终显示播放控制条','')}`;
   if(tab==='clean')return `<h2>页面净化</h2>${toggle('hideAds','自动清理广告与运营推广','首页轮播、赛事/下载入口、视频下方横幅与右侧推广卡片。')}${toggle('homeBanner','显示首页顶部横幅','关掉后整块去掉，下面的内容直接顶上来')}<h3>首页卡片过滤</h3>${toggle('feedHideLive','隐藏直播','首页推荐里的直播卡片')}${toggle('feedHideBangumi','隐藏番剧和影视','番剧、国创、电影、纪录片等卡片')}${toggle('feedHideCourse','隐藏课程','付费课程卡片')}${toggle('feedHideManga','隐藏漫画','漫画卡片')}<div class="actions"><button class="link" id="rescan">重新检查当前页面</button><span class="status" id="ad-count"></span></div>`+
     `<div class="section-label">评论屏蔽</div>${toggle('commentBlock','屏蔽评论','名单里的用户发的评论，或者含有屏蔽词的评论（楼中楼回复也算）不显示')}`+
     `<div class="row block-list"><label for="block-users">屏蔽用户名<span class="hint">一行一个，昵称完全一样才屏蔽</span></label><textarea id="block-users" data-block-list="commentBlockUsers" rows="4" spellcheck="false" placeholder="一行一个用户名">${escapeHtml((PREFS.commentBlockUsers||[]).join('\n'))}</textarea></div>`+
     `<div class="row block-list"><label for="block-words">屏蔽词<span class="hint">一行一个，评论里出现就屏蔽</span></label><textarea id="block-words" data-block-list="commentBlockWords" rows="4" spellcheck="false" placeholder="一行一个词">${escapeHtml((PREFS.commentBlockWords||[]).join('\n'))}</textarea></div>`;
   if(tab==='play')return withoutVideoAi(`<h2>播放</h2>${toggle('soundBalance','声音平衡器','平衡不同视频的响度')}<p id="sound-balance-status" class="hint"></p><div class="row"><label for="pref-volumeBoost">音量增益<span class="hint">超过 100% 可能失真</span></label><input id="pref-volumeBoost" data-pref="volumeBoost" type="range" min="100" max="200" step="5" value="${PREFS.volumeBoost}"><output>${PREFS.volumeBoost}%</output></div>${toggle('homePreload','首页预加载','鼠标停在首页视频上时，在后台把这个视频提前打开好，点进去几乎马上播放；会多用一点流量')}${toggle('hdrVideo','HDR 画质','和网页版一样可以在播放器里选 HDR；如果 HDR 视频在你的显示器上发白，关掉它只看普通画质（4K 照常），重新打开视频后生效')}<div class="row"><label for="pref-holdSpeed">长按快进倍速<span class="hint">按住 → 键时的速度，B 站原本是 3 倍</span></label><select id="pref-holdSpeed" data-pref="holdSpeed">${[150,200,250,300,400].map(n=>`<option value="${n}">${n/100} 倍</option>`).join('')}</select></div><div class="note" role="note"><strong>⚠ 测试功能</strong><br>超分仍在测试，可能卡顿、闪烁或产生伪影。补帧已正式上线，也可以在播放器右下角清晰度左边一键开关。</div><div class="row"><label for="pref-srMode">超分辨率<span class="hint">WebGPU · 每个源帧只计算一次</span></label><select id="pref-srMode" data-pref="srMode"><option value="off">关闭</option><option value="performance">性能</option><option value="quality">质量</option></select></div><div class="row"><label for="pref-srModel">超分模型<span class="hint">自动：番剧、国创、动画区用动画模型，其余用通用模型</span></label><select id="pref-srModel" data-pref="srModel"><option value="auto">自动识别</option><option value="anime">动画（Anime4K）</option><option value="general">通用</option></select></div><div class="row"><label for="pref-srScale">目标倍率</label><select id="pref-srScale" data-pref="srScale"><option value="1">1× · 原生（不推理）</option><option value="2">2×</option><option value="3">3×</option></select></div><div class="row"><label for="pref-fiMode">补帧模式</label><select id="pref-fiMode" data-pref="fiMode"><option value="off">关闭</option><option value="rife">画面补帧（Lossless Scaling 式）</option></select></div><div class="row"><label for="pref-fiFps">补帧上限<span class="hint">不超过屏幕刷新率</span></label><select id="pref-fiFps" data-pref="fiFps"><option value="60">60 fps</option><option value="120">120 fps</option><option value="144">144 fps</option><option value="240">240 fps</option></select></div><p id="fi-status">${interpolator?.status||'补帧未开启'}</p><div class="row"><div class="label">当前处理状态<span class="hint" id="gpu-status"></span></div><button class="link" id="pip-action">进入画中画 ↗</button></div>`);
-  return `<div class="compact-tab"><h2>扩展</h2>${toggle('clickGui','悬浮设置面板','内置插件 · 设置变成可拖动的悬浮面板：左键开关，右键展开详情，右 Shift 也能打开')}<div class="row"><label for="pref-btr">Bilibili 线程撕裂者<span class="hint">多线路并发加速视频缓冲 · 始终开启</span></label><input id="pref-btr" type="checkbox" checked disabled aria-describedby="btr-locked"></div><div class="actions"><button id="btr-settings" class="link">线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div>${cdnRows()}<div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器</div>${toggle('downloader','视频页显示下载按钮','支持 AVC / AAC 单视频下载，暂不支持批量、多段与番剧')}<div class="section-label">插件</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本 主题"></div></div>`;
+  return `<div class="compact-tab"><h2>扩展</h2>${toggle('clickGui','悬浮设置面板','内置插件 · 设置变成可拖动的悬浮面板：左键开关，右键展开详情，右 Shift 也能打开')}<div class="row"><label for="pref-btr">Bilibili 线程撕裂者<span class="hint">多线路并发加速视频缓冲 · 始终开启</span></label><input id="pref-btr" type="checkbox" checked disabled aria-describedby="btr-locked"></div><div class="actions"><button id="btr-settings" class="link">线程撕裂者设置 ↗</button><button id="reload" class="link">刷新页面</button></div>${cdnRows()}<div class="row"><div class="label">一键拉黑 UP主<span class="hint">仅首页 · 同步至 B站黑名单</span></div><span class="status">首页限定</span></div><div class="section-label">内置下载器</div>${toggle('downloader','视频页显示下载按钮','支持 AVC / AAC 单视频下载，暂不支持批量、多段与番剧')}<div class="section-label">浏览器扩展</div><div class="note">直接导入 Chrome / Edge 扩展（.crx、.zip 或解压后的文件夹），在客户端的所有页面里运行，不会弹出浏览器窗口。扩展的选项页在客户端里打开。</div><div class="actions"><button class="link" data-ext-action="import-file">导入扩展文件…</button><button class="link" data-ext-action="import-folder">导入扩展文件夹…</button></div><div id="extensions-list" data-setting-keywords="浏览器扩展 扩展 插件 chrome edge crx 广告 去广告 脚本"></div><div class="section-label">插件</div><div id="plugins44-panel" data-setting-keywords="插件 plugin 扩展 本地脚本 主题"></div></div>`;
 }
 const settingsGroupsOpen=new Map();
-function organizeSettings(panel){
- if(currentTab!=='appearance')return;
- const definitions=[['外观',['theme','accent','font','settingsZoom','experimentalFrost','experimentalBounce','experimentalFullscreenMotion']],['顶部栏与首页',['header','feedColumns','showChannels','logoAutoHide','showClock','videoLinkButton','videoLinkCompact','watchlaterOpen']],['窗口与缩放',['trafficLights','closeAction','zoom','autoZoom','autoZoomTarget']],['播放与小窗',['officialVideoStyle','pipDanmaku','pipDanmakuMinWidth','videoLoadingMode']],['剪贴板',['clipboardAutoOpen']],['通知',['upNotify']],['动态',['dynamicCards']],['播放进度条',['progress']]];
- const buckets=definitions.map(()=>[]),heading=panel.querySelector('h2');
- for(const el of [...panel.children]){if(el===heading)continue;if(el.matches('h2,.section-label')){el.remove();continue;}const key=el.querySelector('[data-pref]')?.dataset.pref||(el.matches('.themes')?'theme':el.querySelector('#header-reset')?'headerReset':el.matches('.preview')?'progressPreview':'');const index=definitions.findIndex(([,keys])=>keys.some(k=>key===k||['header','progress'].includes(k)&&key.startsWith(k)));buckets[index<0?0:index].push(el);}
- buckets.forEach((nodes,i)=>{if(!nodes.length)return;const group=document.createElement('details'),summary=document.createElement('summary');group.className='settings-group';group.dataset.group=String(i);group.open=settingsGroupsOpen.get(i)??i===0;summary.textContent=definitions[i][0];const count=document.createElement('small');count.textContent=String(nodes.filter(n=>n.matches('.row,.themes')).length)+' 项';summary.append(count);group.append(summary,...nodes);group.ontoggle=()=>settingsGroupsOpen.set(i,group.open);panel.append(group);});
+const SETTING_GROUPS=[
+ ['外观','appearance',['theme','accent','font','settingsZoom','experimentalFrost','experimentalBounce','experimentalFullscreenMotion']],
+ ['播放进度条','appearance',['progress']],
+ ['顶部栏','home',['header','showChannels','logoAutoHide','showClock','videoLinkButton','videoLinkCompact']],
+ ['首页','home',['feedColumns','feedMargin','blacklistButtons','cornerAutoHide']],
+ ['动态','home',['dynamicCards']],
+ ['视频页与视频坞','window',['videoDock','officialVideoStyle','watchlaterOpen','videoLoadingMode']],
+ ['画中画','window',['pipDanmaku','pipDanmakuMinWidth']],
+ ['窗口与缩放','window',['trafficLights','closeAction','zoom','autoZoom','autoZoomTarget']],
+ ['语言','general',['language']],
+ ['剪贴板','general',['clipboardAutoOpen']],
+ ['通知','general',['upNotify']]];
+function organizeSettings(panel,tab=currentTab){
+ if(!LOOK_TABS.includes(tab))return;
+ const buckets=SETTING_GROUPS.map(()=>[]),heading=panel.querySelector('h2');
+ for(const el of [...panel.children]){if(el===heading)continue;if(el.matches('h2,.section-label')){el.remove();continue;}
+  const key=el.querySelector('[data-pref]')?.dataset.pref||(el.matches('.themes')?'theme':el.querySelector('#header-reset')?'headerReset':el.matches('.preview')?'progressPreview':'');
+  let index=SETTING_GROUPS.findIndex(([,,keys])=>keys.some(k=>key===k||['header','progress'].includes(k)&&key.startsWith(k)));if(index<0)index=0;
+  el.remove();if(SETTING_GROUPS[index][1]===tab)buckets[index].push(el);}
+ const mine=SETTING_GROUPS.map((g,i)=>i).filter(i=>SETTING_GROUPS[i][1]===tab&&buckets[i].length);
+ mine.forEach((i,n)=>{const nodes=buckets[i];const group=document.createElement('details'),summary=document.createElement('summary');group.className='settings-group';group.dataset.group=String(i);
+  group.open=settingsGroupsOpen.get(i)??(mine.length<=3||n===0);summary.textContent=SETTING_GROUPS[i][0];const count=document.createElement('small');count.textContent=String(nodes.filter(n=>n.matches('.row,.themes')).length)+' 项';summary.append(count);group.append(summary,...nodes);group.ontoggle=()=>settingsGroupsOpen.set(i,group.open);panel.append(group);});
 }
 function renderSettings(){
   if(!shadow)return;
@@ -2929,6 +2974,7 @@ function renderSettings(){
   if(currentTab==='downloads')window.BiliDesktop44?.renderDownloads($('#downloads44-panel',panel));
   if(currentTab==='blocklist')window.BiliDesktop44?.renderBlacklist($('#blacklist44-panel',panel));
   if(currentTab==='community')window.BiliCommunity44?.render($('#community44-panel',panel));
+  if(currentTab==='plugins'){renderExtensions();native('extensions',{action:'list'});}
   if(currentTab==='plugins')window.BiliSpacePlugins?.renderPanel($('#plugins44-panel',panel),{update,prefs:PREFS,toast});
   $$('.tabs button',shadow).forEach(b=>{b.setAttribute('aria-selected',String(b.dataset.tab===currentTab));b.tabIndex=b.dataset.tab===currentTab?0:-1;});
   $$('select[data-pref]',panel).forEach(s=>s.value=String(PREFS[s.dataset.pref]));
@@ -2941,13 +2987,13 @@ function searchSettingEntries(){
   if(settingsIndex)return settingsIndex;
   const selected=currentTab,entries=[];
   try{for(const [tab,[category]] of Object.entries(tabs)){
-    currentTab=tab;const template=document.createElement('template');template.innerHTML=tabContent();
+    currentTab=tab;const template=document.createElement('template');template.innerHTML=tabContent();if(LOOK_TABS.includes(tab)){const box=document.createElement('div');box.append(template.content);organizeSettings(box,tab);template.content.append(...box.childNodes);}
     for(const marker of $$('[data-setting-keywords]',template.content))entries.push({tab,category,label:category,target:marker.id,text:(category+' '+marker.dataset.settingKeywords).normalize('NFKC').toLocaleLowerCase()});
     for(const item of $$('.row,.theme,.chip,.actions button,.chip-actions button',template.content)){
       const labelNode=($('label,.label,.theme span,.chip span',item)||item).cloneNode(true);$$('.hint',labelNode).forEach(node=>node.remove());
       const label=labelNode.textContent.trim().replace(/\s+/g,' ');
       if(!label)continue;const control=$('input,select,button',item)||item;
-      entries.push({tab,category,label,target:control.id||'',text:(category+' '+item.textContent).normalize('NFKC').toLocaleLowerCase()});
+      entries.push({tab,category,label,target:control.id||'',labelText:label,text:(category+' '+item.textContent).normalize('NFKC').toLocaleLowerCase()});
     }
   }}finally{currentTab=selected;}
   settingsIndex=entries;return entries;
@@ -2979,10 +3025,30 @@ function renderSettingsSearch(){
   const matches=ranked.map(r=>r.item),loose=ranked.length&&ranked.every(r=>r.score<words.length*2);
   status.textContent=matches.length?(loose?'找到 '+matches.length+' 项相近设置':'找到 '+matches.length+' 项设置'):'没有找到匹配设置';
   for(const item of matches){
-    const button=document.createElement('button');button.type='button';button.className='settings-match';button.dataset.settingTab=item.tab;button.dataset.settingTarget=item.target;
+    const button=document.createElement('button');button.type='button';button.className='settings-match';button.dataset.settingTab=item.tab;button.dataset.settingTarget=item.target;button.dataset.settingLabel=item.labelText||item.label;
     const title=document.createElement('span'),category=document.createElement('small');title.textContent=item.label;category.textContent=item.category;button.append(title,category);list.append(button);
   }
 }
+// 搜索结果：直接滚到那一项并闪一下，而不是只切到所在的分页
+let extensionState={items:[],supported:true};
+function renderExtensions(){const box=shadow&&$('#extensions-list',shadow);if(!box)return;box.replaceChildren();
+  if(!extensionState.supported){const n=document.createElement('div');n.className='note';n.textContent='当前 WebView2 运行库不支持浏览器扩展，更新 Microsoft Edge WebView2 后再试。';box.append(n);return;}
+  if(!extensionState.items.length){const n=document.createElement('div');n.className='note';n.textContent='还没有导入扩展';box.append(n);return;}
+  for(const e of extensionState.items){const row=document.createElement('div');row.className='row';const label=document.createElement('div');label.className='label';label.textContent=e.name||e.id;
+    const hint=document.createElement('span');hint.className='hint';hint.textContent=e.enabled?'已启用':'已停用';label.append(hint);
+    const acts=document.createElement('span');acts.className='chip-actions';
+    for(const [act,text] of [['toggle',e.enabled?'停用':'启用'],['options','选项'],['remove','移除']]){const b=document.createElement('button');b.type='button';b.className='link';b.textContent=text;b.dataset.extAction=act;b.dataset.extId=e.id;b.dataset.extEnabled=String(!!e.enabled);acts.append(b);}
+    row.append(label,acts);box.append(row);}}
+function acceptExtensions(state){if(!state||typeof state!=='object')return;extensionState={items:Array.isArray(state.items)?state.items.filter(e=>!/^Microsoft (Clipboard Extension|Edge PDF Viewer)/.test(e?.name||'')).slice(0,64):[],supported:state.supported!==false};
+  if(CHROME_VIEW){renderExtensions();if(state.event==='added')toast('已导入扩展：'+String(state.message||'').slice(0,60));else if(state.event==='removed')toast('扩展已移除');else if(state.event==='error')toast(String(state.message||'扩展操作失败').slice(0,120));}}
+function revealSetting(id,label){const panel=$('#tab-content',shadow);if(!panel)return;
+  let control=id?shadow.getElementById(id):null;
+  if(!control&&label)control=[...panel.querySelectorAll('label,.label,.theme span,button,summary')].find(n=>n.textContent.replace(/\s+/g,' ').trim().startsWith(label))||null;
+  if(!control)return;for(let p=control.parentElement;p&&p!==shadow.host;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;
+  const row=control.closest('.row,.themes,.theme,.chip,.actions,.preview')||control;
+  requestAnimationFrame(()=>{row.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    row.classList.remove('search-hit');void row.offsetWidth;row.classList.add('search-hit');setTimeout(()=>row.classList.remove('search-hit'),2200);
+    if(control.matches('input,select,button'))control.focus({preventScroll:true});});}
 function clearSettingsSearch(){const query=$('#settings-query',shadow);query.value='';renderSettingsSearch();}
 function closeSettings(){
   if(!shadow)return;$('#settings',shadow).hidden=true;lastFocus?.focus();
@@ -3024,6 +3090,9 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
 .history-controls:not([hidden])+.back{margin-left:-10px}.history-controls{gap:0}:host([data-frost=true]) #chrome{background:var(--bg)!important;box-shadow:0 5px 16px #00000010!important}:host([data-frost=true]) #chrome::before{display:none!important}:host([data-frost=true]) :is(#settings-trigger,.upload){border-color:transparent!important;background:var(--frost-tint)!important;background-image:linear-gradient(140deg,#ffffff10,transparent 70%)!important;box-shadow:var(--frost-shadow)!important;backdrop-filter:var(--frost-filter)!important;-webkit-backdrop-filter:var(--frost-filter)!important}/* Experimental: every client control bounces once on hover. *//* A damped spring (damping 0.35): about two visible swings, sampled into linear() so it stays smooth and interruptible. */:host([data-bounce=true]) :is(button,a,.search,.account){transition:scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) :is(button,a,.search,.account):not(:disabled):hover{scale:1.16}
 /* Rows in dropdowns and menus bounce too, but only by 3%: a full-width row then stays inside its panel's padding instead of being clipped. Neighbouring rows stay still. */:host([data-bounce=true]) :is(#search-panel,#messages-menu,#favorites-panel,#account-card,.account-manager) :is(button,a,.search-choice):not(:disabled){scale:none!important}:host([data-bounce=true]) :is(#search-panel,#messages-menu,#favorites-panel,#account-card,.account-manager) :is(button,a,.search-choice):not(:disabled):hover{scale:1.03!important}:host([data-bounce=true]) #settings :is(button,a):not(:disabled){scale:none!important}:host([data-bounce=true]) :is(#search-panel,#messages-menu,#favorites-panel,#account-card,.account-manager) :is(button,a,.search-choice){transition:background 140ms cubic-bezier(.2,.8,.2,1),color 140ms cubic-bezier(.2,.8,.2,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)!important}/* A history word and its × are one chip: the chip bounces as a whole; the word and the × inside it stay still. */:host([data-bounce=true]) #search-panel .search-history-chip :is(.search-choice,.search-remove):not(:disabled):hover{scale:none!important}:host([data-bounce=true]) #search-panel .search-history-chip :is(.search-choice,.search-remove){scale:none!important}:host([data-bounce=true]) #search-panel .search-history-chip{transition:scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) #search-panel .search-history-chip:hover{scale:1.06}@media (prefers-reduced-motion:reduce){:host([data-bounce=true]) #search-panel .search-history-chip{transition:none}:host([data-bounce=true]) #search-panel .search-history-chip:hover{scale:none}}/* Nav items bounce their label and refresh glyph, not the link box, so the current-page underline stays put. */:host([data-bounce=true]) .primary-nav a[data-route]{scale:none!important}:host([data-bounce=true]) .primary-nav a[data-route] .route-text{transition:opacity 160ms cubic-bezier(.2,.8,.2,1),transform 260ms cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) .primary-nav a[data-route] .route-refresh{transition:opacity 160ms cubic-bezier(.2,.8,.2,1),transform 360ms cubic-bezier(.32,.72,0,1),scale 650ms linear(0,0.053,0.192,0.383,0.597,0.807,0.992,1.139,1.24,1.295,1.309,1.288,1.242,1.181,1.115,1.051,0.995,0.952,0.922,0.907,0.905,0.913,0.928,0.947,0.967,0.987,1.004,1.017,1.025,1.029,1.029,1.026,1.022,1.015,1.009,1.003,0.998,0.994,0.992,0.991,1)}:host([data-bounce=true]) .primary-nav a[data-route]:hover :is(.route-text,.route-refresh){scale:1.16}:host([data-bounce=true]) .primary-nav a[data-route]:has(+ a[data-route]:hover) .route-text,:host([data-bounce=true]) .primary-nav a[data-route]:hover+a[data-route] .route-text{scale:1.03}
 /* The search field is several times wider than a button, so the same scale would look enormous on it. */:host([data-bounce=true]) .search:not(:disabled):hover{scale:1.03}:host([data-bounce=true]) :is(button,a):not(:hover):has(+ :is(button,a):hover),:host([data-bounce=true]) :is(button,a):hover+:is(button,a):not(:hover){scale:1.03}:host([data-bounce=true]) :is(.messages-item,.favorites-video,.favorites-folder,.search-choice):hover{animation:none}@media(prefers-reduced-motion:reduce){:host([data-bounce=true]) *{animation:none!important}}
+@keyframes bs-search-hit{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent,#fb7299) 0%,transparent);background:transparent}18%{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#fb7299) 70%,transparent);background:color-mix(in srgb,var(--accent,#fb7299) 16%,transparent)}100%{box-shadow:0 0 0 0 transparent;background:transparent}}
+.search-hit{border-radius:12px;animation:bs-search-hit 2s cubic-bezier(.32,.72,0,1)}
+@media (prefers-reduced-motion: reduce){.search-hit{animation:none;background:color-mix(in srgb,var(--accent,#fb7299) 14%,transparent)}}
 .settings-group{margin:0 0 14px;padding:0 18px;border:0;border-radius:14px;background:color-mix(in srgb,var(--panel) 82%,var(--bg));box-shadow:0 1px 2px #0000000c,0 6px 20px #00000014;interpolate-size:allow-keywords}.settings-group>summary{padding:15px 0;gap:10px;font-size:15px;letter-spacing:-.1px}.settings-group>summary small{padding:2px 8px;border-radius:999px;background:var(--field);font-variant-numeric:tabular-nums}.settings-group>summary::after{content:'';width:8px;height:8px;border:solid var(--muted);border-width:0 1.8px 1.8px 0;transform:translateY(-2px) rotate(45deg);transition:transform 240ms cubic-bezier(.32,.72,0,1)}.settings-group[open]>summary::after{transform:translateY(2px) rotate(-135deg)}.settings-group>summary:hover{color:var(--accent)}.settings-group::details-content{block-size:0;overflow:hidden;transition:block-size 320ms cubic-bezier(.32,.72,0,1),content-visibility 320ms allow-discrete}.settings-group[open]::details-content{block-size:auto}.settings-group .row+.row{border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent)}.settings-group .row{border-bottom:0!important}.settings-match{border-radius:10px;transition:background 140ms cubic-bezier(.2,.8,.2,1)}@media(prefers-reduced-motion:reduce){.settings-group::details-content,.settings-group>summary::after{transition:none}}
 #page-pending{animation:bs-pending-in 220ms ease-out 800ms both}#page-pending .page-placeholder{display:none}@keyframes bs-pending-in{from{opacity:0}}
 #home-bubble{position:fixed;left:50%;top:calc(var(--bs-header-height,58px) + 14px);transform:translate(-50%,0);z-index:30;padding:11px 18px;border-radius:18px;background:#fff;color:#1d1d22;font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;box-shadow:0 2px 6px #00000014,0 12px 32px #0000002b;pointer-events:none}#home-bubble::before{content:'';position:absolute;left:50%;top:-6px;width:14px;height:14px;margin-left:-7px;border-radius:3px;background:#fff;transform:rotate(45deg)}#home-bubble[hidden]{display:none}
@@ -3042,7 +3111,8 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
     if(['check','download','ignore','install','log'].includes(b?.dataset.update)){native('updates',{action:b.dataset.update});return;}
     if(b?.classList.contains('video-link')){copyCurrentVideoLink(e.shiftKey);return;}
     if(b?.dataset.egg==='category'){categoryEggForced=true;renderSettingsSearch();toast('彩蛋已开启：去展开再收起分区试试');return;}
-    if(b?.dataset.settingTab){currentTab=b.dataset.settingTab;const id=b.dataset.settingTarget;clearSettingsSearch();renderSettings();const control=id?shadow.getElementById(id):$('#tab-content',shadow);if(control){for(let p=control.parentElement;p&&p!==shadow.host;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;}control?.focus();if(control&&typeof control.scrollIntoView==='function')control.scrollIntoView({block:'nearest'});return;}
+    if(b?.dataset.settingTab){currentTab=b.dataset.settingTab;const id=b.dataset.settingTarget,label=b.dataset.settingLabel||'';clearSettingsSearch();renderSettings();revealSetting(id,label);return;}
+    if(b?.dataset.extAction){native('extensions',{action:b.dataset.extAction,id:b.dataset.extId||'',enabled:b.dataset.extEnabled!=='true'});return;}
     if(b?.dataset.window){native('window',{action:b.dataset.window});return;}
     if(b?.classList.contains('back')){setCategories(b.getAttribute('aria-expanded')!=='true',e.detail===0);return;}
     if(b?.id==='settings-trigger')openSettings();
@@ -3100,6 +3170,7 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
     if(key==='proxyAll')toast('重启后生效');
   });
   accountsController=window.installBiliAccounts?.({shadow,native,refreshAccount,hideAccountCard,toast});
+  if(CHROME_VIEW&&!/jsdom/i.test(navigator.userAgent))setTimeout(()=>maybeAskUpdateChannel(),4000);
   installSearchPanel();favoritesController=window.installBiliFavorites?.({shadow,native,closeSearch:closeSearchPanel});installMessagesMenu();installSearchQuips();installSearchGrip();installWatchlaterSpin();installAvatarSpin();installFeedRoll();installRouteRefresh();installVideoLinkDrag();installChromeView();
   $('.search',shadow).addEventListener('submit',e=>{e.preventDefault();submitSearch();});
   $('#chrome',shadow).addEventListener('mousedown',e=>{if(e.button===0&&!e.target.closest('button,a,input,form'))native('window',{action:'drag',screenX:e.screenX,screenY:e.screenY});});
@@ -3616,10 +3687,11 @@ function applyUiScale(){const html=document.documentElement;if(!html)return;cons
 let uiScaleFrame;window.addEventListener('resize',()=>{clearTimeout(uiScaleFrame);uiScaleFrame=setTimeout(applyUiScale,150);});
 /* Video pages tell the native host their title and cover so the video dock can label them. */
 let tabInfoSent='',tabInfoTimer;
-function reportTabInfo(){clearTimeout(tabInfoTimer);tabInfoTimer=setTimeout(()=>{if(typeof RUNTIME==='undefined'||pageKind()!=='video')return;
+function reportTabInfo(){clearTimeout(tabInfoTimer);tabInfoTimer=setTimeout(()=>{const liveRoom=location.hostname==='live.bilibili.com'&&/^\/(?:blanc\/|h5\/)?\d+/.test(location.pathname);if(typeof RUNTIME==='undefined'||(pageKind()!=='video'&&!liveRoom))return;
   const heading=document.querySelector('h1.video-title,.video-title,.media-title,h1')?.textContent?.trim();
   const title=(heading||document.title.replace(/_哔哩哔哩_bilibili$|_bilibili$/,'')).trim().slice(0,200);
-  const meta=document.querySelector('meta[itemprop=image],meta[property="og:image"],meta[itemprop=thumbnailUrl]')?.content||'';const cover=/^(https?:)?\/\/[a-z0-9.-]+\.hdslb\.com\//i.test(meta)?meta:'';
+  const liveCover=liveRoom?(window.__NEPTUNE_IS_MY_WAIFU__?.roomInfoRes?.data?.room_info?.cover||document.querySelector('.room-cover img,.live-room-cover img')?.src||''):'';
+  const meta=liveCover||document.querySelector('meta[itemprop=image],meta[property="og:image"],meta[itemprop=thumbnailUrl]')?.content||'';const cover=/^(https?:)?\/\/[a-z0-9.-]+\.hdslb\.com\//i.test(meta)?meta:'';
   const key=title+'|'+cover;if(!title||key===tabInfoSent)return;tabInfoSent=key;native('tab-info',{title,cover});},400);}
 function homeBubble(text='你已经在主页啦！'){
   if(!shadow)return;let bubble=$('#home-bubble',shadow);if(!bubble){bubble=document.createElement('div');bubble.id='home-bubble';bubble.setAttribute('role','status');shadow.append(bubble);}
@@ -3633,8 +3705,37 @@ function ctrlHome(){if(pageKind()==='home')homeBubble();else location.href='http
 let chromePending=null,chromeDirection=null,chromeHoldControls=false,chromeAssume={};
 // Back/forward started outside the header (mouse side buttons, Alt+arrows) announce their direction the same way a header click does.
 function chromeStep(d){if(!CHROME_VIEW||(d!=='back'&&d!=='forward'))return;chromeDirection=d;setTimeout(()=>{if(chromeDirection===d)chromeDirection=null;},1500);}
+// 视频坞小技巧：第一次把视频放进视频坞时提示一次（新用户和更新上来的老用户都会看到）
+// 更新通道：这一版装好后先让用户选一次（新安装的也一样），之后在 设置 → 关于与更新 改
+function maybeAskUpdateChannel(tries=0){if(!CHROME_VIEW||!shadow||PREFS.updateChannel||$('#channel-pick',shadow)||/jsdom/i.test(navigator.userAgent))return;
+  const busy=['#onboarding','#whats-new','#language-pick','#share-card','#news-card','#update-notice','#feedback'].some(q=>$(q,shadow))||!$('#settings',shadow)?.hidden;
+  if(busy){if(tries<240)setTimeout(()=>maybeAskUpdateChannel(tries+1),1500);return;}
+  const wrap=document.createElement('div');wrap.id='channel-pick';wrap.className='scrim';
+  wrap.innerHTML=`<style>#channel-pick{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:#0008;animation:bs-ch-fade .3s ease both}
+#channel-pick .card{width:min(560px,92vw);padding:30px 30px 24px;border-radius:22px;background:var(--panel,#1e1e21);color:var(--ink,#eeeef0);box-shadow:0 0 0 1px #ffffff12,0 30px 80px #000a;animation:bs-ch-in .42s cubic-bezier(.32,.72,0,1) both}
+#channel-pick h2{margin:0 0 6px;font-size:22px}#channel-pick p{margin:0 0 20px;color:var(--muted,#9a9aa2);font-size:14px;line-height:1.6}
+#channel-pick .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px}#channel-pick button.opt{text-align:left;padding:18px;border-radius:16px;border:1px solid #ffffff14;background:#ffffff08;color:inherit;font:inherit;cursor:pointer;transition:transform .2s cubic-bezier(.32,.72,0,1),border-color .2s}
+#channel-pick button.opt:hover,#channel-pick button.opt:focus-visible{transform:translateY(-2px);border-color:var(--accent,#fb7299);outline:none}#channel-pick b{display:block;font-size:17px;margin-bottom:6px}#channel-pick small{color:var(--muted,#9a9aa2);font-size:13px;line-height:1.55;display:block}
+#channel-pick .tag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--accent,#fb7299);color:#fff;font-size:11px;vertical-align:2px}
+@keyframes bs-ch-fade{from{opacity:0}}@keyframes bs-ch-in{from{opacity:0;transform:translateY(16px) scale(.97)}}@media (prefers-reduced-motion: reduce){#channel-pick,#channel-pick .card{animation:none}}</style>
+<div class="card" role="dialog" aria-modal="true" aria-labelledby="channel-title"><h2 id="channel-title">选择更新通道</h2><p>以后可以在 设置 → 关于与更新 里随时改。</p><div class="opts">
+<button class="opt" data-channel="stable"><b>稳定版<span class="tag">推荐</span></b><small>只更新大版本，小修小补攒到下一次大更新一起来，打扰最少。</small></button>
+<button class="opt" data-channel="latest"><b>最新版</b><small>GitHub 上发布的每一个版本都会更新，新功能和修复第一时间拿到。</small></button></div></div>`;
+  shadow.append(wrap);reportChromeLayout();wrap.querySelector('[data-channel=stable]').focus();
+  wrap.addEventListener('click',e=>{const b=e.target.closest('[data-channel]');if(!b)return;update({updateChannel:b.dataset.channel});toast(b.dataset.channel==='stable'?'已选择稳定版：只更新大版本':'已选择最新版：每个版本都更新');wrap.remove();reportChromeLayout();});}
+function showDockTip(){if(!CHROME_VIEW||!shadow||PREFS.dockTipSeen||$('#dock-tip',shadow))return;
+  const tip=document.createElement('div');tip.id='dock-tip';tip.setAttribute('role','status');
+  tip.innerHTML=`<style>#dock-tip{position:fixed;right:18px;top:78px;z-index:30;width:300px;padding:18px 18px 14px;border-radius:16px;background:var(--panel,#1e1e21);color:var(--ink,#eeeef0);box-shadow:0 0 0 1px #ffffff14,0 18px 40px #0007;font-size:13px;line-height:1.55;animation:bs-dock-tip-in .45s cubic-bezier(.32,.72,0,1) both}
+#dock-tip.out{animation:bs-dock-tip-out .25s cubic-bezier(.32,.72,0,1) both}#dock-tip b{display:block;font-size:15px;margin-bottom:6px}#dock-tip kbd{display:inline-block;padding:1px 7px;margin:0 2px;border-radius:6px;background:#ffffff14;box-shadow:inset 0 -1px 0 #ffffff1f;font:600 12px inherit}
+#dock-tip .row{display:flex;align-items:center;gap:8px;margin:4px 0}#dock-tip button{margin-top:10px;float:right;border:0;border-radius:999px;padding:6px 16px;background:var(--accent,#fb7299);color:#fff;font:600 13px inherit;cursor:pointer}
+@keyframes bs-dock-tip-in{from{opacity:0;transform:translateX(24px) scale(.96)}to{opacity:1;transform:none}}@keyframes bs-dock-tip-out{to{opacity:0;transform:translateX(16px) scale(.98)}}
+@media (prefers-reduced-motion: reduce){#dock-tip,#dock-tip.out{animation:none}}</style><b>视频坞小技巧</b>
+<div class="row">按住 <kbd>Alt</kbd> 指向视频坞里的视频，再按 <kbd>左键</kbd> 直接关掉</div><div class="row">或者用 <kbd>鼠标中键</kbd> 点一下</div><div class="row">直播间现在也会放进视频坞，可以同时开好几个</div><button type="button">知道了</button>`;
+  shadow.append(tip);update({dockTipSeen:true});reportChromeLayout();
+  const close=()=>{if(!tip.isConnected)return;tip.classList.add('out');setTimeout(()=>{tip.remove();reportChromeLayout();},260);};
+  tip.querySelector('button').addEventListener('click',close);setTimeout(close,12000);}
 function chromeActive(state){
-  if(!CHROME_VIEW||!state?.url)return;let next;try{next=new URL(state.url);}catch{return;}
+  if(!CHROME_VIEW||!state?.url)return;if(state.video&&!PREFS.dockTipSeen&&NATIVE_PLATFORM==='windows')setTimeout(showDockTip,1400);let next;try{next=new URL(state.url);}catch{return;}
   // While a navigation is under way the page still reports its old address (history updates, state reads); those
   // reports must not pull the header back. The destination's own report, or 8s without one, ends the wait.
   const kind=pageKind(next);
@@ -3694,19 +3795,31 @@ function watchWebFullscreen(){if(!CONTENT_VIEW)return;let was=false;const check=
   // The tab that comes to the front tells the header its own state.
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){was=null;check();}});}
 function setWebFullscreen(on){if(!CHROME_VIEW||!shadow)return;webFullscreen=!!on;shadow.host.toggleAttribute('data-web-full',webFullscreen);reportChromeLayout();}
+const CAPTCHA_SELECTOR='[class*="geetest"],[id*="geetest"],[class*="captcha"],[id*="captcha"],iframe[src*="geetest"],iframe[src*="captcha"]';
+function foreignCaptchaVisible(el){const hits=el.matches(CAPTCHA_SELECTOR)?[el,...el.querySelectorAll(CAPTCHA_SELECTOR)]:[...el.querySelectorAll(CAPTCHA_SELECTOR)];
+  // the login form's own captcha *input* is not a challenge window
+  for(const h of hits){if(h.matches('input,label,[class*="captcha-input"],[class*="captcha-input"] *')||(!/geetest/i.test(h.className+h.id+(h.src||''))&&h.closest('#bili-space-login-mount')))continue;const r=h.getBoundingClientRect();if(r.width<60||r.height<60)continue;
+    const look=getComputedStyle(h);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)continue;return true}return false}
 function reportChromeLayout(){
   if(!CHROME_VIEW||!shadow)return;cancelAnimationFrame(chromeLayoutFrame);chromeLayoutFrame=requestAnimationFrame(()=>{
     const rects=[],scale=devicePixelRatio||1;
     const add=el=>{if(!el||el.hidden||!el.isConnected)return;const look=getComputedStyle(el);if(look.display==='none'||look.visibility==='hidden'||Number(look.opacity)===0)return;const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)rects.push([Math.floor(r.left*scale),Math.floor(r.top*scale),Math.ceil(r.right*scale),Math.ceil(r.bottom*scale)]);};
-    if(!swipeTucked&&!immersive)add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories',...(webFullscreen||immersive?[]:['#settings-trigger','.upload','#feed-roll','#page-top']),'#toast','#clipboard-video-prompt','.account-manager'])add($(q,shadow));for(const p of $$('.bs-plugin-panel',shadow))add(p);
+    // fixed/absolute descendants that stick out of their container (popups of the login panel and the like)
+    const addOverflow=root=>{const box=root.getBoundingClientRect();let n=0;for(const d of root.querySelectorAll('*')){if(++n>400)break;const pos=getComputedStyle(d).position;if(pos!=='fixed'&&pos!=='absolute')continue;
+      const r=d.getBoundingClientRect();if(r.width<4||r.height<4)continue;if(r.left<box.left-1||r.top<box.top-1||r.right>box.right+1||r.bottom>box.bottom+1)add(d);}};
+    if(!swipeTucked&&!immersive)add($('#chrome',shadow));for(const q of ['#search-panel','#favorites-panel','#account-card','#messages-menu','#header-categories',...(webFullscreen||immersive?[]:['#settings-trigger','.upload','#feed-roll','#page-top']),'#toast','#clipboard-video-prompt','.account-manager','#dock-tip'])add($(q,shadow));for(const p of $$('.bs-plugin-panel',shadow))add(p);
     // Windows that other scripts open in this document (the login panel, the thread ripper's settings dialog) sit
     // outside the shadow root; without their rectangles the clicks would land on the page underneath.
     let foreignModal=false;
     for(const el of document.querySelectorAll('html>*:not(head):not(body),body>*')){if(el.id==='bili-space-root'||el.matches('style,script,link,meta,template,dialog:not([open])'))continue;
       // 验证码之类直接挂在 body 下的 iframe：看得见才算
       if(el.matches('iframe')){const r=el.getBoundingClientRect();if(r.width<40||r.height<40)continue;}
-      if(el.matches('dialog[open]')&&el.matches(':modal')){foreignModal=true;continue;}if(getComputedStyle(el).pointerEvents!=='none')add(el);}
-    const modal=foreignModal||!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow)||!!$('#plugin-dialog',shadow)||!!$('#onboarding',shadow)||!!$('#feedback',shadow)||!!$('#whats-new',shadow)||!!$('#share-card',shadow)||!!$('#news-card',shadow)||!!$('#language-pick',shadow)||!!$('#clickgui',shadow);
+      if(el.matches('dialog[open]')){let isModal=true;try{isModal=el.matches(':modal');}catch{}if(isModal){foreignModal=true;continue;}}
+      // 人机验证（极验等）：外层容器常常是 0 尺寸，真正的面板和遮罩是 fixed 的子元素，只报外层会让点击漏到网页上、
+      // 把手机号登录框当成"点了外面"关掉。看得见的验证码就整窗接管点击，直到它消失。
+      try{if(foreignCaptchaVisible(el)){foreignModal=true;continue;}
+      if(getComputedStyle(el).pointerEvents!=='none'){add(el);addOverflow(el);}}catch{}}
+    const modal=foreignModal||!!$('#settings:not([hidden])',shadow)||!!$('.scrim:not([hidden])',shadow)||!!$('#update-notice',shadow)||!!$('#plugin-dialog',shadow)||!!$('#onboarding',shadow)||!!$('#feedback',shadow)||!!$('#whats-new',shadow)||!!$('#share-card',shadow)||!!$('#news-card',shadow)||!!$('#language-pick',shadow)||!!$('#clickgui',shadow)||!!$('#channel-pick',shadow);
     const key=JSON.stringify([rects,modal]);if(key===chromeLayoutKey)return;chromeLayoutKey=key;native('chrome-layout',{rects,modal});
   });
 }
@@ -3782,7 +3895,7 @@ function boot(){
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={fullReadyAt,tourBackdrop,offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
+  window.BiliSpace={acceptExtensions,fullReadyAt,tourBackdrop,offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};

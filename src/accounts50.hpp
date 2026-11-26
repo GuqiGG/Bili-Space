@@ -19,6 +19,30 @@ void restoreAddition(const json& current){
  json original=json::array();if(!addingId.empty()){for(const auto& e:entries)if(e.value("mid",std::string{})==addingId)original=unprotect(e.at("protected").get<std::string>());if(mid(original)!=addingId)throw std::runtime_error("原账号资料不可用，请重新登录");}
  clear(current);replay(original);active=addingId;adding=false;addingId.clear();save();
 }
+// Keep the saved copy of the active account current: Bilibili rotates SESSDATA now and then and the old value stops
+// working, so a copy taken only at sign-in is useless for the startup restore below. Refreshed every few minutes and
+// before the app or Windows shuts down. Only the account that is signed in right now is touched.
+void snapshot(){
+ load();if(active.empty()||adding||busy)return;
+ readJar([](json jar){try{
+  if(mid(jar)!=active)return;bool authenticated=false;for(const auto& c:jar)if(c.value("name",std::string{})=="SESSDATA"&&!c.value("value",std::string{}).empty())authenticated=true;
+  if(!authenticated)return;for(auto& e:entries)if(e.value("mid",std::string{})==active){auto fresh=protect(jar);if(e.value("protected",std::string{})!=fresh){e["protected"]=fresh;save();}return;}
+ }catch(...){}});
+}
+// Startup safety net: some machines come back from a shutdown/restart with an empty cookie store (the browser
+// process was killed before it wrote its cookies). If the remembered active account is still here, put its saved
+// cookies back so the user does not have to sign in after every boot. A deliberate logout clears `active`.
+void restoreIfSignedOut(){
+ load();if(active.empty()||adding)return;
+ readJar([](json jar){try{
+  bool authenticated=false;for(const auto& c:jar)if(c.value("name",std::string{})=="SESSDATA"&&!c.value("value",std::string{}).empty())authenticated=true;
+  if(authenticated)return;
+  for(const auto& e:entries)if(e.value("mid",std::string{})==active){auto saved=unprotect(e.at("protected").get<std::string>());if(mid(saved)!=active)return;
+   replay(saved);log("accounts: restored signed-out session for the active account");
+   if(webview){LPWSTR raw{};webview->get_Source(&raw);std::wstring src=raw?raw:L"";CoTaskMemFree(raw);if(src.find(L"bilibili.com")!=std::wstring::npos)webview->Reload();}
+   return;}
+ }catch(const std::exception& e){log(std::string("accounts: restore skipped: ")+e.what());}});
+}
 void action(const json& message){
  load();auto a=message.value("action",std::string{});
  if(a=="list"){if(!addingId.empty()&&!adding){action({{"action","cancel-add"}});return;}state();return;}
