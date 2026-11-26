@@ -11,7 +11,7 @@ test('requested message SVG and square maximize glyph appear in the centered-tit
 });
 test('header settings individually hide all nine optional items without hiding window controls',()=>{
  const a=app(),s=a.w.document.querySelector('#bili-space-root').shadowRoot;
- s.querySelector('[data-tab=appearance]').click();
+ s.querySelector('[data-tab=home]').click();
  const keys=['headerHome','headerSwipe','headerDynamic','headerHistory','headerBrand','headerSearch','headerMessages','headerAccount','headerBack'];
  for(const key of keys)assert(s.querySelector(`[data-pref=${key}]`));
  a.w.BiliSpace.update(Object.fromEntries(keys.map(key=>[key,false])));

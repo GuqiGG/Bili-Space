@@ -4,7 +4,9 @@ test('back invokes native history and personalization combines header and progre
  const a=app();try{const s=a.w.document.querySelector('#bili-space-root').shadowRoot;
  a.w.__bsAcceptNavigationState({back:true,forward:false,visible:0});s.querySelector('.history-back').click();assert(a.messages.some(m=>m.type==='window'&&m.action==='back'));
  a.w.BiliSpace.openSettings();assert(!s.querySelector('[data-tab=header]'));assert(!s.querySelector('[data-tab=progress]'));
- for(const key of ['headerUpload','logoAutoHide','feedColumns','progressHeight'])assert(s.querySelector(`[data-pref=${key}]`),key);
+ // 个性化拆成了几页：顶栏和首页的选项在「顶栏与首页」，进度条在「外观」
+ s.querySelector('[data-tab=home]').click();for(const key of ['headerUpload','logoAutoHide','feedColumns'])assert(s.querySelector(`[data-pref=${key}]`),key);
+ s.querySelector('[data-tab=appearance]').click();assert(s.querySelector('[data-pref=progressHeight]'),'progressHeight');
  assert.equal(s.querySelector('.upload').parentNode,s);
  // The setting is a minimum: the page is 1024 CSS px wide here, where auto gives 3; 8 still shows 8, 2 shows auto's 3.
  a.w.BiliSpace.update({headerUpload:false,feedColumns:3});assert(s.querySelector('.upload').hidden);

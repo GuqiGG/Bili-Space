@@ -11,7 +11,7 @@ test('focusing account actions preserves the clicked DOM node and dispatches add
  }finally{a.close();}
 });
 test('the original website channel row can be toggled from personalization independently of header categories',()=>{
- const a=app();try{const api=a.w.BiliSpace,s=a.w.document.querySelector('#bili-space-root').shadowRoot;api.openSettings();
+ const a=app();try{const api=a.w.BiliSpace,s=a.w.document.querySelector('#bili-space-root').shadowRoot;api.openSettings('home');
  assert(s.querySelector('[data-pref="showChannels"]'));api.update({showChannels:false});assert.equal(a.w.document.documentElement.dataset.bsChannels,'false');assert(!s.querySelector('.back').hidden);
  api.update({showChannels:true});assert.equal(a.w.document.documentElement.dataset.bsChannels,'true');
  }finally{a.close();}
