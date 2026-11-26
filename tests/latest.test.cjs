@@ -8,7 +8,9 @@ test('short wheel inertia progresses, clamps and cancels; precision / reduced-mo
  Object.defineProperty(el,'scrollHeight',{value:1000});Object.defineProperty(el,'clientHeight',{value:100});el.scrollTop=0;el.scrollTo=({top})=>el.scrollTop=top;
  let next,clock=0;w.requestAnimationFrame=cb=>(next=cb,1);w.cancelAnimationFrame=()=>{next=null};w.performance.now=()=>clock;
  const wheel=dy=>{const e=new w.WheelEvent('wheel',{deltaY:dy,bubbles:true,cancelable:true});el.dispatchEvent(e);return e};
- assert.equal(wheel(120).defaultPrevented,true);next(30);const partial=el.scrollTop;assert(partial>0&&partial<120);next(151);assert.equal(el.scrollTop,120);
+ assert.equal(wheel(120).defaultPrevented,true);next(30);const partial=el.scrollTop;assert(partial>0&&partial<120);
+ // 每帧按经过的时间朝目标收拢：几百毫秒内到位，途中不会超过目标
+ for(let t=46;t<=800&&next;t+=16){next(t);assert(el.scrollTop<=120);}assert.equal(el.scrollTop,120);
  wheel(120);d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'PageDown',bubbles:true}));assert.equal(next,null);
  assert.equal(wheel(8).defaultPrevented,false);a.close();
  const b=app({reduceMotion:true}),e=new b.w.WheelEvent('wheel',{deltaY:120,bubbles:true,cancelable:true});b.w.document.body.dispatchEvent(e);assert.equal(e.defaultPrevented,false);b.close();

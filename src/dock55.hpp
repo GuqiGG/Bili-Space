@@ -21,7 +21,7 @@ struct CoverReply{uintptr_t id;std::string cover,bytes;};
 ULONG_PTR gdiplusToken{};State view;std::vector<std::unique_ptr<Item>> items;Spring pill,homeScale{1,0};float shown=0,homeShown=0,tipAlpha=0,pillHeight=PAD*2+ITEM;
 // island: maximized or fullscreen windows get a horizontal dock at the bottom edge that folds into a thin bar while a video plays.
 Spring collapse;bool island=false,inside=false;ULONGLONG lastInside=0;
-RECT lastRect{};ULONGLONG revealUntil=0;int hovered=-2,pressed=-2;bool closeHovered=false,tracking=false,animating=false,outside=true;LONGLONG lastFrame=0;std::string tipText;std::unique_ptr<GraphicsPath> homeGlyph;
+RECT lastRect{};ULONGLONG revealUntil=0;int hovered=-2,pressed=-2;bool altArmed=false;bool closeHovered=false,tracking=false,animating=false,outside=true;LONGLONG lastFrame=0;std::string tipText;std::unique_ptr<GraphicsPath> homeGlyph;
 HDC canvasDc{};HBITMAP canvasBitmap{};HGDIOBJ canvasPrevious{};void* canvasBits{};int canvasW=0,canvasH=0;
 
 bool reduceMotion(){BOOL on=TRUE;SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&on,0);return !on;}
@@ -137,8 +137,8 @@ void paint(){
             for(size_t i=0;i<items.size();++i){auto& it=*items[i];auto box=tile(it.y.value,it.scale.value,it.alpha*ia,it.white,it.image.get(),false,it.entry.active);
                 // The close button sits on the tile's top-right corner and may overhang it.
                 if(it.hover>.01f){float r=CLOSE*s*(.75f+.25f*it.hover),cx=box.X+box.Width-r*.3f,cy=box.Y+r*.3f;softShadow(g,cx-r,cy-r,r*2,r*2,r,it.hover*a,4*s);
-                    GraphicsPath dot;dot.AddEllipse(cx-r,cy-r,r*2,r*2);SolidBrush b(closeHovered&&int(i)==hovered?Color(BYTE(a*it.hover*245),232,72,84):(dark?Color(BYTE(a*it.hover*245),62,62,68):Color(BYTE(a*it.hover*245),255,255,255)));g.FillPath(&b,&dot);
-                    Pen x1(closeHovered&&int(i)==hovered?Color(BYTE(a*it.hover*255),255,255,255):(dark?Color(BYTE(a*it.hover*255),240,240,244):Color(BYTE(a*it.hover*255),40,40,46)),1.7f*s);x1.SetStartCap(LineCapRound);x1.SetEndCap(LineCapRound);float k=r*.38f;g.DrawLine(&x1,cx-k,cy-k,cx+k,cy+k);g.DrawLine(&x1,cx+k,cy-k,cx-k,cy+k);}
+                    GraphicsPath dot;dot.AddEllipse(cx-r,cy-r,r*2,r*2);SolidBrush b((closeHovered||altArmed)&&int(i)==hovered?Color(BYTE(a*it.hover*245),232,72,84):(dark?Color(BYTE(a*it.hover*245),62,62,68):Color(BYTE(a*it.hover*245),255,255,255)));g.FillPath(&b,&dot);
+                    Pen x1((closeHovered||altArmed)&&int(i)==hovered?Color(BYTE(a*it.hover*255),255,255,255):(dark?Color(BYTE(a*it.hover*255),240,240,244):Color(BYTE(a*it.hover*255),40,40,46)),1.7f*s);x1.SetStartCap(LineCapRound);x1.SetEndCap(LineCapRound);float k=r*.38f;g.DrawLine(&x1,cx-k,cy-k,cx+k,cy+k);g.DrawLine(&x1,cx+k,cy-k,cx-k,cy+k);}
             }
             if(tipAlpha>.01f&&c<.5f&&!tipText.empty()&&hovered>=0&&hovered<int(items.size())){
                 auto title=wide(tipText);FontFamily family(L"Microsoft YaHei UI");Font font(&family,13*s,FontStyleBold,UnitPixel);StringFormat fmt;fmt.SetTrimming(StringTrimmingEllipsisCharacter);fmt.SetFormatFlags(StringFormatFlagsNoWrap);fmt.SetLineAlignment(StringAlignmentCenter);
@@ -166,8 +166,10 @@ void step(){
         // Dock-style magnification: the hovered tile swells and its neighbours lean in a little.
         float lift=0;if(hovered>=0){int d=std::abs(int(i)-hovered);lift=d==0?.16f:d==1?.03f:0.f;}
         float target=(it.entry.active?1.08f:1.f)+lift;if(int(i)==pressed)target=.94f;
+        // 按住 Alt 指着一个视频：它缩一点（弹簧带回弹）、变淡一点，表示「点一下就关掉」
+        const bool armed=altArmed&&int(i)==hovered;if(armed)target=.86f;
         if(it.leaving){bounce(it.scale,.55f);move(it.alpha,0.f,.06f);move(it.hover,0.f,.05f);move(it.white,0.f,.06f);continue;}
-        glide(it.y,y);bounce(it.scale,target);move(it.alpha,1.f,.07f);move(it.white,0.f,.08f);move(it.hover,int(i)==hovered?1.f:0.f,.06f);y+=ITEM+GAP;}
+        glide(it.y,y);bounce(it.scale,target);move(it.alpha,armed?.62f:1.f,.07f);move(it.white,0.f,.08f);move(it.hover,int(i)==hovered?1.f:0.f,.06f);y+=ITEM+GAP;}
     for(size_t i=items.size();i-->0;)if(items[i]->leaving&&items[i]->alpha<.02f){items.erase(items.begin()+i);if(hovered>=int(i))hovered=hovered==int(i)?-2:hovered-1;}
     const ULONGLONG nowMs=GetTickCount64();const bool fold=island&&view.video&&!inside&&nowMs-lastInside>2500;
     if(island&&view.video&&!inside&&!fold)SetTimer(window,2,UINT(2600-std::min<ULONGLONG>(2500,nowMs-lastInside)),nullptr);
@@ -202,19 +204,24 @@ int hit(POINT p,bool* onClose){
     for(size_t i=0;i<items.size();++i){if(items[i]->leaving)continue;float top=items[i]->y.value*s;if(along>=top-GAP*s/2&&along<=top+ITEM*s+GAP*s/2)return int(i);}
     return -2;
 }
+constexpr UINT_PTR altPollTimer=31;void kick();
+void pollAlt(){bool a=hovered>=0&&(GetAsyncKeyState(VK_MENU)&0x8000)!=0;if(a!=altArmed){altArmed=a;kick();}}
 void act(WPARAM action,uintptr_t id){PostMessageW(windowHandle,dockActionMessage,action,LPARAM(id));}
 LRESULT CALLBACK proc(HWND h,UINT msg,WPARAM wp,LPARAM lp){
     switch(msg){
     case WM_MOUSEACTIVATE:return MA_NOACTIVATE;
-    case WM_TIMER:if(wp==2){KillTimer(h,2);kick();return 0;}if(wp==3){if(!animating&&view.show&&wanted()!=(shown>.5f))kick();return 0;}step();return 0;
+    case WM_TIMER:if(wp==altPollTimer){if(hovered<0){KillTimer(h,altPollTimer);if(altArmed){altArmed=false;kick();}}else pollAlt();return 0;}if(wp==2){KillTimer(h,2);kick();return 0;}if(wp==3){if(!animating&&view.show&&wanted()!=(shown>.5f))kick();return 0;}step();return 0;
     case stateMessage:acceptState();return 0;
     case coverMessage:acceptCover(reinterpret_cast<CoverReply*>(lp));return 0;
     case WM_SETCURSOR:{POINT p;GetCursorPos(&p);bool c=false;if(hit(p,&c)>=-1){SetCursor(LoadCursorW(nullptr,IDC_HAND));return TRUE;}break;}
     case WM_MOUSEMOVE:{inside=true;lastInside=GetTickCount64();if(collapse.value>.01f)kick();if(!tracking){TRACKMOUSEEVENT t{sizeof(t),TME_LEAVE,h,0};TrackMouseEvent(&t);tracking=true;}POINT p;GetCursorPos(&p);bool onClose=false;int now=hit(p,&onClose);if(now<-1)now=-2;
-        if(now!=hovered||onClose!=closeHovered){hovered=now;closeHovered=onClose;if(now>=0)tipText=items[now]->entry.title;kick();}return 0;}
-    case WM_MOUSELEAVE:inside=false;lastInside=GetTickCount64();tracking=false;hovered=-2;pressed=-2;closeHovered=false;kick();return 0;
+        if(now!=hovered||onClose!=closeHovered){hovered=now;closeHovered=onClose;if(now>=0)tipText=items[now]->entry.title;kick();}
+        // the dock never takes keyboard focus, so Alt is polled while the pointer is over it
+        if(now>=0)SetTimer(h,altPollTimer,40,nullptr);pollAlt();return 0;}
+    case WM_MOUSELEAVE:altArmed=false;KillTimer(h,altPollTimer);inside=false;lastInside=GetTickCount64();tracking=false;hovered=-2;pressed=-2;closeHovered=false;kick();return 0;
     case WM_LBUTTONDOWN:{POINT p;GetCursorPos(&p);bool c=false;pressed=hit(p,&c);if(c)pressed=-4;kick();return 0;}
     case WM_LBUTTONUP:{POINT p;GetCursorPos(&p);bool onClose=false;int target=hit(p,&onClose);int was=pressed;pressed=-2;kick();
+        if(target>=0&&target<int(items.size())&&(GetKeyState(VK_MENU)&0x8000)){act(2,items[target]->entry.id);return 0;} // Alt + 左键：关掉
         if(onClose&&was==-4&&target>=0&&target<int(items.size()))act(2,items[target]->entry.id);
         else if(!onClose&&target==was){if(target==-1)act(0,0);else if(target>=0&&target<int(items.size()))act(1,items[target]->entry.id);}return 0;}
     case WM_MBUTTONUP:{POINT p;GetCursorPos(&p);int target=hit(p,nullptr);if(target>=0&&target<int(items.size()))act(2,items[target]->entry.id);return 0;}

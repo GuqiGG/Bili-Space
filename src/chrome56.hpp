@@ -15,6 +15,8 @@ void show(bool on){comp::chromeVisible=on&&ready;if(ctl)ctl->put_IsVisible(on?TR
 void push(const std::wstring& target=L""){
     if(!view||!ready)return;Tab* t=activeTab;std::wstring url=target;BOOL back{},forward{};
     if(t&&t->view){if(url.empty()){LPWSTR s{};t->view->get_Source(&s);url=s?s:L"";CoTaskMemFree(s);t->view->get_CanGoBack(&back);t->view->get_CanGoForward(&forward);}else back=TRUE;}
+    // A video tab can always go back: to its own earlier page, or else to the tab it was opened from.
+    if(t&&t->video)back=TRUE;
     if(url.rfind(L"https://",0)!=0)return;
     json state={{"url",utf8(url)},{"back",bool(back)},{"forward",bool(forward)},{"video",bool(t&&t->video)},{"starting",!target.empty()}};
     view->ExecuteScript(wide("window.BiliSpace?.chromeActive?.("+state.dump()+")").c_str(),nullptr);
@@ -42,7 +44,7 @@ void receiveFromHeaderUnchecked(ICoreWebView2WebMessageReceivedEventArgs* args){
     json m;try{m=json::parse(raw);}catch(...){return;}auto type=m.value("type",std::string{}),action=m.value("action",std::string{});
     if(type=="chrome-layout"){
         comp::chromeModal=m.value("modal",false);comp::chromeRects.clear();
-        if(m.contains("rects")&&m["rects"].is_array())for(auto& r:m["rects"])if(r.is_array()&&r.size()==4&&comp::chromeRects.size()<32)comp::chromeRects.push_back({r[0].get<LONG>(),r[1].get<LONG>(),r[2].get<LONG>(),r[3].get<LONG>()});
+        if(m.contains("rects")&&m["rects"].is_array())for(auto& r:m["rects"])if(r.is_array()&&r.size()==4&&comp::chromeRects.size()<96)comp::chromeRects.push_back({r[0].get<LONG>(),r[1].get<LONG>(),r[2].get<LONG>(),r[3].get<LONG>()});
         return;
     }
     if(type=="navigate"){navigate(wide(m.value("url",std::string{})));return;}

@@ -105,10 +105,13 @@ void acceptUpdate(const json& reply){
     updateBusy=false;updateState["busy"]=false;
     if(event=="checked"){
         auto value=reply.at("manifest");bool required=value.at("required").get<bool>();
+        // 更新通道：稳定版只跟大更新，标着「小更新」（silent）的版本跳过；必须更新的版本两个通道都会装
+        if(!required&&value.value("available",false)&&value.value("silent",false)&&config.value("updateChannel",std::string())=="stable"){
+            value["available"]=false;value["ready"]=false;value["skippedByChannel"]=true;updateLog("stable channel skips "+value.value("version",std::string()));}
         try{if(required)saveUpdateJson(dataPath/L"updates/required.json",value);else{std::error_code ec;fs::remove(dataPath/L"updates/required.json",ec);}}catch(const std::exception& e){updateLog(e.what());}
         const bool wasRequired=updateRequired;updateRequired=required;readyUpdatePackage.clear();updateState=value;updateState["busy"]=false;updateState["ignored"]=!required&&value["version"]==ignoredUpdateVersion;
         updateState["status"]=required?"required":value["available"]==true?"available":"current";
-        updateState["message"]=required?"必须更新后才能继续使用":value["available"]==true?(updateState["ignored"]==true?"已忽略此版本，可手动下载":"发现新版本"):"当前已是最新版本";
+        updateState["message"]=required?"必须更新后才能继续使用":value.value("skippedByChannel",false)?"稳定版通道：已跳过小更新 "+value.value("version",std::string())+"，等下一个大更新":value["available"]==true?(updateState["ignored"]==true?"已忽略此版本，可手动下载":"发现新版本"):"当前已是最新版本";
         if(value.value("ready",false)&&value.value("available",false)){readyUpdatePackage=dataPath/L"updates"/wide("Bili-Space-"+value.at("version").get<std::string>()+"-Setup.exe");updateState["message"]="更新已就绪，点击安装并重启。";if(value.value("silent",false)&&!updateState.value("ignored",false))installUpdateOnExit=true;}
         updateLog(std::string(required?"required ":"checked ")+value.at("version").get<std::string>());if(required)showRequiredUpdate();else if(wasRequired){updateGateShown=false;if(webview)webview->Navigate(L"https://www.bilibili.com/");}
         // Everything that is not required downloads by itself; nothing restarts on its own.

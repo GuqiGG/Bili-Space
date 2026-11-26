@@ -20,7 +20,11 @@ struct ViewScope{
 std::vector<Tab*> videoTabs(){std::vector<Tab*> v;for(auto t:tabs)if(t->video&&!t->closed)v.push_back(t);std::sort(v.begin(),v.end(),[](Tab* a,Tab* b){return a->order<b->order;});return v;}
 std::wstring videoTabKey(const std::wstring& uri){
     static const std::wregex pattern(LR"(^https://www\.bilibili\.com/(?:zh-Hans/)?(?:video/(BV[A-Za-z0-9]{10})|bangumi/play/((?:ep|ss)[0-9]{1,12}))(?:[/?#].*)?$)");
-    std::wsmatch m;if(uri.size()>4096||!std::regex_match(uri,m,pattern))return {};return m[1].matched?m[1].str():m[2].str();
+    std::wsmatch m;if(uri.size()>4096)return {};if(std::regex_match(uri,m,pattern))return m[1].matched?m[1].str():m[2].str();
+    // 直播间也单独开一个标签放进视频坞，可以同时开好几个直播（反馈建议）
+    static const std::wregex live(LR"(^https://live\.bilibili\.com/(?:blanc/|h5/)?([0-9]{1,12})(?:[/?#].*)?$)");
+    if(std::regex_match(uri,m,live))return L"live"+m[1].str();
+    return {};
 }
 bool homeDestination(const std::wstring& uri){
     for(auto host:{L"www.bilibili.com",L"t.bilibili.com",L"space.bilibili.com",L"search.bilibili.com",L"message.bilibili.com",L"live.bilibili.com"})if(uri.rfind(std::wstring(L"https://")+host+L"/",0)==0)return true;
@@ -179,7 +183,7 @@ void historyStep(ICoreWebView2* view,int direction){
         if(SUCCEEDED(hr)&&result){auto history=json::parse(utf8(result),nullptr,false);
             if(history.is_object()&&history["entries"].is_array()){auto& entries=history["entries"];int current=history.value("currentIndex",-1),count=int(entries.size());
                 if(current>=0&&current<count){auto here=normalisedPage(wide(entries[current].value("url",std::string{})));int i=current+direction;
-                    while(i>=0&&i<count&&normalisedPage(wide(entries[i].value("url",std::string{})))==here)i+=direction;
+                    while(i>=0&&i<count&&(normalisedPage(wide(entries[i].value("url",std::string{})))==here||entries[i].value("url",std::string{}).rfind("http",0)!=0))i+=direction;
                     if(i>=0&&i<count){steps=i-current;target=wide(entries[i].value("url",std::string{}));}}}}
         // The page's own history.go is a normal history load; Page.navigateToHistoryEntry left the next page idle for about 2s.
         // A history load of the home page sits idle about 2s before it starts parsing, while a fresh load takes ~0.4s;
@@ -187,6 +191,10 @@ void historyStep(ICoreWebView2* view,int direction){
         if(steps<0&&normalisedPage(target)==L"https://www.bilibili.com/")view->Navigate(target.c_str());
         else if(steps)view->ExecuteScript((L"history.go("+std::to_wstring(steps)+L")").c_str(),nullptr);
         else if(FAILED(hr)){if(direction<0)view->GoBack();else view->GoForward();}
+        // A video tab starts with no page of its own to go back to (it was opened from home or from another video):
+        // back then returns to the tab it came from instead of doing nothing or jumping to home.
+        else if(direction<0){Tab* t=tabForView(view);if(t&&t->video&&!t->closed){Tab* to=t->opener;
+            if(!to||to->closed||std::find(tabs.begin(),tabs.end(),to)==tabs.end())to=homeTab;if(to&&to!=t)activateTab(to);}}
         view->Release();return S_OK;});
     if(FAILED(view->CallDevToolsProtocolMethod(L"Page.getNavigationHistory",L"{}",done))){view->Release();if(direction<0)view->GoBack();else view->GoForward();}
     done->Release();
