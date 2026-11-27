@@ -71,6 +71,8 @@ void execute(const std::string&);
 // Results the client's own interface waits for (settings, account menu) go to the header layer as well as the page.
 void executeEverywhere(const std::string&);
 void lightenSettings(ICoreWebView2Settings* settings);
+// 开发者模式：设置里连点版本号打开；开发者工具、F12 和日志查看只在它开着（或测试模式）时可用
+bool devMode();void applyDevTools();
 void trayMemory(bool hidden);
 void restoreFromTray(){trayMemory(false);if(closePending)SetWindowPos(windowHandle,nullptr,closeRect.left,closeRect.top,closeRect.right-closeRect.left,closeRect.bottom-closeRect.top,SWP_NOZORDER|SWP_NOACTIVATE);closePending=false;KillTimer(windowHandle,72);KillTimer(windowHandle,74);execute("document.querySelector('#bs-close-animation')?.remove();window.BiliSpace?.restoreFromTray()");ShowWindow(windowHandle,IsIconic(windowHandle)?SW_RESTORE:SW_SHOW);SetForegroundWindow(windowHandle);}
 void installTray(){
@@ -368,7 +370,7 @@ public:
 };
 template<class T, class... Args, class F> T* callback(F fn){return new Handler<T,Args...>(std::move(fn));}
 
-json defaults(){return {{"dockTipSeen",false},{"updateChannel",""},{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"holdSpeed",200},{"hdrVideo",true},{"homePreload",false},{"videoDock",true},{"homeBanner",true},{"feedHideLive",false},{"feedHideBangumi",false},{"feedHideCourse",false},{"feedHideManga",false},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"shareSeen",""},{"newsSeen",json::array()},{"language",""},{"languageChosen",false},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"blacklistButtons",true},{"cornerAutoHide",false},{"feedColumns",0},{"feedMargin","auto"},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerSwipe",true},{"upNotify",true},{"dynamicCards",true},{"commentBlock",true},{"commentBlockUsers",json::array()},{"commentBlockWords",json::array()},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerWatchlater",true},{"clickGui",false},{"searchWidth",0},{"watchlaterOpen","list"},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
+json defaults(){return {{"devMode",false},{"dockTipSeen",false},{"updateChannel",""},{"theme","dark"},{"accent","#fb7299"},{"progressColor","#fb7299"},{"progressHeight",4},{"progressRadius",6},{"progressAlways",false},{"progressThumb",true},{"showChannels",true},{"hideAds",true},{"btr",true},{"font",true},{"zoom",100},{"volumeBoost",100},{"holdSpeed",200},{"hdrVideo",true},{"homePreload",false},{"videoDock",true},{"homeBanner",true},{"feedHideLive",false},{"feedHideBangumi",false},{"feedHideCourse",false},{"feedHideManga",false},{"soundBalance",true},{"srMode","off"},{"srScale",2},{"srFps",60},{"closeAction","tray"},{"videoLoadingMode","page"},{"clipboardAutoOpen",true},{"experimentalFrost",false},{"experimentalBounce",true},{"settingsZoom",100},{"experimentalFullscreenMotion",false},{"onboardingSeen",false},{"whatsNewSeen",""},{"shareSeen",""},{"newsSeen",json::array()},{"language",""},{"languageChosen",false},{"officialVideoStyle",false},{"experimentalControlsV1",false},{"fiMode","off"},{"srModel","auto"},{"fiFps",60},{"fiFlowScale",50},{"trafficLights",false},{"logoAutoHide",true},{"blacklistButtons",true},{"cornerAutoHide",false},{"feedColumns",0},{"feedMargin","auto"},{"showClock",false},{"videoLinkButton",true},{"videoLinkCompact",false},{"pipDanmaku",true},{"pipDanmakuMinWidth",520},{"headerHome",true},{"headerSwipe",true},{"upNotify",true},{"dynamicCards",true},{"commentBlock",true},{"commentBlockUsers",json::array()},{"commentBlockWords",json::array()},{"headerDynamic",true},{"headerHistory",true},{"headerBrand",true},{"headerSearch",true},{"headerFavorites",true},{"headerWatchlater",true},{"clickGui",false},{"searchWidth",0},{"watchlaterOpen","list"},{"headerMessages",true},{"headerUpload",true},{"headerAccount",true},{"headerBack",true},{"autoZoom",true},{"autoZoomTarget",1280},{"downloader",true},{"downloadConnections",256},{"pluginsDisabled",json::array()},{"downloaderPath",""},{"proxy",false},{"proxyAll",false},{"proxyNode",""},{"categoryPreset",0},{"categorySelection",json::array({0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17})}};}
 json cleanSearchHistory(const json& values){
     json result=json::array();if(!values.is_array())return result;
     for(const auto& value:values){if(!value.is_string())continue;auto term=value.get<std::string>();if(term.empty()||term.size()>400||term.find_first_of("\r\n\t")!=std::string::npos||term.find('\0')!=std::string::npos)continue;if(std::find(result.begin(),result.end(),value)==result.end())result.push_back(value);if(result.size()>=20)break;}return result;
@@ -797,6 +799,15 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             if(action=="status")pushDownloaderState();
             else if(action=="cancel")cancelDownload();
             else if(action=="save")saveDownload(m.value("url",std::string{}),m.value("title",std::string{}),m.value("audioUrl",std::string{}));
+        }else if(type=="dev"){
+            if(!devMode())return;auto action=m.value("action",std::string{});
+            if(action=="log"){auto text=read(dataPath/L"runtime.log");if(text.size()>120000)text=text.substr(text.size()-120000);auto at=text.find('\n');if(text.size()==120000&&at!=std::string::npos)text=text.substr(at+1);
+                execute("window.BiliSpace?.acceptDevLog?.("+json(text).dump(-1,' ',false,json::error_handler_t::replace)+")");}
+            else if(action=="devtools"){if(activeTab&&activeTab->view)activeTab->view->OpenDevToolsWindow();}
+            else if(action=="devtools-header"){if(webview)webview->OpenDevToolsWindow();}
+            else if(action=="open-folder"){ShellExecuteW(windowHandle,L"open",dataPath.c_str(),nullptr,nullptr,SW_SHOWNORMAL);}
+            else if(action=="reload-all"){for(auto t:tabs)if(t->view&&!t->closed)t->view->Reload();if(webview)webview->Reload();}
+            else if(action=="clear-log"){std::ofstream(dataPath/L"runtime.log",std::ios::trunc);log("log cleared from developer mode");}
         }else if(type=="extensions"){ext::action(m);
         }else if(type=="proxy"){proxyAction(m.value("action",std::string{}),m.value("node",std::string{}),m.value("url",std::string{}));
         }else if(type=="config"){
@@ -806,6 +817,7 @@ void receive(ICoreWebView2WebMessageReceivedEventArgs* args){
             // volume key or a dragged slider sends a change every few ms: they wait for a quiet 0.8s and run once.
             mergeConfig(changed);configDirty=true;SetTimer(windowHandle,7772,800,nullptr);if(zoomChanged){if(changed.contains("zoom"))manualZoom=1;applyZoom();}
             if(m.at("value").contains("proxyAll")){flushConfig();proxyAction("reload","","");}
+            if(m.at("value").contains("devMode"))applyDevTools();
             log("config saved: "+m.at("value").dump());
             // The sender's id goes back with the echo: only the view that made the change compares revisions (see enhance.js).
             std::string origin=m.value("origin",std::string{});if(origin.size()>16||!std::all_of(origin.begin(),origin.end(),[](char c){return std::isalnum((unsigned char)c);}))origin.clear();lastConfigOrigin=origin;lastConfigRevision=m.value("revision",0);
@@ -929,6 +941,9 @@ void chromeStep(int direction){if(chromeHost::view&&chromeHost::ready)chromeHost
 void chromeAcceptConfig(){if(chromeHost::view&&webview!=chromeHost::view)chromeHost::view->ExecuteScript(wide("window.BiliSpace?.acceptConfig?.("+config.dump()+","+std::to_string(lastConfigRevision)+","+json(lastConfigOrigin).dump()+")").c_str(),nullptr);}
 // Work no page here needs: SmartScreen reputation lookups (an extra request on every navigation, for a client that only
 // opens Bilibili) and address/card form autofill parsing on every page. Saved passwords are left as they are.
+bool devMode(){return testing||config.value("devMode",false);}
+void applyDevTools(){auto set=[](ICoreWebView2* v){if(!v)return;ICoreWebView2Settings* st{};v->get_Settings(&st);if(st){st->put_AreDevToolsEnabled(devMode());st->Release();}};
+    for(auto t:tabs)set(t->view);set(chromeHost::view);log(std::string("developer mode ")+(devMode()?"on":"off"));}
 void lightenSettings(ICoreWebView2Settings* settings){
     ICoreWebView2Settings8* s8{};if(SUCCEEDED(settings->QueryInterface(__uuidof(ICoreWebView2Settings8),reinterpret_cast<void**>(&s8)))&&s8){s8->put_IsReputationCheckingRequired(FALSE);s8->Release();}
     ICoreWebView2Settings4* s4{};if(SUCCEEDED(settings->QueryInterface(__uuidof(ICoreWebView2Settings4),reinterpret_cast<void**>(&s4)))&&s4){s4->put_IsGeneralAutofillEnabled(FALSE);s4->put_IsPasswordAutosaveEnabled(FALSE);s4->Release();}
@@ -939,7 +954,7 @@ void lightenSettings(ICoreWebView2Settings* settings){
 bool browserOnlyKey(UINT key){
     const bool ctrl=GetKeyState(VK_CONTROL)&0x8000,shift=GetKeyState(VK_SHIFT)&0x8000,alt=GetKeyState(VK_MENU)&0x8000;
     if(key==VK_F7||(key==VK_F3&&!alt))return true;
-    if(!testing&&(key==VK_F12||(ctrl&&shift&&(key=='I'||key=='J'||key=='C'))))return true;
+    if(!devMode()&&(key==VK_F12||(ctrl&&shift&&(key=='I'||key=='J'||key=='C'))))return true;
     return ctrl&&!alt&&!shift&&(key=='F'||key=='G'||key=='P'||key=='S'||key=='U'||key=='J'||key=='H'||key=='O');
 }
 // The browser's context menu only shows its editing items over text fields and selections (cut, copy, paste, select
@@ -992,7 +1007,7 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
                 if(browserOnlyKey(key)){args->put_Handled(TRUE);return S_OK;}
                 if(key=='W'&&(GetKeyState(VK_CONTROL)&0x8000)&&!(GetKeyState(VK_MENU)&0x8000)&&(kind==COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN||kind==COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN)){args->put_Handled(TRUE);PostMessageW(windowHandle,WM_CLOSE,0,0);}return S_OK;
             });c->add_AcceleratorKeyPressed(accelerator,&acceleratorToken);accelerator->Release();
-            ICoreWebView2Settings* settings{};view->get_Settings(&settings);settings->put_AreDefaultContextMenusEnabled(TRUE);settings->put_IsStatusBarEnabled(FALSE);settings->put_AreDevToolsEnabled(testing);lightenSettings(settings);settings->Release();
+            ICoreWebView2Settings* settings{};view->get_Settings(&settings);settings->put_AreDefaultContextMenusEnabled(TRUE);settings->put_IsStatusBarEnabled(FALSE);settings->put_AreDevToolsEnabled(devMode());lightenSettings(settings);settings->Release();
             {ICoreWebView2_11* v11{};if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_11),reinterpret_cast<void**>(&v11)))&&v11){EventRegistrationToken t{};auto menu=callback<ICoreWebView2ContextMenuRequestedEventHandler,ICoreWebView2*,ICoreWebView2ContextMenuRequestedEventArgs*>([](ICoreWebView2*,ICoreWebView2ContextMenuRequestedEventArgs* a){return trimContextMenu(a);});v11->add_ContextMenuRequested(menu,&t);menu->Release();v11->Release();}}
             {ICoreWebView2_4* v4{};if(SUCCEEDED(view->QueryInterface(__uuidof(ICoreWebView2_4),reinterpret_cast<void**>(&v4)))&&v4){EventRegistrationToken t{};auto down=callback<ICoreWebView2DownloadStartingEventHandler,ICoreWebView2*,ICoreWebView2DownloadStartingEventArgs*>([](ICoreWebView2*,ICoreWebView2DownloadStartingEventArgs* a){return quietDownload(a);});v4->add_DownloadStarting(down,&t);down->Release();v4->Release();}}
             ICoreWebView2_3* v3{};
@@ -1024,6 +1039,8 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
 LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     if(windowsMediaMessage(msg,wp,lp))return 0;
     // Visual hosting has no WebView child window, so pointer input and the cursor are forwarded to the visible view.
+    // 触摸和触控笔交给网页；鼠标的指针消息不处理，照旧走下面的鼠标消息
+    if((msg==WM_POINTERDOWN||msg==WM_POINTERUP||msg==WM_POINTERUPDATE||msg==WM_POINTERENTER||msg==WM_POINTERLEAVE||msg==WM_POINTERCAPTURECHANGED)&&comp::forwardPointer(hwnd,msg,wp))return 0;
     if(((msg>=WM_MOUSEFIRST&&msg<=WM_MOUSELAST)||msg==WM_MOUSELEAVE)&&comp::forwardMouse(hwnd,msg,wp,lp))return 0;
     if(msg==WM_SETCURSOR&&LOWORD(lp)==HTCLIENT&&comp::setCursor())return TRUE;
     if(msg==taskbarCreated&&!testing){installTray();return 0;}

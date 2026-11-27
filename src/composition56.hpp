@@ -13,7 +13,7 @@ struct View{ICoreWebView2CompositionController* composition{};IDCompositionVisua
 IDCompositionDevice* device{};IDCompositionTarget* target{};IDCompositionVisual *root{},*contentLayer{},*chromeLayer{};bool ready=false,failed=false,tracking=false;
 std::map<ICoreWebView2Controller*,View> views;
 // Header view state: the regions it currently draws (physical client pixels) and whether a modal dialog takes all input.
-ICoreWebView2Controller* chromeController{};bool chromeVisible=false,chromeModal=false;std::vector<RECT> chromeRects;
+ICoreWebView2Environment3* pointerEnv{};ICoreWebView2Controller* chromeController{};bool chromeVisible=false,chromeModal=false;std::vector<RECT> chromeRects;
 ICoreWebView2Controller *pointerTarget{},*capturedTarget{},*focusTarget{};
 // A Direct3D device lets the compositor hold pictures of its own (for the fullscreen transition), which it then moves and
 // fades on the GPU. Loaded at run time; without it the transition is simply skipped.
@@ -184,6 +184,7 @@ void createController(ICoreWebView2Environment* env,ICoreWebView2CreateCoreWebVi
         }
         HRESULT result=done->Invoke(c?S_OK:(FAILED(hr)?hr:E_FAIL),c);done->Release();if(c)c->Release();return result;
     });
+    if(!pointerEnv){pointerEnv=env3;pointerEnv->AddRef();}
     env3->CreateCoreWebView2CompositionController(windowHandle,created);created->Release();env3->Release();
 }
 void forget(ICoreWebView2Controller* c){
@@ -224,6 +225,37 @@ bool forwardMouse(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     send(target,COREWEBVIEW2_MOUSE_EVENT_KIND(msg),keys,data,point);
     if((msg==WM_LBUTTONUP||msg==WM_RBUTTONUP||msg==WM_MBUTTONUP||msg==WM_XBUTTONUP)&&!(GET_KEYSTATE_WPARAM(wp)&(MK_LBUTTON|MK_RBUTTON|MK_MBUTTON|MK_XBUTTON1|MK_XBUTTON2))){capturedTarget=nullptr;ReleaseCapture();}
     return true;
+}
+// 触摸屏和触控笔：把 Windows 的指针消息原样交给网页（WebView2 的 SendPointerInput），网页就能像在 Edge 里一样
+// 手指滑动、惯性滚动、双指缩放和长按。不转的话 Windows 只会把触摸模拟成鼠标：点一下能用，拖动却变成选文字。
+std::map<UINT32,ICoreWebView2Controller*> pointerTargets;
+bool forwardPointer(HWND hwnd,UINT msg,WPARAM wp){
+    const UINT32 id=GET_POINTERID_WPARAM(wp);if(msg==WM_POINTERCAPTURECHANGED){pointerTargets.erase(id);return false;}POINTER_INPUT_TYPE type{};if(!GetPointerType(id,&type)||(type!=PT_TOUCH&&type!=PT_PEN))return false;
+    if(!pointerEnv||!forController(controller))return false;
+    ICoreWebView2PointerInfo* info{};if(FAILED(pointerEnv->CreateCoreWebView2PointerInfo(&info))||!info)return false;
+    POINTER_INFO base{};POINTER_TOUCH_INFO touch{};POINTER_PEN_INFO pen{};
+    if(type==PT_TOUCH){if(!GetPointerTouchInfo(id,&touch)){info->Release();return false;}base=touch.pointerInfo;}
+    else{if(!GetPointerPenInfo(id,&pen)){info->Release();return false;}base=pen.pointerInfo;}
+    POINT client=base.ptPixelLocation;ScreenToClient(hwnd,&client);
+    ICoreWebView2Controller* target{};
+    if(msg==WM_POINTERDOWN||msg==WM_POINTERENTER){target=targetAt(client);pointerTargets[id]=target;}
+    else{auto it=pointerTargets.find(id);target=it!=pointerTargets.end()?it->second:targetAt(client);}
+    if(!target||!views.count(target)){info->Release();return false;}
+    auto cc=forController(target);RECT bounds{};target->get_Bounds(&bounds);
+    auto local=[&](POINT p){ScreenToClient(hwnd,&p);p.x-=bounds.left;p.y-=bounds.top;return p;};
+    auto localRect=[&](RECT r){POINT a{r.left,r.top},b{r.right,r.bottom};a=local(a);b=local(b);return RECT{a.x,a.y,b.x,b.y};};
+    info->put_PointerKind(type);info->put_PointerId(id);info->put_FrameId(base.frameId);info->put_PointerFlags(base.pointerFlags);
+    RECT device{},display{};GetPointerDeviceRects(base.sourceDevice,&device,&display);info->put_PointerDeviceRect(device);info->put_DisplayRect(display);
+    info->put_PixelLocation(local(base.ptPixelLocation));info->put_HimetricLocation(base.ptHimetricLocation);
+    info->put_PixelLocationRaw(local(base.ptPixelLocationRaw));info->put_HimetricLocationRaw(base.ptHimetricLocationRaw);
+    info->put_Time(base.dwTime);info->put_HistoryCount(base.historyCount);info->put_InputData(base.InputData);info->put_KeyStates(base.dwKeyStates);
+    info->put_PerformanceCount(base.PerformanceCount);info->put_ButtonChangeKind(base.ButtonChangeType);
+    if(type==PT_TOUCH){info->put_TouchFlags(touch.touchFlags);info->put_TouchMask(touch.touchMask);info->put_TouchContact(localRect(touch.rcContact));info->put_TouchContactRaw(localRect(touch.rcContactRaw));info->put_TouchOrientation(touch.orientation);info->put_TouchPressure(touch.pressure);}
+    else{info->put_PenFlags(pen.penFlags);info->put_PenMask(pen.penMask);info->put_PenPressure(pen.pressure);info->put_PenRotation(pen.rotation);info->put_PenTiltX(pen.tiltX);info->put_PenTiltY(pen.tiltY);}
+    if(msg==WM_POINTERDOWN&&focusTarget!=target){target->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);focusTarget=target;}
+    auto hr=cc->SendPointerInput(COREWEBVIEW2_POINTER_EVENT_KIND(msg),info);info->Release();
+    if(msg==WM_POINTERUP||msg==WM_POINTERLEAVE)pointerTargets.erase(id);
+    return SUCCEEDED(hr);
 }
 bool setCursor(){auto cc=forController(pointerTarget?pointerTarget:controller);if(!cc)return false;HCURSOR h{};cc->get_Cursor(&h);SetCursor(h?h:LoadCursorW(nullptr,IDC_ARROW));return true;}
 void shutdown(){for(auto& [c,v]:views){if(v.visual)v.visual->Release();if(v.composition)v.composition->Release();}views.clear();for(auto p:{&chromeLayer,&contentLayer,&root})if(*p){(*p)->Release();*p=nullptr;}if(target){target->Release();target=nullptr;}if(device){device->Release();device=nullptr;}ready=false;}

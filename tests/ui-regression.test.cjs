@@ -17,7 +17,7 @@ test('login status renders API avatar; messages link is present; no text imperso
  const a=app({loggedIn:true}),s=a.w.document.querySelector('#bili-space-root').shadowRoot;
  await new Promise(r=>setTimeout(r,10));
  assert.equal(s.querySelector('.account img').src,'https://i0.hdslb.com/bfs/face/test-avatar.png');
- assert.equal(s.querySelector('.account').href,'https://space.bilibili.com/1234');
+ assert.equal(s.querySelector('.account').href,'https://space.bilibili.com/1234/relation/follow');
  assert.equal(s.querySelector('.account').getAttribute('aria-label'),'测试账号');
  assert.equal(s.querySelector('.messages').href,'https://message.bilibili.com/#/reply');a.close();
 });
