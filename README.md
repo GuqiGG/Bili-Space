@@ -112,7 +112,7 @@ python scripts/package.py
 
 想一起把 Bili-Space 做成最好用的 B 站客户端？写功能、修 Bug、做动效、写插件、做设计、翻译、提建议都欢迎。
 
-▶ [看招募短片](docs/media/recruit.mp4)（45 秒）
+▶ [看招募短片](docs/media/recruit.mp4)（25 秒）
 
 - 技术栈：C++20 · Win32 · WebView2 · JavaScript · Python
 - 开始前先读 [设计说明](docs/DESIGN.md)，然后提 Issue 或直接发 Pull Request
