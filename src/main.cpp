@@ -1039,8 +1039,10 @@ void wireView(ICoreWebView2Controller* c,ICoreWebView2* view,ICoreWebView2Enviro
 LRESULT CALLBACK proc(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     if(windowsMediaMessage(msg,wp,lp))return 0;
     // Visual hosting has no WebView child window, so pointer input and the cursor are forwarded to the visible view.
+#ifndef BILI_LEGACY_WIN7
     // 触摸和触控笔交给网页；鼠标的指针消息不处理，照旧走下面的鼠标消息
     if((msg==WM_POINTERDOWN||msg==WM_POINTERUP||msg==WM_POINTERUPDATE||msg==WM_POINTERENTER||msg==WM_POINTERLEAVE||msg==WM_POINTERCAPTURECHANGED)&&comp::forwardPointer(hwnd,msg,wp))return 0;
+#endif
     if(((msg>=WM_MOUSEFIRST&&msg<=WM_MOUSELAST)||msg==WM_MOUSELEAVE)&&comp::forwardMouse(hwnd,msg,wp,lp))return 0;
     if(msg==WM_SETCURSOR&&LOWORD(lp)==HTCLIENT&&comp::setCursor())return TRUE;
     if(msg==taskbarCreated&&!testing){installTray();return 0;}

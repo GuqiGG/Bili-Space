@@ -184,7 +184,9 @@ void createController(ICoreWebView2Environment* env,ICoreWebView2CreateCoreWebVi
         }
         HRESULT result=done->Invoke(c?S_OK:(FAILED(hr)?hr:E_FAIL),c);done->Release();if(c)c->Release();return result;
     });
+#ifndef BILI_LEGACY_WIN7
     if(!pointerEnv){pointerEnv=env3;pointerEnv->AddRef();}
+#endif
     env3->CreateCoreWebView2CompositionController(windowHandle,created);created->Release();env3->Release();
 }
 void forget(ICoreWebView2Controller* c){
@@ -226,6 +228,7 @@ bool forwardMouse(HWND hwnd,UINT msg,WPARAM wp,LPARAM lp){
     if((msg==WM_LBUTTONUP||msg==WM_RBUTTONUP||msg==WM_MBUTTONUP||msg==WM_XBUTTONUP)&&!(GET_KEYSTATE_WPARAM(wp)&(MK_LBUTTON|MK_RBUTTON|MK_MBUTTON|MK_XBUTTON1|MK_XBUTTON2))){capturedTarget=nullptr;ReleaseCapture();}
     return true;
 }
+#ifndef BILI_LEGACY_WIN7 // 指针输入接口 Windows 8 才有；Win7 版照旧只用鼠标
 // 触摸屏和触控笔：把 Windows 的指针消息原样交给网页（WebView2 的 SendPointerInput），网页就能像在 Edge 里一样
 // 手指滑动、惯性滚动、双指缩放和长按。不转的话 Windows 只会把触摸模拟成鼠标：点一下能用，拖动却变成选文字。
 std::map<UINT32,ICoreWebView2Controller*> pointerTargets;
@@ -257,6 +260,7 @@ bool forwardPointer(HWND hwnd,UINT msg,WPARAM wp){
     if(msg==WM_POINTERUP||msg==WM_POINTERLEAVE)pointerTargets.erase(id);
     return SUCCEEDED(hr);
 }
+#endif
 bool setCursor(){auto cc=forController(pointerTarget?pointerTarget:controller);if(!cc)return false;HCURSOR h{};cc->get_Cursor(&h);SetCursor(h?h:LoadCursorW(nullptr,IDC_ARROW));return true;}
 void shutdown(){for(auto& [c,v]:views){if(v.visual)v.visual->Release();if(v.composition)v.composition->Release();}views.clear();for(auto p:{&chromeLayer,&contentLayer,&root})if(*p){(*p)->Release();*p=nullptr;}if(target){target->Release();target=nullptr;}if(device){device->Release();device=nullptr;}ready=false;}
 }
