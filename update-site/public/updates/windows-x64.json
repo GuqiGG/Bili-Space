@@ -2,22 +2,17 @@
   "schema": 1,
   "appId": "bili-space",
   "platform": "windows-x64",
-  "version": "0.1.82",
+  "version": "0.1.83",
   "minimumSupportedVersion": "0.1.0",
   "force": false,
   "silent": true,
-  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.82-win64.zip",
-  "sha256": "f256c9b21c75b121c0d50b65a468ac48fc01b03be4d43f21eac836a61e9a20c3",
-  "size": 38822325,
-  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.82/Bili-Space-0.1.82-Setup.exe",
-  "setupSha256": "d9f9d5dbf23693db09c4b268495d6d3ac18e948d7f17c5c849a3f31411c717f9",
-  "setupSize": 30218128,
+  "downloadUrl": "https://bili.gvqi.top/releases/Bili-Space-0.1.83-win64.zip",
+  "sha256": "fa80ca2b21030c5576dabdc538a4461330d9dbbae3aee2131e0495aa7617bac6",
+  "size": 45552513,
+  "setupUrl": "https://github.com/GuqiGG/Bili-Space/releases/download/v0.1.83/Bili-Space-0.1.83-Setup.exe",
+  "setupSha256": "9caad51beb70bbf3665929d37039d9ff75ef70d191ca1dffc810257d9843619b",
+  "setupSize": 36946604,
   "changelog": [
-    "修复：深色模式下动态页一片黑、动态都看不见",
-    "修复：打开新视频时声音先出来，画面要等四五秒；现在视频一开始播放就切到画面",
-    "点右上角的头像直接进关注列表（个人空间在头像卡片里）",
-    "触摸屏可以用了：手指滑动、惯性滚动、双指缩放、长按，二合一和平板更顺手",
-    "新增开发者模式：在 设置 → 关于与更新 里连点 7 下版本号打开，可以打开开发者工具、看运行日志",
-    "电脑上没有 WebView2 运行库也能装：安装包会自动装上；便携版打开时会问你要不要装"
+    "点头像进关注列表改成了一个设置（设置 → 顶栏与首页 → 点头像进关注列表），默认打开，关掉后点头像进个人空间"
   ]
 }
