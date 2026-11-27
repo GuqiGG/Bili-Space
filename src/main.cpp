@@ -1149,7 +1149,15 @@ void startupFailed(HRESULT hr){
     using Version=HRESULT(STDAPICALLTYPE*)(PCWSTR,LPWSTR*);LPWSTR installed{};bool present=false;
     if(auto dll=GetModuleHandleW(L"WebView2Loader.dll"))if(auto get=reinterpret_cast<Version>(GetProcAddress(dll,"GetAvailableCoreWebView2BrowserVersionString"))){present=SUCCEEDED(get(nullptr,&installed))&&installed;if(installed)CoTaskMemFree(installed);}
     wchar_t code[16];swprintf(code,16,L"0x%08lX",static_cast<unsigned long>(hr));
-    if(!present)MessageBoxW(windowHandle,L"没有找到 Microsoft Edge WebView2 运行库，请安装 WebView2 Evergreen Runtime 后重试。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);
+    if(!present){
+        // 随包附带了微软的 WebView2 安装程序：问一下，装好后重新打开客户端
+        auto setup=root/L"runtime"/L"MicrosoftEdgeWebview2Setup.exe";std::error_code ec;
+        if(fs::exists(setup,ec)&&MessageBoxW(windowHandle,L"这台电脑还没有 Microsoft Edge WebView2 运行库，Bili-Space 需要它才能显示页面。\n\n现在安装吗？（约 2 分钟，需要联网）",L"Bili-Space",MB_YESNO|MB_ICONINFORMATION)==IDYES){
+            SHELLEXECUTEINFOW run{sizeof(run)};run.fMask=SEE_MASK_NOCLOSEPROCESS;run.lpFile=setup.c_str();run.lpParameters=L"/install";run.nShow=SW_SHOWNORMAL;
+            if(ShellExecuteExW(&run)&&run.hProcess){WaitForSingleObject(run.hProcess,INFINITE);CloseHandle(run.hProcess);
+                wchar_t self[MAX_PATH]{};GetModuleFileNameW(nullptr,self,MAX_PATH);ShellExecuteW(nullptr,L"open",self,nullptr,nullptr,SW_SHOWNORMAL);}
+        }else MessageBoxW(windowHandle,L"没有找到 Microsoft Edge WebView2 运行库，请安装 WebView2 Evergreen Runtime 后重试。",L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);
+    }
     else MessageBoxW(windowHandle,(std::wstring(L"浏览器组件暂时打不开（错误码 ")+code+L"）。\n\n请在任务管理器里结束所有 Bili-Space 和 msedgewebview2 进程后再打开；还不行就重启电脑。登录数据不会被清除。").c_str(),L"Bili-Space 启动失败",MB_OK|MB_ICONERROR);
 }
 int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,PWSTR command,int){

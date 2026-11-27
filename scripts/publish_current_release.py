@@ -7,11 +7,12 @@ tag = 'v'+version
 repo = os.environ['GH_REPO']
 files = [ROOT/'releases'/f'Bili-Space-{version}-win64.zip', ROOT/'releases'/f'Bili-Space-{version}-Setup.exe']
 if tuple(map(int,version.split('.'))) >= (0,1,50):
-    files += [ROOT/'releases'/f'Bili-Space-{version}-{name}' for name in ['win7-x64.zip','macos-universal.zip','linux.deb','android.apk']]
+    files += [ROOT/'releases'/f'Bili-Space-{version}-{name}' for name in ['win7-x64.zip','macos-universal.zip','linux.deb']]
     assert all(p.is_file() for p in files), 'All platform packages are required before publication'
 # 没签名的 iOS 包：打出来了就一起发，没打出来不挡其它平台
 ios = ROOT/'releases'/f'Bili-Space-{version}-ios-unsigned.ipa'
-if ios.is_file(): files.append(ios)
+# 安卓和 iOS 包暂时不随版本更新（0.1.82 起），用户继续用之前发布的版本
+# if ios.is_file(): files.append(ios)
 manifest = None
 if tuple(map(int,version.split('.'))) >= (0,1,38):
     zipfile, setup = files[:2]
