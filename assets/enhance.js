@@ -3,7 +3,7 @@ const ICON_TV='<svg xmlns="http://www.w3.org/2000/svg" class="bs-tv" viewBox="0 
 const ICON_DOWNLOAD='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></svg>';
 const DEFAULT_CATEGORIES=[0,1,2,3,4,13,14,16];
 const APP_META=typeof APP_INFO!=='undefined'?APP_INFO:{name:'Bili-Space',version:'0.1.37',author:'未署名'};
-const DEFAULTS = {dockTipSeen:false,updateChannel:'',theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,holdSpeed:200,hdrVideo:true,homePreload:false,homeBanner:true,feedHideLive:false,feedHideBangumi:false,feedHideCourse:false,feedHideManga:false,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,blacklistButtons:true,cornerAutoHide:false,feedColumns:0,feedMargin:'auto',experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,videoDock:true,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
+const DEFAULTS = {devMode:false,dockTipSeen:false,updateChannel:'',theme:'dark',accent:'#fb7299',progressColor:'#fb7299',progressHeight:4,progressRadius:6,progressAlways:false,progressThumb:true,showChannels:true,hideAds:true,btr:true,font:true,zoom:100,volumeBoost:100,holdSpeed:200,hdrVideo:true,homePreload:false,homeBanner:true,feedHideLive:false,feedHideBangumi:false,feedHideCourse:false,feedHideManga:false,soundBalance:true,downloadConnections:256,srMode:'off',srScale:2,srFps:60,closeAction:'tray',videoLoadingMode:'page',clipboardAutoOpen:true,experimentalFrost:false,experimentalControlsV1:false,fiMode:'off',srModel:'auto',fiFps:60,fiFlowScale:50,trafficLights:false,logoAutoHide:true,blacklistButtons:true,cornerAutoHide:false,feedColumns:0,feedMargin:'auto',experimentalBounce:true,settingsZoom:100,experimentalFullscreenMotion:false,onboardingSeen:false,whatsNewSeen:'',shareSeen:'',newsSeen:[],language:'',languageChosen:false,officialVideoStyle:false,videoDock:true,showClock:false,videoLinkButton:true,videoLinkCompact:false,pipDanmaku:true,pipDanmakuMinWidth:520,upNotify:true,dynamicCards:true,commentBlock:true,commentBlockUsers:[],commentBlockWords:[],headerHome:true,headerSwipe:true,headerDynamic:true,headerHistory:true,headerBrand:true,headerSearch:true,headerFavorites:true,headerWatchlater:true,clickGui:false,searchWidth:0,watchlaterOpen:'list',headerMessages:true,headerUpload:true,headerAccount:true,headerBack:true,autoZoom:true,autoZoomTarget:1280,downloader:true,downloaderPath:'',proxy:false,proxyAll:false,proxyNode:'',categoryPreset:0,pluginsDisabled:[],categorySelection:DEFAULT_CATEGORIES.slice()};
 const PREFS = { ...DEFAULTS, ...INITIAL };
 /* With visual hosting the header runs once, in a persistent header view above the pages (CHROME_VIEW); pages then
    keep their header space but hide their own copy (content mode). */
@@ -1265,7 +1265,7 @@ async function refreshAccount(force=false){
     const account=$('.account',shadow),img=document.createElement('img');
     img.src=face.href;img.alt=data.uname||'我的头像';img.referrerPolicy='no-referrer';
     renderAccountDecorations();account.setAttribute('aria-label',data.uname||'我的主页');account.title=data.uname||'我的主页';
-    if(/^\d+$/.test(String(data.mid)))account.href='https://space.bilibili.com/'+data.mid;
+    if(/^\d+$/.test(String(data.mid)))account.href='https://space.bilibili.com/'+data.mid+'/relation/follow' /* 反馈：点头像直接进关注列表；个人空间在账号卡片里 */;
     account.dataset.authenticated='true';
   }catch(_){
     // Login cookies stay in the browser. A failed status read must not fake a profile.
@@ -1704,7 +1704,8 @@ html[data-bs-page=home][data-bs-hide-course=true] .bili-feed4-layout :is(.floor-
 html[data-bs-page=home][data-bs-hide-manga=true] .bili-feed4-layout :is(.floor-single-card,.feed-card,.bili-video-card):has(a[href*="manga.bilibili.com"]){display:none!important}
 /* 动态页底下有一层浅色插画背景（.bg），深色模式下不会跟着变，去掉 */
 html[data-bs-theme=dark][data-bs-page=dynamic] :is(.bg,.bili-dyn-home__bg,.bili-dyn-home--member>.bg){background:#161618!important;background-image:none!important}
-html[data-bs-theme=dark][data-bs-page=dynamic],html[data-bs-theme=dark][data-bs-page=dynamic] :is(body,#app,#app>div,.bili-dyn-home--member,.bili-dyn-home--visitor,.bili-dyn-home__main,.bili-dyn-home,.opus-detail,.bili-opus-view,.app-layout){background-color:#161618!important;background-image:none!important}
+/* 只给最底层上深色。给 #app 里的容器刷不透明底色会盖住动态内容（0.1.81 回归：深色模式动态页一片黑） */
+html[data-bs-theme=dark][data-bs-page=dynamic],html[data-bs-theme=dark][data-bs-page=dynamic] body{background-color:#161618!important;background-image:none!important}
 html[data-bs-theme=dark][data-bs-page=dynamic]{--graph_bg_regular:#202023;--graph_bg_thin:#1b1b1e;--graph_bg_thick:#29292e;--bg1_float:#202023}
 /* Space backgrounds deliberately use negative layers; isolate them above the document surface. */
 html[data-bs-page=space] #app{isolation:isolate;background-color:transparent!important}html[data-bs-page=space] .space-header{isolation:isolate;background-color:transparent!important}html[data-bs-page=space] .space-theme-bg{pointer-events:none}html[data-bs-page=space] .header-toutu{display:block!important}
@@ -2018,7 +2019,7 @@ async function checkProxyRegion(){
     out.textContent=`当前出口：${data.country||'未知'}${data.city?' · '+data.city:''}${data.addr?' · '+data.addr:''} — ${mainland?'大陆出口；是否能播放仍受版权、账号权限等限制':'不能解锁“仅限中国大陆”的番剧'}`;
   }catch(e){out.textContent='检测失败：'+e.message+'（直连也可能被网站拒绝）';}
 }
-const tabs={appearance:['外观','appearance'],home:['顶栏与首页','progress'],play:['播放与画质','sparkles'],window:['窗口与画中画','appearance'],clean:['页面净化','clean'],general:['通用','plugins'],categories:['分区选择','progress'],downloads:['下载任务','plugins'],blocklist:['拉黑管理','plugins'],community:['观看记录','sparkles'],network:['网络代理','plugins'],plugins:['扩展插件','plugins'],feedback:['反馈','sparkles'],about:['关于与更新','plugins']};
+const tabs={appearance:['外观','appearance'],home:['顶栏与首页','progress'],play:['播放与画质','sparkles'],window:['窗口与画中画','appearance'],clean:['页面净化','clean'],general:['通用','plugins'],categories:['分区选择','progress'],downloads:['下载任务','plugins'],blocklist:['拉黑管理','plugins'],community:['观看记录','sparkles'],network:['网络代理','plugins'],plugins:['扩展插件','plugins'],feedback:['反馈','sparkles'],about:['关于与更新','plugins'],developer:['开发者','plugins']};
 // 这几页共用一份「个性化」内容，按分组拆到各自的页里（organizeSettings）
 const LOOK_TABS=['appearance','home','window','general'];
 if(NATIVE_PLATFORM!=='windows'){for(const tab of ['downloads','network','plugins'])delete tabs[tab];}
@@ -2915,7 +2916,10 @@ function tabContent(tab=currentTab){
   if(tab==='blocklist')return '<h2>拉黑管理</h2><div id="blacklist44-panel" tabindex="-1" data-setting-keywords="拉黑 黑名单 取消拉黑 UP主"></div>';
   if(tab==='community')return '<h2>观看记录</h2><div id="community44-panel" tabindex="-1" data-setting-keywords="观看统计 周报 订阅提醒"></div>';
   if(tab==='feedback')return `<h2>反馈</h2><p class="subtitle">遇到问题、想要新功能，都可以直接告诉开发者。</p><div class="row"><label>写一条反馈<span class="hint">邮箱可选，不填开发者就没法回复你；不会附带账号、Cookie 和浏览记录</span></label><button id="feedback-open" class="link" type="button">写反馈</button></div><div class="note">也可以在托盘图标的右键菜单里选「反馈问题…」。</div>`;
-  if(tab==='about')return `<h2>Bili-Space</h2><div class="row"><span>版本号</span><strong id="app-version"></strong></div><div class="row"><span>作者</span><strong id="app-author"></strong></div><p class="subtitle">更新源 · bili.gvqi.top</p><div class="section-label">更新 / UPDATES</div><div class="row"><label for="pref-updateChannel">更新通道<span class="hint">稳定版只更新大版本，最新版跟着 GitHub 上的每一个版本</span></label><select id="pref-updateChannel" data-pref="updateChannel"><option value="latest">最新版</option><option value="stable">稳定版</option></select></div><p id="client-update-status" role="status" aria-live="polite"></p><strong id="update-version"></strong><ul id="update-notes"></ul><div class="actions"><button class="link" data-update="check">检查更新</button><button class="link" data-update="download" hidden>下载更新</button><button class="link" data-update="ignore" hidden>忽略此版本</button><button class="link" data-update="install" hidden>安装并重启</button><button class="link" data-update="log">查看检查日志</button><button class="link" id="whats-new-open">查看更新公告</button><button class="link" id="share-open">分享 Bili-Space</button></div><div class="note">下载完成后可在此安装并重启，保留登录和设置。</div>`;
+  if(tab==='developer')return `<h2>开发者</h2><p class="subtitle">给想调试客户端、写插件或者帮忙查问题的人用。日志里没有账号和 Cookie。</p>${toggle('devMode','开发者模式','关掉后这一页会隐藏，开发者工具和 F12 也会关闭')}
+<div class="section-label">开发者工具</div><div class="actions"><button class="link" data-dev="devtools">当前页面的开发者工具</button><button class="link" data-dev="devtools-header">顶栏和设置的开发者工具</button><button class="link" data-dev="reload-all">重新载入所有页面</button><button class="link" data-dev="open-folder">打开数据文件夹</button></div><div class="note">开着开发者模式时也可以按 F12 或 Ctrl+Shift+I。</div>
+<div class="section-label">运行日志</div><div class="actions"><button class="link" data-dev="log">刷新</button><label class="dev-auto"><input type="checkbox" id="dev-log-auto"> 自动刷新</label><button class="link" data-dev-copy>复制</button><button class="link" data-dev="clear-log">清空</button></div><pre id="dev-log" class="dev-log" tabindex="0">正在读取日志…</pre>`;
+  if(tab==='about')return `<h2>Bili-Space</h2><div class="row"><span>版本号</span><strong id="app-version" style="cursor:default;user-select:none"></strong></div><div class="row"><span>作者</span><strong id="app-author"></strong></div><p class="subtitle">更新源 · bili.gvqi.top</p><div class="section-label">更新 / UPDATES</div><div class="row"><label for="pref-updateChannel">更新通道<span class="hint">稳定版只更新大版本，最新版跟着 GitHub 上的每一个版本</span></label><select id="pref-updateChannel" data-pref="updateChannel"><option value="latest">最新版</option><option value="stable">稳定版</option></select></div><p id="client-update-status" role="status" aria-live="polite"></p><strong id="update-version"></strong><ul id="update-notes"></ul><div class="actions"><button class="link" data-update="check">检查更新</button><button class="link" data-update="download" hidden>下载更新</button><button class="link" data-update="ignore" hidden>忽略此版本</button><button class="link" data-update="install" hidden>安装并重启</button><button class="link" data-update="log">查看检查日志</button><button class="link" id="whats-new-open">查看更新公告</button><button class="link" id="share-open">分享 Bili-Space</button></div><div class="note">下载完成后可在此安装并重启，保留登录和设置。</div>`;
 
   if(tab==='categories'){
     const total=CATEGORIES.length,chosen=PREFS.categorySelection.length;
@@ -2976,6 +2980,8 @@ function renderSettings(){
   if(currentTab==='community')window.BiliCommunity44?.render($('#community44-panel',panel));
   if(currentTab==='plugins'){renderExtensions();native('extensions',{action:'list'});}
   if(currentTab==='plugins')window.BiliSpacePlugins?.renderPanel($('#plugins44-panel',panel),{update,prefs:PREFS,toast});
+  const devTab=$('.tabs button[data-tab=developer]',shadow);if(devTab)devTab.hidden=!PREFS.devMode;if(currentTab==='developer'&&!PREFS.devMode)currentTab='about';
+  if(currentTab==='developer'){native('dev',{action:'log'});clearInterval(devLogTimer);devLogTimer=setInterval(()=>{if(currentTab!=='developer'||$('#settings',shadow)?.hidden){clearInterval(devLogTimer);return;}if($('#dev-log-auto',shadow)?.checked)native('dev',{action:'log'});},1500);}
   $$('.tabs button',shadow).forEach(b=>{b.setAttribute('aria-selected',String(b.dataset.tab===currentTab));b.tabIndex=b.dataset.tab===currentTab?0:-1;});
   $$('select[data-pref]',panel).forEach(s=>s.value=String(PREFS[s.dataset.pref]));
   const nodeSelect=$('#proxy-node',panel);if(nodeSelect)fillProxyNodes(nodeSelect);
@@ -3030,6 +3036,11 @@ function renderSettingsSearch(){
   }
 }
 // 搜索结果：直接滚到那一项并闪一下，而不是只切到所在的分页
+let devLogTimer=0,versionTaps=0,versionTapAt=0;
+function acceptDevLog(text){const pre=shadow&&$('#dev-log',shadow);if(!pre)return;const atBottom=pre.scrollTop+pre.clientHeight>=pre.scrollHeight-8;pre.textContent=String(text||'').slice(-120000)||'（日志是空的）';if(atBottom)pre.scrollTop=pre.scrollHeight;}
+// 关于里连点 7 下版本号打开开发者模式
+function tapVersion(){const now=Date.now();versionTaps=now-versionTapAt<700?versionTaps+1:1;versionTapAt=now;if(PREFS.devMode){if(versionTaps===1)toast('开发者模式已经开着，在「开发者」页里');return;}
+  if(versionTaps>=3&&versionTaps<7)toast('再点 '+(7-versionTaps)+' 下打开开发者模式');if(versionTaps>=7){versionTaps=0;update({devMode:true});toast('已打开开发者模式');currentTab='developer';renderSettings();}}
 let extensionState={items:[],supported:true};
 function renderExtensions(){const box=shadow&&$('#extensions-list',shadow);if(!box)return;box.replaceChildren();
   if(!extensionState.supported){const n=document.createElement('div');n.className='note';n.textContent='当前 WebView2 运行库不支持浏览器扩展，更新 Microsoft Edge WebView2 后再试。';box.append(n);return;}
@@ -3093,6 +3104,9 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
 @keyframes bs-search-hit{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent,#fb7299) 0%,transparent);background:transparent}18%{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#fb7299) 70%,transparent);background:color-mix(in srgb,var(--accent,#fb7299) 16%,transparent)}100%{box-shadow:0 0 0 0 transparent;background:transparent}}
 .search-hit{border-radius:12px;animation:bs-search-hit 2s cubic-bezier(.32,.72,0,1)}
 @media (prefers-reduced-motion: reduce){.search-hit{animation:none;background:color-mix(in srgb,var(--accent,#fb7299) 14%,transparent)}}
+.dev-log{margin:8px 0 0;max-height:360px;overflow:auto;padding:12px 14px;border-radius:12px;background:#00000040;box-shadow:inset 0 0 0 1px #ffffff12;font:12px/1.55 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-all;color:var(--ink,#ddd);user-select:text}
+.dev-auto{display:inline-flex;align-items:center;gap:6px;font-size:13px;margin:0 6px}
+button[data-tab=developer][hidden]{display:none!important}
 .settings-group{margin:0 0 14px;padding:0 18px;border:0;border-radius:14px;background:color-mix(in srgb,var(--panel) 82%,var(--bg));box-shadow:0 1px 2px #0000000c,0 6px 20px #00000014;interpolate-size:allow-keywords}.settings-group>summary{padding:15px 0;gap:10px;font-size:15px;letter-spacing:-.1px}.settings-group>summary small{padding:2px 8px;border-radius:999px;background:var(--field);font-variant-numeric:tabular-nums}.settings-group>summary::after{content:'';width:8px;height:8px;border:solid var(--muted);border-width:0 1.8px 1.8px 0;transform:translateY(-2px) rotate(45deg);transition:transform 240ms cubic-bezier(.32,.72,0,1)}.settings-group[open]>summary::after{transform:translateY(2px) rotate(-135deg)}.settings-group>summary:hover{color:var(--accent)}.settings-group::details-content{block-size:0;overflow:hidden;transition:block-size 320ms cubic-bezier(.32,.72,0,1),content-visibility 320ms allow-discrete}.settings-group[open]::details-content{block-size:auto}.settings-group .row+.row{border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent)}.settings-group .row{border-bottom:0!important}.settings-match{border-radius:10px;transition:background 140ms cubic-bezier(.2,.8,.2,1)}@media(prefers-reduced-motion:reduce){.settings-group::details-content,.settings-group>summary::after{transition:none}}
 #page-pending{animation:bs-pending-in 220ms ease-out 800ms both}#page-pending .page-placeholder{display:none}@keyframes bs-pending-in{from{opacity:0}}
 #home-bubble{position:fixed;left:50%;top:calc(var(--bs-header-height,58px) + 14px);transform:translate(-50%,0);z-index:30;padding:11px 18px;border-radius:18px;background:#fff;color:#1d1d22;font-size:14px;font-weight:600;line-height:20px;white-space:nowrap;box-shadow:0 2px 6px #00000014,0 12px 32px #0000002b;pointer-events:none}#home-bubble::before{content:'';position:absolute;left:50%;top:-6px;width:14px;height:14px;margin-left:-7px;border-radius:3px;background:#fff;transform:rotate(45deg)}#home-bubble[hidden]{display:none}
@@ -3107,11 +3121,14 @@ header{zoom:var(--bs-ui-scale,1);height:calc(var(--bs-header-height,58px) / var(
   const dialog=$('.dialog',shadow);if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(([entry])=>{if(entry.contentRect.width>0)dialog.dataset.compact=String(entry.contentRect.width<620);});observer.observe(dialog);}
   shadow.addEventListener('click',e=>{
     const upload=e.target.closest('a.upload');if(upload){e.preventDefault();native('open-external',{url:upload.href});return;}
+    if(e.target.closest?.('#app-version')){tapVersion();return;}
     const b=e.target.closest('button');
     if(['check','download','ignore','install','log'].includes(b?.dataset.update)){native('updates',{action:b.dataset.update});return;}
     if(b?.classList.contains('video-link')){copyCurrentVideoLink(e.shiftKey);return;}
     if(b?.dataset.egg==='category'){categoryEggForced=true;renderSettingsSearch();toast('彩蛋已开启：去展开再收起分区试试');return;}
     if(b?.dataset.settingTab){currentTab=b.dataset.settingTab;const id=b.dataset.settingTarget,label=b.dataset.settingLabel||'';clearSettingsSearch();renderSettings();revealSetting(id,label);return;}
+    if(b?.dataset.dev){native('dev',{action:b.dataset.dev});if(b.dataset.dev==='clear-log')setTimeout(()=>native('dev',{action:'log'}),300);return;}
+    if(b?.hasAttribute('data-dev-copy')){const t=$('#dev-log',shadow)?.textContent||'';navigator.clipboard?.writeText(t).then(()=>toast('日志已复制'),()=>toast('复制失败'));return;}
     if(b?.dataset.extAction){native('extensions',{action:b.dataset.extAction,id:b.dataset.extId||'',enabled:b.dataset.extEnabled!=='true'});return;}
     if(b?.dataset.window){native('window',{action:b.dataset.window});return;}
     if(b?.classList.contains('back')){setCategories(b.getAttribute('aria-expanded')!=='true',e.detail===0);return;}
@@ -3895,7 +3912,7 @@ function boot(){
     if(!button)return;
     e.preventDefault();e.stopPropagation();requestDownload();
   },true);
-  window.BiliSpace={acceptExtensions,fullReadyAt,tourBackdrop,offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
+  window.BiliSpace={acceptExtensions,acceptDevLog,fullReadyAt,tourBackdrop,offerClipboardVideo,clipboardVideoTarget,refreshMessageUnread,acceptUpdateStatus,videoLinkCopied,pauseForTray,restoreFromTray,setPlayerVolume,acceptSearchHistory,beginNavigation,showAccountCard,hideAccountCard,surfaceRevealed,beginVideoLoading,finishVideoLoading,cancelVideoLoading,revealFade,chromeActive,chromeStep,tabShown,tabHidden,homeBubble,ctrlHome,beginClose,proxyStatus,proxyState,proxyToast(text){if(!CONTENT_VIEW)toast(text);},pluginsChanged(){if(shadow&&!$('#settings',shadow).hidden&&currentTab==='plugins')renderSettings();},
     openSettings,closeSettings,update,markAds,requestPip,setLoading,refreshAccount,syncRoute,checkProxyRegion,
     downloaderStatus(info){
       downloaderInfo={...downloaderInfo,...(info||{})};
@@ -3945,6 +3962,9 @@ function boot(){
   // A video page carries its own loading cover from here on, so its tab can be shown now (about 0.8 s sooner than
   // waiting for the load event); the cover stays until the video itself is ready.
   if(document.readyState==='complete'||(CONTENT_VIEW&&pageKind()==='video'&&$('#bs-video-loading')))window.__bsPaintReady?.();
+  // 视频一开始播放就让这个标签显示出来：登录后的视频页很重，等整页加载完会比起播晚好几秒，
+  // 用户就只能听着声音看上一页的加载动画（反馈：声音先出、画面晚四五秒）
+  if(CONTENT_VIEW&&!window.__bsPlayReveal){window.__bsPlayReveal=true;document.addEventListener('playing',e=>{if(e.target instanceof HTMLMediaElement){window.__bsPaintReady?.();if($('#bs-video-loading'))settleVideoLoading();}},true);}
   diagnostic('Bili-Space ready');
 }
 if(document.documentElement)prepareShell();else{const earlyShell=new MutationObserver(()=>{if(document.documentElement){earlyShell.disconnect();prepareShell();}});earlyShell.observe(document,{childList:true});}

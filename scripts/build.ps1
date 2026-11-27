@@ -17,6 +17,7 @@ if ($LASTEXITCODE) { throw "C++ build failed: $LASTEXITCODE" }
 Copy-Item .tools/webview2/build/native/x64/WebView2Loader.dll dist -Force
 Copy-Item assets dist -Recurse -Force
 Copy-Item runtime dist -Recurse -Force
+& (Join-Path $PSScriptRoot 'fetch_webview2.ps1')
 Copy-Item vendor dist -Recurse -Force
 Copy-Item README.md dist -Force
 Copy-Item docs dist -Recurse -Force
