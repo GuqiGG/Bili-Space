@@ -108,6 +108,16 @@ python scripts/package.py
 
 [实现与历史记录](docs/IMPLEMENTATION-NOTES.md) · [通用超分调研](docs/GENERAL-SR-MODELS.md)
 
+## 招募开发者
+
+想一起把 Bili-Space 做成最好用的 B 站客户端？写功能、修 Bug、做动效、写插件、做设计、翻译、提建议都欢迎。
+
+▶ [看招募短片](docs/media/recruit.mp4)（21 秒）
+
+- 技术栈：C++20 · Win32 · WebView2 · JavaScript · Python
+- 开始前先读 [设计说明](docs/DESIGN.md)，然后提 Issue 或直接发 Pull Request
+- 觉得不错就点个 Star，关注 GuqiGG 获取更新
+
 ## 许可
 
 自有代码与资产采用 **[PolyForm Noncommercial 1.0.0](LICENSE)**，不授权商业使用。第三方组件遵循各自许可，见 [第三方声明](THIRD_PARTY_NOTICES.md)。作者未署名。
